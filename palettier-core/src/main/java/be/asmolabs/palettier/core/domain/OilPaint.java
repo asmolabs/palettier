@@ -96,6 +96,29 @@ public class OilPaint {
     @Column(name = "color_derived", nullable = false)
     private boolean colorDerived;
 
+    /**
+     * Vrai quand les pigments viennent du fabricant, et non d'une reconstitution.
+     *
+     * <p>Distinction qui merite d'etre visible : ce sont les pigments qui donnent la
+     * vitesse de sechage, donc le planning. Une fiche reconstituee de memoire peut se
+     * tromper de pigment, et le peintre doit savoir sur quoi il s'appuie.</p>
+     */
+    @Column(name = "pigments_verified", nullable = false,
+            columnDefinition = "boolean default false not null")
+    private boolean pigmentsVerified;
+
+    /**
+     * Vrai pour un tube saisi par le peintre, et non livre avec l'application.
+     *
+     * <p>Distinction necessaire au menage : une fiche livree qui disparait des fichiers
+     * de gamme doit etre retiree, une fiche saisie a la main ne doit jamais l'etre.
+     * La valeur par defaut est portee par le schema, sans quoi l'ajout de la colonne
+     * echoue sur une table deja peuplee.</p>
+     */
+    @Column(name = "user_added", nullable = false,
+            columnDefinition = "boolean default false not null")
+    private boolean userAdded;
+
     /** Vrai si le tube est effectivement sur l'etagere du peintre. */
     @Column(name = "in_stock", nullable = false)
     private boolean inStock = true;
@@ -222,6 +245,22 @@ public class OilPaint {
 
     public void setTintingStrength(double tintingStrength) {
         this.tintingStrength = tintingStrength;
+    }
+
+    public boolean isPigmentsVerified() {
+        return pigmentsVerified;
+    }
+
+    public void setPigmentsVerified(boolean pigmentsVerified) {
+        this.pigmentsVerified = pigmentsVerified;
+    }
+
+    public boolean isUserAdded() {
+        return userAdded;
+    }
+
+    public void setUserAdded(boolean userAdded) {
+        this.userAdded = userAdded;
     }
 
     public boolean isInStock() {

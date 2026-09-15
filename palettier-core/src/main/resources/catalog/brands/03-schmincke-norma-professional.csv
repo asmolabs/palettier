@@ -1,62 +1,103 @@
-# Schmincke - NORMA PROFESSIONAL (huile fine)
+# Schmincke - NORMA PROFESSIONAL (huile fine, serie 11)
 #
-# COUVERTURE : partielle, environ 50 teintes sur les ~84 de la gamme.
-brand;name;code;pigments;opacity;hex
-Schmincke Norma;Titanium White;110;PW6;OPAQUE;#F7F5F0
-Schmincke Norma;Titanium Opaque White;111;PW6;OPAQUE;#F8F6F1
-Schmincke Norma;Zinc White;112;PW4;SEMI_TRANSPARENT;#F7F7F5
-Schmincke Norma;Mixing White;113;PW6 PW4;OPAQUE;#F7F5F1
-Schmincke Norma;Ivory Black;780;PBk9;SEMI_OPAQUE;#221F1C
-Schmincke Norma;Lamp Black;782;PBk7;SEMI_OPAQUE;#1A1918
-Schmincke Norma;Mars Black;784;PBk11;OPAQUE;#1B1A19
-Schmincke Norma;Payne's Grey;787;PB29 PBk7;SEMI_TRANSPARENT;#3A4552
-Schmincke Norma;Neutral Grey;785;PBk7 PW6;OPAQUE;#8A8886
-Schmincke Norma;Raw Umber;668;PBr7;SEMI_OPAQUE;#4E4133
-Schmincke Norma;Burnt Umber;669;PBr7;SEMI_OPAQUE;#4A3427
-Schmincke Norma;Raw Sienna;655;PBr7;SEMI_TRANSPARENT;#9A6B32
-Schmincke Norma;Burnt Sienna;660;PBr7;TRANSPARENT;#7A3A22
-Schmincke Norma;Transparent Oxide Brown;663;PR101;TRANSPARENT;#5A3418
-Schmincke Norma;Transparent Oxide Red;662;PR101;TRANSPARENT;#8A2E15
-Schmincke Norma;Transparent Oxide Yellow;661;PY42;TRANSPARENT;#B87A1E
-Schmincke Norma;English Red;645;PR101;OPAQUE;#9E4030
-Schmincke Norma;Venetian Red;646;PR101;OPAQUE;#8E4230
-Schmincke Norma;Caput Mortuum;648;PR101;OPAQUE;#5E3436
-Schmincke Norma;Yellow Ochre;630;PY43;SEMI_OPAQUE;#C08A34
-Schmincke Norma;Gold Ochre;632;PY42;SEMI_OPAQUE;#BC8434
-Schmincke Norma;Green Earth;520;PG23;TRANSPARENT;#6B7A5A
-Schmincke Norma;Naples Yellow Light;207;PBr24 PW6;OPAQUE;#EFD79C
-Schmincke Norma;Naples Yellow Deep;208;PBr24 PY42;OPAQUE;#DCA754
-Schmincke Norma;Lemon Yellow;204;PY184;OPAQUE;#F7DE2A
-Schmincke Norma;Cadmium Yellow Light;222;PY35;OPAQUE;#F7D200
-Schmincke Norma;Cadmium Yellow Medium;224;PY35;OPAQUE;#F5B800
-Schmincke Norma;Cadmium Yellow Deep;226;PY37;OPAQUE;#F2A000
-Schmincke Norma;Vanadium Yellow;213;PY184;OPAQUE;#F7D21A
-Schmincke Norma;Indian Yellow;216;PY139 PO62;TRANSPARENT;#EE9A14
-Schmincke Norma;Cadmium Orange;227;PO20;OPAQUE;#EE7318
-Schmincke Norma;Translucent Orange;218;PO71;TRANSPARENT;#EE5A1A
-Schmincke Norma;Vermilion;303;PR255;SEMI_OPAQUE;#E0401F
-Schmincke Norma;Cadmium Red Light;314;PR108;OPAQUE;#D9341F
-Schmincke Norma;Cadmium Red Medium;316;PR108;OPAQUE;#CE2A22
-Schmincke Norma;Cadmium Red Deep;318;PR108;OPAQUE;#B0221F
-Schmincke Norma;Permanent Red;344;PR254;OPAQUE;#D62B22
-Schmincke Norma;Madder Lake Deep;349;PR264;TRANSPARENT;#A81830
-Schmincke Norma;Alizarin Crimson Hue;354;PR177;TRANSPARENT;#93182F
-Schmincke Norma;Magenta;356;PR122;TRANSPARENT;#A61B5A
-Schmincke Norma;Quinacridone Violet;367;PV19;TRANSPARENT;#B01B5A
-Schmincke Norma;Brilliant Purple;368;PV23 PW6;SEMI_OPAQUE;#6E4A8C
-Schmincke Norma;Violet;370;PV23;TRANSPARENT;#3A1B52
-Schmincke Norma;Ultramarine Finest;494;PB29;TRANSPARENT;#1F2E7A
-Schmincke Norma;Ultramarine Deep;496;PB29;TRANSPARENT;#1C2870
-Schmincke Norma;Cobalt Blue Light;484;PB28;SEMI_OPAQUE;#2A5EB0
-Schmincke Norma;Cobalt Blue Deep;486;PB74;SEMI_OPAQUE;#1B3E8C
-Schmincke Norma;Cerulean Blue Hue;476;PB15 PW6;OPAQUE;#3A8CC0
-Schmincke Norma;Prussian Blue;482;PB27;TRANSPARENT;#16323C
-Schmincke Norma;Phthalo Blue;470;PB15;TRANSPARENT;#0E3F73
-Schmincke Norma;Indanthrene Blue;498;PB60;TRANSPARENT;#1E2A52
-Schmincke Norma;Cobalt Turquoise;460;PB36;OPAQUE;#1E7A8C
-Schmincke Norma;Viridian;534;PG18;TRANSPARENT;#0F6B54
-Schmincke Norma;Phthalo Green;536;PG7;TRANSPARENT;#0A5A46
-Schmincke Norma;Permanent Green Light;526;PG7 PY154;SEMI_OPAQUE;#5AA82E
-Schmincke Norma;Chromium Oxide Green;530;PG17;OPAQUE;#4A6B42
-Schmincke Norma;Olive Green;528;PY150 PG7 PBk9;TRANSPARENT;#4C5B23
-Schmincke Norma;Sap Green;524;PY150 PG7;TRANSPARENT;#4C6B23
+# COUVERTURE : les 84 couleurs de la gamme, au complet.
+#
+# PROVENANCE : noms, references, pigments et opacite extraits du catalogue en ligne du
+# fabricant (schmincke.de/en/products/oil/norma-professional), qui les publie dans les
+# attributs de chaque fiche. Ce sont les donnees du fabricant.
+#
+# L'opacite reprend la notation Schmincke : D deckend (opaque), HD halbdeckend,
+# HL halblasierend, L lasierend (transparent).
+#
+# Deux notations du fabricant ont ete traduites : une barre oblique entre deux pigments
+# ("PBr7/PG23") signale les deux composants du melange et devient deux codes ; les
+# pigments a effet, que Schmincke nomme en clair sans code Colour Index, recoivent un
+# code interne (EFFEKT, ALU) plutot qu'un code normalise invente.
+#
+# La colonne hex est vide : Schmincke ne publie pas de valeur numerique. La teinte est
+# deduite des pigments et l'application signale ces tubes comme approximatifs.
+brand;name;code;pigments;opacity;hex;verified
+Schmincke Norma;Transparent White;11110;PW6;SEMI_TRANSPARENT;;true
+Schmincke Norma;Zinc White;11112;PW4;SEMI_OPAQUE;;true
+Schmincke Norma;Titanium White;11114;PW4 PW6;OPAQUE;;true
+Schmincke Norma;Opaque White;11116;PW7;OPAQUE;;true
+Schmincke Norma;Zinc Titanium White;11118;PW4 PW6;OPAQUE;;true
+Schmincke Norma;Burnt Ochre Light;11220;PW4 PW6 PY42 PR101;OPAQUE;;true
+Schmincke Norma;Naples Yellow Reddish;11222;PW4 PW6 PY53 PO20;SEMI_OPAQUE;;true
+Schmincke Norma;Naples Yellow Deep;11224;PBr24;OPAQUE;;true
+Schmincke Norma;Naples Yellow Light;11226;PY53 PBr24;OPAQUE;;true
+Schmincke Norma;Chrome Yellow Hue Light;11228;PY216;OPAQUE;;true
+Schmincke Norma;Chrome Yellow Hue Medium;11230;PY216;OPAQUE;;true
+Schmincke Norma;Chrome Yellow Hue Deep;11232;PY216;OPAQUE;;true
+Schmincke Norma;Brilliant Yellow Light;11234;PW4 PY53 PBr24;SEMI_OPAQUE;;true
+Schmincke Norma;Lemon Yellow;11236;PY3;SEMI_OPAQUE;;true
+Schmincke Norma;Cadmium Yellow Lemon;11238;PY35;OPAQUE;;true
+Schmincke Norma;Cadmium Yellow Mix;11240;PW4 PW6 PY35;SEMI_OPAQUE;;true
+Schmincke Norma;Cadmium Yellow Light;11242;PY35;OPAQUE;;true
+Schmincke Norma;Cadmium Yellow Deep;11244;PO20;OPAQUE;;true
+Schmincke Norma;Brilliant Yellow;11246;PY155 PY184;SEMI_OPAQUE;;true
+Schmincke Norma;Indian Yellow;11248;PY153;SEMI_TRANSPARENT;;true
+Schmincke Norma;Cadmium Orange;11300;PO20;OPAQUE;;true
+Schmincke Norma;Brilliant Orange;11302;PW4 PY184 PO67;SEMI_OPAQUE;;true
+Schmincke Norma;Poppy Red;11304;PO71;TRANSPARENT;;true
+Schmincke Norma;Vermilion Red Light;11306;PO67 PR255;OPAQUE;;true
+Schmincke Norma;Vermilion Red Deep;11308;PR255 PO62;SEMI_OPAQUE;;true
+Schmincke Norma;Cadmium Red Light;11310;PO20;OPAQUE;;true
+Schmincke Norma;Cadmium Red Mix;11312;PW4 PO20;OPAQUE;;true
+Schmincke Norma;Cadmium Red Deep;11314;PR108;OPAQUE;;true
+Schmincke Norma;Madder Light;11316;PR207;TRANSPARENT;;true
+Schmincke Norma;Madder Red;11318;PR207 PR264;TRANSPARENT;;true
+Schmincke Norma;Madder Ruby;11320;PR264;TRANSPARENT;;true
+Schmincke Norma;Alizarin Crimson Hue;11342;PR179;TRANSPARENT;;true
+Schmincke Norma;Carmine Red;11344;PR179 PV19;SEMI_TRANSPARENT;;true
+Schmincke Norma;Ruby Red;11346;PR122;TRANSPARENT;;true
+Schmincke Norma;Magenta;11348;PW4 PR122;SEMI_OPAQUE;;true
+Schmincke Norma;Cobalt Violet Hue;11350;PV62;SEMI_OPAQUE;;true
+Schmincke Norma;Violet Dark;11352;PV23;TRANSPARENT;;true
+Schmincke Norma;Indanthrene Blue;11400;PB60;TRANSPARENT;;true
+Schmincke Norma;Ultramarine Blue Deep;11402;PB29;TRANSPARENT;;true
+Schmincke Norma;Ultramarine Blue Light;11404;PB29;TRANSPARENT;;true
+Schmincke Norma;Royal Blue;11406;PW6 PB29;OPAQUE;;true
+Schmincke Norma;Cobalt Blue Deep;11408;PB74;SEMI_TRANSPARENT;;true
+Schmincke Norma;Cobalt Blue Light;11410;PB28;SEMI_OPAQUE;;true
+Schmincke Norma;Cobalt Blue Hue;11412;PW4 PB29 PB15:6;OPAQUE;;true
+Schmincke Norma;Cobalt Cerulean Blue;11414;PB35;SEMI_OPAQUE;;true
+Schmincke Norma;Indigo;11416;PR101 PB60;SEMI_TRANSPARENT;;true
+Schmincke Norma;Prussian Blue;11418;PB27;SEMI_TRANSPARENT;;true
+Schmincke Norma;Phthalo Blue;11420;PB15:3;TRANSPARENT;;true
+Schmincke Norma;Cerulean Blue;11422;PW4 PW6 PB15:3 PG18;OPAQUE;;true
+Schmincke Norma;Azure Blue;11424;PW4 PW6 PB15:3;OPAQUE;;true
+Schmincke Norma;Cobalt Turquoise;11426;PG50;OPAQUE;;true
+Schmincke Norma;Phthalo Green;11500;PG7;TRANSPARENT;;true
+Schmincke Norma;Chromium Oxide Green Brill.;11502;PG18;SEMI_TRANSPARENT;;true
+Schmincke Norma;Emerald Green;11504;PW6 PG50 PG18 PG36;SEMI_OPAQUE;;true
+Schmincke Norma;Schweinfurt Green Hue;11506;PB28 PG18 PY216 PG50;OPAQUE;;true
+Schmincke Norma;Permanent Green;11508;PG7 PY151;OPAQUE;;true
+Schmincke Norma;Permanent Yellowish-green;11510;PY184 PY150 PB36;OPAQUE;;true
+Schmincke Norma;Olive Green;11512;PY42 PY150 PB60;OPAQUE;;true
+Schmincke Norma;Sap Green;11514;PY150 PB60;TRANSPARENT;;true
+Schmincke Norma;Chromium Oxide Green;11516;PG17;OPAQUE;;true
+Schmincke Norma;Green Earth;11518;PY42 PG18 PBr7 PG23;SEMI_TRANSPARENT;;true
+Schmincke Norma;Raw Light Ochre;11600;PY42 PY43;SEMI_OPAQUE;;true
+Schmincke Norma;Yellow Ochre;11602;PY42 PBr24;OPAQUE;;true
+Schmincke Norma;Transparent Ochre;11604;PY42;TRANSPARENT;;true
+Schmincke Norma;Golden Ochre;11606;PY42 PBr7 PY43;OPAQUE;;true
+Schmincke Norma;Raw Sienna;11608;PBr7 PY43;SEMI_OPAQUE;;true
+Schmincke Norma;Burnt Sienna;11610;PBr7;SEMI_OPAQUE;;true
+Schmincke Norma;English Red;11612;PR101;OPAQUE;;true
+Schmincke Norma;Red Earth;11614;PR101;OPAQUE;;true
+Schmincke Norma;Caput Mortuum;11616;PR101;OPAQUE;;true
+Schmincke Norma;Transparent Red Brown;11618;PR101;TRANSPARENT;;true
+Schmincke Norma;Agate Brown;11620;PR101;TRANSPARENT;;true
+Schmincke Norma;Raw Umber;11622;PBr7;SEMI_OPAQUE;;true
+Schmincke Norma;Burnt Umber;11624;PBr7;SEMI_OPAQUE;;true
+Schmincke Norma;Vandyke Brown;11626;PR101 PR179 PBk7;SEMI_OPAQUE;;true
+Schmincke Norma;Neutral Black;11700;PR179 PG7;SEMI_TRANSPARENT;;true
+Schmincke Norma;Black Iron Oxide;11702;PBk11;OPAQUE;;true
+Schmincke Norma;Ivory Black;11704;PBk9;OPAQUE;;true
+Schmincke Norma;Payne's Grey;11706;PV23 PB29 PBk9;SEMI_TRANSPARENT;;true
+Schmincke Norma;Warm Grey;11708;PW6 PR101 PG17;OPAQUE;;true
+Schmincke Norma;Cold Grey;11710;PW6 PY42 PBk11 PG18;OPAQUE;;true
+Schmincke Norma;Silver;11800;ALU;OPAQUE;;true
+Schmincke Norma;Classic Gold;11802;EFFEKT;OPAQUE;;true
+Schmincke Norma;Bronze;11804;EFFEKT;OPAQUE;;true

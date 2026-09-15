@@ -2,12 +2,15 @@ package be.asmolabs.palettier.core.service;
 
 import be.asmolabs.palettier.core.color.Colors;
 import be.asmolabs.palettier.core.color.Rgb;
+import be.asmolabs.palettier.core.domain.DryingClass;
 import be.asmolabs.palettier.core.domain.OilPaint;
+import be.asmolabs.palettier.core.domain.Opacity;
 import be.asmolabs.palettier.core.repository.OilPaintRepository;
 import be.asmolabs.palettier.core.service.MixModels.PaintMatch;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,6 +102,54 @@ public class PaintCatalogService {
 
     public long countOwned() {
         return repository.findByInStockTrueOrderByBrandAscNameAsc().size();
+    }
+
+    /**
+     * Cree un tube absent du catalogue.
+     *
+     * <p>Aucun catalogue livre n'est complet, et un peintre qui possede un tube doit
+     * pouvoir s'en servir sans attendre une mise a jour. Les proprietes qui ne sont pas
+     * fournies sont deduites des pigments, comme pour les fiches livrees.</p>
+     *
+     * @param pigments codes Colour Index ; au moins un est necessaire, ce sont eux qui
+     *                 donnent la vitesse de sechage et le pouvoir colorant
+     * @throws IllegalArgumentException si le tube existe deja ou si aucun pigment n'est donne
+     */
+    @Transactional
+    public OilPaint add(String brand, String name, String code, Set<String> pigments,
+                        Rgb color, Opacity opacity, DryingClass drying, double tintingStrength) {
+        if (brand == null || brand.isBlank() || name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Une marque et un nom sont necessaires.");
+        }
+        if (pigments == null || pigments.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Indiquez au moins un pigment : c'est lui qui donne la vitesse de sechage.");
+        }
+        if (repository.findFirstByBrandIgnoreCaseAndNameIgnoreCase(brand, name).isPresent()) {
+            throw new IllegalArgumentException(
+                    "%s - %s existe deja dans le catalogue.".formatted(brand, name));
+        }
+
+        OilPaint paint = new OilPaint(brand.trim(), name.trim(), code == null ? "" : code.trim(),
+                color.toHex(), opacity, drying, tintingStrength, pigments);
+        paint.setInStock(true);
+        paint.setUserAdded(true);
+        return repository.save(paint);
+    }
+
+    /** Modifie l'identite et la composition d'un tube existant. */
+    @Transactional
+    public OilPaint update(OilPaint paint, String code, Set<String> pigments,
+                           Opacity opacity, DryingClass drying, double tintingStrength) {
+        if (pigments == null || pigments.isEmpty()) {
+            throw new IllegalArgumentException("Indiquez au moins un pigment.");
+        }
+        paint.setCode(code == null ? "" : code.trim());
+        paint.setPigments(pigments);
+        paint.setOpacity(opacity);
+        paint.setDryingClass(drying);
+        paint.setTintingStrength(tintingStrength);
+        return repository.save(paint);
     }
 
     @Transactional

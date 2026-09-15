@@ -152,6 +152,16 @@ public class Project {
         return createdAt;
     }
 
+    /**
+     * Retablit la date d'origine lors d'une restauration.
+     *
+     * <p>Un projet restaure doit garder sa date de creation : la liste est triee dessus,
+     * et un import remonterait sinon tous les anciens projets en tete.</p>
+     */
+    public void restoreCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public List<ProjectZone> getZones() {
         return zones;
     }

@@ -39,7 +39,9 @@ class SchemaMaintenance implements ApplicationRunner {
      */
     private static final String[] REPAIRS = {
             "alter table if exists oil_paint drop constraint if exists uk_paint_brand_code",
-            "alter table if exists project_layer add column if not exists kind varchar(10) default 'LADDER' not null"
+            "alter table if exists project_layer add column if not exists kind varchar(10) default 'LADDER' not null",
+            "alter table if exists oil_paint add column if not exists user_added boolean default false not null",
+            "alter table if exists oil_paint add column if not exists pigments_verified boolean default false not null"
     };
 
     private final JdbcTemplate jdbc;

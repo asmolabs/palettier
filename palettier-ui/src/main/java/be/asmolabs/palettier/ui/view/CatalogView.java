@@ -10,6 +10,7 @@ import be.asmolabs.palettier.ui.SampledColor;
 import be.asmolabs.palettier.ui.component.ColorSwatch;
 import be.asmolabs.palettier.ui.component.Card;
 import be.asmolabs.palettier.ui.component.Formats;
+import be.asmolabs.palettier.ui.component.PaintEditor;
 import be.asmolabs.palettier.ui.component.Pill;
 import java.io.File;
 import java.nio.file.Files;
@@ -67,6 +68,7 @@ public class CatalogView implements AppView {
     private final Label countLabel = new Label();
     private final Label ownedCount = new Label();
     private final Label recognitionState = new Label();
+    private final Label editState = new Label();
     private final ListView<TubeRecognitionService.Identification> recognised = new ListView<>();
     private final ColorPicker targetPicker = new ColorPicker(Color.web("#8A6A4A"));
     private final TableView<OilPaint> table = new TableView<>(paints);
@@ -130,7 +132,11 @@ public class CatalogView implements AppView {
                 + "bleute. Quand elle est connue, les melanges de ce tube sont calcules avec le "
                 + "modele de Kubelka-Munk a deux constantes ; un tiret signale les tubes qui "
                 + "restent sur le modele simple. Vous pouvez relever la votre sur vos propres "
-                + "ecouvillons : onglet Pipette pour mesurer, carte ci-contre pour attribuer.");
+                + "ecouvillons : onglet Pipette pour mesurer, carte ci-contre pour attribuer.\n\n"
+                + "La colonne \u00AB Source \u00BB dit d'ou viennent les pigments. \u00AB fabricant \u00BB : "
+                + "releves dans le catalogue officiel de la marque. \u00AB a verifier \u00BB : reconstitues, "
+                + "donc possiblement faux. Ce sont eux qui donnent la vitesse de sechage, et donc les "
+                + "delais annonces : sur un tube a verifier, lisez l'etiquette et corrigez la fiche.");
         legend.setWrapText(true);
         legend.getStyleClass().add("hint");
         legend.setManaged(false);
@@ -189,6 +195,9 @@ public class CatalogView implements AppView {
                 column("Nom", 220, OilPaint::getName),
                 column("Ref.", 70, OilPaint::getCode),
                 column("Pigments", 120, p -> String.join(", ", p.getPigments())),
+                pillColumn("Source", 110, paint -> paint.isPigmentsVerified()
+                        ? Pill.of("fabricant", "pill-fast")
+                        : Pill.of("a verifier", "pill-ghost")),
                 pillColumn("Opacite", 140, paint -> Pill.forOpacity(paint.getOpacity())),
                 pillColumn("Sechage", 110, paint -> Pill.forDrying(paint.getDryingClass())),
                 column("Pouvoir colorant", 130, p -> Formats.percent(p.getTintingStrength())),
@@ -260,6 +269,8 @@ public class CatalogView implements AppView {
                 : "Demande un assistant configure (voir Parametres)"));
         fromPhoto.setOnAction(event -> recogniseFromPhoto());
 
+        editState.getStyleClass().add("hint");
+        editState.setWrapText(true);
         recognitionState.getStyleClass().add("hint");
         recognitionState.setWrapText(true);
         recognised.setPlaceholder(new Label("Aucune lecture."));
@@ -269,8 +280,17 @@ public class CatalogView implements AppView {
         Button applyRecognised = new Button("Ajouter les tubes reconnus");
         applyRecognised.setOnAction(event -> applyRecognised());
 
+        Button addPaint = new Button("Ajouter un tube...");
+        addPaint.setTooltip(new Tooltip("Pour un tube que vous possedez et qui n'est pas au catalogue"));
+        addPaint.setOnAction(event -> addPaint());
+
+        Button editPaint = new Button("Corriger le tube selectionne...");
+        editPaint.setOnAction(event -> editSelectedPaint());
+
         VBox content = new VBox(10, ownedCount,
                 new HBox(8, markSelection, unmarkSelection), none, hint,
+                new javafx.scene.control.Separator(),
+                new HBox(8, addPaint, editPaint), editState,
                 new javafx.scene.control.Separator(),
                 fromPhoto, recognitionState, recognised, applyRecognised);
 
@@ -334,6 +354,54 @@ public class CatalogView implements AppView {
         table.refresh();
         refreshOwnedCount();
         recognitionState.setText("%d tubes ajoutes a votre inventaire.".formatted(reliable.size()));
+    }
+
+    /** Saisir un tube absent du catalogue : aucun catalogue livre n'est complet. */
+    private void addPaint() {
+        String brand = brandFilter.getValue();
+        PaintEditor.show(null, ALL_BRANDS.equals(brand) ? null : brand).ifPresent(result -> {
+            try {
+                var created = catalog.add(result.brand(), result.name(), result.code(),
+                        result.pigments(), result.color(), result.opacity(),
+                        result.drying(), result.tintingStrength());
+                rebuildBrandFilter();
+                refresh();
+                refreshOwnedCount();
+                table.getSelectionModel().select(created);
+                editState.setText("%s ajoute et marque comme possede.".formatted(created.displayName()));
+            } catch (IllegalArgumentException e) {
+                editState.setText(e.getMessage());
+            }
+        });
+    }
+
+    private void editSelectedPaint() {
+        OilPaint selected = table.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            editState.setText("Selectionnez d'abord un tube dans le tableau.");
+            return;
+        }
+        PaintEditor.show(selected, null).ifPresent(result -> {
+            try {
+                catalog.update(selected, result.code(), result.pigments(),
+                        result.opacity(), result.drying(), result.tintingStrength());
+                catalog.recordMasstone(selected, result.color());
+                table.refresh();
+                findClosest();
+                editState.setText("%s corrige.".formatted(selected.displayName()));
+            } catch (IllegalArgumentException e) {
+                editState.setText(e.getMessage());
+            }
+        });
+    }
+
+    /** La liste des marques peut s'enrichir d'un tube ajoute a la main. */
+    private void rebuildBrandFilter() {
+        String current = brandFilter.getValue();
+        brandFilter.getItems().setAll(ALL_BRANDS);
+        catalog.findAll().stream().map(OilPaint::getBrand).distinct().sorted()
+                .forEach(brandFilter.getItems()::add);
+        brandFilter.setValue(brandFilter.getItems().contains(current) ? current : ALL_BRANDS);
     }
 
     private void applyToSelection(boolean owned) {

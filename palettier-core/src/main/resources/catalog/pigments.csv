@@ -37,6 +37,7 @@ PBk6;Noir de fumee;#1C1B1A;SEMI_OPAQUE;SLOW;0.95;#8C9098
 PBk7;Noir de carbone;#171615;SEMI_OPAQUE;SLOW;1.00;#8A8E96
 PBk9;Noir d'ivoire (noir d'os);#221F1C;SEMI_OPAQUE;SLOW;0.90;#8E9094
 PBk11;Noir de mars (oxyde de fer);#1B1A19;OPAQUE;FAST;0.90;#93918D
+PBk28;Noir de spinelle cuivre-chrome;#1A1A1C;OPAQUE;FAST;0.90
 PBk31;Vert perylene;#1E2A22;TRANSPARENT;MEDIUM;0.90;#96A096
 PBk19;Silicate d'aluminium hydrate (gris d'ardoise);#6E6E66;SEMI_OPAQUE;MEDIUM;0.30
 
@@ -64,6 +65,7 @@ PY110;Jaune isoindolinone fonce;#E08A0A;TRANSPARENT;MEDIUM;0.85
 PY129;Vert d'or (complexe azo cuivre);#8A8A1E;TRANSPARENT;MEDIUM;0.80
 PY139;Jaune isoindolinone;#F0A800;SEMI_OPAQUE;MEDIUM;0.85
 PY150;Jaune azo de nickel;#C9A32A;TRANSPARENT;MEDIUM;0.85
+PY151;Jaune benzimidazolone (nuance verte);#F0C41A;TRANSPARENT;MEDIUM;0.85
 PY153;Jaune dioxine de nickel;#D9992A;TRANSPARENT;MEDIUM;0.85
 PY154;Jaune benzimidazolone;#F5C21A;SEMI_OPAQUE;MEDIUM;0.85
 PY155;Jaune bisacetoacetanilide;#F5D71A;SEMI_TRANSPARENT;MEDIUM;0.85
@@ -96,6 +98,7 @@ PR179;Marron perylene;#7A2020;SEMI_TRANSPARENT;MEDIUM;0.85
 PR188;Rouge naphtol (laque ecarlate);#D62E2A;SEMI_TRANSPARENT;MEDIUM;0.85
 PR202;Rouge de quinacridone;#9E1440;TRANSPARENT;MEDIUM;0.95
 PR206;Orange brule de quinacridone;#8C3A1E;TRANSPARENT;MEDIUM;0.90
+PR207;Ecarlate de quinacridone;#C4242E;TRANSPARENT;MEDIUM;0.90
 PR209;Rouge vif de quinacridone;#C41F4A;TRANSPARENT;MEDIUM;0.95
 PR254;Rouge pyrrole;#D62B22;OPAQUE;MEDIUM;0.90
 PR255;Ecarlate pyrrole;#E0401F;SEMI_OPAQUE;MEDIUM;0.90
@@ -107,10 +110,13 @@ PV15;Violet d'outremer;#5A4A8C;SEMI_TRANSPARENT;MEDIUM;0.50
 PV16;Violet de manganese;#6B3A78;SEMI_OPAQUE;FAST;0.60
 PV19;Violet de quinacridone;#B01B5A;TRANSPARENT;MEDIUM;0.95;#DCA6BE
 PV23;Violet de dioxazine;#3A1B52;TRANSPARENT;SLOW;0.95;#B4A8C8
+PV62;Violet organique;#6B4A8C;SEMI_TRANSPARENT;MEDIUM;0.70
 
 # --- Bleus ---
 PB15;Bleu de phtalocyanine;#0E3F73;TRANSPARENT;MEDIUM;1.00;#8FAED2
 PB15:3;Bleu de phtalocyanine nuance verte;#0D4A80;TRANSPARENT;MEDIUM;1.00;#8CB4D6
+PB15:6;Bleu de phtalocyanine forme epsilon;#0C2F63;TRANSPARENT;MEDIUM;1.00
+PB16;Turquoise de phtalocyanine (sans metal);#0E7A86;TRANSPARENT;MEDIUM;0.95
 PB27;Bleu de Prusse;#16323C;TRANSPARENT;FAST;0.98;#A2B8C4
 PB28;Bleu de cobalt;#2255A4;SEMI_OPAQUE;FAST;0.70
 PB29;Bleu outremer;#1F2E7A;TRANSPARENT;MEDIUM;0.80;#A8B0D2
@@ -118,6 +124,12 @@ PB35;Bleu ceruleum;#2C7FB8;OPAQUE;MEDIUM;0.60
 PB36;Ceruleum au chrome (turquoise de cobalt);#1E7A8C;OPAQUE;FAST;0.60
 PB60;Bleu indanthrone;#1E2A52;TRANSPARENT;MEDIUM;0.90;#A6AABE
 PB74;Bleu de cobalt fonce;#1B3E8C;SEMI_OPAQUE;FAST;0.70
+
+# --- Pigments a effet ---
+# Les gammes qui en proposent ne publient pas de code Colour Index : le fabricant ecrit
+# seulement "pigment a effet". Les proprietes ci-dessous sont celles d'un mica metallise.
+EFFEKT;Pigment a effet (mica metallise);#C9A24A;SEMI_OPAQUE;MEDIUM;0.50
+ALU;Pigment d'aluminium;#B8BABC;OPAQUE;MEDIUM;0.70
 
 # --- Verts ---
 PG7;Vert de phtalocyanine nuance bleue;#0A5A46;TRANSPARENT;MEDIUM;1.00;#8FC4B4

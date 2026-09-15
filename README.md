@@ -9,7 +9,7 @@ planning. Le logiciel répond à ces trois questions.
 
 | Section | Ce qu'elle résout |
 |---|---|
-| **Catalogue** | 439 huiles de 8 gammes ; laquelle se rapproche le plus d'une teinte visée (écart CIEDE2000) |
+| **Catalogue** | 485 huiles de 8 gammes ; laquelle se rapproche le plus d'une teinte visée (écart CIEDE2000) |
 | **Palettes** | Une sélection nommée de tubes par sujet, qui sert ensuite de filtre de recherche |
 | **Pipette** | Relever une teinte sur une photo (ou la saisir en hexa) et obtenir le mélange à faire |
 | **Mélangeur** | Quelle couleur donne ce mélange — et, à l'inverse, quel mélange donne cette couleur |
@@ -74,8 +74,8 @@ fait échouer le build.
 |---|---|---|
 | Winsor & Newton Artists' Oil | **120** | quasi complète (la gamme annonce « plus de 135 », métalliques exclues) |
 | Winsor & Newton Winton | 46 | quasi complète |
-| Schmincke Norma Professional | 58 | partielle (~84) |
-| Schmincke Norma Blue (diluable à l'eau) | 28 | **vérifiée auprès du fabricant**, 28 sur 48 |
+| Schmincke Norma Professional | **84** | ✅ vérifiée auprès du fabricant, complète |
+| Schmincke Norma Blue (diluable à l'eau) | **48** | ✅ vérifiée auprès du fabricant, complète |
 | Gamblin Artist's Oil Colors | 64 | partielle (~110) |
 | Williamsburg Handmade Oil | 59 | partielle (~170) |
 | Scale75 Floww | 18 | **18 sur 24** — le coffret Scenery manque |
@@ -129,6 +129,17 @@ du code métier.
 Le catalogue n'est chargé **que si la base est vide**, donc vos corrections dans
 l'application ne sont jamais écrasées. Pour repartir des fichiers : supprimez
 `~/.palettier/`.
+
+### La colonne « Source »
+
+Le catalogue affiche, pour chaque tube, d'où viennent ses pigments : **fabricant** quand
+ils ont été relevés dans le catalogue officiel de la marque, **à vérifier** quand ils ont
+été reconstitués. Ce ne sont pas des détails : les pigments donnent la vitesse de séchage,
+donc les délais annoncés par l'application.
+
+À ce jour, **132 tubes sur 485** ont des pigments vérifiés — les deux gammes Schmincke,
+dont le site publie les données dans les attributs de chaque fiche. Les six autres gammes
+restent reconstituées et sont signalées comme telles.
 
 ### Ce qui est fiable et ce qui ne l'est pas
 

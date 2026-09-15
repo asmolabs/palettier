@@ -3,6 +3,7 @@ package be.asmolabs.palettier.core.repository;
 import be.asmolabs.palettier.core.domain.OilPaint;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,19 @@ public interface OilPaintRepository extends JpaRepository<OilPaint, Long> {
     Optional<OilPaint> findByBrandIgnoreCaseAndCodeIgnoreCase(String brand, String code);
 
     Optional<OilPaint> findFirstByBrandIgnoreCaseAndNameIgnoreCase(String brand, String name);
+
+    /**
+     * Identifiants des tubes auxquels une palette ou un projet se refere.
+     *
+     * <p>A consulter avant tout menage : tenter la suppression pour voir si elle passe
+     * invalide la session des qu'une contrainte cede, et tout ce qui suit echoue.</p>
+     */
+    @Query("""
+            select distinct paint.id from Palette palette join palette.paints paint
+            union
+            select distinct paint.id from Project project join project.paints paint
+            """)
+    Set<Long> idsInUse();
 
     @Query("""
             select p from OilPaint p

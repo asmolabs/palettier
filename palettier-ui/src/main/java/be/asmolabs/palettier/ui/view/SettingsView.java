@@ -112,13 +112,18 @@ public class SettingsView implements AppView {
         Button export = new Button("Exporter tout dans un zip...");
         export.setOnAction(event -> exportBackup());
 
+        Button restore = new Button("Restaurer une sauvegarde...");
+        restore.setTooltip(new javafx.scene.control.Tooltip(
+                "Ajoute ce qui manque. Ce qui porte deja le meme nom n'est pas touche."));
+        restore.setOnAction(event -> importBackup());
+
         backupState.getStyleClass().add("hint");
         backupState.setWrapText(true);
         backupState.setText("Palettes, projets, photos, recettes, inventaire et corrections du "
                 + "catalogue. Le catalogue d'origine n'a pas besoin d'etre sauvegarde : il est "
                 + "livre avec l'application.");
 
-        return new Card("Sauvegarde", new VBox(10, export, backupState));
+        return new Card("Sauvegarde", new VBox(10, new HBox(8, export, restore), backupState));
     }
 
     private void exportBackup() {
@@ -152,6 +157,48 @@ public class SettingsView implements AppView {
         });
         // Lecture de toute la base et ecriture d'un fichier : hors du fil d'affichage.
         Thread.ofPlatform().daemon().name("backup").start(task);
+    }
+
+    /**
+     * Relit une archive.
+     *
+     * <p>Rien n'est ecrase : ce qui porte deja le meme nom est laisse tel quel et compte
+     * a part. Une restauration sert a retrouver ce qu'on a perdu, jamais a remplacer ce
+     * qu'on a en cours.</p>
+     */
+    private void importBackup() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Choisir une sauvegarde");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archive zip", "*.zip"));
+        File file = chooser.showOpenDialog(modelList.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        backupState.setText("Lecture de l'archive...");
+        Task<BackupService.ImportReport> task = new Task<>() {
+            @Override
+            protected BackupService.ImportReport call() throws Exception {
+                return backup.importFrom(file.toPath());
+            }
+        };
+        task.setOnSucceeded(event -> {
+            var report = task.getValue();
+            StringBuilder text = new StringBuilder(report.summary());
+            if (report.skipped() > 0) {
+                text.append("\n%d elements laisses tels quels : ils portaient deja ce nom."
+                        .formatted(report.skipped()));
+            }
+            report.warnings().forEach(warning -> text.append('\n').append(warning));
+            text.append("\nRouvrez les onglets Projets et Palettes pour voir le resultat.");
+            backupState.setText(text.toString());
+        });
+        task.setOnFailed(event -> {
+            Throwable error = task.getException();
+            backupState.setText("Restauration impossible : "
+                    + (error == null ? "cause inconnue" : error.getMessage()));
+        });
+        Thread.ofPlatform().daemon().name("restore").start(task);
     }
 
     // --- Moteur ------------------------------------------------------------

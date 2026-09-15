@@ -52,8 +52,9 @@ public class CatalogLoader {
         }
 
         long twoConstant = paints.stream().filter(paint -> paint.getTintHex() != null).count();
-        log.info("{} huiles au total, dont {} avec teinte diluee connue (melange a deux constantes)",
-                paints.size(), twoConstant);
+        long verified = paints.stream().filter(OilPaint::isPigmentsVerified).count();
+        log.info("{} huiles au total, dont {} aux pigments verifies et {} avec teinte diluee connue",
+                paints.size(), verified, twoConstant);
 
         List<String> unknown = pigments.unknownAmong(citedPigments);
         if (!unknown.isEmpty()) {
@@ -104,6 +105,8 @@ public class CatalogLoader {
                 pigmentCodes);
         paint.setColorDerived(derived);
         paint.setTintHex(tint);
+        // Colonne facultative : une gamme qui ne la renseigne pas est tenue pour non verifiee.
+        paint.setPigmentsVerified(Boolean.parseBoolean(row.getOrDefault("verified", "false")));
         return paint;
     }
 

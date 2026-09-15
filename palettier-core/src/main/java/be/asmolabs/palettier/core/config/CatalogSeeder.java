@@ -11,7 +11,9 @@ import be.asmolabs.palettier.core.domain.Technique;
 import be.asmolabs.palettier.core.repository.OilPaintRepository;
 import be.asmolabs.palettier.core.repository.PaletteRepository;
 import be.asmolabs.palettier.core.repository.RecipeRepository;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,31 +65,119 @@ class CatalogSeeder implements ApplicationRunner {
             recipes.saveAll(defaultRecipes());
             log.info("{} recettes d'exemple ajoutees", recipes.count());
         }
-        syncMissingPaints();
+        syncCatalogue();
         backfillTints();
         seedMissingPalettes();
     }
 
     /**
-     * Ajoute les tubes presents dans les fichiers de gamme mais absents de la base.
+     * Aligne le catalogue de la base sur les fichiers de gamme.
      *
-     * <p>Meme raisonnement que pour les palettes : une gamme completee dans une version
-     * ulterieure doit arriver chez un peintre qui utilise deja l'application. Seuls les
-     * tubes manquants sont inseres ; ceux qui existent deja ne sont pas touches, donc
-     * une teinte corrigee a la main est conservee.</p>
+     * <p>Trois mouvements. Les tubes absents sont ajoutes : une gamme completee doit
+     * arriver chez un peintre qui utilise deja l'application. Les tubes presents voient
+     * leur <em>identite</em> rafraichie -- reference, pigments, opacite, sechage -- parce
+     * qu'elle vient du fabricant et qu'une fiche erronee doit pouvoir etre corrigee par
+     * une mise a jour. Enfin, les tubes d'une gamme livree qui ne figurent plus dans son
+     * fichier sont retires : ce sont des fiches d'une version anterieure, parfois
+     * fausses.</p>
+     *
+     * <p>Ce qui appartient au peintre n'est jamais touche : la teinte relevee sur ses
+     * ecouvillons, la teinte diluee, la possession, ses notes, et les tubes qu'il a
+     * saisis lui-meme.</p>
      */
-    private void syncMissingPaints() {
+    private void syncCatalogue() {
         if (paints.count() == 0) {
             return;
         }
-        Set<String> known = paints.findAll().stream().map(CatalogSeeder::key).collect(Collectors.toSet());
-        List<OilPaint> added = catalogLoader.load().stream()
-                .filter(paint -> !known.contains(key(paint)))
+
+        Map<String, OilPaint> fromFiles = new HashMap<>();
+        Set<String> coveredBrands = new HashSet<>();
+        for (OilPaint reference : catalogLoader.load()) {
+            fromFiles.put(key(reference), reference);
+            coveredBrands.add(reference.getBrand());
+        }
+
+        List<OilPaint> refreshed = new ArrayList<>();
+        List<OilPaint> obsolete = new ArrayList<>();
+
+        for (OilPaint stored : paints.findAll()) {
+            OilPaint reference = fromFiles.get(key(stored));
+            if (reference != null) {
+                if (refreshIdentity(stored, reference)) {
+                    refreshed.add(stored);
+                }
+            } else if (!stored.isUserAdded() && coveredBrands.contains(stored.getBrand())) {
+                obsolete.add(stored);
+            }
+        }
+
+        List<OilPaint> added = fromFiles.values().stream()
+                .filter(reference -> paints.findFirstByBrandIgnoreCaseAndNameIgnoreCase(
+                        reference.getBrand(), reference.getName()).isEmpty())
                 .toList();
 
+        if (!refreshed.isEmpty()) {
+            paints.saveAll(refreshed);
+            log.info("{} fiches mises a jour d'apres les gammes", refreshed.size());
+        }
         if (!added.isEmpty()) {
             paints.saveAll(added);
             log.info("{} huiles ajoutees au catalogue existant", added.size());
+        }
+        removeObsolete(obsolete);
+    }
+
+    /**
+     * Reprend du fichier ce qui releve du fabricant, et rien d'autre.
+     *
+     * @return vrai si quelque chose a change
+     */
+    private static boolean refreshIdentity(OilPaint stored, OilPaint reference) {
+        boolean changed = !stored.getCode().equals(reference.getCode())
+                || !stored.getPigments().equals(reference.getPigments())
+                || stored.getOpacity() != reference.getOpacity()
+                || stored.getDryingClass() != reference.getDryingClass();
+
+        stored.setCode(reference.getCode());
+        stored.setPigments(reference.getPigments());
+        stored.setOpacity(reference.getOpacity());
+        stored.setDryingClass(reference.getDryingClass());
+        stored.setTintingStrength(reference.getTintingStrength());
+        stored.setPigmentsVerified(reference.isPigmentsVerified());
+
+        // La teinte relevee par le peintre l'emporte ; celle deduite se laisse corriger.
+        if (stored.isColorDerived() && !reference.isColorDerived()) {
+            stored.setHexColor(reference.getHexColor());
+            stored.setColorDerived(false);
+        }
+        return changed;
+    }
+
+    /**
+     * Retire les fiches perimees, en epargnant celles qui servent encore.
+     *
+     * <p>Un tube employe par une palette ou fige dans un projet ne peut pas disparaitre
+     * sans emporter ce qui s'y refere. On demande donc d'abord lesquels sont utilises,
+     * plutot que de tenter la suppression pour voir : une contrainte qui cede invalide
+     * la session, et tout ce qui suit echoue avec elle.</p>
+     */
+    private void removeObsolete(List<OilPaint> obsolete) {
+        if (obsolete.isEmpty()) {
+            return;
+        }
+        Set<Long> inUse = paints.idsInUse();
+
+        List<OilPaint> removable = obsolete.stream()
+                .filter(paint -> !inUse.contains(paint.getId()))
+                .toList();
+        long kept = obsolete.size() - removable.size();
+
+        if (!removable.isEmpty()) {
+            paints.deleteAll(removable);
+            log.info("{} fiches perimees retirees du catalogue", removable.size());
+        }
+        if (kept > 0) {
+            log.info("{} fiches perimees conservees : elles servent encore a une palette ou un projet", kept);
         }
     }
 

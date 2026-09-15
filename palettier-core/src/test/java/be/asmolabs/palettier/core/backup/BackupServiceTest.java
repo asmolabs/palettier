@@ -156,4 +156,99 @@ class BackupServiceTest {
                             StandardCharsets.UTF_8));
         }
     }
+
+    @Test
+    @DisplayName("aller-retour : ce qui sort de l'archive est ce qui y etait entre")
+    void aroundTrip(@TempDir Path directory) throws Exception {
+        catalog.declareNothingOwned();
+        var umber = catalog.search("Burnt Umber").getFirst();
+        catalog.setOwned(umber, true);
+        catalog.recordTint(umber, Rgb.ofHex("#C9B9AC"));
+        Project original = projectWithPhoto("Grognard a restaurer");
+        String paletteName = original.getPalette().getName();
+
+        Path archive = directory.resolve("sauvegarde.zip");
+        backup.export(archive);
+
+        // On efface le travail, on garde le catalogue : la situation d'une machine neuve.
+        projects.delete(original);
+        catalog.declareNothingOwned();
+        catalog.recordTint(umber, Rgb.ofHex("#FFFFFF"));
+
+        BackupService.ImportReport report = backup.importFrom(archive);
+
+        assertThat(report.projectsAdded()).isEqualTo(1);
+        assertThat(report.photos()).isEqualTo(1);
+        assertThat(report.paintsUpdated()).isGreaterThan(400);
+
+        Project restored = projects.findAll().stream()
+                .filter(p -> p.getName().equals("Grognard a restaurer"))
+                .findFirst().orElseThrow();
+        assertThat(restored.getPalette().getName()).isEqualTo(paletteName);
+        assertThat(restored.getPhotos()).hasSize(1);
+        assertThat(restored.getPaints()).isNotEmpty();
+        assertThat(restored.getZones().getFirst().getLayers())
+                .extracting(l -> l.getRole())
+                .contains("Base", "Rougeur des pommettes");
+        assertThat(restored.getZones().getFirst().getLayers())
+                .filteredOn(l -> l.getKind() == be.asmolabs.palettier.core.domain.ProjectLayer.Kind.ACCENT)
+                .hasSize(1);
+
+        // Les corrections du catalogue reviennent aussi.
+        assertThat(catalog.search("Burnt Umber").getFirst().getTintHex()).isEqualTo("#C9B9AC");
+        assertThat(catalog.countOwned()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("une restauration n'ecrase jamais un travail en cours")
+    void importNeverOverwritesExistingWork(@TempDir Path directory) throws Exception {
+        Project original = projectWithPhoto("Projet garde");
+        original.setNotes("Note ecrite apres la sauvegarde.");
+        projects.save(original);
+
+        Path archive = directory.resolve("sauvegarde.zip");
+        backup.export(archive);
+        original.setNotes("Note modifiee depuis.");
+        projects.save(original);
+
+        BackupService.ImportReport report = backup.importFrom(archive);
+
+        assertThat(report.projectsAdded()).isZero();
+        assertThat(report.projectsSkipped()).isEqualTo(1);
+        assertThat(projects.findAll().stream()
+                .filter(p -> p.getName().equals("Projet garde"))
+                .findFirst().orElseThrow().getNotes())
+                .as("le travail en cours l'emporte sur l'archive")
+                .isEqualTo("Note modifiee depuis.");
+    }
+
+    @Test
+    @DisplayName("reimporter la meme archive ne duplique rien")
+    void importingTwiceChangesNothing(@TempDir Path directory) throws Exception {
+        projectWithPhoto("Idempotent");
+        Path archive = directory.resolve("sauvegarde.zip");
+        backup.export(archive);
+
+        backup.importFrom(archive);
+        int after = projects.findAll().size();
+        BackupService.ImportReport second = backup.importFrom(archive);
+
+        assertThat(projects.findAll()).hasSize(after);
+        assertThat(second.projectsAdded()).isZero();
+    }
+
+    @Test
+    @DisplayName("une archive qui n'en est pas une est refusee avec un message clair")
+    void anUnrelatedArchiveIsRefused(@TempDir Path directory) throws Exception {
+        Path bogus = directory.resolve("autre.zip");
+        try (var zip = new java.util.zip.ZipOutputStream(java.nio.file.Files.newOutputStream(bogus))) {
+            zip.putNextEntry(new java.util.zip.ZipEntry("lisezmoi.txt"));
+            zip.write("rien a voir".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+
+        org.assertj.core.api.Assertions.assertThatIllegalArgumentException()
+                .isThrownBy(() -> backup.importFrom(bogus))
+                .withMessageContaining("pas une sauvegarde Palettier");
+    }
 }
