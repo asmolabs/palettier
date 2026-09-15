@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:palettier-test;DB_CLOSE_DELAY=-1
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  main:
+    banner-mode: off
+
+logging:
+  level:
+    root: WARN

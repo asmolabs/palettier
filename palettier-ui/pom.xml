@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>be.asmolabs</groupId>
+    <artifactId>palettier</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>palettier-ui</artifactId>
+  <name>Palettier :: UI</name>
+  <description>Client JavaFX pilote par Spring Boot</description>
+
+  <properties>
+    <start-class>be.asmolabs.palettier.ui.PalettierApplication</start-class>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>be.asmolabs</groupId>
+      <artifactId>palettier-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>be.asmolabs</groupId>
+      <artifactId>palettier-ai</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>${start-class}</mainClass>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>${start-class}</mainClass>
+          <options>
+            <!-- JavaFX charge ses bibliotheques natives : on l'autorise explicitement
+                 plutot que de laisser le JDK 25 emettre un avertissement a chaque lancement -->
+            <option>--enable-native-access=javafx.graphics</option>
+          </options>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

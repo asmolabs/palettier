@@ -1,0 +1,70 @@
+# Gamblin - Artist's Oil Colors
+#
+# COUVERTURE : partielle, environ 60 teintes sur les ~110 de la gamme.
+# Gamblin publie une vitesse de sechage par couleur ; ici elle est deduite du pigment,
+# ce qui donne le meme classement dans l'immense majorite des cas.
+brand;name;code;pigments;opacity;hex
+Gamblin;Titanium White;1810;PW6;OPAQUE;#F7F5F0
+Gamblin;Titanium Zinc White;1815;PW6 PW4;OPAQUE;#F7F5F1
+Gamblin;Flake White Replacement;1790;PW6 PW4;OPAQUE;#F7F4EC
+Gamblin;Radiant White;1730;PW6;OPAQUE;#F9F8F4
+Gamblin;Ivory Black;1250;PBk9;SEMI_OPAQUE;#221F1C
+Gamblin;Chromatic Black;1140;PG36 PR206;TRANSPARENT;#1E2220
+Gamblin;Portland Grey Light;1650;PW6 PBk11;OPAQUE;#C2BEB8
+Gamblin;Portland Grey Medium;1655;PW6 PBk11;OPAQUE;#8E8A85
+Gamblin;Portland Grey Deep;1660;PW6 PBk11;OPAQUE;#5A5754
+Gamblin;Payne's Grey;1560;PB29 PBk9;SEMI_TRANSPARENT;#3A4552
+Gamblin;Raw Umber;1700;PBr7;SEMI_OPAQUE;#4E4133
+Gamblin;Burnt Umber;1090;PBr7;SEMI_OPAQUE;#4A3427
+Gamblin;Raw Sienna;1690;PBr7;SEMI_TRANSPARENT;#9A6B32
+Gamblin;Burnt Sienna;1080;PBr7;TRANSPARENT;#7A3A22
+Gamblin;Transparent Earth Yellow;1965;PY42;TRANSPARENT;#B87A1E
+Gamblin;Transparent Earth Orange;1960;PR101;TRANSPARENT;#A04A16
+Gamblin;Transparent Earth Red;1970;PR101;TRANSPARENT;#8A2E15
+Gamblin;Venetian Red;1990;PR101;OPAQUE;#8E4230
+Gamblin;Indian Red;1330;PR101;OPAQUE;#8A4A46
+Gamblin;Yellow Ochre;2130;PY43;SEMI_OPAQUE;#C08A34
+Gamblin;Terre Verte;1930;PG23;TRANSPARENT;#6B7A5A
+Gamblin;Naples Yellow Hue;1440;PW6 PY42 PR101;OPAQUE;#E9CE8E
+Gamblin;Hansa Yellow Light;1290;PY3;SEMI_TRANSPARENT;#F5DC2A
+Gamblin;Hansa Yellow Medium;1300;PY74;SEMI_TRANSPARENT;#F7C51B
+Gamblin;Hansa Yellow Deep;1295;PY65;SEMI_OPAQUE;#F0A81B
+Gamblin;Cadmium Lemon;1110;PY35;OPAQUE;#F7DE1A
+Gamblin;Cadmium Yellow Light;1130;PY35;OPAQUE;#F6C500
+Gamblin;Cadmium Yellow Medium;1135;PY35;OPAQUE;#F5B800
+Gamblin;Cadmium Yellow Deep;1120;PY37;OPAQUE;#F2A000
+Gamblin;Indian Yellow;1340;PY83 PO62;TRANSPARENT;#EE9A14
+Gamblin;Nickel Titanate Yellow;1470;PY53;OPAQUE;#EBD98A
+Gamblin;Cadmium Orange;1125;PO20;OPAQUE;#EE7318
+Gamblin;Cadmium Orange Deep;1128;PO20;OPAQUE;#E86418
+Gamblin;Perinone Orange;1580;PO43;TRANSPARENT;#E85A14
+Gamblin;Napthol Scarlet;1450;PR188;SEMI_TRANSPARENT;#D62E2A
+Gamblin;Cadmium Red Light;1150;PR108;OPAQUE;#D9341F
+Gamblin;Cadmium Red Medium;1155;PR108;OPAQUE;#CE2A22
+Gamblin;Cadmium Red Deep;1145;PR108;OPAQUE;#B0221F
+Gamblin;Perylene Red;1590;PR149;SEMI_OPAQUE;#C8302E
+Gamblin;Alizarin Permanent;1010;PR177 PV19;TRANSPARENT;#93182F
+Gamblin;Quinacridone Red;1670;PV19;TRANSPARENT;#C41F4A
+Gamblin;Quinacridone Magenta;1665;PR122;TRANSPARENT;#A61B5A
+Gamblin;Quinacridone Violet;1675;PV19;TRANSPARENT;#B01B5A
+Gamblin;Dioxazine Purple;1200;PV23;TRANSPARENT;#3A1B52
+Gamblin;Manganese Violet;1410;PV16;SEMI_OPAQUE;#6B3A78
+Gamblin;Ultramarine Violet;2010;PV15;SEMI_TRANSPARENT;#5A4A8C
+Gamblin;Ultramarine Blue;2000;PB29;TRANSPARENT;#1F2E7A
+Gamblin;Cobalt Blue;1170;PB28;SEMI_OPAQUE;#2255A4
+Gamblin;Cerulean Blue;1160;PB35;OPAQUE;#2C7FB8
+Gamblin;Cerulean Blue Hue;1165;PB35 PW6;OPAQUE;#3A8CC0
+Gamblin;Manganese Blue Hue;1400;PB15;TRANSPARENT;#0F7AA8
+Gamblin;Phthalo Blue;1600;PB15;TRANSPARENT;#0E3F73
+Gamblin;Prussian Blue;1640;PB27;TRANSPARENT;#16323C
+Gamblin;Indanthrone Blue;1350;PB60;TRANSPARENT;#1E2A52
+Gamblin;Cobalt Teal;1185;PG50;OPAQUE;#5AA08C
+Gamblin;Viridian;2020;PG18;TRANSPARENT;#0F6B54
+Gamblin;Phthalo Green;1610;PG7;TRANSPARENT;#0A5A46
+Gamblin;Phthalo Emerald;1615;PG36;TRANSPARENT;#0F5E3A
+Gamblin;Chromium Oxide Green;1190;PG17;OPAQUE;#4A6B42
+Gamblin;Cobalt Green;1180;PG19;SEMI_OPAQUE;#2E8A6B
+Gamblin;Permanent Green Light;1620;PG7 PY74;SEMI_OPAQUE;#5AA82E
+Gamblin;Sap Green;1720;PY129 PG36;TRANSPARENT;#4C6B23
+Gamblin;Olive Green;1520;PY129 PG36 PBk9;TRANSPARENT;#4C5B23
+Gamblin;Green Gold;1280;PY129;TRANSPARENT;#8A8A1E

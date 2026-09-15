@@ -1,0 +1,29 @@
+# Scale75 - Floww (huiles artiste, finition mate, tubes de 20 ml)
+#
+# COUVERTURE : 18 teintes sur 24. Les six du coffret SCENERY manquent : Scale75 ne
+# publie pas la liste nominative en ligne et aucun revendeur consulte ne la detaille.
+# Relevez-les sur vos tubes et ajoutez une ligne chacune.
+#
+# ATTENTION - PIGMENTS DEDUITS : Scale75 ne publie pas les codes Colour Index de cette
+# gamme. Les pigments ci-dessous sont inferes du nom de la couleur. Ils servent au
+# calcul du sechage et du pouvoir colorant : corrigez-les d'apres l'etiquette du tube,
+# sinon les durees annoncees pour ces teintes seront approximatives.
+brand;name;code;pigments;opacity;hex
+Scale75 Floww;Titanium White;SFLOW-01;PW6;OPAQUE;#F8F7F3
+Scale75 Floww;Medium Yellow;SFLOW-02;PY74;SEMI_OPAQUE;#F5BE18
+Scale75 Floww;Vermilion;SFLOW-03;PR255;SEMI_OPAQUE;#E0401F
+Scale75 Floww;Cobalt Blue Light (Hue);SFLOW-04;PB15 PW6;SEMI_OPAQUE;#2A5EA8
+Scale75 Floww;Ivory Black;SFLOW-05;PBk9;SEMI_OPAQUE;#221F1C
+Scale75 Floww;Turquoise Blue;SFLOW-06;PB15 PG7;TRANSPARENT;#0F7A8C
+Scale75 Floww;Paris Red;SFLOW-07;PR254;OPAQUE;#C42A28
+Scale75 Floww;Persian Yellow;SFLOW-08;PY83;SEMI_OPAQUE;#E0A018
+Scale75 Floww;Prussian Blue;SFLOW-09;PB27;TRANSPARENT;#16323C
+Scale75 Floww;Stencil Yellow;SFLOW-10;PY42 PW6;OPAQUE;#D9B45E
+Scale75 Floww;Olive Green;SFLOW-11;PY150 PG7 PBk9;SEMI_TRANSPARENT;#4C5B23
+Scale75 Floww;Stone Grey;SFLOW-12;PW6 PBk9 PBr7;OPAQUE;#9A948A
+Scale75 Floww;Toad Green;SFLOW-13;PG17 PY42;SEMI_OPAQUE;#6B7A42
+Scale75 Floww;Antique Pink;SFLOW-14;PW6 PR101;SEMI_OPAQUE;#D2A296
+Scale75 Floww;Moist Soil;SFLOW-15;PBr7;SEMI_OPAQUE;#5A4030
+Scale75 Floww;Red Mauve;SFLOW-16;PR122 PW6;SEMI_TRANSPARENT;#A05A6B
+Scale75 Floww;Scroll White;SFLOW-17;PW6 PY42;OPAQUE;#EFE6D2
+Scale75 Floww;Bronzed Skin;SFLOW-18;PR101 PY42 PW6;SEMI_OPAQUE;#C08A68

@@ -1,0 +1,51 @@
+# Winsor & Newton - Winton Oil Colour (gamme etude)
+#
+# COUVERTURE : quasi complete. Les teintes "Hue" remplacent un pigment couteux par un
+# melange : leur comportement de sechage suit le pigment de substitution, pas le nom.
+brand;name;code;pigments;opacity;hex
+Winton;Titanium White;644;PW6;OPAQUE;#F7F5F0
+Winton;Soft Mixing White;415;PW6 PW21;SEMI_OPAQUE;#F5F3EE
+Winton;Zinc White;748;PW4;SEMI_TRANSPARENT;#F7F7F5
+Winton;Ivory Black;331;PBk9;SEMI_OPAQUE;#221F1C
+Winton;Lamp Black;337;PBk7;SEMI_OPAQUE;#1A1918
+Winton;Payne's Gray;465;PB29 PBk6 PW6;SEMI_OPAQUE;#3E4854
+Winton;Raw Umber;554;PBr7;SEMI_OPAQUE;#50442F
+Winton;Burnt Umber;076;PBr7;SEMI_OPAQUE;#4C3629
+Winton;Raw Sienna;552;PBr7;SEMI_TRANSPARENT;#9C6E36
+Winton;Burnt Sienna;074;PBr7;TRANSPARENT;#7E3C24
+Winton;Vandyke Brown;676;PBr7 PBk9;SEMI_TRANSPARENT;#3E2C22
+Winton;Light Red;362;PR101;OPAQUE;#A8503A
+Winton;Indian Red;317;PR101;OPAQUE;#8A4A46
+Winton;Terre Verte Hue;637;PG18 PY42 PW6;SEMI_OPAQUE;#6E7C5E
+Winton;Yellow Ochre;744;PY42;SEMI_OPAQUE;#C08A34
+Winton;Naples Yellow Hue;422;PW6 PY42 PR101;OPAQUE;#E9CE8E
+Winton;Lemon Yellow Hue;346;PY3;SEMI_TRANSPARENT;#F5DC2A
+Winton;Cadmium Lemon Hue;087;PY3 PW6;SEMI_OPAQUE;#F6E04A
+Winton;Cadmium Yellow Pale Hue;119;PY74 PW6;SEMI_OPAQUE;#F7C81B
+Winton;Cadmium Yellow Hue;109;PY74;SEMI_OPAQUE;#F5B81A
+Winton;Cadmium Yellow Deep Hue;115;PY83;SEMI_OPAQUE;#F0A014
+Winton;Indian Yellow;319;PY83 PO62;TRANSPARENT;#EE9A14
+Winton;Cadmium Orange Hue;090;PO62;SEMI_OPAQUE;#F0821A
+Winton;Cadmium Scarlet Hue;107;PR188 PO62;SEMI_OPAQUE;#E2481E
+Winton;Cadmium Red Hue;095;PR188;SEMI_OPAQUE;#D2301F
+Winton;Cadmium Red Deep Hue;098;PR188 PR122;SEMI_OPAQUE;#B02420
+Winton;Bright Red;042;PR254;OPAQUE;#D62B22
+Winton;Permanent Rose;502;PV19;TRANSPARENT;#C41F58
+Winton;Permanent Alizarin Crimson;468;PR177;TRANSPARENT;#93182F
+Winton;Alizarin Crimson Hue;003;PR177 PV19;TRANSPARENT;#8E1B2E
+Winton;Magenta;380;PR122;TRANSPARENT;#A61B5A
+Winton;Purple Lake;544;PV19 PBk9;TRANSPARENT;#6E2436
+Winton;Dioxazine Purple;229;PV23;TRANSPARENT;#3A1B52
+Winton;Ultramarine;660;PB29;TRANSPARENT;#1F2E7A
+Winton;French Ultramarine;263;PB29;TRANSPARENT;#20307C
+Winton;Cobalt Blue Hue;179;PB15 PW6;SEMI_OPAQUE;#2A5EA8
+Winton;Cerulean Blue Hue;140;PB15 PW6;OPAQUE;#3A8CC0
+Winton;Phthalo Blue;516;PB15;TRANSPARENT;#0E3F73
+Winton;Prussian Blue;538;PB27;TRANSPARENT;#16323C
+Winton;Viridian Hue;696;PG7;TRANSPARENT;#0F6B54
+Winton;Phthalo Green;522;PG7;TRANSPARENT;#0A5A46
+Winton;Permanent Green Light;483;PG7 PY74;SEMI_OPAQUE;#5AA82E
+Winton;Sap Green;599;PG7 PY83;TRANSPARENT;#4C6B23
+Winton;Olive Green;447;PG7 PY83 PBk9;TRANSPARENT;#4C5B23
+Winton;Oxide of Chromium;459;PG17;OPAQUE;#4A6B42
+Winton;Chrome Green Deep Hue;146;PG7 PY74;SEMI_OPAQUE;#2E6B32

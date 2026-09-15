@@ -1,0 +1,87 @@
+spring:
+  application:
+    name: palettier
+  datasource:
+    # Base locale au poste : le catalogue et les recettes appartiennent au peintre,
+    # rien ne part sur un serveur.
+    url: jdbc:h2:file:${user.home}/.palettier/db;AUTO_SERVER=TRUE
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  main:
+    banner-mode: off
+
+  ai:
+    # ------------------------------------------------------------------
+    # Assistant : desactive par defaut.
+    #
+    # Aucun moteur n'est selectionne, donc aucune cle n'est requise, aucun
+    # appel reseau n'est fait, et l'application se comporte exactement comme
+    # si le module n'existait pas. Choisissez un moteur ci-dessous pour
+    # l'activer -- en sachant que les informations envoyees quittent alors le
+    # poste, ce que le reste de l'application ne fait jamais.
+    # ------------------------------------------------------------------
+    model:
+      chat: ${PALETTIER_AI_PROVIDER:none}   # none | google-genai | ollama | openai
+
+    # 1. Gemini, palier gratuit de Google AI Studio.
+    #    export PALETTIER_AI_PROVIDER=google-genai
+    #    export GEMINI_API_KEY=...
+    #    Ne renseignez ni project-id ni location : cela basculerait sur Vertex AI,
+    #    qui est facture. Attention, le palier gratuit autorise Google a reutiliser
+    #    les contenus envoyes.
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:}
+        chat:
+          options:
+            model: gemini-2.5-flash
+            temperature: 0.2
+
+    # 2. Ollama, en local. Rien ne quitte le poste.
+    #    export PALETTIER_AI_PROVIDER=ollama   (le modele doit savoir renvoyer du JSON structure)
+    ollama:
+      base-url: ${OLLAMA_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${OLLAMA_MODEL:gemma4:e4b}
+          temperature: 0.2
+          # Une image consomme beaucoup de jetons d'entree, et un plan complet beaucoup
+          # de jetons de sortie. La fenetre par defaut d'Ollama est trop courte pour les
+          # deux a la fois : la reponse se retrouve coupee en plein JSON.
+          num-ctx: 32768
+          num-predict: 16384
+
+    # 3. Tout serveur compatible OpenAI : LM Studio, llama.cpp, vLLM en local,
+    #    ou l'API OpenAI elle-meme.
+    #    export PALETTIER_AI_PROVIDER=openai
+    #    export OPENAI_BASE_URL=http://localhost:1234   (local)
+    #    export OPENAI_API_KEY=...                      (obligatoire, meme factice en local)
+    openai:
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o-mini}
+          temperature: 0.2
+
+logging:
+  level:
+    root: WARN
+    be.asmolabs.palettier: INFO
+
+# Reglages du modele de sechage. A ajuster si votre atelier vous donne
+# systematiquement des durees differentes de celles annoncees.
+palettier:
+  drying:
+    reference-temperature: 20
+    temperature-halving-step: 10
+    reference-humidity: 50
+    humidity-sensitivity: 0.6
+    open-time-share: 0.22
+    recoat-factor: 1.8
+    through-dry-factor: 5.0
+    full-cure-factor: 22.0

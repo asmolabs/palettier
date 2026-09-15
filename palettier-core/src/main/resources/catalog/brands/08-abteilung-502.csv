@@ -1,0 +1,55 @@
+# Abteilung 502 (AK Interactive) - huiles pour maquette et figurine
+#
+# COUVERTURE : partielle, environ 45 teintes sur les ~90 de la gamme.
+#
+# ATTENTION - PIGMENTS DEDUITS : comme la plupart des gammes maquette, Abteilung 502
+# ne publie pas les codes Colour Index. Les pigments ci-dessous sont inferes du nom et
+# du comportement usuel de la teinte ; ils pilotent le calcul du sechage. Corrigez-les
+# si l'etiquette de votre tube les indique.
+brand;name;code;pigments;opacity;hex
+Abteilung 502;Snow White;ABT001;PW6;OPAQUE;#F8F7F3
+Abteilung 502;Ivory;ABT002;PW6 PY42;OPAQUE;#F0E6CE
+Abteilung 502;Buff;ABT004;PW6 PY42 PBr7;OPAQUE;#D9C29A
+Abteilung 502;Sand;ABT005;PY42 PW6;OPAQUE;#C9A870
+Abteilung 502;Faded Dark Yellow;ABT070;PY42 PW6;SEMI_OPAQUE;#B29B62
+Abteilung 502;Light Mud;ABT020;PBr7 PW6;SEMI_OPAQUE;#9A8460
+Abteilung 502;Dark Mud;ABT022;PBr7;SEMI_OPAQUE;#5E4A36
+Abteilung 502;Earth;ABT030;PBr7;SEMI_OPAQUE;#6B5038
+Abteilung 502;Green Brown;ABT035;PBr7 PG17;SEMI_OPAQUE;#5E5A36
+Abteilung 502;Shadow Brown;ABT015;PBr7;SEMI_TRANSPARENT;#3B2A20
+Abteilung 502;Starship Filth;ABT160;PBr7 PBk9;SEMI_TRANSPARENT;#4A4036
+Abteilung 502;Sepia;ABT018;PBr7 PBk9;TRANSPARENT;#4A3828
+Abteilung 502;Burnt Umber;ABT016;PBr7;SEMI_OPAQUE;#4A3427
+Abteilung 502;Raw Umber;ABT017;PBr7;SEMI_OPAQUE;#4E4133
+Abteilung 502;Burnt Sienna;ABT014;PBr7;TRANSPARENT;#7A3A22
+Abteilung 502;Raw Sienna;ABT013;PBr7;SEMI_TRANSPARENT;#9A6B32
+Abteilung 502;Rust;ABT060;PR101;SEMI_OPAQUE;#8B4A26
+Abteilung 502;Light Rust;ABT061;PR101 PY42;SEMI_OPAQUE;#A8622C
+Abteilung 502;Dark Rust;ABT062;PR101 PBk9;SEMI_OPAQUE;#6B3620
+Abteilung 502;Old Rust;ABT065;PR101 PBr7;SEMI_OPAQUE;#7A4428
+Abteilung 502;Industrial Earth;ABT080;PBr7 PBk11;SEMI_OPAQUE;#4C3E32
+Abteilung 502;Engine Grease;ABT085;PBk9 PBr7;SEMI_TRANSPARENT;#2C2622
+Abteilung 502;Oil Stains;ABT090;PBk7;TRANSPARENT;#1E1C1A
+Abteilung 502;Smoke;ABT095;PBk6;TRANSPARENT;#2A2826
+Abteilung 502;Black;ABT100;PBk9;SEMI_OPAQUE;#201E1C
+Abteilung 502;Carbon Black;ABT101;PBk7;SEMI_OPAQUE;#171615
+Abteilung 502;Blue Black;ABT105;PBk6 PB29;SEMI_OPAQUE;#22262E
+Abteilung 502;Payne Grey;ABT110;PB29 PBk9;SEMI_TRANSPARENT;#3A4552
+Abteilung 502;Neutral Grey;ABT112;PW6 PBk7;OPAQUE;#8A8886
+Abteilung 502;Light Grey;ABT114;PW6 PBk7;OPAQUE;#B8B6B2
+Abteilung 502;Blue Grey for Panzer Grey;ABT061B;PB29 PBk9 PW6;SEMI_OPAQUE;#4A5560
+Abteilung 502;Prussian Blue;ABT120;PB27;TRANSPARENT;#16323C
+Abteilung 502;Cobalt Blue;ABT122;PB28;SEMI_OPAQUE;#2255A4
+Abteilung 502;Ultramarine Blue;ABT124;PB29;TRANSPARENT;#1F2E7A
+Abteilung 502;Deep Green;ABT130;PG7 PBk9;TRANSPARENT;#1E3E2E
+Abteilung 502;Olive Green;ABT132;PY150 PG7 PBk9;SEMI_TRANSPARENT;#4C5B23
+Abteilung 502;Yellow Green;ABT134;PG7 PY74;SEMI_OPAQUE;#6B8A2E
+Abteilung 502;Chromium Green;ABT136;PG17;OPAQUE;#4A6B42
+Abteilung 502;Cadmium Yellow;ABT140;PY35;OPAQUE;#F5B800
+Abteilung 502;Cadmium Orange;ABT142;PO20;OPAQUE;#EE7318
+Abteilung 502;Cadmium Red;ABT145;PR108;OPAQUE;#CE2A22
+Abteilung 502;Crimson;ABT147;PR177;TRANSPARENT;#93182F
+Abteilung 502;Violet;ABT150;PV23;TRANSPARENT;#3A1B52
+Abteilung 502;Basic Flesh Tone;ABT200;PR101 PY42 PW6;SEMI_OPAQUE;#C98F72
+Abteilung 502;Deep Shadow Flesh;ABT202;PR101 PBr7;SEMI_TRANSPARENT;#8A4A3C
+Abteilung 502;Highlight Flesh;ABT204;PW6 PR101 PY42;OPAQUE;#E0B49A

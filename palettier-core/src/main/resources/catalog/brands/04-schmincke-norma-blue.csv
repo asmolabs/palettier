@@ -1,0 +1,44 @@
+# Schmincke - NORMA BLUE (huile diluable a l'eau)
+#
+# Meme chimie de sechage qu'une huile classique : la polymerisation reste une oxydation,
+# l'eau ne fait que remplacer le diluant petrolier. Les temps annonces par l'application
+# restent donc valables ; seul le nettoyage change.
+#
+# COUVERTURE : 28 teintes verifiees sur les 48 de la gamme. Noms, references et pigments
+# proviennent du catalogue du fabricant (schmincke.de/en/produkte/oel/norma-blue), qui
+# n'en expose pas davantage d'un coup. Les vingt manquantes sont a relever sur un
+# nuancier ou sur les tubes.
+#
+# La colonne hex est volontairement vide : Schmincke ne publie pas de valeur numerique.
+# La teinte est donc deduite des pigments declares, et l'application signale ces tubes
+# comme approximatifs (colonne "Coupe de blanc" et indicateur de teinte deduite).
+# Relevez-les a la pipette sur vos propres ecouvillons pour les fiabiliser.
+brand;name;code;pigments;opacity;hex
+Schmincke Norma Blue;Titanium White;21114;PW6;OPAQUE;
+Schmincke Norma Blue;Mixing White;21120;PW6 PW7 PW5;OPAQUE;
+Schmincke Norma Blue;Burnt Ochre Light;21220;PW6 PY42 PR101 PW7;;
+Schmincke Norma Blue;Naples Yellow Light;21226;PY53 PBr24;OPAQUE;
+Schmincke Norma Blue;Lemon Yellow;21236;PY3;SEMI_TRANSPARENT;
+Schmincke Norma Blue;Cadmium Yellow Hue Lemon;21237;PY155 PY184;;
+Schmincke Norma Blue;Cadmium Yellow Hue Light;21239;PY155 PY184;;
+Schmincke Norma Blue;Cadmium Yellow Hue Medium;21241;PY155 PY184 PO67;;
+Schmincke Norma Blue;Cadmium Yellow Hue Deep;21243;PY155 PY184 PO67;;
+Schmincke Norma Blue;Indian Yellow;21248;PY128 PY110;TRANSPARENT;
+Schmincke Norma Blue;Cadmium Orange Hue;21301;PY184 PO67;;
+Schmincke Norma Blue;Poppy Red;21304;PO71;TRANSPARENT;
+Schmincke Norma Blue;Vermilion Light;21306;PO67 PR255;;
+Schmincke Norma Blue;Cadmium Red Hue Light;21309;PY184 PR255;;
+Schmincke Norma Blue;Cadmium Red Hue Medium;21311;PY216 PR254;;
+Schmincke Norma Blue;Cadmium Red Hue Deep;21313;PV19 PY216 PR254;;
+Schmincke Norma Blue;Alizarin Crimson;21315;PR83;TRANSPARENT;
+Schmincke Norma Blue;Madder Lake Deep;21321;PR83 PV19;TRANSPARENT;
+Schmincke Norma Blue;Quinacridone Magenta;21327;PV19;TRANSPARENT;
+Schmincke Norma Blue;Ultramarine;21333;PB29;TRANSPARENT;
+Schmincke Norma Blue;Cobalt Blue;21339;PB28;SEMI_OPAQUE;
+Schmincke Norma Blue;Cerulean Blue;21345;PB35;OPAQUE;
+Schmincke Norma Blue;Phthalo Blue;21351;PB15;TRANSPARENT;
+Schmincke Norma Blue;Viridian;21357;PG18;TRANSPARENT;
+Schmincke Norma Blue;Chromium Oxide Green;21363;PG17;OPAQUE;
+Schmincke Norma Blue;Raw Umber;21369;PBr7;SEMI_OPAQUE;
+Schmincke Norma Blue;Burnt Umber;21375;PBr7;SEMI_OPAQUE;
+Schmincke Norma Blue;Ivory Black;21381;PBk9;SEMI_OPAQUE;

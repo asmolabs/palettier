@@ -1,0 +1,129 @@
+# Table des pigments du Colour Index utilises par les gammes du catalogue.
+#
+# C'est le socle de tout le reste : sechage et pouvoir colorant sont des proprietes
+# du pigment, pas de la marque. Les renseigner ici une fois evite de les redeviner
+# pour chaque tube de chaque gamme.
+#
+# hex     : teinte en masse ton, indicative. Pour les oxydes de fer (PBr7, PR101...),
+#           un meme code couvre des teintes tres differentes selon le gisement et la
+#           cuisson : la valeur ci-dessous est un compromis, et les fichiers de gamme
+#           precisent la teinte reelle tube par tube.
+# drying  : FAST | MEDIUM | SLOW | VERY_SLOW
+# opacity : TRANSPARENT | SEMI_TRANSPARENT | SEMI_OPAQUE | OPAQUE
+# tinting : pouvoir colorant relatif, de 0,05 a 1
+# tint    : couleur du pigment coupe de blanc de titane, une part pour neuf. COLONNE
+#           FACULTATIVE. Quand elle est renseignee, le melange passe au modele de
+#           Kubelka-Munk a deux constantes, seul capable de representer un pigment dont
+#           le ton de masse et la teinte diluee divergent : le noir d'ivoire sort du tube
+#           chaud et donne pourtant des gris froids.
+#           Elle n'est remplie que la ou cette divergence est franche et connue, donc
+#           surtout sur les pigments a ton de masse tres sombre et teinte coloree. Ailleurs
+#           la colonne reste vide et le comportement est celui d'avant, inchange.
+#           Ces valeurs sont estimees, pas mesurees : a corriger sur vos propres ecouvillons.
+code;name;hex;opacity;drying;tinting;tint
+
+# --- Blancs ---
+PW1;Blanc de plomb (ceruse);#F6F3EA;OPAQUE;FAST;0.85
+PW4;Blanc de zinc;#F7F7F5;SEMI_TRANSPARENT;VERY_SLOW;0.35
+PW5;Lithopone;#F5F4F0;OPAQUE;SLOW;0.60
+PW6;Blanc de titane;#F7F5F0;OPAQUE;SLOW;1.00
+PW7;Sulfure de zinc;#F6F6F3;OPAQUE;SLOW;0.55
+PW18;Carbonate de calcium (craie);#F2EFE9;TRANSPARENT;MEDIUM;0.10
+PW21;Blanc fixe (sulfate de baryum);#F4F2EE;TRANSPARENT;MEDIUM;0.10
+PW24;Hydroxyde d'aluminium (base de laque);#F4F2EF;TRANSPARENT;MEDIUM;0.05
+
+# --- Noirs ---
+PBk6;Noir de fumee;#1C1B1A;SEMI_OPAQUE;SLOW;0.95;#8C9098
+PBk7;Noir de carbone;#171615;SEMI_OPAQUE;SLOW;1.00;#8A8E96
+PBk9;Noir d'ivoire (noir d'os);#221F1C;SEMI_OPAQUE;SLOW;0.90;#8E9094
+PBk11;Noir de mars (oxyde de fer);#1B1A19;OPAQUE;FAST;0.90;#93918D
+PBk31;Vert perylene;#1E2A22;TRANSPARENT;MEDIUM;0.90;#96A096
+PBk19;Silicate d'aluminium hydrate (gris d'ardoise);#6E6E66;SEMI_OPAQUE;MEDIUM;0.30
+
+# --- Terres et oxydes de fer ---
+PBr6;Brun de mars;#5A3A22;OPAQUE;FAST;0.75;#BCA898
+PBr7;Oxyde de fer naturel (terres);#6B4326;SEMI_OPAQUE;FAST;0.70;#C4B4A6
+PBr33;Brun de chromite de zinc et de fer;#6B4A2A;OPAQUE;FAST;0.60
+PY42;Oxyde de fer jaune synthetique (jaune de mars);#B8792A;SEMI_OPAQUE;FAST;0.65;#E6CFA4
+PY43;Oxyde de fer jaune naturel (ocre jaune);#C08A34;SEMI_OPAQUE;MEDIUM;0.60;#E4D2B0
+PY119;Brun de ferrite de zinc;#8A6B3A;OPAQUE;FAST;0.60
+PR101;Oxyde de fer rouge synthetique;#8C3A22;OPAQUE;FAST;0.80;#D2A292
+PR102;Oxyde de fer rouge naturel;#8E4128;SEMI_OPAQUE;FAST;0.70;#D0A496
+PG23;Terre verte;#6B7A5A;TRANSPARENT;MEDIUM;0.30
+
+# --- Jaunes ---
+PY3;Jaune arylide clair (Hansa);#F5DC2A;SEMI_TRANSPARENT;SLOW;0.80
+PY35;Jaune de cadmium;#F6C500;OPAQUE;VERY_SLOW;0.80;#F7E4A8
+PY37;Jaune de cadmium (sulfure);#F5C000;OPAQUE;VERY_SLOW;0.80
+PY40;Aureoline (jaune de cobalt);#F2C51F;TRANSPARENT;FAST;0.50
+PY53;Titanate de nickel;#EBD98A;OPAQUE;MEDIUM;0.40
+PY65;Jaune Hansa fonce;#F0A81B;SEMI_OPAQUE;SLOW;0.80
+PY74;Jaune Hansa moyen;#F7C51B;SEMI_TRANSPARENT;SLOW;0.85
+PY83;Jaune diarylide fonce;#D9971A;TRANSPARENT;SLOW;0.90
+PY110;Jaune isoindolinone fonce;#E08A0A;TRANSPARENT;MEDIUM;0.85
+PY129;Vert d'or (complexe azo cuivre);#8A8A1E;TRANSPARENT;MEDIUM;0.80
+PY139;Jaune isoindolinone;#F0A800;SEMI_OPAQUE;MEDIUM;0.85
+PY150;Jaune azo de nickel;#C9A32A;TRANSPARENT;MEDIUM;0.85
+PY153;Jaune dioxine de nickel;#D9992A;TRANSPARENT;MEDIUM;0.85
+PY154;Jaune benzimidazolone;#F5C21A;SEMI_OPAQUE;MEDIUM;0.85
+PY155;Jaune bisacetoacetanilide;#F5D71A;SEMI_TRANSPARENT;MEDIUM;0.85
+PY128;Jaune azo condense;#F2B814;SEMI_TRANSPARENT;MEDIUM;0.85
+PY216;Jaune azoique (nuance orangee);#F0A81E;SEMI_OPAQUE;MEDIUM;0.85
+PY175;Jaune benzimidazolone citron;#F6E64A;SEMI_TRANSPARENT;MEDIUM;0.80
+PY184;Vanadate de bismuth;#F7D21A;OPAQUE;MEDIUM;0.80;#F7E8AC
+PBr24;Titanate de chrome (jaune de Naples de substitution);#E5B45E;OPAQUE;MEDIUM;0.50
+
+# --- Oranges ---
+PO20;Orange de cadmium;#EE7318;OPAQUE;VERY_SLOW;0.80
+PO36;Orange benzimidazolone fonce;#E06A12;SEMI_OPAQUE;MEDIUM;0.85
+PO43;Orange perinone;#E85A14;TRANSPARENT;MEDIUM;0.90
+PO62;Orange benzimidazolone;#F0821A;SEMI_OPAQUE;MEDIUM;0.85
+PO67;Orange pyrazoloquinazolone;#F07018;SEMI_OPAQUE;MEDIUM;0.85
+PO71;Orange pyrrole (DPP);#EE5A1A;TRANSPARENT;MEDIUM;0.90
+PO73;Orange pyrrole;#EE5A1A;TRANSPARENT;MEDIUM;0.90
+
+# --- Rouges ---
+NR9;Garance naturelle (laque);#C44A62;TRANSPARENT;SLOW;0.55;#EEC0C8
+PR83;Alizarine (garance de synthese);#8E1B2E;TRANSPARENT;SLOW;0.85;#D4A8B4
+PR106;Vermillon (sulfure de mercure);#E03A20;OPAQUE;SLOW;0.80
+PR108;Rouge de cadmium;#D9341F;OPAQUE;VERY_SLOW;0.85;#EFB8AC
+PR112;Rouge naphtol clair;#DC3B22;SEMI_OPAQUE;MEDIUM;0.85
+PR122;Magenta de quinacridone;#A61B5A;TRANSPARENT;MEDIUM;0.95;#E0A8C4
+PR149;Rouge perylene;#C8302E;SEMI_OPAQUE;MEDIUM;0.85
+PR170;Rouge naphtol;#D8382F;SEMI_OPAQUE;MEDIUM;0.85
+PR177;Rouge anthraquinone (alizarine permanente);#9E1B33;TRANSPARENT;MEDIUM;0.90;#D8A6B0
+PR179;Marron perylene;#7A2020;SEMI_TRANSPARENT;MEDIUM;0.85
+PR188;Rouge naphtol (laque ecarlate);#D62E2A;SEMI_TRANSPARENT;MEDIUM;0.85
+PR202;Rouge de quinacridone;#9E1440;TRANSPARENT;MEDIUM;0.95
+PR206;Orange brule de quinacridone;#8C3A1E;TRANSPARENT;MEDIUM;0.90
+PR209;Rouge vif de quinacridone;#C41F4A;TRANSPARENT;MEDIUM;0.95
+PR254;Rouge pyrrole;#D62B22;OPAQUE;MEDIUM;0.90
+PR255;Ecarlate pyrrole;#E0401F;SEMI_OPAQUE;MEDIUM;0.90
+PR264;Rubis pyrrole;#A81830;TRANSPARENT;MEDIUM;0.90
+
+# --- Violets ---
+PV14;Violet de cobalt;#8A4A8C;SEMI_OPAQUE;FAST;0.50
+PV15;Violet d'outremer;#5A4A8C;SEMI_TRANSPARENT;MEDIUM;0.50
+PV16;Violet de manganese;#6B3A78;SEMI_OPAQUE;FAST;0.60
+PV19;Violet de quinacridone;#B01B5A;TRANSPARENT;MEDIUM;0.95;#DCA6BE
+PV23;Violet de dioxazine;#3A1B52;TRANSPARENT;SLOW;0.95;#B4A8C8
+
+# --- Bleus ---
+PB15;Bleu de phtalocyanine;#0E3F73;TRANSPARENT;MEDIUM;1.00;#8FAED2
+PB15:3;Bleu de phtalocyanine nuance verte;#0D4A80;TRANSPARENT;MEDIUM;1.00;#8CB4D6
+PB27;Bleu de Prusse;#16323C;TRANSPARENT;FAST;0.98;#A2B8C4
+PB28;Bleu de cobalt;#2255A4;SEMI_OPAQUE;FAST;0.70
+PB29;Bleu outremer;#1F2E7A;TRANSPARENT;MEDIUM;0.80;#A8B0D2
+PB35;Bleu ceruleum;#2C7FB8;OPAQUE;MEDIUM;0.60
+PB36;Ceruleum au chrome (turquoise de cobalt);#1E7A8C;OPAQUE;FAST;0.60
+PB60;Bleu indanthrone;#1E2A52;TRANSPARENT;MEDIUM;0.90;#A6AABE
+PB74;Bleu de cobalt fonce;#1B3E8C;SEMI_OPAQUE;FAST;0.70
+
+# --- Verts ---
+PG7;Vert de phtalocyanine nuance bleue;#0A5A46;TRANSPARENT;MEDIUM;1.00;#8FC4B4
+PG17;Oxyde de chrome;#4A6B42;OPAQUE;FAST;0.70;#B4C0A8
+PG18;Viridien;#0F6B54;TRANSPARENT;MEDIUM;0.60;#A8CBC0
+PG19;Vert de cobalt;#2E8A6B;SEMI_OPAQUE;FAST;0.50
+PG26;Chromite de cobalt;#1E6B5A;OPAQUE;FAST;0.60
+PG36;Vert de phtalocyanine nuance jaune;#0F5E3A;TRANSPARENT;MEDIUM;1.00;#94C6AC
+PG50;Titanate de cobalt;#5AA08C;OPAQUE;FAST;0.50

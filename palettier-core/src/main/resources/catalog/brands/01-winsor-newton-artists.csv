@@ -1,0 +1,139 @@
+# Winsor & Newton - Artists' Oil Colour
+#
+# COUVERTURE : 120 teintes. La gamme en annonce "plus de 135", dont des metalliques que
+# je n'ai pas pu rattacher a la gamme huile avec certitude et qui sont donc absentes.
+#
+# PROVENANCE. Les 70 premieres lignes portent des teintes estimees, calibrees avec la
+# table des pigments. Les 50 suivantes viennent d'un nuancier publie
+# (color-term.com/winsornewton-colors) : leurs valeurs sont donc sourcees, mais ce sont
+# des rendus d'ecran, plus satures qu'un film de peinture. Les deux familles se voient a
+# l'oeil dans le tableau ; l'ideal reste de corriger sur vos propres ecouvillons.
+#
+# Les codes pigments des lignes ajoutees sont deduits du nom de la couleur, W&N ne les
+# publiant pas sur ce nuancier. Ils pilotent le calcul du sechage : verifiez-les sur le
+# tube si la teinte compte pour votre planning.
+#
+# Pour completer : une ligne par tube, seules brand, name et pigments sont obligatoires.
+brand;name;code;pigments;opacity;hex
+Winsor & Newton;Titanium White;644;PW6;OPAQUE;#F7F5F0
+Winsor & Newton;Flake White Hue;242;PW6 PW4;OPAQUE;#F7F4EC
+Winsor & Newton;Zinc White;748;PW4;SEMI_TRANSPARENT;#F7F7F5
+Winsor & Newton;Transparent White;711;PW4 PW21;TRANSPARENT;#F5F4F1
+Winsor & Newton;Buff Titanium;058;PW6 PY42;OPAQUE;#D9C9AC
+Winsor & Newton;Ivory Black;331;PBk9;SEMI_OPAQUE;#221F1C
+Winsor & Newton;Lamp Black;337;PBk6;SEMI_OPAQUE;#1C1B1A
+Winsor & Newton;Mars Black;386;PBk11;OPAQUE;#1B1A19
+Winsor & Newton;Blue Black;034;PBk6 PB29;SEMI_OPAQUE;#22262E
+Winsor & Newton;Payne's Gray;465;PB29 PBk9;SEMI_TRANSPARENT;#3A4552
+Winsor & Newton;Davy's Gray;217;PBk19 PG23;SEMI_OPAQUE;#6E6E63
+Winsor & Newton;Raw Umber;554;PBr7;SEMI_OPAQUE;#4E4133
+Winsor & Newton;Burnt Umber;076;PBr7;SEMI_OPAQUE;#4A3427
+Winsor & Newton;Raw Sienna;552;PBr7;SEMI_TRANSPARENT;#9A6B32
+Winsor & Newton;Burnt Sienna;074;PBr7;TRANSPARENT;#7A3A22
+Winsor & Newton;Light Red;362;PR101;OPAQUE;#A8503A
+Winsor & Newton;Indian Red;317;PR101;OPAQUE;#8A4A46
+Winsor & Newton;Venetian Red;678;PR101;OPAQUE;#8E4230
+Winsor & Newton;Terre Verte;637;PG23 PG18;TRANSPARENT;#6B7A5A
+Winsor & Newton;Yellow Ochre;744;PY43;SEMI_OPAQUE;#C08A34
+Winsor & Newton;Yellow Ochre Pale;745;PY42;SEMI_OPAQUE;#D2A254
+Winsor & Newton;Gold Ochre;283;PY42;SEMI_OPAQUE;#BC8434
+Winsor & Newton;Naples Yellow;422;PBr24 PW6;OPAQUE;#E9CE8E
+Winsor & Newton;Naples Yellow Deep;425;PBr24 PY42;OPAQUE;#DCA754
+Winsor & Newton;Lemon Yellow Hue;346;PY175;SEMI_TRANSPARENT;#F6E64A
+Winsor & Newton;Winsor Lemon;722;PY175;SEMI_TRANSPARENT;#F7E23A
+Winsor & Newton;Cadmium Lemon;086;PY35;OPAQUE;#F7DE1A
+Winsor & Newton;Cadmium Yellow Pale;118;PY35;OPAQUE;#F6C500
+Winsor & Newton;Cadmium Yellow;108;PY35;OPAQUE;#F5B800
+Winsor & Newton;Cadmium Yellow Deep;111;PY37;OPAQUE;#F2A000
+Winsor & Newton;Winsor Yellow;730;PY154;SEMI_OPAQUE;#F5C21A
+Winsor & Newton;Winsor Yellow Deep;731;PY65;SEMI_OPAQUE;#F0A81B
+Winsor & Newton;Indian Yellow;319;PY139 PO62;TRANSPARENT;#EE9A14
+Winsor & Newton;Cadmium Orange;089;PO20;OPAQUE;#EE7318
+Winsor & Newton;Winsor Orange;724;PO73;TRANSPARENT;#EE5A1A
+Winsor & Newton;Cadmium Scarlet;106;PR108;OPAQUE;#E2401E
+Winsor & Newton;Cadmium Red Light;100;PR108;OPAQUE;#D9341F
+Winsor & Newton;Cadmium Red;094;PR108;OPAQUE;#CE2A22
+Winsor & Newton;Cadmium Red Deep;097;PR108;OPAQUE;#B0221F
+Winsor & Newton;Scarlet Lake;603;PR188;SEMI_TRANSPARENT;#D62E2A
+Winsor & Newton;Bright Red;042;PR254;OPAQUE;#D62B22
+Winsor & Newton;Winsor Red;726;PR254;OPAQUE;#CE2A20
+Winsor & Newton;Permanent Alizarin Crimson;468;PR177 PR206;TRANSPARENT;#93182F
+Winsor & Newton;Alizarin Crimson;004;PR83;TRANSPARENT;#8E1B2E
+Winsor & Newton;Permanent Rose;502;PV19;TRANSPARENT;#C41F58
+Winsor & Newton;Permanent Magenta;489;PV19;TRANSPARENT;#B01B5A
+Winsor & Newton;Magenta;380;PR122;TRANSPARENT;#A61B5A
+Winsor & Newton;Purple Lake;544;PR206 PV19;TRANSPARENT;#6E2436
+Winsor & Newton;Winsor Violet;728;PV23;TRANSPARENT;#3A1B52
+Winsor & Newton;Ultramarine Violet;672;PV15;SEMI_TRANSPARENT;#5A4A8C
+Winsor & Newton;Cobalt Violet;192;PV14;SEMI_OPAQUE;#8A4A8C
+Winsor & Newton;French Ultramarine;263;PB29;TRANSPARENT;#1F2E7A
+Winsor & Newton;Ultramarine (Green Shade);667;PB29;TRANSPARENT;#22357E
+Winsor & Newton;Cobalt Blue;178;PB28;SEMI_OPAQUE;#2255A4
+Winsor & Newton;Cobalt Blue Deep;180;PB74;SEMI_OPAQUE;#1B3E8C
+Winsor & Newton;Cerulean Blue;137;PB35;OPAQUE;#2C7FB8
+Winsor & Newton;Cerulean Blue Hue;140;PB15 PW6;OPAQUE;#3A8CC0
+Winsor & Newton;Winsor Blue (Green Shade);707;PB15;TRANSPARENT;#0D4A80
+Winsor & Newton;Winsor Blue (Red Shade);706;PB15;TRANSPARENT;#0E3F73
+Winsor & Newton;Prussian Blue;538;PB27;TRANSPARENT;#16323C
+Winsor & Newton;Indanthrene Blue;321;PB60;TRANSPARENT;#1E2A52
+Winsor & Newton;Cobalt Turquoise;190;PB36;OPAQUE;#1E7A8C
+Winsor & Newton;Viridian;692;PG18;TRANSPARENT;#0F6B54
+Winsor & Newton;Winsor Green (Blue Shade);719;PG7;TRANSPARENT;#0A5A46
+Winsor & Newton;Winsor Green (Yellow Shade);721;PG36;TRANSPARENT;#0F5E3A
+Winsor & Newton;Oxide of Chromium;459;PG17;OPAQUE;#4A6B42
+Winsor & Newton;Permanent Sap Green;503;PY150 PG7;TRANSPARENT;#4C6B23
+Winsor & Newton;Olive Green;447;PY150 PG7 PBk9;TRANSPARENT;#4C5B23
+Winsor & Newton;Cobalt Green;184;PG19;SEMI_OPAQUE;#2E8A6B
+Winsor & Newton;Green Gold;294;PY129;TRANSPARENT;#8A8A1E
+
+# --- Ajouts d'apres nuancier publie ---
+Winsor & Newton;Bismuth Yellow;;PY184;;#EAE84B
+Winsor & Newton;Transparent Yellow;653;PY150;;#FBE802
+Winsor & Newton;Chrome Yellow Hue;149;PY74;;#FAE200
+Winsor & Newton;Cadmium Free Lemon;;PY184;;#ECDB14
+Winsor & Newton;Cadmium Free Yellow Pale;;PY184;;#ECDB14
+Winsor & Newton;Cadmium Free Yellow;;PY139;;#FAA21B
+Winsor & Newton;Cadmium Free Yellow Deep;;PY139 PO73;;#F58220
+Winsor & Newton;Cadmium Free Orange;;PO73;;#F26724
+Winsor & Newton;Cadmium Free Scarlet;;PR255;;#E63E30
+Winsor & Newton;Cadmium Free Red;;PR254;;#E12827
+Winsor & Newton;Cadmium Free Red Deep;;PR254 PR179;;#A42036
+Winsor & Newton;Cadmium Free Green Pale;;PY139 PG7;;#98CB4F
+Winsor & Newton;Cadmium Green Pale;084;PY35 PG7;;#98CB4F
+Winsor & Newton;Indian Yellow Deep;320;PY83 PO62;;#FED103
+Winsor & Newton;Jaune Brillant;118B;PY35 PW6;;#F6CF3E
+Winsor & Newton;Naples Yellow Light;424;PBr24 PW6;;#FCF0A7
+Winsor & Newton;Yellow Ochre Light;746;PY43;;#C7962C
+Winsor & Newton;Raw Umber Light;556;PBr7 PY42;;#BF972D
+Winsor & Newton;Brown Ochre;065;PBr7 PY43;;#BA6D29
+Winsor & Newton;Transparent Gold Ochre;;PY42;;#E3AC36
+Winsor & Newton;Transparent Red Ochre;;PR101;;#DC7134
+Winsor & Newton;Transparent Brown Oxide;;PR101;;#884D31
+Winsor & Newton;Transparent Maroon;;PR206;;#AD452F
+Winsor & Newton;Brown Madder;056;PR206;;#973622
+Winsor & Newton;Terra Rosa;635;PR101;;#AF2025
+Winsor & Newton;Mars Violet Deep;387;PR101;;#87202C
+Winsor & Newton;Vandyke Brown;676;PBr7 PBk9;;#221417
+Winsor & Newton;Charcoal Grey;;PBk9;;#212222
+Winsor & Newton;Perylene Black;;PBk31;;#1F3327
+Winsor & Newton;Quinacridone Red;;PR209;;#EF3753
+Winsor & Newton;Quinacridone Magenta;;PR122;;#B4469A
+Winsor & Newton;Permanent Carmine;479;PR202;;#BD2657
+Winsor & Newton;Purple Madder;543;PR179 PV19;;#6B0B2C
+Winsor & Newton;Rose Madder Genuine;587;NR9;;#E1506D
+Winsor & Newton;Pale Rose Blush;;PW6 PR188;;#FABEAE
+Winsor & Newton;Winsor Red Deep;;PR264;;#BF202B
+Winsor & Newton;Permanent Mauve;491;PV16;;#622B67
+Winsor & Newton;Mauve Blue Shade;398;PV23 PB29;;#372D77
+Winsor & Newton;Indigo;322;PB15 PBk9;;#0B5EAA
+Winsor & Newton;Manganese Blue Hue;379;PB15;;#1099D6
+Winsor & Newton;Cobalt Turquoise Light;191;PG50 PB36;;#00B1A9
+Winsor & Newton;Phthalo Turquoise;;PB15 PG7;;#0D5A6B
+Winsor & Newton;Cobalt Chromite Green;;PG50;;#90B89A
+Winsor & Newton;Prussian Green;;PB27 PY150;;#0E6C37
+Winsor & Newton;Winsor Emerald;;PG7 PY74;;#2FA170
+Winsor & Newton;Permanent Green;;PG7 PY74;;#369244
+Winsor & Newton;Permanent Green Light;483;PG7 PY74;;#369244
+Winsor & Newton;Permanent Green Deep;;PG7 PY74;;#238C44
+Winsor & Newton;Chrome Green Deep Hue;146;PG7 PY74;;#20763B
+Winsor & Newton;Sap Green;599;PY150 PG7;;#236533
