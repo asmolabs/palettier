@@ -1,66 +1,204 @@
-# Williamsburg - Handmade Oil Colors (Golden)
+# Williamsburg Handmade Oil Colors (Golden Artist Colors)
 #
-# COUVERTURE : partielle, environ 55 teintes sur les ~170 de la gamme. Williamsburg
-# compte de nombreuses terres d'origine geographique (Italian, French, Persian...)
-# dont la teinte varie d'un gisement a l'autre : leurs valeurs ci-dessous sont des
-# approximations a corriger sur nuancier.
-brand;name;code;pigments;opacity;hex
-Williamsburg;Titanium White;7000;PW6;OPAQUE;#F7F5F0
-Williamsburg;Titanium Zinc White;7005;PW6 PW4;OPAQUE;#F7F5F1
-Williamsburg;Porcelain White;7010;PW6 PW4;OPAQUE;#F8F7F3
-Williamsburg;Flake White;6990;PW1;OPAQUE;#F6F3EA
-Williamsburg;Zinc Buff;7015;PW4 PY42;SEMI_OPAQUE;#EADCC2
-Williamsburg;Unbleached Titanium;6995;PW6 PY42;OPAQUE;#DCC9A8
-Williamsburg;Ivory Black;5000;PBk9;SEMI_OPAQUE;#221F1C
-Williamsburg;Mars Black;5010;PBk11;OPAQUE;#1B1A19
-Williamsburg;German Lamp Black;5005;PBk6;SEMI_OPAQUE;#1C1B1A
-Williamsburg;Payne's Grey;5300;PB29 PBk9;SEMI_TRANSPARENT;#3A4552
-Williamsburg;Davy's Grey;5200;PG23 PBk9;SEMI_OPAQUE;#6E6E63
-Williamsburg;Raw Umber;4400;PBr7;SEMI_OPAQUE;#4E4133
-Williamsburg;Raw Umber Greenish;4405;PBr7;SEMI_OPAQUE;#4A4632
-Williamsburg;Burnt Umber;4300;PBr7;SEMI_OPAQUE;#4A3427
-Williamsburg;Italian Raw Sienna;4100;PBr7;SEMI_TRANSPARENT;#9A6B32
-Williamsburg;Italian Burnt Sienna;4200;PBr7;TRANSPARENT;#7A3A22
-Williamsburg;French Raw Sienna;4110;PBr7;SEMI_TRANSPARENT;#A87A3C
-Williamsburg;Italian Green Umber;4410;PBr7;SEMI_OPAQUE;#4C4A30
-Williamsburg;Cyprus Raw Umber Deep;4420;PBr7;SEMI_OPAQUE;#413626
-Williamsburg;Italian Pompeii Red;4500;PR102;OPAQUE;#8E4128
-Williamsburg;Persian Rose;4520;PR101;OPAQUE;#A85A52
-Williamsburg;Indian Red;4510;PR101;OPAQUE;#8A4A46
-Williamsburg;Mars Red;4530;PR101;OPAQUE;#9E3A28
-Williamsburg;Mars Yellow;4030;PY42;SEMI_OPAQUE;#B8792A
-Williamsburg;French Yellow Ochre;4000;PY43;SEMI_OPAQUE;#C08A34
-Williamsburg;Italian Yellow Ochre;4010;PY43;SEMI_OPAQUE;#C69038
-Williamsburg;Brown Ochre;4040;PY43 PBr7;SEMI_OPAQUE;#8E6428
-Williamsburg;Cyprus Green Earth;4600;PG23;TRANSPARENT;#6B7A5A
-Williamsburg;Naples Yellow Italian;3000;PBr24 PW6;OPAQUE;#E9CE8E
-Williamsburg;Naples Yellow Reddish;3010;PBr24 PR101;OPAQUE;#E0AE72
-Williamsburg;Permanent Lemon;3100;PY175;SEMI_TRANSPARENT;#F6E64A
-Williamsburg;Nickel Yellow;3110;PY53;OPAQUE;#EBD98A
-Williamsburg;Cadmium Yellow Light;3200;PY35;OPAQUE;#F6C500
-Williamsburg;Cadmium Yellow Medium;3210;PY35;OPAQUE;#F5B800
-Williamsburg;Cadmium Yellow Deep;3220;PY37;OPAQUE;#F2A000
-Williamsburg;Indian Yellow;3300;PY83 PO62;TRANSPARENT;#EE9A14
-Williamsburg;Cadmium Orange;3400;PO20;OPAQUE;#EE7318
-Williamsburg;Permanent Orange;3410;PO62;SEMI_OPAQUE;#F0821A
-Williamsburg;Cadmium Red Light;2000;PR108;OPAQUE;#D9341F
-Williamsburg;Cadmium Red Medium;2010;PR108;OPAQUE;#CE2A22
-Williamsburg;Cadmium Red Deep;2020;PR108;OPAQUE;#B0221F
-Williamsburg;Permanent Crimson;2100;PR264;TRANSPARENT;#A81830
-Williamsburg;Alizarin Crimson;2110;PR83;TRANSPARENT;#8E1B2E
-Williamsburg;Quinacridone Magenta;2200;PR122;TRANSPARENT;#A61B5A
-Williamsburg;Provence Violet Bluish;2300;PV15;SEMI_TRANSPARENT;#5A4A8C
-Williamsburg;Cobalt Violet;2310;PV14;SEMI_OPAQUE;#8A4A8C
-Williamsburg;Dioxazine Purple;2320;PV23;TRANSPARENT;#3A1B52
-Williamsburg;French Ultramarine Blue;1000;PB29;TRANSPARENT;#1F2E7A
-Williamsburg;Cobalt Blue;1100;PB28;SEMI_OPAQUE;#2255A4
-Williamsburg;Cerulean Blue;1200;PB35;OPAQUE;#2C7FB8
-Williamsburg;Prussian Blue;1300;PB27;TRANSPARENT;#16323C
-Williamsburg;Phthalo Blue;1400;PB15;TRANSPARENT;#0E3F73
-Williamsburg;Indanthrone Blue;1500;PB60;TRANSPARENT;#1E2A52
-Williamsburg;Cobalt Teal;1600;PG50;OPAQUE;#5AA08C
-Williamsburg;Viridian;1700;PG18;TRANSPARENT;#0F6B54
-Williamsburg;Phthalo Green;1800;PG7;TRANSPARENT;#0A5A46
-Williamsburg;Chromium Oxide Green;1900;PG17;OPAQUE;#4A6B42
-Williamsburg;Cobalt Green;1910;PG19;SEMI_OPAQUE;#2E8A6B
-Williamsburg;Sap Green;1920;PY150 PG7;TRANSPARENT;#4C6B23
+# COUVERTURE : les 180 teintes de la gamme, au complet - series regulieres, safflower
+# (prefixe SF), iridescentes et interference comprises.
+#
+# PROVENANCE : noms, references, pigments et opacite releves le 15/09/2026 dans les
+# donnees de la fiche pigments du fabricant (goldenartistcolors.com/products/
+# williamsburg-artist-oil-colors/oil-colors/pigment-data), qui publie pour chaque
+# couleur la liste complete de ses index couleur. 170 teintes portent verified=true.
+#
+# LES 10 AUTRES : les iridescentes et les interference sont declarees "N/A" par le
+# fabricant, faute d'index couleur. Elles reprennent le pseudo-code EFFEKT / ALU des
+# gammes Schmincke et restent marquees verified=false.
+#
+# HEX : le fabricant ne publie une valeur colorimetrique que pour 34 teintes, reprises
+# telles quelles. Pour les autres on garde le hex de l'ancien fichier quand le nom
+# correspond, sinon la case reste vide et la couleur est derivee des pigments.
+#
+# Les nuanciers peints du fabricant n'ont PAS servi a mesurer les teintes : ce sont des
+# photographies d'empatements ou le blanc de titane se lit #D7D7D4. Le biais de clarte
+# est d'environ 6 points, bien davantage sur les transparentes, et une correction
+# d'exposition calee sur les blancs degrade encore le resultat (ecart median a la
+# valeur officielle : 8,6 avant, 9,4 apres).
+brand;name;code;pigments;opacity;hex;verified
+Williamsburg;Italian Terra Verte;6000013;PG23;TRANSPARENT;;true
+Williamsburg;Italian Lemon Ochre;6000014;PY43;SEMI_OPAQUE;;true
+Williamsburg;Italian Yellow Ochre;6000015;PY43;SEMI_OPAQUE;#C69038;true
+Williamsburg;Italian Orange Ochre;6000016;PBr7 PY43;SEMI_OPAQUE;;true
+Williamsburg;Italian Green Ochre;6000017;PBr7 PY43;SEMI_OPAQUE;;true
+Williamsburg;Italian Pompeii Red;6000018;PR102;SEMI_OPAQUE;#8E4128;true
+Williamsburg;Italian Rosso Veneto;6000019;PR102;SEMI_OPAQUE;;true
+Williamsburg;Italian Pozzuoli Earth;6000020;PR102;SEMI_OPAQUE;;true
+Williamsburg;Italian Terra Rosa;6000021;PR102;SEMI_OPAQUE;;true
+Williamsburg;Italian Black Roman Earth;6000022;PBr7 PBk6;SEMI_OPAQUE;;true
+Williamsburg;Italian Burnt Sienna;6000023;PBr7;SEMI_OPAQUE;#7A3A22;true
+Williamsburg;Italian Raw Sienna;6000024;PY43;SEMI_OPAQUE;#9A6B32;true
+Williamsburg;Italian Raw Umber;6000025;PBr7;SEMI_OPAQUE;;true
+Williamsburg;French Yellow Ochre Deep;6000040;PY43;SEMI_OPAQUE;;true
+Williamsburg;French Raw Sienna;6000041;PY43;SEMI_OPAQUE;#A87A3C;true
+Williamsburg;French Ochre Havane;6000042;PY43 PR102;SEMI_OPAQUE;;true
+Williamsburg;French Rouge Indien;6000043;PR102;SEMI_OPAQUE;;true
+Williamsburg;French Brown Ochre;6000044;PR102 PY43 PBk11;SEMI_OPAQUE;;true
+Williamsburg;French Burnt Umber;6000045;PBr7;SEMI_OPAQUE;;true
+Williamsburg;French Burnt Ochre;6000046;PR102 PY43 PBk11;SEMI_OPAQUE;;true
+Williamsburg;French Raw Umber;6000047;PY43 PBk11;SEMI_OPAQUE;;true
+Williamsburg;French Ardoise Grey;6000050;PBk11 PG17;TRANSPARENT;;true
+Williamsburg;French Light Sienna;6000051;PY43 PBk11;SEMI_OPAQUE;;true
+Williamsburg;French Terre Verte;6000052;PG23;TRANSPARENT;;true
+Williamsburg;Titanium White;6000101;PW6;OPAQUE;#FEFEFE;true
+Williamsburg;Flake White;6000104;PW1;SEMI_OPAQUE;#F6F3EA;true
+Williamsburg;Titanium - Zinc White;6000121;PW6 PW4;OPAQUE;#F7F5F1;true
+Williamsburg;Zinc White;6000141;PW4;SEMI_OPAQUE;#FEFEFE;true
+Williamsburg;Titan Buff;6000160;PW6 PY42 PR101;OPAQUE;#E0D4BA;true
+Williamsburg;Unbleached Titanium;6000181;PW6;OPAQUE;#DCC9A8;true
+Williamsburg;Unbleached Titanium Pale;6000191;PW6;OPAQUE;;true
+Williamsburg;Brilliant Yellow Extra Pale;6000202;PW6 PY74;OPAQUE;;true
+Williamsburg;Brilliant Yellow Pale;6000212;PW6 PY74;OPAQUE;;true
+Williamsburg;Nickel Yellow;6000224;PY53;OPAQUE;#EBD98A;true
+Williamsburg;Cadmium Lemon;6000246;PY35;OPAQUE;;true
+Williamsburg;Permanent Lemon;6000263;PY3 PW6 PG18;SEMI_OPAQUE;#F6E64A;true
+Williamsburg;Cadmium Yellow Light;6000286;PY35;OPAQUE;#FFE348;true
+Williamsburg;Permanent Yellow Light;6000303;PY3;SEMI_OPAQUE;;true
+Williamsburg;Olive Green;6000322;PY129 PG36 PY42;SEMI_TRANSPARENT;;true
+Williamsburg;Cadmium Yellow Medium;6000366;PY35;OPAQUE;#FFC613;true
+Williamsburg;Permanent Yellow Medium;6000383;PY74 PY65;SEMI_OPAQUE;;true
+Williamsburg;Cadmium Yellow Deep;6000406;PY35 PO20;OPAQUE;#F2A000;true
+Williamsburg;Cadmium Yellow Extra Deep;6000416;PY35 PO20;OPAQUE;;true
+Williamsburg;Naples Yellow Reddish;6000422;PW6 PY42 PO73 PY74;OPAQUE;#E0AE72;true
+Williamsburg;Permanent Yellow Deep;6000423;PY65;SEMI_OPAQUE;;true
+Williamsburg;Naples Yellow;6000442;PW6 PY42 PV15 PY65 PY175;OPAQUE;;true
+Williamsburg;Naples Yellow Italian;6000461;PW6 PBr24 PY35;OPAQUE;#E9CE8E;true
+Williamsburg;Jaune Brilliant;6000463;PW6 PY42 PY74 PO73;OPAQUE;;true
+Williamsburg;Cobalt Yellow;6000508;PY40;TRANSPARENT;;true
+Williamsburg;Alizarin Yellow;6000514;PY83 PY42;TRANSPARENT;;true
+Williamsburg;Green Gold;6000518;PY129;SEMI_TRANSPARENT;#667400;true
+Williamsburg;Indian Yellow;6000524;PY83;TRANSPARENT;#EE9A14;true
+Williamsburg;Alizarin Orange;6000534;PY83 PR177;TRANSPARENT;;true
+Williamsburg;Permanent Orange;6000542;PY154 PR112;SEMI_OPAQUE;#F0821A;true
+Williamsburg;Cadmium Orange;6000546;PO20 PY35;OPAQUE;#ED4B00;true
+Williamsburg;Permanent Red Orange;6000563;PO36;SEMI_OPAQUE;;true
+Williamsburg;Montserrat Orange;6000583;PW6 PY154 PO73 PV19;OPAQUE;;true
+Williamsburg;Cadmium Red Light;6000587;PR108;OPAQUE;#D9341F;true
+Williamsburg;Cadmium Red Vermilion;6000597;PR108;OPAQUE;;true
+Williamsburg;Cadmium Red Medium;6000607;PR108;OPAQUE;#B23738;true
+Williamsburg;Fanchon Red;6000624;PR112;SEMI_OPAQUE;;true
+Williamsburg;Cadmium Red Deep;6000647;PR108;OPAQUE;#B0221F;true
+Williamsburg;Cadmium Red Purple;6000657;PR108;OPAQUE;;true
+Williamsburg;Cadmium Purple;6000658;PR108;OPAQUE;;true
+Williamsburg;Quinacridone Red;6000665;PV19;TRANSPARENT;#B91D14;true
+Williamsburg;Alizarin Crimson;6000684;PR83;TRANSPARENT;#8E1B2E;true
+Williamsburg;Carl's Crimson;6000685;PR187;TRANSPARENT;;true
+Williamsburg;Perylene Crimson;6000686;PR179;TRANSPARENT;;true
+Williamsburg;Permanent Crimson;6000687;PR177;TRANSPARENT;#A81830;true
+Williamsburg;Manganese Violet;6000704;PV16;SEMI_TRANSPARENT;;true
+Williamsburg;Persian Rose;6000713;PW6 PR112 PY154 PV19;OPAQUE;#A85A52;true
+Williamsburg;Dianthus Pink;6000724;PW6 PV19;OPAQUE;;true
+Williamsburg;Cobalt Violet Light;6000728;PV49;TRANSPARENT;;true
+Williamsburg;Provence Violet Reddish;6000734;PW6 PV19;OPAQUE;;true
+Williamsburg;Canton Rose;6000744;PW6 PY42 PR254 PR101;OPAQUE;;true
+Williamsburg;Cobalt Violet Deep;6000748;PV14;SEMI_TRANSPARENT;;true
+Williamsburg;Provence Violet Bluish;6000754;PW6 PV23;OPAQUE;#5A4A8C;true
+Williamsburg;Ultramarine Violet;6000764;PV15;TRANSPARENT;#4B4069;true
+Williamsburg;Ultramarine Pink;6000774;PV15;TRANSPARENT;;true
+Williamsburg;Quinacridone Magenta;6000775;PR122;TRANSPARENT;#870412;true
+Williamsburg;Quinacridone Violet;6000785;PV19;TRANSPARENT;#87001D;true
+Williamsburg;Cobalt Teal Greenish;6000786;PG50;OPAQUE;;true
+Williamsburg;Egyptian Violet;6000805;PV23;SEMI_TRANSPARENT;;true
+Williamsburg;King's Blue;6000813;PW6 PB29 PB15;OPAQUE;;true
+Williamsburg;Cobalt Teal Bluish;6000817;PG50;OPAQUE;;true
+Williamsburg;Sevres Blue;6000823;PW6 PB15;OPAQUE;;true
+Williamsburg;Cerulean Blue (Genuine);6000848;PB35;OPAQUE;;true
+Williamsburg;Cerulean Blue French;6000857;PB36;SEMI_OPAQUE;;true
+Williamsburg;Turquoise;6000863;PW6 PG7 PB15;OPAQUE;;true
+Williamsburg;Quinacridone Gold Brown;6000874;PR206 PO48;TRANSPARENT;;true
+Williamsburg;Cobalt Turquoise Greenish;6000887;PB36;OPAQUE;;true
+Williamsburg;Cobalt Turquoise Bluish;6000907;PB36;OPAQUE;;true
+Williamsburg;Cobalt Blue;6000927;PB28;SEMI_OPAQUE;#0052B4;true
+Williamsburg;Cobalt Blue Deep;6000937;PB28;SEMI_OPAQUE;;true
+Williamsburg;Ultramarine Blue;6000942;PB29;TRANSPARENT;#1C1B7C;true
+Williamsburg;Ultramarine Blue French;6000962;PV15 PB29;TRANSPARENT;;true
+Williamsburg;Prussian Blue;6000982;PB27;SEMI_TRANSPARENT;#16323C;true
+Williamsburg;Indanthrone Blue;6000985;PB60;SEMI_TRANSPARENT;#1E2A52;true
+Williamsburg;Phthalo Blue;6001004;PB15;TRANSPARENT;#0E3F73;true
+Williamsburg;Bohemian Green Earth;6001021;PY42 PBk11 PR101;OPAQUE;;true
+Williamsburg;Phthalo Turquoise;6001024;PG7 PB15;TRANSPARENT;;true
+Williamsburg;Indigo;6001043;PBr7 PB27;SEMI_OPAQUE;;true
+Williamsburg;Payne's Grey (Violet);6001063;PBr7 PV23 PB29;SEMI_OPAQUE;;true
+Williamsburg;Veronese Green;6001103;PW6 PG7 PY3;OPAQUE;;true
+Williamsburg;Earth Green;6001122;PY43 PBk11 PG7;SEMI_OPAQUE;;true
+Williamsburg;Cadmium Green Light;6001146;PY35 PG18;OPAQUE;;true
+Williamsburg;Cinnabar Green Light;6001153;PY3 PW6 PB29 PB15;SEMI_OPAQUE;;true
+Williamsburg;Permanent Green Light;6001163;PY3 PG7;SEMI_OPAQUE;#007740;true
+Williamsburg;Cadmium Green;6001186;PG18 PY35;OPAQUE;;true
+Williamsburg;Chromium Oxide Green;6001223;PG17;OPAQUE;#3C6B3B;true
+Williamsburg;Viridian;6001245;PG18;SEMI_TRANSPARENT;#0F6B54;true
+Williamsburg;Cobalt Green;6001250;PG26;OPAQUE;#305A4D;true
+Williamsburg;Permanent Green;6001263;PY74 PG7 PY65;SEMI_OPAQUE;;true
+Williamsburg;Phthalo Green-Yellowish;6001264;PG36;TRANSPARENT;;true
+Williamsburg;Phthalo Green;6001284;PG7;TRANSPARENT;#0A5A46;true
+Williamsburg;Sap Green;6001303;PY42 PY129 PG7;SEMI_TRANSPARENT;#4C6B23;true
+Williamsburg;Courbet Green;6001323;PR102 PY65 PB27;SEMI_OPAQUE;;true
+Williamsburg;Mars Yellow Light;6001342;PY42;OPAQUE;;true
+Williamsburg;Mars Yellow Deep;6001362;PY42 PR101;OPAQUE;;true
+Williamsburg;Mars Orange;6001382;PR101 PY42;OPAQUE;;true
+Williamsburg;Yellow Ochre;6001401;PY43;SEMI_OPAQUE;;true
+Williamsburg;Mars Red Light;6001402;PR101;OPAQUE;;true
+Williamsburg;Mars Red;6001422;PR101;OPAQUE;#9E3A28;true
+Williamsburg;Mars Violet;6001442;PR101;OPAQUE;;true
+Williamsburg;Stil de Grain;6001464;PY42;TRANSPARENT;;true
+Williamsburg;Italian Pink;6001474;PY42 PR101;SEMI_TRANSPARENT;;true
+Williamsburg;Brown Pink;6001484;PR101;SEMI_TRANSPARENT;;true
+Williamsburg;Dutch Brown (Transparent);6001494;PBr6;SEMI_TRANSPARENT;;true
+Williamsburg;Raw Sienna;6001501;PY43;SEMI_OPAQUE;#A77846;true
+Williamsburg;Cyprus Orange;6001512;PY43 PY42 PO73;SEMI_OPAQUE;;true
+Williamsburg;Burnt Sienna;6001521;PR102;SEMI_OPAQUE;#7A4029;true
+Williamsburg;Yellow Ochre Burnt;6001541;PY43 PR102;OPAQUE;;true
+Williamsburg;Brown Ochre;6001561;PY43;OPAQUE;#8E6428;true
+Williamsburg;Red Ochre;6001581;PR102;OPAQUE;;true
+Williamsburg;Spanish Earth;6001601;PR102;OPAQUE;;true
+Williamsburg;Raw Umber;6001621;PBr7;SEMI_OPAQUE;#4A433E;true
+Williamsburg;Brown Umber;6001631;PBr7;SEMI_OPAQUE;;true
+Williamsburg;Turkey Umber;6001641;PBr7 PG7;SEMI_OPAQUE;;true
+Williamsburg;Burnt Umber;6001661;PBr7;SEMI_OPAQUE;#473930;true
+Williamsburg;Red Umber;6001671;PBr7;SEMI_OPAQUE;;true
+Williamsburg;Van Dyke Brown;6001680;PBk9 PBr6;SEMI_OPAQUE;;true
+Williamsburg;Davy's Grey Deep;6001701;PBk19;SEMI_OPAQUE;;true
+Williamsburg;Graphite Grey;6001702;PBk10;OPAQUE;#5E5E5E;true
+Williamsburg;Payne's Grey;6001703;PB29 PBk9;SEMI_OPAQUE;#2C3149;true
+Williamsburg;Ivory Black;6001721;PBk9;SEMI_OPAQUE;#221F1C;true
+Williamsburg;Cold Black;6001732;PB29 PBk9;OPAQUE;;true
+Williamsburg;Mars Black;6001742;PBk11;OPAQUE;#2D2D2D;true
+Williamsburg;Lamp Black;6001761;PBk6;OPAQUE;;true
+Williamsburg;German Earth;6001792;PBk11;OPAQUE;;true
+Williamsburg;Interference Blue;6001803;EFFEKT;TRANSPARENT;;false
+Williamsburg;Interference Violet;6001813;EFFEKT;TRANSPARENT;;false
+Williamsburg;Iridescent Pale Gold;6001823;EFFEKT;SEMI_OPAQUE;;false
+Williamsburg;Iridescent Silver;6001833;ALU;SEMI_OPAQUE;;false
+Williamsburg;Iridescent Pewter;6001843;ALU;SEMI_OPAQUE;;false
+Williamsburg;Iridescent Bronze;6001853;EFFEKT;SEMI_OPAQUE;;false
+Williamsburg;Iridescent Pearl White;6001863;EFFEKT;SEMI_OPAQUE;;false
+Williamsburg;Interference Red;6001873;EFFEKT;TRANSPARENT;;false
+Williamsburg;Iridescent Copper;6001883;EFFEKT;SEMI_OPAQUE;;false
+Williamsburg;Interference Green;6001893;EFFEKT;TRANSPARENT;;false
+Williamsburg;Neutral Gray N2;6001912;PBr7 PBk6 PY43 PW6;;#202425;true
+Williamsburg;Neutral Gray N4;6001914;PW6 PY43 PR102 PBk6;;#575A5E;true
+Williamsburg;Neutral Gray N6;6001916;PW6 PY43 PR102 PBk6;;#9FA0A4;true
+Williamsburg;Neutral Gray N8;6001918;PW6 PY43 PR102 PBk6;;#D6D7D9;true
+Williamsburg;Transparent Yellow Iron Oxide;6001920;PY42;TRANSPARENT;#A95B15;true
+Williamsburg;Transparent Red Iron Oxide;6001922;PR101;TRANSPARENT;#84301E;true
+Williamsburg;Pyrrole Red;6001925;PR254;SEMI_OPAQUE;#C23739;true
+Williamsburg;Pyrrole Orange;6001927;PO73;SEMI_OPAQUE;#F3491E;true
+Williamsburg;Nickel Azo Yellow;6001928;PY150;TRANSPARENT;#AF791B;true
+Williamsburg;Bismuth Vanadate Yellow;6001929;PY184;OPAQUE;#F7ED43;true
+Williamsburg;SF Italian Terra Verte;6003013;PG23;TRANSPARENT;;true
+Williamsburg;SF French Ardoise Grey;6003050;PBk11 PG17;TRANSPARENT;;true
+Williamsburg;SF Titanium White;6003101;PW6;OPAQUE;;true
+Williamsburg;SF Porcelain White;6003103;PW5;SEMI_OPAQUE;;true
+Williamsburg;SF Flake White;6003104;PW1;SEMI_OPAQUE;;true
+Williamsburg;SF Cobalt Violet Light;6003728;PV49;TRANSPARENT;;true
+Williamsburg;SF Ultramarine Violet;6003764;PV15;TRANSPARENT;;true
+Williamsburg;SF Ultramarine Pink;6003774;PV15;TRANSPARENT;;true
+Williamsburg;SF Cerulean Blue French;6003857;PB36;SEMI_OPAQUE;;true
+Williamsburg;SF Ultramarine Blue;6003942;PB29;TRANSPARENT;;true
+Williamsburg;SF Ultramarine Blue French;6003962;PV15 PB29;TRANSPARENT;;true

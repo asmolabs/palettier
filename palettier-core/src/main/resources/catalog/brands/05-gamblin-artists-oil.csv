@@ -1,70 +1,118 @@
 # Gamblin - Artist's Oil Colors
 #
-# COUVERTURE : partielle, environ 60 teintes sur les ~110 de la gamme.
-# Gamblin publie une vitesse de sechage par couleur ; ici elle est deduite du pigment,
-# ce qui donne le meme classement dans l'immense majorite des cas.
-brand;name;code;pigments;opacity;hex
-Gamblin;Titanium White;1810;PW6;OPAQUE;#F7F5F0
-Gamblin;Titanium Zinc White;1815;PW6 PW4;OPAQUE;#F7F5F1
-Gamblin;Flake White Replacement;1790;PW6 PW4;OPAQUE;#F7F4EC
-Gamblin;Radiant White;1730;PW6;OPAQUE;#F9F8F4
-Gamblin;Ivory Black;1250;PBk9;SEMI_OPAQUE;#221F1C
-Gamblin;Chromatic Black;1140;PG36 PR206;TRANSPARENT;#1E2220
-Gamblin;Portland Grey Light;1650;PW6 PBk11;OPAQUE;#C2BEB8
-Gamblin;Portland Grey Medium;1655;PW6 PBk11;OPAQUE;#8E8A85
-Gamblin;Portland Grey Deep;1660;PW6 PBk11;OPAQUE;#5A5754
-Gamblin;Payne's Grey;1560;PB29 PBk9;SEMI_TRANSPARENT;#3A4552
-Gamblin;Raw Umber;1700;PBr7;SEMI_OPAQUE;#4E4133
-Gamblin;Burnt Umber;1090;PBr7;SEMI_OPAQUE;#4A3427
-Gamblin;Raw Sienna;1690;PBr7;SEMI_TRANSPARENT;#9A6B32
-Gamblin;Burnt Sienna;1080;PBr7;TRANSPARENT;#7A3A22
-Gamblin;Transparent Earth Yellow;1965;PY42;TRANSPARENT;#B87A1E
-Gamblin;Transparent Earth Orange;1960;PR101;TRANSPARENT;#A04A16
-Gamblin;Transparent Earth Red;1970;PR101;TRANSPARENT;#8A2E15
-Gamblin;Venetian Red;1990;PR101;OPAQUE;#8E4230
-Gamblin;Indian Red;1330;PR101;OPAQUE;#8A4A46
-Gamblin;Yellow Ochre;2130;PY43;SEMI_OPAQUE;#C08A34
-Gamblin;Terre Verte;1930;PG23;TRANSPARENT;#6B7A5A
-Gamblin;Naples Yellow Hue;1440;PW6 PY42 PR101;OPAQUE;#E9CE8E
-Gamblin;Hansa Yellow Light;1290;PY3;SEMI_TRANSPARENT;#F5DC2A
-Gamblin;Hansa Yellow Medium;1300;PY74;SEMI_TRANSPARENT;#F7C51B
-Gamblin;Hansa Yellow Deep;1295;PY65;SEMI_OPAQUE;#F0A81B
-Gamblin;Cadmium Lemon;1110;PY35;OPAQUE;#F7DE1A
-Gamblin;Cadmium Yellow Light;1130;PY35;OPAQUE;#F6C500
-Gamblin;Cadmium Yellow Medium;1135;PY35;OPAQUE;#F5B800
-Gamblin;Cadmium Yellow Deep;1120;PY37;OPAQUE;#F2A000
-Gamblin;Indian Yellow;1340;PY83 PO62;TRANSPARENT;#EE9A14
-Gamblin;Nickel Titanate Yellow;1470;PY53;OPAQUE;#EBD98A
-Gamblin;Cadmium Orange;1125;PO20;OPAQUE;#EE7318
-Gamblin;Cadmium Orange Deep;1128;PO20;OPAQUE;#E86418
-Gamblin;Perinone Orange;1580;PO43;TRANSPARENT;#E85A14
-Gamblin;Napthol Scarlet;1450;PR188;SEMI_TRANSPARENT;#D62E2A
-Gamblin;Cadmium Red Light;1150;PR108;OPAQUE;#D9341F
-Gamblin;Cadmium Red Medium;1155;PR108;OPAQUE;#CE2A22
-Gamblin;Cadmium Red Deep;1145;PR108;OPAQUE;#B0221F
-Gamblin;Perylene Red;1590;PR149;SEMI_OPAQUE;#C8302E
-Gamblin;Alizarin Permanent;1010;PR177 PV19;TRANSPARENT;#93182F
-Gamblin;Quinacridone Red;1670;PV19;TRANSPARENT;#C41F4A
-Gamblin;Quinacridone Magenta;1665;PR122;TRANSPARENT;#A61B5A
-Gamblin;Quinacridone Violet;1675;PV19;TRANSPARENT;#B01B5A
-Gamblin;Dioxazine Purple;1200;PV23;TRANSPARENT;#3A1B52
-Gamblin;Manganese Violet;1410;PV16;SEMI_OPAQUE;#6B3A78
-Gamblin;Ultramarine Violet;2010;PV15;SEMI_TRANSPARENT;#5A4A8C
-Gamblin;Ultramarine Blue;2000;PB29;TRANSPARENT;#1F2E7A
-Gamblin;Cobalt Blue;1170;PB28;SEMI_OPAQUE;#2255A4
-Gamblin;Cerulean Blue;1160;PB35;OPAQUE;#2C7FB8
-Gamblin;Cerulean Blue Hue;1165;PB35 PW6;OPAQUE;#3A8CC0
-Gamblin;Manganese Blue Hue;1400;PB15;TRANSPARENT;#0F7AA8
-Gamblin;Phthalo Blue;1600;PB15;TRANSPARENT;#0E3F73
-Gamblin;Prussian Blue;1640;PB27;TRANSPARENT;#16323C
-Gamblin;Indanthrone Blue;1350;PB60;TRANSPARENT;#1E2A52
-Gamblin;Cobalt Teal;1185;PG50;OPAQUE;#5AA08C
-Gamblin;Viridian;2020;PG18;TRANSPARENT;#0F6B54
-Gamblin;Phthalo Green;1610;PG7;TRANSPARENT;#0A5A46
-Gamblin;Phthalo Emerald;1615;PG36;TRANSPARENT;#0F5E3A
-Gamblin;Chromium Oxide Green;1190;PG17;OPAQUE;#4A6B42
-Gamblin;Cobalt Green;1180;PG19;SEMI_OPAQUE;#2E8A6B
-Gamblin;Permanent Green Light;1620;PG7 PY74;SEMI_OPAQUE;#5AA82E
-Gamblin;Sap Green;1720;PY129 PG36;TRANSPARENT;#4C6B23
-Gamblin;Olive Green;1520;PY129 PG36 PBk9;TRANSPARENT;#4C5B23
-Gamblin;Green Gold;1280;PY129;TRANSPARENT;#8A8A1E
+# COUVERTURE : les 98 teintes publiees par le fabricant, au complet.
+#
+# PROVENANCE : noms, pigments et opacite releves le 15/09/2026 sur la fiche de gamme
+# du fabricant (gamblincolors.com/oil-painting/color/artist-grade-oil-colors/), qui
+# imprime pour chaque couleur "Pigment: ... (codes)" puis "Lightfastness X, Series N,
+# OPACITE". 94 teintes portent donc verified=true.
+#
+# LES 4 AUTRES : Copper, Pale Gold, Rich Gold et Silver n'ont aucun index couleur.
+# Elles reprennent le pseudo-code EFFEKT / ALU deja employe par les gammes Schmincke
+# pour les pigments a effet, et restent marquees verified=false.
+#
+# HEX : Gamblin ne publie aucune valeur colorimetrique. La colonne reprend celle de
+# l'ancien fichier quand le nom correspond ; sinon elle reste vide et l'application
+# derive la couleur des pigments en la marquant comme approximative. 39 teintes sont
+# dans ce cas.
+#
+# REFERENCES PRODUIT : le site ne les affiche pas ; elles viennent de l'ancien fichier.
+brand;name;code;pigments;opacity;hex;verified
+Gamblin;Cadmium Chartreuse;;PY35 PG36;OPAQUE;;true
+Gamblin;Cadmium Lemon;1110;PY35;OPAQUE;#F7DE1A;true
+Gamblin;Cadmium Yellow Light;1130;PY35;OPAQUE;#F6C500;true
+Gamblin;Cadmium Yellow Medium;1135;PY37;OPAQUE;#F5B800;true
+Gamblin;Cadmium Yellow Deep;1120;PY37;OPAQUE;#F2A000;true
+Gamblin;Nickel Titanate Yellow;1470;PY53;OPAQUE;#EBD98A;true
+Gamblin;Hansa Yellow Light;1290;PY3;SEMI_TRANSPARENT;#F5DC2A;true
+Gamblin;Hansa Yellow Medium;1300;PY74;SEMI_TRANSPARENT;#F7C51B;true
+Gamblin;Hansa Yellow Deep;1295;PY75;SEMI_TRANSPARENT;#F0A81B;true
+Gamblin;India Yellow;;PY83;TRANSPARENT;;true
+Gamblin;Cadmium Orange;1125;PO20;OPAQUE;#EE7318;true
+Gamblin;Cadmium Orange Deep;1128;PO20;OPAQUE;#E86418;true
+Gamblin;Permanent Orange;;PO62;SEMI_TRANSPARENT;;true
+Gamblin;Transparent Orange;;PY83 PR149;TRANSPARENT;;true
+Gamblin;Alizarin Crimson;;PR83;TRANSPARENT;;true
+Gamblin;Alizarin Crimson Permanent;;PR177;TRANSPARENT;;true
+Gamblin;Cadmium Red Light;1150;PR108;OPAQUE;#D9341F;true
+Gamblin;Cadmium Red Medium;1155;PR108;OPAQUE;#CE2A22;true
+Gamblin;Cadmium Red Deep;1145;PR108;OPAQUE;#B0221F;true
+Gamblin;Napthol Red;;PR112;SEMI_TRANSPARENT;;true
+Gamblin;Napthol Scarlet;1450;PR188;SEMI_TRANSPARENT;#D62E2A;true
+Gamblin;Brown Pink;;PR101 PR149;TRANSPARENT;;true
+Gamblin;Perylene Red;1590;PR149;TRANSPARENT;#C8302E;true
+Gamblin;Quinacridone Magenta;1665;PR122;TRANSPARENT;#A61B5A;true
+Gamblin;Quinacridone Red;1670;PV19;TRANSPARENT;#C41F4A;true
+Gamblin;Quinacridone Violet;1675;PV19;TRANSPARENT;#B01B5A;true
+Gamblin;Cobalt Violet;;PV14;SEMI_TRANSPARENT;;true
+Gamblin;Ultramarine Violet;2010;PV15;TRANSPARENT;#5A4A8C;true
+Gamblin;Dioxazine Purple;1200;PV23;TRANSPARENT;#3A1B52;true
+Gamblin;Manganese Violet;1410;PV16;SEMI_TRANSPARENT;#6B3A78;true
+Gamblin;Cerulean Blue;1160;PB36;OPAQUE;#2C7FB8;true
+Gamblin;Cerulean Blue Hue;1165;PW6 PB15;OPAQUE;#3A8CC0;true
+Gamblin;Cobalt Blue;1170;PB28;SEMI_TRANSPARENT;#2255A4;true
+Gamblin;Cobalt Teal;1185;PB28;OPAQUE;#5AA08C;true
+Gamblin;Manganese Blue Hue;1400;PB15;TRANSPARENT;#0F7AA8;true
+Gamblin;Phthalo Blue;1600;PB15;TRANSPARENT;#0E3F73;true
+Gamblin;Phthalo Turquoise;;PB15 PG7;TRANSPARENT;;true
+Gamblin;Prussian Blue;1640;PB27;SEMI_TRANSPARENT;#16323C;true
+Gamblin;Indanthrone Blue;1350;PB60;SEMI_TRANSPARENT;#1E2A52;true
+Gamblin;Ultramarine Blue;2000;PB29;TRANSPARENT;#1F2E7A;true
+Gamblin;Cadmium Green;;PY35 PG18;OPAQUE;;true
+Gamblin;Cobalt Green;1180;PG19;SEMI_TRANSPARENT;#2E8A6B;true
+Gamblin;Permanent Green Light;1620;PY74 PG7;SEMI_TRANSPARENT;#5AA82E;true
+Gamblin;Emerald Green;;PG36 PW6 PY74;SEMI_TRANSPARENT;;true
+Gamblin;Phthalo Green;1610;PG7;TRANSPARENT;#0A5A46;true
+Gamblin;Phthalo Emerald;1615;PG36;TRANSPARENT;#0F5E3A;true
+Gamblin;Sap Green;1720;PY83 PB15;TRANSPARENT;#4C6B23;true
+Gamblin;Terre Verte;1930;PBr7 PG18;TRANSPARENT;#6B7A5A;true
+Gamblin;Viridian;2020;PG18;TRANSPARENT;#0F6B54;true
+Gamblin;Chromium Oxide Green;1190;PG17;OPAQUE;#4A6B42;true
+Gamblin;Olive Green;1520;PBr7 PY75 PB29;SEMI_TRANSPARENT;#4C5B23;true
+Gamblin;Green Gold;1280;PY129;SEMI_TRANSPARENT;#8A8A1E;true
+Gamblin;Burnt Sienna;1080;PBr7;SEMI_TRANSPARENT;#7A3A22;true
+Gamblin;Burnt Umber;1090;PBr7;SEMI_TRANSPARENT;#4A3427;true
+Gamblin;India Red;;PR101;OPAQUE;;true
+Gamblin;Venetian Red;1990;PR101;OPAQUE;#8E4230;true
+Gamblin;Raw Sienna;1690;PBr7;SEMI_TRANSPARENT;#9A6B32;true
+Gamblin;Raw Umber;1700;PBr7;SEMI_TRANSPARENT;#4E4133;true
+Gamblin;Naples Yellow;;PW6 PY75 PY43;OPAQUE;;true
+Gamblin;Naples Orange;;PW6 PY43 PR188;OPAQUE;;true
+Gamblin;Gold Ochre;;PY43 PY83;TRANSPARENT;;true
+Gamblin;Yellow Ochre;2130;PY43;SEMI_TRANSPARENT;#C08A34;true
+Gamblin;Transparent Earth Yellow;1965;PY42;TRANSPARENT;#B87A1E;true
+Gamblin;Transparent Earth Orange;1960;PY42 PR101;TRANSPARENT;#A04A16;true
+Gamblin;Transparent Earth Red;1970;PR101;TRANSPARENT;#8A2E15;true
+Gamblin;Asphaltum;;PR101 PB29;TRANSPARENT;;true
+Gamblin;Van Dyke Brown;;PBr7 PB29;SEMI_TRANSPARENT;;true
+Gamblin;Ivory Black;1250;PBk9;SEMI_TRANSPARENT;#221F1C;true
+Gamblin;Mars Black;;PBk11;OPAQUE;;true
+Gamblin;Chromatic Black;1140;PG36 PV19;TRANSPARENT;#1E2220;true
+Gamblin;Black Spinel;;PBk28;OPAQUE;;true
+Gamblin;Payne’s Grey;1560;PBr7 PB29;TRANSPARENT;#3A4552;true
+Gamblin;Portland Grey Light;1650;PW6 PW4 PBr7 PBk11;OPAQUE;#C2BEB8;true
+Gamblin;Portland Grey Medium;1655;PW6 PW4 PBr7 PBk11;OPAQUE;#8E8A85;true
+Gamblin;Portland Grey Deep;1660;PW6 PW4 PBr7 PBk11;OPAQUE;#5A5754;true
+Gamblin;Titanium Buff;;PW6;OPAQUE;;true
+Gamblin;Portland Warm Grey;;PW6 PR101 PBk11;OPAQUE;;true
+Gamblin;Portland Cool Grey;;PW6 PB29 PBk11;OPAQUE;;true
+Gamblin;Warm White;;PW6 PY75 PO62 PW4;OPAQUE;;true
+Gamblin;Cool White;;PW6 PB15 PW4;OPAQUE;;true
+Gamblin;Titanium White;1810;PW6;OPAQUE;#F7F5F0;true
+Gamblin;Titanium Zinc White;1815;PW6 PW4;OPAQUE;#F7F5F1;true
+Gamblin;Radiant White;1730;PW6;OPAQUE;#F9F8F4;true
+Gamblin;Flake White Replacement;1790;PW6;OPAQUE;#F7F4EC;true
+Gamblin;Zinc White;;PW4;SEMI_TRANSPARENT;;true
+Gamblin;Fast Dry Titanium White;;PW6;OPAQUE;;true
+Gamblin;Radiant Lemon;;PY3 PW6;OPAQUE;;true
+Gamblin;Radiant Yellow;;PY83 PW6;OPAQUE;;true
+Gamblin;Radiant Red;;PR149 PW6;OPAQUE;;true
+Gamblin;Radiant Magenta;;PV19 PW6;OPAQUE;;true
+Gamblin;Radiant Violet;;PV23 PW6;OPAQUE;;true
+Gamblin;Radiant Blue;;PB29 PW6;OPAQUE;;true
+Gamblin;Radiant Turquoise;;PG7 PB15 PW6;OPAQUE;;true
+Gamblin;Radiant Green;;PG36 PY3 PW6;OPAQUE;;true
+Gamblin;Copper;;EFFEKT;OPAQUE;;false
+Gamblin;Pale Gold;;EFFEKT;OPAQUE;;false
+Gamblin;Rich Gold;;EFFEKT;OPAQUE;;false
+Gamblin;Silver;;ALU;OPAQUE;;false

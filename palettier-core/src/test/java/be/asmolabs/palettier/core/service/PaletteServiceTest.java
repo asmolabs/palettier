@@ -107,7 +107,7 @@ class PaletteServiceTest {
                 assertThat(paint.getBrand()).isEqualTo("Winsor & Newton"));
         assertThat(zorn.getPaints()).extracting(OilPaint::getName)
                 .containsExactlyInAnyOrder("Titanium White", "Yellow Ochre",
-                        "Cadmium Red Light", "Ivory Black");
+                        "Cadmium Scarlet", "Ivory Black");
     }
 
     @Test
@@ -142,7 +142,7 @@ class PaletteServiceTest {
 
         double withBlack = warmth(mixedWith(white, named(zorn, "Ivory Black")));
         double withOchre = warmth(mixedWith(white, named(zorn, "Yellow Ochre")));
-        double withRed = warmth(mixedWith(white, named(zorn, "Cadmium Red Light")));
+        double withRed = warmth(mixedWith(white, named(zorn, "Cadmium Scarlet")));
 
         assertThat(withBlack).isLessThan(withOchre).isLessThan(withRed);
     }
@@ -198,10 +198,14 @@ class PaletteServiceTest {
     @Test
     @DisplayName("relever une teinte diluee fait passer le tube au melange a deux constantes")
     void recordingATintEnablesTwoConstantMixing() {
+        // Un tube franchement chaud et sans teinte diluee connue : c'est la que l'ecart
+        // entre le modele a une constante et celui a deux se voit le mieux. On le nomme
+        // plutot que de prendre le premier venu, l'ordre du catalogue n'etant pas un contrat.
         OilPaint paint = catalog.findAll().stream()
-                .filter(p -> p.getTintHex() == null)
+                .filter(p -> p.getBrand().equals("Winsor & Newton") && p.getName().equals("Winsor Orange"))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("aucun tube sans teinte diluee"));
+                .orElseThrow(() -> new AssertionError("tube de reference absent du catalogue"));
+        assertThat(paint.getTintHex()).as("teinte diluee non renseignee au depart").isNull();
 
         Rgb white = Rgb.ofHex("#F7F5F0");
         Rgb beforeTint = mixer.mix(List.of(

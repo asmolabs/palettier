@@ -117,7 +117,12 @@ class BackupServiceTest {
     @DisplayName("l'inventaire et les corrections du catalogue sont conserves")
     void inventoryAndCorrectionsAreKept(@TempDir Path directory) throws Exception {
         catalog.declareNothingOwned();
-        var umber = catalog.search("Burnt Umber").getFirst();
+        // Plusieurs gammes ont un "Burnt Umber" et d'autres un "Burnt Umber/Brown Wash" :
+        // on vise le tube exact, sans dependre de l'ordre du catalogue.
+        var umber = catalog.search("Burnt Umber").stream()
+                .filter(paint -> paint.getName().equals("Burnt Umber"))
+                .findFirst()
+                .orElseThrow();
         catalog.setOwned(umber, true);
         catalog.recordTint(umber, Rgb.ofHex("#C9B9AC"));
 
@@ -161,7 +166,12 @@ class BackupServiceTest {
     @DisplayName("aller-retour : ce qui sort de l'archive est ce qui y etait entre")
     void aroundTrip(@TempDir Path directory) throws Exception {
         catalog.declareNothingOwned();
-        var umber = catalog.search("Burnt Umber").getFirst();
+        // Plusieurs gammes ont un "Burnt Umber" et d'autres un "Burnt Umber/Brown Wash" :
+        // on vise le tube exact, sans dependre de l'ordre du catalogue.
+        var umber = catalog.search("Burnt Umber").stream()
+                .filter(paint -> paint.getName().equals("Burnt Umber"))
+                .findFirst()
+                .orElseThrow();
         catalog.setOwned(umber, true);
         catalog.recordTint(umber, Rgb.ofHex("#C9B9AC"));
         Project original = projectWithPhoto("Grognard a restaurer");
@@ -195,7 +205,9 @@ class BackupServiceTest {
                 .hasSize(1);
 
         // Les corrections du catalogue reviennent aussi.
-        assertThat(catalog.search("Burnt Umber").getFirst().getTintHex()).isEqualTo("#C9B9AC");
+        assertThat(catalog.search("Burnt Umber").stream()
+                .filter(paint -> paint.getName().equals("Burnt Umber"))
+                .findFirst().orElseThrow().getTintHex()).isEqualTo("#C9B9AC");
         assertThat(catalog.countOwned()).isEqualTo(1);
     }
 

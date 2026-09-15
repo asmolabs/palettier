@@ -243,8 +243,8 @@ class CatalogSeeder implements ApplicationRunner {
                 palette fournie.""");
         addAll(flesh,
                 paint("Abteilung 502", "Basic Flesh Tone"),
-                paint("Abteilung 502", "Deep Shadow Flesh"),
-                paint("Abteilung 502", "Highlight Flesh"),
+                paint("Abteilung 502", "Flesh Shadow"),
+                paint("Abteilung 502", "Light Flesh Tone"),
                 paint("Winsor & Newton", "Naples Yellow"),
                 paint("Winsor & Newton", "Alizarin Crimson"),
                 paint("Winsor & Newton", "Burnt Umber"),
@@ -257,9 +257,9 @@ class CatalogSeeder implements ApplicationRunner {
                 paint("Winsor & Newton", "Olive Green"),
                 paint("Winsor & Newton", "Yellow Ochre"),
                 paint("Winsor & Newton", "Ivory Black"),
-                paint("Abteilung 502", "Shadow Brown"),
+                paint("Abteilung 502", "Cassel Earth/Shadow Brown"),
                 paint("Abteilung 502", "Starship Filth"),
-                paint("Abteilung 502", "Rust"),
+                paint("Abteilung 502", "Red Ochre/Light Rust"),
                 paint("Gamblin", "Titanium White"));
 
         return List.of(zorn(), flesh, armour);
@@ -276,13 +276,13 @@ class CatalogSeeder implements ApplicationRunner {
      * qui la rend redoutable sur les carnations.</p>
      *
      * <p>Zorn employait du vermillon, pigment au mercure aujourd'hui abandonne : le
-     * rouge de cadmium clair en est le substitut usuel. Attention, c'est lui qui impose
+     * cadmium ecarlate en est le substitut usuel. Attention, c'est lui qui impose
      * le rythme de la palette, les cadmiums etant les pigments les plus lents a secher.</p>
      */
     private Palette zorn() {
         Palette palette = new Palette("Palette Zorn (Winsor & Newton)", "Carnations et portraits");
         palette.setNotes("""
-                Quatre tubes : blanc de titane, ocre jaune, rouge de cadmium clair, noir d'ivoire.
+                Quatre tubes : blanc de titane, ocre jaune, cadmium ecarlate, noir d'ivoire.
 
                 Le noir ne sert pas a noircir, il tient le role du bleu. Sorti du tube il est \
                 chaud ; coupe de blanc il donne des gris franchement bleutes, et mele a \
@@ -292,12 +292,12 @@ class CatalogSeeder implements ApplicationRunner {
                 Cette divergence entre le tube et le melange est reelle, et c'est ce que le \
                 modele a deux constantes de l'application sait reproduire.
 
-                Zorn peignait au vermillon ; le rouge de cadmium clair le remplace. C'est le \
+                Zorn peignait au vermillon ; le cadmium ecarlate le remplace. C'est le \
                 pigment le plus lent de la palette, il commande le planning de la seance.""");
         addAll(palette,
                 paint("Winsor & Newton", "Titanium White"),
                 paint("Winsor & Newton", "Yellow Ochre"),
-                paint("Winsor & Newton", "Cadmium Red Light"),
+                paint("Winsor & Newton", "Cadmium Scarlet"),
                 paint("Winsor & Newton", "Ivory Black"));
         return palette;
     }
@@ -347,7 +347,7 @@ class CatalogSeeder implements ApplicationRunner {
         armour.addStep(step(Technique.FILTER, "Olive Green tres dilue",
                 Medium.ODORLESS_THINNER, 0.94, LayerThickness.GLAZE,
                 "Unifie les modules de camouflage sans les effacer."));
-        armour.addStep(step(Technique.PIN_WASH, "Shadow Brown",
+        armour.addStep(step(Technique.PIN_WASH, "Cassel Earth/Shadow Brown",
                 Medium.ODORLESS_THINNER, 0.90, LayerThickness.GLAZE,
                 "Uniquement dans les lignes de structure et autour des rivets."));
         armour.addStep(step(Technique.STREAKING_GRIME, "Starship Filth",

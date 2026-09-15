@@ -40,6 +40,10 @@ PBk11;Noir de mars (oxyde de fer);#1B1A19;OPAQUE;FAST;0.90;#93918D
 PBk28;Noir de spinelle cuivre-chrome;#1A1A1C;OPAQUE;FAST;0.90
 PBk31;Vert perylene;#1E2A22;TRANSPARENT;MEDIUM;0.90;#96A096
 PBk19;Silicate d'aluminium hydrate (gris d'ardoise);#6E6E66;SEMI_OPAQUE;MEDIUM;0.30
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PBk10;Graphite;#3A3A3C;SEMI_OPAQUE;MEDIUM;0.60
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PBk8;Noir de charbon de bois;#2B2A28;SEMI_TRANSPARENT;SLOW;0.65;#8E8C88
 
 # --- Terres et oxydes de fer ---
 PBr6;Brun de mars;#5A3A22;OPAQUE;FAST;0.75;#BCA898
@@ -51,6 +55,8 @@ PY119;Brun de ferrite de zinc;#8A6B3A;OPAQUE;FAST;0.60
 PR101;Oxyde de fer rouge synthetique;#8C3A22;OPAQUE;FAST;0.80;#D2A292
 PR102;Oxyde de fer rouge naturel;#8E4128;SEMI_OPAQUE;FAST;0.70;#D0A496
 PG23;Terre verte;#6B7A5A;TRANSPARENT;MEDIUM;0.30
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PBr25;Brun de benzimidazolone;#5E2418;TRANSPARENT;MEDIUM;0.85;#C79A8E
 
 # --- Jaunes ---
 PY3;Jaune arylide clair (Hansa);#F5DC2A;SEMI_TRANSPARENT;SLOW;0.80
@@ -74,6 +80,14 @@ PY216;Jaune azoique (nuance orangee);#F0A81E;SEMI_OPAQUE;MEDIUM;0.85
 PY175;Jaune benzimidazolone citron;#F6E64A;SEMI_TRANSPARENT;MEDIUM;0.80
 PY184;Vanadate de bismuth;#F7D21A;OPAQUE;MEDIUM;0.80;#F7E8AC
 PBr24;Titanate de chrome (jaune de Naples de substitution);#E5B45E;OPAQUE;MEDIUM;0.50
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PY1;Jaune arylide G (Hansa);#F2C81E;SEMI_TRANSPARENT;SLOW;0.75
+PY41;Jaune de Naples veritable (antimoniate de plomb);#F0CE7A;OPAQUE;FAST;0.55
+PY75;Jaune arylide fonce;#F5B914;SEMI_TRANSPARENT;SLOW;0.80
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PY73;Jaune arylide citron;#F7DC3A;SEMI_TRANSPARENT;SLOW;0.75
+PY138;Jaune de quinophtalone (nuance verte);#E8D318;TRANSPARENT;MEDIUM;0.90
+PY164;Brun jaune de manganese-antimoine-titane;#9A6B33;OPAQUE;FAST;0.45
 
 # --- Oranges ---
 PO20;Orange de cadmium;#EE7318;OPAQUE;VERY_SLOW;0.80
@@ -83,6 +97,9 @@ PO62;Orange benzimidazolone;#F0821A;SEMI_OPAQUE;MEDIUM;0.85
 PO67;Orange pyrazoloquinazolone;#F07018;SEMI_OPAQUE;MEDIUM;0.85
 PO71;Orange pyrrole (DPP);#EE5A1A;TRANSPARENT;MEDIUM;0.90
 PO73;Orange pyrrole;#EE5A1A;TRANSPARENT;MEDIUM;0.90
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PO13;Orange de pyrazolone;#F26A1B;SEMI_TRANSPARENT;MEDIUM;0.85
+PO48;Quinacridone or;#A8501E;TRANSPARENT;MEDIUM;0.85;#E0B49E
 
 # --- Rouges ---
 NR9;Garance naturelle (laque);#C44A62;TRANSPARENT;SLOW;0.55;#EEC0C8
@@ -103,6 +120,12 @@ PR209;Rouge vif de quinacridone;#C41F4A;TRANSPARENT;MEDIUM;0.95
 PR254;Rouge pyrrole;#D62B22;OPAQUE;MEDIUM;0.90
 PR255;Ecarlate pyrrole;#E0401F;SEMI_OPAQUE;MEDIUM;0.90
 PR264;Rubis pyrrole;#A81830;TRANSPARENT;MEDIUM;0.90
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PR4;Rouge para chlore;#D8321E;SEMI_OPAQUE;MEDIUM;0.80
+PR176;Carmin de benzimidazolone;#9E1B32;TRANSPARENT;MEDIUM;0.90;#E2A6B4
+PR187;Rouge naphtol;#C21F35;SEMI_TRANSPARENT;MEDIUM;0.85
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PR259;Rose d'outremer;#D98BA8;SEMI_TRANSPARENT;MEDIUM;0.35
 
 # --- Violets ---
 PV14;Violet de cobalt;#8A4A8C;SEMI_OPAQUE;FAST;0.50
@@ -111,6 +134,8 @@ PV16;Violet de manganese;#6B3A78;SEMI_OPAQUE;FAST;0.60
 PV19;Violet de quinacridone;#B01B5A;TRANSPARENT;MEDIUM;0.95;#DCA6BE
 PV23;Violet de dioxazine;#3A1B52;TRANSPARENT;SLOW;0.95;#B4A8C8
 PV62;Violet organique;#6B4A8C;SEMI_TRANSPARENT;MEDIUM;0.70
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PV49;Violet de cobalt clair;#7A4A86;TRANSPARENT;MEDIUM;0.40
 
 # --- Bleus ---
 PB15;Bleu de phtalocyanine;#0E3F73;TRANSPARENT;MEDIUM;1.00;#8FAED2
@@ -139,3 +164,5 @@ PG19;Vert de cobalt;#2E8A6B;SEMI_OPAQUE;FAST;0.50
 PG26;Chromite de cobalt;#1E6B5A;OPAQUE;FAST;0.60
 PG36;Vert de phtalocyanine nuance jaune;#0F5E3A;TRANSPARENT;MEDIUM;1.00;#94C6AC
 PG50;Titanate de cobalt;#5AA08C;OPAQUE;FAST;0.50
+# Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
+PG8;Vert nitroso (vert de Hooker);#4A5A28;TRANSPARENT;FAST;0.70

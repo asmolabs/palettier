@@ -8,6 +8,11 @@
 # gamme. Les pigments ci-dessous sont inferes du nom de la couleur. Ils servent au
 # calcul du sechage et du pouvoir colorant : corrigez-les d'apres l'etiquette du tube,
 # sinon les durees annoncees pour ces teintes seront approximatives.
+#
+# Le 15/09/2026, les sept autres gammes ont ete reprises directement chez leurs
+# fabricants. Scale75 est la seule a etre restee hors d'atteinte : scale75.com repond
+# par une verification anti-robot qui exige un navigateur, y compris sur robots.txt.
+# C'est donc la seule gamme du catalogue dont aucune ligne ne porte verified=true.
 brand;name;code;pigments;opacity;hex
 Scale75 Floww;Titanium White;SFLOW-01;PW6;OPAQUE;#F8F7F3
 Scale75 Floww;Medium Yellow;SFLOW-02;PY74;SEMI_OPAQUE;#F5BE18

@@ -1,55 +1,72 @@
-# Abteilung 502 (AK Interactive) - huiles pour maquette et figurine
+# Abteilung 502 (AK Interactive) - huiles pour modelisme
 #
-# COUVERTURE : partielle, environ 45 teintes sur les ~90 de la gamme.
+# COUVERTURE : les 52 tubes de la gamme. Les 12 coffrets references AKABT3xx et
+# AKABT1000 sont exclus : ce sont des assortiments, pas des couleurs.
 #
-# ATTENTION - PIGMENTS DEDUITS : comme la plupart des gammes maquette, Abteilung 502
-# ne publie pas les codes Colour Index. Les pigments ci-dessous sont inferes du nom et
-# du comportement usuel de la teinte ; ils pilotent le calcul du sechage. Corrigez-les
-# si l'etiquette de votre tube les indique.
-brand;name;code;pigments;opacity;hex
-Abteilung 502;Snow White;ABT001;PW6;OPAQUE;#F8F7F3
-Abteilung 502;Ivory;ABT002;PW6 PY42;OPAQUE;#F0E6CE
-Abteilung 502;Buff;ABT004;PW6 PY42 PBr7;OPAQUE;#D9C29A
-Abteilung 502;Sand;ABT005;PY42 PW6;OPAQUE;#C9A870
-Abteilung 502;Faded Dark Yellow;ABT070;PY42 PW6;SEMI_OPAQUE;#B29B62
-Abteilung 502;Light Mud;ABT020;PBr7 PW6;SEMI_OPAQUE;#9A8460
-Abteilung 502;Dark Mud;ABT022;PBr7;SEMI_OPAQUE;#5E4A36
-Abteilung 502;Earth;ABT030;PBr7;SEMI_OPAQUE;#6B5038
-Abteilung 502;Green Brown;ABT035;PBr7 PG17;SEMI_OPAQUE;#5E5A36
-Abteilung 502;Shadow Brown;ABT015;PBr7;SEMI_TRANSPARENT;#3B2A20
-Abteilung 502;Starship Filth;ABT160;PBr7 PBk9;SEMI_TRANSPARENT;#4A4036
-Abteilung 502;Sepia;ABT018;PBr7 PBk9;TRANSPARENT;#4A3828
-Abteilung 502;Burnt Umber;ABT016;PBr7;SEMI_OPAQUE;#4A3427
-Abteilung 502;Raw Umber;ABT017;PBr7;SEMI_OPAQUE;#4E4133
-Abteilung 502;Burnt Sienna;ABT014;PBr7;TRANSPARENT;#7A3A22
-Abteilung 502;Raw Sienna;ABT013;PBr7;SEMI_TRANSPARENT;#9A6B32
-Abteilung 502;Rust;ABT060;PR101;SEMI_OPAQUE;#8B4A26
-Abteilung 502;Light Rust;ABT061;PR101 PY42;SEMI_OPAQUE;#A8622C
-Abteilung 502;Dark Rust;ABT062;PR101 PBk9;SEMI_OPAQUE;#6B3620
-Abteilung 502;Old Rust;ABT065;PR101 PBr7;SEMI_OPAQUE;#7A4428
-Abteilung 502;Industrial Earth;ABT080;PBr7 PBk11;SEMI_OPAQUE;#4C3E32
-Abteilung 502;Engine Grease;ABT085;PBk9 PBr7;SEMI_TRANSPARENT;#2C2622
-Abteilung 502;Oil Stains;ABT090;PBk7;TRANSPARENT;#1E1C1A
-Abteilung 502;Smoke;ABT095;PBk6;TRANSPARENT;#2A2826
-Abteilung 502;Black;ABT100;PBk9;SEMI_OPAQUE;#201E1C
-Abteilung 502;Carbon Black;ABT101;PBk7;SEMI_OPAQUE;#171615
-Abteilung 502;Blue Black;ABT105;PBk6 PB29;SEMI_OPAQUE;#22262E
-Abteilung 502;Payne Grey;ABT110;PB29 PBk9;SEMI_TRANSPARENT;#3A4552
-Abteilung 502;Neutral Grey;ABT112;PW6 PBk7;OPAQUE;#8A8886
-Abteilung 502;Light Grey;ABT114;PW6 PBk7;OPAQUE;#B8B6B2
-Abteilung 502;Blue Grey for Panzer Grey;ABT061B;PB29 PBk9 PW6;SEMI_OPAQUE;#4A5560
-Abteilung 502;Prussian Blue;ABT120;PB27;TRANSPARENT;#16323C
-Abteilung 502;Cobalt Blue;ABT122;PB28;SEMI_OPAQUE;#2255A4
-Abteilung 502;Ultramarine Blue;ABT124;PB29;TRANSPARENT;#1F2E7A
-Abteilung 502;Deep Green;ABT130;PG7 PBk9;TRANSPARENT;#1E3E2E
-Abteilung 502;Olive Green;ABT132;PY150 PG7 PBk9;SEMI_TRANSPARENT;#4C5B23
-Abteilung 502;Yellow Green;ABT134;PG7 PY74;SEMI_OPAQUE;#6B8A2E
-Abteilung 502;Chromium Green;ABT136;PG17;OPAQUE;#4A6B42
-Abteilung 502;Cadmium Yellow;ABT140;PY35;OPAQUE;#F5B800
-Abteilung 502;Cadmium Orange;ABT142;PO20;OPAQUE;#EE7318
-Abteilung 502;Cadmium Red;ABT145;PR108;OPAQUE;#CE2A22
-Abteilung 502;Crimson;ABT147;PR177;TRANSPARENT;#93182F
-Abteilung 502;Violet;ABT150;PV23;TRANSPARENT;#3A1B52
-Abteilung 502;Basic Flesh Tone;ABT200;PR101 PY42 PW6;SEMI_OPAQUE;#C98F72
-Abteilung 502;Deep Shadow Flesh;ABT202;PR101 PBr7;SEMI_TRANSPARENT;#8A4A3C
-Abteilung 502;Highlight Flesh;ABT204;PW6 PR101 PY42;OPAQUE;#E0B49A
+# PROVENANCE : noms, references, pigments et opacite releves le 15/09/2026 sur les
+# fiches produit du fabricant (ak-interactive.com/product-category/paints/
+# oils-for-painting/), qui impriment "Contains pigments: ..." et affichent l'opacite
+# en pictogramme titre. 51 tubes sur 52 portent donc verified=true.
+#
+# EXCEPTION : Cobalt Blue/Faded Navy Blue (AKABT030) ne declare aucun pigment sur le
+# site ; sa composition reste celle de l'ancien fichier, donc verified=false.
+#
+# REFERENCES : la gamme a ete renumerotee. On utilise la reference actuelle du
+# fabricant (AKABT004), et non l'ancienne (ABT004) du fichier precedent.
+#
+# HEX : AK ne publie aucune valeur colorimetrique. Le hex conserve est celui de
+# l'ancien fichier, retrouve en essayant aussi chaque moitie des noms doubles du type
+# "Burnt Umber/Brown Wash". 31 tubes restent sans hex et sont derives des pigments.
+brand;name;code;pigments;opacity;hex;verified
+Abteilung 502;Titanium White/Snow white;AKABT001;PW6 PW5;OPAQUE;#F8F7F3;true
+Abteilung 502;Sepia;AKABT002;PBk11 PR101;OPAQUE;#4A3828;true
+Abteilung 502;Dust;AKABT003;PBk11 PR101;OPAQUE;;true
+Abteilung 502;Bitume;AKABT004;PR101;OPAQUE;;true
+Abteilung 502;Smoke;AKABT005;PBk11;SEMI_OPAQUE;#2A2826;true
+Abteilung 502;Burnt Umber/Brown Wash;AKABT006;PY42 PBk11;SEMI_OPAQUE;#4A3427;true
+Abteilung 502;Raw Umber/Industrial Earth;AKABT007;PY42 PBk11;SEMI_OPAQUE;#4E4133;true
+Abteilung 502;Royal Yellow;AKABT010;PY1 PO13;SEMI_OPAQUE;;true
+Abteilung 502;Cassel Earth/Shadow Brown;AKABT015;PR101 PBk11;SEMI_OPAQUE;#3B2A20;true
+Abteilung 502;Indian Yellow/Faded Dark Yellow;AKABT020;PY1 PY42;SEMI_OPAQUE;#B29B62;true
+Abteilung 502;Warm Red;AKABT025;PR112 PY42;SEMI_OPAQUE;;true
+Abteilung 502;Cobalt Blue/Faded Navy Blue;AKABT030;PB28;SEMI_OPAQUE;#2255A4;false
+Abteilung 502;Buff;AKABT035;PY42 PW6;SEMI_OPAQUE;#D9C29A;true
+Abteilung 502;Sap Green/Faded Green;AKABT040;PG8;SEMI_OPAQUE;;true
+Abteilung 502;Cinnabar Green;AKABT050;PY42 PG8;SEMI_OPAQUE;;true
+Abteilung 502;Red Ochre/Light Rust;AKABT060;PY42 PR101;SEMI_OPAQUE;#A8622C;true
+Abteilung 502;Burnt Sienna/Dark Rust;AKABT070;PR101 PBk11;SEMI_OPAQUE;#7A3A22;true
+Abteilung 502;Flesh Ocher;AKABT092;PY42 PR101;SEMI_OPAQUE;;true
+Abteilung 502;Raw Sienna/Earth;AKABT093;PR101 PY42;SEMI_OPAQUE;#9A6B32;true
+Abteilung 502;Green Grass;AKABT094;PY1 PY42;SEMI_OPAQUE;;true
+Abteilung 502;Neutral Grey;AKABT100;PW4 PBk7;SEMI_OPAQUE;#8A8886;true
+Abteilung 502;Ivory Black;AKABT110;PBk7;SEMI_OPAQUE;;true
+Abteilung 502;Red;AKABT120;PW6 PR112;SEMI_OPAQUE;;true
+Abteilung 502;Light Mud;AKABT125;PY42 PBk11;SEMI_OPAQUE;#9A8460;true
+Abteilung 502;Dark Mud;AKABT130;PR101 PW6;SEMI_OPAQUE;#5E4A36;true
+Abteilung 502;Light Flesh Tone;AKABT135;PR101 PY42;SEMI_OPAQUE;;true
+Abteilung 502;Basic Flesh Tone;AKABT140;PW6 PY1;SEMI_OPAQUE;#C98F72;true
+Abteilung 502;Sunny Flesh Tone;AKABT145;PW6 PY1;SEMI_OPAQUE;;true
+Abteilung 502;Naples Yellow/Light Sand;AKABT155;PW4 PY35;SEMI_OPAQUE;;true
+Abteilung 502;Faded White;AKABT165;PW4 PW6;SEMI_OPAQUE;;true
+Abteilung 502;Light Grey;AKABT170;PW6 PB29;SEMI_OPAQUE;#B8B6B2;true
+Abteilung 502;Faded Flesh;AKABT190;PR112 PO20;SEMI_OPAQUE;;true
+Abteilung 502;Flesh Shadow;AKABT215;PR4 PO36;SEMI_OPAQUE;;true
+Abteilung 502;Intense Blue;AKABT235;PB29 PB15;SEMI_OPAQUE;;true
+Abteilung 502;Cream Brown;AKABT240;PBk11 PY42;SEMI_OPAQUE;;true
+Abteilung 502;Magenta;AKABT250;PR122 PW6;SEMI_OPAQUE;;true
+Abteilung 502;Paynes Grey;AKABT255;PB29 PBk11;SEMI_OPAQUE;;true
+Abteilung 502;Madder Carmin;AKABT505;PR176;SEMI_OPAQUE;;true
+Abteilung 502;Starship Filth;AKABT510;PR101 PBk7;SEMI_OPAQUE;#4A4036;true
+Abteilung 502;Turquoise Lights;AKABT515;PB29 PG7;SEMI_OPAQUE;;true
+Abteilung 502;Lemon Yellow;AKABT530;PY3;SEMI_OPAQUE;;true
+Abteilung 502;Primary Yellow;AKABT535;PY1;SEMI_OPAQUE;;true
+Abteilung 502;Cyan;AKABT540;PB15 PW6;SEMI_OPAQUE;;true
+Abteilung 502;Prussian Blue;AKABT545;PB27;SEMI_OPAQUE;#16323C;true
+Abteilung 502;Emerald Green;AKABT550;PG7;SEMI_OPAQUE;;true
+Abteilung 502;Permanent Violet;AKABT555;PV23 PR122;SEMI_OPAQUE;;true
+Abteilung 502;Cadmium Red;AKABT560;PR108;SEMI_OPAQUE;#CE2A22;true
+Abteilung 502;Vermilion;AKABT605;PR4;SEMI_OPAQUE;;true
+Abteilung 502;Ochre;AKABT610;PY41;SEMI_OPAQUE;;true
+Abteilung 502;Olive Green;AKABT615;PY3 PBk7;SEMI_OPAQUE;#4C5B23;true
+Abteilung 502;Purple;AKABT620;PV15;SEMI_OPAQUE;;true
+Abteilung 502;Orange;AKABT625;PO13 PY83;SEMI_OPAQUE;;true

@@ -98,8 +98,16 @@ class CatalogDataTest {
                 .isNotEmpty()
                 .allSatisfy(paint -> assertThat(paint.isColorDerived()).isTrue());
 
-        assertThat(catalog).filteredOn(paint -> paint.getBrand().equals("Winsor & Newton"))
-                .allSatisfy(paint -> assertThat(paint.isColorDerived()).isFalse());
+        // Le drapeau doit suivre le fichier, gamme par gamme : W&N ne publie aucune valeur
+        // colorimetrique, mais le catalogue en conserve pour la plupart de ses teintes.
+        // Celles qui n'en ont pas doivent se declarer deduites, pas se faire passer pour
+        // relevees.
+        assertThat(paintNamed("Winsor & Newton", "Titanium White").isColorDerived())
+                .as("teinte presente dans le fichier")
+                .isFalse();
+        assertThat(paintNamed("Winsor & Newton", "Oriental Blue").isColorDerived())
+                .as("teinte absente du fichier, donc deduite des pigments")
+                .isTrue();
     }
 
     @Test
@@ -109,5 +117,12 @@ class CatalogDataTest {
         Rgb greyed = pigments.colorFor(Set.of("PW6", "PBk11"));
 
         assertThat(greyed.relativeLuminance()).isLessThan(white.relativeLuminance());
+    }
+
+    private OilPaint paintNamed(String brand, String name) {
+        return catalog.stream()
+                .filter(paint -> paint.getBrand().equals(brand) && paint.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("tube absent du catalogue : " + brand + " - " + name));
     }
 }
