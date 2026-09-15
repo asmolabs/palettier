@@ -1,9 +1,14 @@
 spring:
   datasource:
     url: jdbc:h2:mem:palettier-test;DB_CLOSE_DELAY=-1
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      # Les tests passent par les memes migrations que l'application : une migration
+      # fausse casse la suite, ce qui est bien le but.
+      ddl-auto: validate
   main:
     banner-mode: off
 

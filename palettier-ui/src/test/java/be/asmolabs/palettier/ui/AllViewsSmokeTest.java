@@ -32,7 +32,7 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @TestPropertySource(properties = {
         "spring.ai.model.chat=none",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.hibernate.ddl-auto=validate",
         "spring.datasource.url=jdbc:h2:mem:views-smoke;DB_CLOSE_DELAY=-1"
 })
 class AllViewsSmokeTest {

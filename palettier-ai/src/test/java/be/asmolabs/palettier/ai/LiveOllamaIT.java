@@ -33,7 +33,7 @@ import org.springframework.test.context.TestPropertySource;
         "spring.ai.ollama.chat.options.temperature=0.2",
         "spring.ai.ollama.chat.options.num-ctx=32768",
         "spring.ai.ollama.chat.options.num-predict=16384",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
+        "spring.jpa.hibernate.ddl-auto=validate"
 })
 @EnabledIfEnvironmentVariable(named = "PALETTIER_AI_LIVE", matches = "1")
 class LiveOllamaIT {

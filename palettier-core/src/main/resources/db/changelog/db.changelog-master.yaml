@@ -1,0 +1,10 @@
+# Journal des changements de schema.
+#
+# Chaque fichier inclus est joue une fois et jamais modifie ensuite : corriger une
+# migration deja appliquee chez quelqu'un ne la rejouerait pas et ferait diverger les
+# bases. Une erreur se repare par une migration supplementaire.
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-schema-initial.sql
+  - include:
+      file: db/changelog/002-reparations-heritees.sql

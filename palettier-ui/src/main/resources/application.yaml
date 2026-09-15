@@ -7,9 +7,16 @@ spring:
     url: jdbc:h2:file:${user.home}/.palettier/db;AUTO_SERVER=TRUE
     username: sa
     password: ""
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
   jpa:
     hibernate:
-      ddl-auto: update
+      # Le schema appartient aux migrations, plus a Hibernate. En "validate", un modele
+      # qui ne correspond plus a la base empeche le demarrage au lieu de la modifier en
+      # douce : c'est exactement ce qui manquait quand une colonne NOT NULL ajoutee a une
+      # table peuplee echouait en silence.
+      ddl-auto: validate
     open-in-view: false
   main:
     banner-mode: off

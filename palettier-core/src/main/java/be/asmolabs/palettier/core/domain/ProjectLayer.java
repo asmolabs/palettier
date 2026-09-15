@@ -53,17 +53,8 @@ public class ProjectLayer {
     @Column(length = 1000)
     private String note = "";
 
-    /**
-     * Valeur par defaut portee par le schema, et pas seulement par le code.
-     *
-     * <p>Sans elle, ajouter cette colonne a une table qui contient deja des lignes echoue :
-     * la base refuse un NOT NULL sans valeur pour l'existant, et la colonne n'est jamais
-     * creee. Toutes les couches anterieures appartiennent a l'echelle, {@code LADDER} est
-     * donc la bonne valeur pour elles.</p>
-     */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10,
-            columnDefinition = "varchar(10) default 'LADDER' not null")
+    @Column(nullable = false, length = 10)
     private Kind kind = Kind.LADDER;
 
     protected ProjectLayer() {

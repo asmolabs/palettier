@@ -103,20 +103,16 @@ public class OilPaint {
      * vitesse de sechage, donc le planning. Une fiche reconstituee de memoire peut se
      * tromper de pigment, et le peintre doit savoir sur quoi il s'appuie.</p>
      */
-    @Column(name = "pigments_verified", nullable = false,
-            columnDefinition = "boolean default false not null")
+    @Column(name = "pigments_verified", nullable = false)
     private boolean pigmentsVerified;
 
     /**
      * Vrai pour un tube saisi par le peintre, et non livre avec l'application.
      *
      * <p>Distinction necessaire au menage : une fiche livree qui disparait des fichiers
-     * de gamme doit etre retiree, une fiche saisie a la main ne doit jamais l'etre.
-     * La valeur par defaut est portee par le schema, sans quoi l'ajout de la colonne
-     * echoue sur une table deja peuplee.</p>
+     * de gamme doit etre retiree, une fiche saisie a la main ne doit jamais l'etre.</p>
      */
-    @Column(name = "user_added", nullable = false,
-            columnDefinition = "boolean default false not null")
+    @Column(name = "user_added", nullable = false)
     private boolean userAdded;
 
     /** Vrai si le tube est effectivement sur l'etagere du peintre. */

@@ -23,6 +23,16 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
+    <!--
+      Migrations de schema versionnees.
+      Spring Boot 4 separe les auto-configurations en modules : la bibliotheque seule ne
+      suffit pas, il faut le starter pour que le changelog soit joue au demarrage.
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-liquibase</artifactId>
+    </dependency>
+
     <!-- Lecture et ecriture des sauvegardes -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
