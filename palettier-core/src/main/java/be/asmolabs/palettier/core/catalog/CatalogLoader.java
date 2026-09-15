@@ -104,6 +104,8 @@ public class CatalogLoader {
                 pigments.tintingStrengthFor(pigmentCodes),
                 pigmentCodes);
         paint.setColorDerived(derived);
+        // Colonne facultative : seules les gammes renumerotees par leur fabricant la remplissent.
+        paint.setLegacyCode(row.getOrDefault("legacy", ""));
         paint.setTintHex(tint);
         // Colonne facultative : une gamme qui ne la renseigne pas est tenue pour non verifiee.
         paint.setPigmentsVerified(Boolean.parseBoolean(row.getOrDefault("verified", "false")));

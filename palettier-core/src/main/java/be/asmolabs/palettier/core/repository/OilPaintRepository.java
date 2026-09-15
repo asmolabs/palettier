@@ -36,6 +36,7 @@ public interface OilPaintRepository extends JpaRepository<OilPaint, Long> {
             where lower(p.name) like lower(concat('%', :term, '%'))
                or lower(p.brand) like lower(concat('%', :term, '%'))
                or lower(p.code) like lower(concat('%', :term, '%'))
+               or lower(p.legacyCode) like lower(concat('%', :term, '%'))
             order by p.brand asc, p.name asc
             """)
     List<OilPaint> search(@Param("term") String term);

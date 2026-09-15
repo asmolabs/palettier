@@ -193,7 +193,7 @@ public class CatalogView implements AppView {
                 tint,
                 column("Marque", 140, OilPaint::getBrand),
                 column("Nom", 220, OilPaint::getName),
-                column("Ref.", 70, OilPaint::getCode),
+                column("Ref.", 110, CatalogView::references),
                 column("Pigments", 120, p -> String.join(", ", p.getPigments())),
                 pillColumn("Source", 110, paint -> paint.isPigmentsVerified()
                         ? Pill.of("fabricant", "pill-fast")
@@ -218,6 +218,19 @@ public class CatalogView implements AppView {
         column.setMinWidth(SWATCH_COLUMN_WIDTH);
         column.setPrefWidth(SWATCH_COLUMN_WIDTH);
         column.setMaxWidth(SWATCH_COLUMN_WIDTH);
+    }
+
+    /**
+     * Les deux etiquettes d'un tube renumerote, l'ancienne entre parentheses.
+     *
+     * <p>Abteilung 502 a renumerote sa gamme : sur une etagere, les deux cohabitent.</p>
+     */
+    private static String references(OilPaint paint) {
+        String legacy = paint.getLegacyCode();
+        if (legacy.isBlank() || legacy.equals(paint.getCode())) {
+            return paint.getCode();
+        }
+        return paint.getCode().isBlank() ? legacy : paint.getCode() + " (" + legacy + ")";
     }
 
     private static TableColumn<OilPaint, String> column(String title, double width,

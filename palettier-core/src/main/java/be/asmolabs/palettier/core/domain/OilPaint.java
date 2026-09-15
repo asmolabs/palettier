@@ -48,6 +48,16 @@ public class OilPaint {
     @Column(nullable = false)
     private String code = "";
 
+    /**
+     * Reference sous laquelle le fabricant vendait le meme tube avant une renumerotation.
+     *
+     * <p>Abteilung 502 a renumerote sa gamme : le peintre a souvent les deux etiquettes
+     * sur son etagere. Sans cette colonne, un tube achete avant le changement devient
+     * introuvable dans le catalogue.</p>
+     */
+    @Column(name = "legacy_code", length = 40)
+    private String legacyCode = "";
+
     /** Codes normalises des pigments, par exemple PBr7 ou PW6. */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "oil_paint_pigment", joinColumns = @JoinColumn(name = "paint_id"))
@@ -193,6 +203,14 @@ public class OilPaint {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getLegacyCode() {
+        return legacyCode == null ? "" : legacyCode;
+    }
+
+    public void setLegacyCode(String legacyCode) {
+        this.legacyCode = legacyCode == null ? "" : legacyCode;
     }
 
     public String getCode() {

@@ -8,3 +8,5 @@ databaseChangeLog:
       file: db/changelog/001-schema-initial.sql
   - include:
       file: db/changelog/002-reparations-heritees.sql
+  - include:
+      file: db/changelog/003-reference-ancienne.sql

@@ -49,6 +49,16 @@ class CatalogIntegrationTest {
         assertThat(catalog.search("Abteilung")).isNotEmpty();
         assertThat(catalog.search("644")).isNotEmpty();
         assertThat(catalog.search("xyzzy")).isEmpty();
+
+        // AK a renumerote sa gamme : l'ancienne etiquette doit ramener le tube.
+        assertThat(catalog.search("ABT004"))
+                .as("recherche par l'ancienne reference")
+                .extracting(OilPaint::getName)
+                .contains("Bitume");
+        assertThat(catalog.search("AKABT004"))
+                .as("recherche par la reference actuelle")
+                .extracting(OilPaint::getName)
+                .contains("Bitume");
     }
 
     @Test

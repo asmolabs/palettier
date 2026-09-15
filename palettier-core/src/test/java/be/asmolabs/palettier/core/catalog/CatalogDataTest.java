@@ -119,6 +119,36 @@ class CatalogDataTest {
         assertThat(greyed.relativeLuminance()).isLessThan(white.relativeLuminance());
     }
 
+    @Test
+    @DisplayName("les tubes Abteilung renumerotes gardent leur ancienne reference")
+    void renumberedPaintsKeepTheirOldReference() {
+        // AK a renumerote sa gamme : ABT004 est devenu AKABT004. Le peintre a les deux
+        // etiquettes sur son etagere, il doit retrouver le tube par l'une ou l'autre.
+        assertThat(paintNamed("Abteilung 502", "Bitume"))
+                .satisfies(paint -> {
+                    assertThat(paint.getCode()).isEqualTo("AKABT004");
+                    assertThat(paint.getLegacyCode()).isEqualTo("ABT004");
+                });
+
+        // Les 12 couleurs apparues avec la nouvelle numerotation n'ont pas d'equivalent.
+        assertThat(paintNamed("Abteilung 502", "Vermilion").getLegacyCode()).isEmpty();
+
+        // Les couleurs retirees de la gamme n'existent plus que sous l'ancienne reference.
+        assertThat(paintNamed("Abteilung 502", "Gundam Blue"))
+                .satisfies(paint -> {
+                    assertThat(paint.getCode()).isEmpty();
+                    assertThat(paint.getLegacyCode()).isEqualTo("ABT500");
+                    assertThat(paint.isPigmentsVerified())
+                            .as("fiche disparue du site : pigments deduits du nom")
+                            .isFalse();
+                });
+
+        // Toute reference ancienne est celle de la nouvelle, sans le prefixe du fabricant.
+        assertThat(catalog).filteredOn(paint -> paint.getBrand().equals("Abteilung 502")
+                        && !paint.getCode().isBlank() && !paint.getLegacyCode().isBlank())
+                .allSatisfy(paint -> assertThat(paint.getCode()).isEqualTo("AK" + paint.getLegacyCode()));
+    }
+
     private OilPaint paintNamed(String brand, String name) {
         return catalog.stream()
                 .filter(paint -> paint.getBrand().equals(brand) && paint.getName().equals(name))

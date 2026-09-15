@@ -132,11 +132,13 @@ class CatalogSeeder implements ApplicationRunner {
      */
     private static boolean refreshIdentity(OilPaint stored, OilPaint reference) {
         boolean changed = !stored.getCode().equals(reference.getCode())
+                || !stored.getLegacyCode().equals(reference.getLegacyCode())
                 || !stored.getPigments().equals(reference.getPigments())
                 || stored.getOpacity() != reference.getOpacity()
                 || stored.getDryingClass() != reference.getDryingClass();
 
         stored.setCode(reference.getCode());
+        stored.setLegacyCode(reference.getLegacyCode());
         stored.setPigments(reference.getPigments());
         stored.setOpacity(reference.getOpacity());
         stored.setDryingClass(reference.getDryingClass());

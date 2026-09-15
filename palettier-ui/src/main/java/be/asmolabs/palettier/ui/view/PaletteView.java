@@ -244,6 +244,7 @@ public class PaletteView implements AppView {
         return paint.getName().toLowerCase().contains(term)
                 || paint.getBrand().toLowerCase().contains(term)
                 || paint.getCode().toLowerCase().contains(term)
+                || paint.getLegacyCode().toLowerCase().contains(term)
                 || paint.getPigments().stream().anyMatch(code -> code.toLowerCase().contains(term));
     }
 
