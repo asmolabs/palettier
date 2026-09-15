@@ -70,6 +70,37 @@ public class PaintCatalogService {
         return repository.save(paint);
     }
 
+    /**
+     * Declare la possession d'un tube.
+     *
+     * <p>Le catalogue livre tout marque comme possede, ce qui ne veut rien dire : c'est
+     * au peintre de dire ce qu'il a vraiment. Tant qu'il ne l'a pas fait, le filtre
+     * "mes tubes" est sans effet.</p>
+     */
+    @Transactional
+    public OilPaint setOwned(OilPaint paint, boolean owned) {
+        paint.setInStock(owned);
+        return repository.save(paint);
+    }
+
+    @Transactional
+    public int setOwned(List<OilPaint> paints, boolean owned) {
+        paints.forEach(paint -> paint.setInStock(owned));
+        repository.saveAll(paints);
+        return paints.size();
+    }
+
+    /** Repart de zero : plus aucun tube declare. Le point de depart d'un inventaire. */
+    @Transactional
+    public int declareNothingOwned() {
+        List<OilPaint> owned = repository.findByInStockTrueOrderByBrandAscNameAsc();
+        return setOwned(owned, false);
+    }
+
+    public long countOwned() {
+        return repository.findByInStockTrueOrderByBrandAscNameAsc().size();
+    }
+
     @Transactional
     public void delete(OilPaint paint) {
         repository.delete(paint);

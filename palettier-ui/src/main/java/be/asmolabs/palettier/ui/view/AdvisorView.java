@@ -141,7 +141,7 @@ public class AdvisorView implements AppView {
             paletteChoice.setValue(paletteChoice.getItems().getFirst());
         }
 
-        maxPaints.getItems().setAll(1, 2, 3);
+        maxPaints.getItems().setAll(1, 2, 3, 4, 5);
         maxPaints.setValue(3);
         maxPaints.setConverter(new StringConverter<>() {
             @Override

@@ -28,9 +28,18 @@ class SchemaMaintenance implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(SchemaMaintenance.class);
 
-    /** Contraintes du modele d'hier, a retirer si elles sont encore la. */
-    private static final String[] OBSOLETE_CONSTRAINTS = {
-            "alter table if exists oil_paint drop constraint if exists uk_paint_brand_code"
+    /**
+     * Reparations du schema, jouees a chaque demarrage et sans effet quand il n'y a rien
+     * a faire.
+     *
+     * <p>Deux familles : les contraintes d'hier qu'Hibernate ne sait pas retirer, et les
+     * colonnes qu'il n'a pas su ajouter. Une colonne NOT NULL ajoutee a une table deja
+     * peuplee echoue silencieusement en mode {@code update} : la base continue de tourner
+     * sans elle jusqu'a la premiere lecture, qui casse.</p>
+     */
+    private static final String[] REPAIRS = {
+            "alter table if exists oil_paint drop constraint if exists uk_paint_brand_code",
+            "alter table if exists project_layer add column if not exists kind varchar(10) default 'LADDER' not null"
     };
 
     private final JdbcTemplate jdbc;
@@ -41,7 +50,7 @@ class SchemaMaintenance implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        for (String statement : OBSOLETE_CONSTRAINTS) {
+        for (String statement : REPAIRS) {
             try {
                 jdbc.execute(statement);
             } catch (RuntimeException e) {

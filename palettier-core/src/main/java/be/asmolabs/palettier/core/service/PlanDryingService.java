@@ -80,7 +80,10 @@ public class PlanDryingService {
     }
 
     private ZoneSchedule schedule(PaintingPlan.Zone zone, Workshop workshop) {
-        List<PaintingPlan.Layer> layers = zone.layers();
+        // Les variations locales se posent apres l'echelle, et comptent dans le planning :
+        // elles seront recouvertes comme le reste.
+        List<PaintingPlan.Layer> layers = new ArrayList<>(zone.layers());
+        layers.addAll(zone.accents());
         List<LayerSchedule> scheduled = new ArrayList<>();
         Duration offset = Duration.ZERO;
 

@@ -1,0 +1,159 @@
+package be.asmolabs.palettier.core.backup;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import be.asmolabs.palettier.core.color.Rgb;
+import be.asmolabs.palettier.core.domain.Palette;
+import be.asmolabs.palettier.core.domain.Project;
+import be.asmolabs.palettier.core.domain.ProjectPhoto;
+import be.asmolabs.palettier.core.plan.PaintingPlan;
+import be.asmolabs.palettier.core.service.PaintCatalogService;
+import be.asmolabs.palettier.core.service.PaletteService;
+import be.asmolabs.palettier.core.service.ProjectService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
+
+@SpringBootTest
+@Transactional
+class BackupServiceTest {
+
+    @Autowired
+    private BackupService backup;
+
+    @Autowired
+    private ProjectService projects;
+
+    @Autowired
+    private PaletteService palettes;
+
+    @Autowired
+    private PaintCatalogService catalog;
+
+    private Palette zorn() {
+        return palettes.findAll().stream()
+                .filter(p -> p.getName().startsWith("Palette Zorn"))
+                .findFirst().orElseThrow();
+    }
+
+    private static PaintingPlan.Layer layer(String role, String hex) {
+        return new PaintingPlan.Layer(role, Rgb.ofHex(hex), "Glacis", "note", null, Rgb.ofHex(hex), 0);
+    }
+
+    private Project projectWithPhoto(String name) throws Exception {
+        PaintingPlan.Zone zone = new PaintingPlan.Zone("Visage", "Peau", "Par glacis.",
+                layer("Base", "#C98F72"),
+                List.of(layer("Ombre 1", "#8A5F4A")),
+                List.of(layer("Lumiere 1", "#E0B49A")),
+                List.of(layer("Rougeur des pommettes", "#C97A62")));
+        Project project = projects.save(
+                new PaintingPlan("Buste", "Zorn", "Approche.", List.of(zone)), zorn(), name);
+        projects.addPhoto(project, image(), ProjectPhoto.Role.PIECE, "piece.png");
+        return project;
+    }
+
+    private static byte[] image() throws Exception {
+        BufferedImage img = new BufferedImage(120, 90, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(img, "png", out);
+        return out.toByteArray();
+    }
+
+    @Test
+    @DisplayName("l'archive contient un JSON lisible et les photos en fichiers ordinaires")
+    void theArchiveHoldsJsonAndPlainImages(@TempDir Path directory) throws Exception {
+        projectWithPhoto("Mon grognard");
+        Path archive = directory.resolve("sauvegarde.zip");
+
+        BackupService.Summary summary = backup.export(archive);
+
+        try (ZipFile zip = new ZipFile(archive.toFile())) {
+            ZipEntry document = zip.getEntry(BackupService.DOCUMENT);
+            assertThat(document).as("le document principal").isNotNull();
+
+            JsonNode root = new ObjectMapper().readTree(
+                    new String(zip.getInputStream(document).readAllBytes(), StandardCharsets.UTF_8));
+            assertThat(root.path("formatVersion").asInt()).isEqualTo(BackupModel.FORMAT_VERSION);
+            assertThat(root.path("projects")).isNotEmpty();
+
+            // La photo est rangee a cote, pas encodee dans le JSON.
+            String file = root.path("projects").get(0).path("photos").get(0).path("file").asText();
+            assertThat(file).startsWith(BackupService.IMAGES + "/").endsWith(".jpg");
+            assertThat(zip.getEntry(file)).as("le fichier image annonce").isNotNull();
+            assertThat(zip.getInputStream(zip.getEntry(file)).readAllBytes()).isNotEmpty();
+        }
+        assertThat(summary.photos()).isEqualTo(1);
+        assertThat(summary.paints()).isGreaterThan(400);
+    }
+
+    @Test
+    @DisplayName("les tubes sont designes par marque et nom, jamais par un numero de base")
+    void paintsAreReferencedByTheirNaturalKey(@TempDir Path directory) throws Exception {
+        projectWithPhoto("Reference");
+        Path archive = directory.resolve("sauvegarde.zip");
+        backup.export(archive);
+
+        JsonNode root = read(archive);
+        JsonNode reference = root.path("palettes").get(0).path("paints").get(0);
+        assertThat(reference.path("brand").asText()).isNotBlank();
+        assertThat(reference.path("name").asText()).isNotBlank();
+        assertThat(reference.has("id")).isFalse();
+    }
+
+    @Test
+    @DisplayName("l'inventaire et les corrections du catalogue sont conserves")
+    void inventoryAndCorrectionsAreKept(@TempDir Path directory) throws Exception {
+        catalog.declareNothingOwned();
+        var umber = catalog.search("Burnt Umber").getFirst();
+        catalog.setOwned(umber, true);
+        catalog.recordTint(umber, Rgb.ofHex("#C9B9AC"));
+
+        Path archive = directory.resolve("sauvegarde.zip");
+        backup.export(archive);
+
+        JsonNode paints = read(archive).path("paints");
+        JsonNode saved = null;
+        for (JsonNode paint : paints) {
+            if (paint.path("name").asText().equals("Burnt Umber") && paint.path("owned").asBoolean()) {
+                saved = paint;
+            }
+        }
+        assertThat(saved).as("le tube declare possede").isNotNull();
+        assertThat(saved.path("tintHex").asText()).isEqualTo("#C9B9AC");
+    }
+
+    @Test
+    @DisplayName("les variations locales gardent leur nature dans la sauvegarde")
+    void accentsKeepTheirKind(@TempDir Path directory) throws Exception {
+        projectWithPhoto("Avec variation");
+        Path archive = directory.resolve("sauvegarde.zip");
+        backup.export(archive);
+
+        JsonNode layers = read(archive).path("projects").get(0).path("zones").get(0).path("layers");
+        assertThat(layers).anySatisfy(layer -> {
+            assertThat(layer.path("role").asText()).isEqualTo("Rougeur des pommettes");
+            assertThat(layer.path("kind").asText()).isEqualTo("ACCENT");
+        });
+    }
+
+    private static JsonNode read(Path archive) throws Exception {
+        try (ZipFile zip = new ZipFile(archive.toFile())) {
+            return new ObjectMapper().readTree(
+                    new String(zip.getInputStream(zip.getEntry(BackupService.DOCUMENT)).readAllBytes(),
+                            StandardCharsets.UTF_8));
+        }
+    }
+}

@@ -29,11 +29,24 @@ public record PaintingPlan(String subject,
      * des valeurs, et c'est le deuxieme ton qui fait la difference entre une piece plate
      * et une piece modelee.</p>
      *
+     * <p>Aux cinq couches de l'echelle s'ajoutent des <em>variations locales</em> : des
+     * couleurs qui ne sont ni plus claires ni plus sombres, mais differentes. Une
+     * carnation ne se resume pas a un degrade du sombre au clair -- les pommettes, le nez
+     * et les oreilles tirent au rouge, le front au jaune, la machoire au froid, tous a
+     * peu pres a la meme valeur. Sans elles, une peau reste correcte et morte.</p>
+     *
      * @param shadows    de la plus legere a la plus profonde
      * @param highlights du premier eclairci au point lumineux
+     * @param accents    variations locales, chacune nommee par l'endroit ou elle se pose
      */
     public record Zone(String name, String material, String note,
-                       Layer base, List<Layer> shadows, List<Layer> highlights) {
+                       Layer base, List<Layer> shadows, List<Layer> highlights, List<Layer> accents) {
+
+        /** Compatibilite : une zone sans variation locale. */
+        public Zone(String name, String material, String note,
+                    Layer base, List<Layer> shadows, List<Layer> highlights) {
+            this(name, material, note, base, shadows, highlights, List.of());
+        }
 
         /** Toutes les couches, de la plus sombre a la plus claire : l'ordre de lecture d'un degrade. */
         public List<Layer> layers() {

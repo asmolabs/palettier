@@ -456,8 +456,9 @@ public class PickerView implements AppView {
         scopeChoice.setOnShowing(event -> rebuildScopes());
         rebuildScopes();
 
-        maxPaints.getItems().setAll(1, 2, 3);
+        maxPaints.getItems().setAll(1, 2, 3, 4, 5);
         maxPaints.setValue(3);
+        maxPaints.setPrefWidth(150);
         maxPaints.setConverter(new javafx.util.StringConverter<>() {
             @Override
             public String toString(Integer count) {
@@ -478,10 +479,12 @@ public class PickerView implements AppView {
 
         Label parsimony = new Label(
                 "C'est un maximum, pas un objectif : a resultat perceptuellement identique, la "
-                + "recherche prefere toujours le melange le plus simple. Sur tout le catalogue "
-                + "deux tubes suffisent presque toujours, et un troisieme n'apporterait que de la "
-                + "complication ; dans une palette restreinte il devient au contraire necessaire, "
-                + "et il apparait alors de lui-meme.");
+                + "recherche prefere toujours le melange le plus simple, et les tubes "
+                + "supplementaires n'apparaissent que s'ils servent. Sur tout le catalogue, deux "
+                + "ou trois suffisent presque toujours. C'est sur une palette courte qu'il faut "
+                + "monter : certaines teintes ne s'obtiennent qu'avec les trois primaires plus un "
+                + "blanc et une terre. Au-dela de trois tubes la recherche devient sensiblement "
+                + "plus longue sur le catalogue entier ; sur une palette, elle reste immediate.");
         parsimony.setWrapText(true);
         parsimony.getStyleClass().add("hint");
 

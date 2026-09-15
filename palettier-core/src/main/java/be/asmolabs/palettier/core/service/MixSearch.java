@@ -3,6 +3,7 @@ package be.asmolabs.palettier.core.service;
 import be.asmolabs.palettier.core.color.Colorant;
 import be.asmolabs.palettier.core.color.Colors;
 import be.asmolabs.palettier.core.color.Lab;
+import be.asmolabs.palettier.core.color.Lab;
 import be.asmolabs.palettier.core.color.Rgb;
 import be.asmolabs.palettier.core.domain.OilPaint;
 import be.asmolabs.palettier.core.service.MixModels.MixSuggestion;
@@ -10,6 +11,8 @@ import be.asmolabs.palettier.core.service.MixModels.PaintPart;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -43,11 +46,20 @@ final class MixSearch {
     /** Dosages de la passe grossiere, exprimes en part de pigment du premier tube. */
     private static final double[] COARSE_WEIGHTS = {0.15, 0.35, 0.5, 0.65, 0.85};
 
-    /** Taille du vivier pour les melanges a trois tubes. */
-    private static final int TRIPLE_POOL = 18;
+    /**
+     * Nombre maximal de tubes par melange.
+     *
+     * <p>Cinq, parce que certaines teintes ne s'obtiennent pas autrement : les trois
+     * primaires pour la couleur, un blanc pour la valeur, une terre pour rompre. Au-dela,
+     * un melange cesse d'etre reproductible d'une seance a l'autre.</p>
+     */
+    static final int MAX_PAINTS = 5;
 
     /** Nombre de tubes structurels ajoutes au vivier (blancs, noirs, forts colorants). */
     private static final int STRUCTURAL_PAINTS = 4;
+
+    /** Secteurs de teinte couverts par le vivier, en degres. */
+    private static final int HUE_SECTORS = 6;
 
     /**
      * En deca de cet ecart, l'oeil ne distingue plus deux teintes. Deux propositions
@@ -65,7 +77,9 @@ final class MixSearch {
     private static final double DUPLICATE_RESULT = 0.15;
 
     private static final List<int[]> PAIR_RATIOS = practicalPairRatios();
-    private static final List<int[]> TRIPLE_RATIOS = practicalTripleRatios();
+
+    /** Grilles de dosage par nombre de tubes, calculees une fois. */
+    private static final Map<Integer, List<int[]>> RATIOS = ratioGrids();
 
     private final Lab target;
     private final List<Candidate> candidates;
@@ -75,7 +89,19 @@ final class MixSearch {
      * gardees separement : c'est ce qui permet au blanc, tres diffusant, de peser sur le
      * resultat autrement que par sa seule clarte.
      */
-    private record Candidate(OilPaint paint, double[] absorption, double[] scattering, double tinting) {
+    private record Candidate(OilPaint paint, double[] absorption, double[] scattering,
+                             double tinting, Lab lab) {
+
+        /** Saturation percue : ce qui distingue une couleur franche d'un gris. */
+        double chroma() {
+            return Math.hypot(lab.a(), lab.b());
+        }
+
+        /** Angle de teinte, en degres. */
+        double hue() {
+            double degrees = Math.toDegrees(Math.atan2(lab.b(), lab.a()));
+            return degrees < 0 ? degrees + 360 : degrees;
+        }
     }
 
     /** Un melange evalue : les tubes, leurs parts entieres, la couleur obtenue, l'ecart. */
@@ -88,7 +114,7 @@ final class MixSearch {
                 .map(paint -> {
                     Colorant colorant = paint.colorant();
                     return new Candidate(paint, colorant.absorption(), colorant.scattering(),
-                            paint.getTintingStrength());
+                            paint.getTintingStrength(), Colors.toLab(paint.color()));
                 })
                 .toList();
     }
@@ -98,8 +124,8 @@ final class MixSearch {
         if (maxPaints >= 2) {
             found.addAll(pairs());
         }
-        if (maxPaints >= 3) {
-            found.addAll(triples());
+        for (int count = 3; count <= Math.min(maxPaints, MAX_PAINTS); count++) {
+            found.addAll(combinations(count));
         }
         return best(found, maxResults);
     }
@@ -151,31 +177,86 @@ final class MixSearch {
     // --- Trois tubes -------------------------------------------------------
 
     /**
-     * Vivier : les tubes les plus proches de la cible pris un a un, plus quelques tubes
-     * a fort pouvoir colorant. Ces derniers ne ressemblent pas a la cible mais sont ce
-     * qui permet d'en ajuster la valeur, et ils manqueraient a une selection fondee sur
-     * la seule proximite.
+     * Melanges a {@code count} tubes, pris dans un vivier restreint.
+     *
+     * <p>Les explorer tous serait hors de portee : quatre cents tubes pris cinq a cinq
+     * font des milliards de combinaisons. Le vivier retient donc ce qui sert vraiment,
+     * et le nombre de tubes fait retrecir le vivier pour que le cout reste tenable.</p>
      */
-    private List<Evaluation> triples() {
-        List<Candidate> pool = new ArrayList<>(candidates.stream()
+    private List<Evaluation> combinations(int count) {
+        List<Candidate> pool = poolFor(count);
+        List<int[]> ratios = RATIOS.get(count);
+        if (pool.size() < count || ratios == null) {
+            return List.of();
+        }
+
+        List<int[]> picks = new ArrayList<>();
+        combine(pool.size(), count, 0, 0, new int[count], picks);
+
+        return picks.stream().parallel()
+                .map(indexes -> {
+                    List<Candidate> paints = new ArrayList<>(count);
+                    for (int index : indexes) {
+                        paints.add(pool.get(index));
+                    }
+                    return refine(paints, ratios);
+                })
+                .toList();
+    }
+
+    /** Toutes les facons de choisir {@code count} rangs distincts parmi {@code size}. */
+    private static void combine(int size, int count, int filled, int start, int[] current, List<int[]> out) {
+        if (filled == count) {
+            out.add(current.clone());
+            return;
+        }
+        for (int i = start; i < size; i++) {
+            current[filled] = i;
+            combine(size, count, filled + 1, i + 1, current, out);
+        }
+    }
+
+    /**
+     * Le vivier dans lequel piocher.
+     *
+     * <p>Trois familles, et la troisieme est celle qui compte pour les melanges nombreux.
+     * Les tubes proches de la cible donnent la teinte generale. Les tubes structurels --
+     * le plus clair, le plus sombre, les plus colorants -- servent a regler la valeur.
+     * Et les representants de chaque secteur de teinte garantissent qu'on dispose des
+     * primaires : une selection fondee sur la seule proximite ne contiendrait jamais le
+     * bleu necessaire a rompre un orange.</p>
+     */
+    private List<Candidate> poolFor(int count) {
+        int nearest = switch (count) {
+            case 3 -> 18;
+            case 4 -> 12;
+            default -> 9;
+        };
+
+        LinkedHashSet<Candidate> pool = new LinkedHashSet<>(candidates.stream()
                 .sorted(Comparator.comparingDouble(c -> evaluate(List.of(c), new int[]{1}).deltaE()))
-                .limit(TRIPLE_POOL)
+                .limit(nearest)
                 .toList());
+
+        // Les extremes de valeur : de quoi monter ou descendre sans changer la teinte.
+        candidates.stream().max(Comparator.comparingDouble(c -> c.lab().l())).ifPresent(pool::add);
+        candidates.stream().min(Comparator.comparingDouble(c -> c.lab().l())).ifPresent(pool::add);
 
         candidates.stream()
                 .sorted(Comparator.comparingDouble(Candidate::tinting).reversed())
-                .filter(candidate -> !pool.contains(candidate))
                 .limit(STRUCTURAL_PAINTS)
                 .forEach(pool::add);
 
-        int size = pool.size();
-        return IntStream.range(0, size).parallel()
-                .boxed()
-                .flatMap(i -> IntStream.range(i + 1, size).boxed()
-                        .flatMap(j -> IntStream.range(j + 1, size)
-                                .mapToObj(k -> refine(List.of(pool.get(i), pool.get(j), pool.get(k)),
-                                        TRIPLE_RATIOS))))
-                .toList();
+        // Un representant par secteur de teinte, le plus franc de son secteur.
+        for (int sector = 0; sector < HUE_SECTORS; sector++) {
+            double from = sector * 360.0 / HUE_SECTORS;
+            double to = (sector + 1) * 360.0 / HUE_SECTORS;
+            candidates.stream()
+                    .filter(c -> c.hue() >= from && c.hue() < to)
+                    .max(Comparator.comparingDouble(Candidate::chroma))
+                    .ifPresent(pool::add);
+        }
+        return List.copyOf(pool);
     }
 
     // --- Evaluation --------------------------------------------------------
@@ -325,19 +406,44 @@ final class MixSearch {
         return List.copyOf(ratios);
     }
 
-    /** A trois tubes, personne ne dose au-dela de quelques parts : on s'arrete a cinq. */
-    private static List<int[]> practicalTripleRatios() {
-        List<int[]> ratios = new ArrayList<>();
-        for (int a = 1; a <= 5; a++) {
-            for (int b = 1; b <= 5; b++) {
-                for (int c = 1; c <= 5; c++) {
-                    if (gcd(gcd(a, b), c) == 1) {
-                        ratios.add(new int[]{a, b, c});
-                    }
-                }
-            }
+    /**
+     * Grilles de dosage, du triple au quintuple.
+     *
+     * <p>Plus il y a de tubes, plus les parts restent petites : personne ne dose
+     * "sept parts de l'un, trois de l'autre, cinq du troisieme et deux du quatrieme".
+     * Cette limite tient autant du realisme que du cout de la recherche.</p>
+     */
+    private static Map<Integer, List<int[]>> ratioGrids() {
+        Map<Integer, List<int[]>> grids = new LinkedHashMap<>();
+        for (int count = 3; count <= MAX_PAINTS; count++) {
+            int max = switch (count) {
+                case 3 -> 5;
+                case 4 -> 4;
+                default -> 3;
+            };
+            List<int[]> grid = new ArrayList<>();
+            fillRatios(new int[count], 0, max, grid);
+            grids.put(count, List.copyOf(grid));
         }
-        return List.copyOf(ratios);
+        return Map.copyOf(grids);
+    }
+
+    private static void fillRatios(int[] current, int index, int max, List<int[]> out) {
+        if (index == current.length) {
+            int divisor = current[0];
+            for (int part : current) {
+                divisor = gcd(divisor, part);
+            }
+            // Un dosage et son double decrivent le meme melange : on ne garde que le reduit.
+            if (divisor == 1) {
+                out.add(current.clone());
+            }
+            return;
+        }
+        for (int part = 1; part <= max; part++) {
+            current[index] = part;
+            fillRatios(current, index + 1, max, out);
+        }
     }
 
     private static int gcd(int a, int b) {

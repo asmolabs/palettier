@@ -3,6 +3,8 @@ package be.asmolabs.palettier.core.domain;
 import be.asmolabs.palettier.core.color.Rgb;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -18,6 +20,20 @@ import jakarta.validation.constraints.Pattern;
 @Entity
 @Table(name = "project_layer")
 public class ProjectLayer {
+
+    /**
+     * A quoi sert la couche.
+     *
+     * <p>Le nom ne suffit pas a le dire : une variation locale s'appelle "rougeur des
+     * pommettes", ce qu'aucune convention de nommage ne permet de reconnaitre. La
+     * distinction est donc portee explicitement.</p>
+     */
+    public enum Kind {
+        /** Une marche de l'echelle des valeurs : ombre, base ou lumiere. */
+        LADDER,
+        /** Une couleur locale, a peu pres a la valeur de la base. */
+        ACCENT
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,11 +53,29 @@ public class ProjectLayer {
     @Column(length = 1000)
     private String note = "";
 
+    /**
+     * Valeur par defaut portee par le schema, et pas seulement par le code.
+     *
+     * <p>Sans elle, ajouter cette colonne a une table qui contient deja des lignes echoue :
+     * la base refuse un NOT NULL sans valeur pour l'existant, et la colonne n'est jamais
+     * creee. Toutes les couches anterieures appartiennent a l'echelle, {@code LADDER} est
+     * donc la bonne valeur pour elles.</p>
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10,
+            columnDefinition = "varchar(10) default 'LADDER' not null")
+    private Kind kind = Kind.LADDER;
+
     protected ProjectLayer() {
         // requis par JPA
     }
 
     public ProjectLayer(String role, Rgb target, String technique, String note) {
+        this(role, target, technique, note, Kind.LADDER);
+    }
+
+    public ProjectLayer(String role, Rgb target, String technique, String note, Kind kind) {
+        this.kind = kind;
         this.role = role;
         this.targetHex = target.toHex();
         this.technique = technique == null ? "" : technique;
@@ -58,6 +92,14 @@ public class ProjectLayer {
 
     public String getRole() {
         return role;
+    }
+
+    public Kind getKind() {
+        return kind;
+    }
+
+    public void setKind(Kind kind) {
+        this.kind = kind;
     }
 
     public String getTargetHex() {

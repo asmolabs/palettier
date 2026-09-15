@@ -6,6 +6,7 @@ import be.asmolabs.palettier.core.color.Rgb;
 import be.asmolabs.palettier.core.domain.OilPaint;
 import be.asmolabs.palettier.core.domain.Palette;
 import be.asmolabs.palettier.core.domain.Project;
+import be.asmolabs.palettier.core.domain.ProjectLayer;
 import be.asmolabs.palettier.core.plan.PaintingPlan;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -217,5 +218,52 @@ class ProjectServiceTest {
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
         javax.imageio.ImageIO.write(image, "png", out);
         return out.toByteArray();
+    }
+
+    @Test
+    @DisplayName("les variations locales sont conservees, et distinguees de l'echelle")
+    void accentsAreKeptApartFromTheLadder() {
+        PaintingPlan.Zone zone = new PaintingPlan.Zone("Visage", "Peau", "Par glacis.",
+                layer("Base", "#C98F72"),
+                List.of(layer("Ombre 1", "#8A5F4A"), layer("Ombre 2", "#5A3B2E")),
+                List.of(layer("Lumiere 1", "#E0B49A"), layer("Lumiere 2", "#F2D8C4")),
+                List.of(layer("Rougeur des pommettes", "#C97A62"),
+                        layer("Front plus jaune", "#CE9A6A")));
+        PaintingPlan plan = new PaintingPlan("Buste", "Zorn", "", List.of(zone));
+
+        Project project = projects.save(plan, zorn(), "Avec variations");
+
+        // En base, les deux familles cohabitent mais restent reconnaissables.
+        var stored = project.getZones().getFirst().getLayers();
+        assertThat(stored).hasSize(7);
+        assertThat(stored).filteredOn(l -> l.getKind() == ProjectLayer.Kind.ACCENT)
+                .extracting(ProjectLayer::getRole)
+                .containsExactly("Rougeur des pommettes", "Front plus jaune");
+
+        // A la relecture, elles ne se melent pas au degrade.
+        PaintingPlan restored = projects.plan(project);
+        assertThat(restored.zones().getFirst().layers()).hasSize(5);
+        assertThat(restored.zones().getFirst().accents())
+                .extracting(PaintingPlan.Layer::role)
+                .containsExactly("Rougeur des pommettes", "Front plus jaune");
+        assertThat(restored.zones().getFirst().accents())
+                .allSatisfy(accent -> assertThat(accent.recipe()).isNotNull());
+    }
+
+    @Test
+    @DisplayName("une variation locale se situe a la valeur de la base, pas au-dela du degrade")
+    void anAccentSitsNearTheBaseValue() {
+        PaintingPlan.Zone zone = new PaintingPlan.Zone("Visage", "Peau", "",
+                layer("Base", "#C98F72"),
+                List.of(layer("Ombre 1", "#8A5F4A")),
+                List.of(layer("Lumiere 1", "#E0B49A")),
+                List.of(layer("Rougeur des pommettes", "#C97A62")));
+
+        // Ce n'est pas une marche de plus : elle ne doit ni eclaircir ni assombrir.
+        double base = zone.base().target().relativeLuminance();
+        double accent = zone.accents().getFirst().target().relativeLuminance();
+        assertThat(Math.abs(accent - base)).isLessThan(0.08);
+        assertThat(zone.layers()).extracting(PaintingPlan.Layer::role)
+                .doesNotContain("Rougeur des pommettes");
     }
 }

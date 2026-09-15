@@ -191,7 +191,10 @@ public class DryingView implements AppView {
         for (var layer : zone.layers()) {
             Label role = new Label(layer.role().toUpperCase(java.util.Locale.FRENCH));
             role.getStyleClass().add("milestone-title");
-            role.setMinWidth(78);
+            role.setWrapText(true);
+            role.setMinWidth(132);
+            role.setPrefWidth(132);
+            role.setMaxWidth(132);
 
             Label what = new Label(layer.mix().isBlank() ? layer.technique().label() : layer.mix());
             what.setWrapText(true);

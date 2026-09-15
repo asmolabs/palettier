@@ -5,9 +5,11 @@ import be.asmolabs.palettier.ai.ModelCatalog;
 import be.asmolabs.palettier.ai.ModelCatalog.ModelInfo;
 import be.asmolabs.palettier.ai.ModelCatalog.PullProgress;
 import be.asmolabs.palettier.ai.PaintingPlanService;
+import be.asmolabs.palettier.core.backup.BackupService;
 import be.asmolabs.palettier.ui.AppView;
 import be.asmolabs.palettier.ui.component.Card;
 import be.asmolabs.palettier.ui.component.Pill;
+import java.io.File;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -27,6 +29,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import org.springframework.stereotype.Component;
 
 /**
@@ -43,6 +46,7 @@ public class SettingsView implements AppView {
     private final ModelCatalog catalog;
     private final AiSettings settings;
     private final PaintingPlanService planner;
+    private final BackupService backup;
 
     private final ObservableList<ModelInfo> models = FXCollections.observableArrayList();
     private final ListView<ModelInfo> modelList = new ListView<>(models);
@@ -52,11 +56,14 @@ public class SettingsView implements AppView {
     private final Button pullButton = new Button("Telecharger");
     private final ProgressBar pullProgress = new ProgressBar(0);
     private final Label pullStatus = new Label();
+    private final Label backupState = new Label();
 
-    public SettingsView(ModelCatalog catalog, AiSettings settings, PaintingPlanService planner) {
+    public SettingsView(ModelCatalog catalog, AiSettings settings, PaintingPlanService planner,
+                        BackupService backup) {
         this.catalog = catalog;
         this.settings = settings;
         this.planner = planner;
+        this.backup = backup;
     }
 
     @Override
@@ -82,7 +89,7 @@ public class SettingsView implements AppView {
 
     @Override
     public Node create() {
-        VBox content = new VBox(14, enginePanel(), modelsPanel(), pullPanel());
+        VBox content = new VBox(14, backupPanel(), enginePanel(), modelsPanel(), pullPanel());
         content.setPadding(new Insets(2));
 
         ScrollPane scroll = new ScrollPane(content);
@@ -90,6 +97,61 @@ public class SettingsView implements AppView {
         refreshEngine();
         refreshModels();
         return scroll;
+    }
+
+    // --- Sauvegarde --------------------------------------------------------
+
+    /**
+     * Emporter son travail ailleurs.
+     *
+     * <p>Une archive avec un JSON lisible et les photos a cote, en fichiers ordinaires :
+     * on doit pouvoir l'ouvrir dans des annees, sans l'application, et y retrouver ses
+     * recettes a l'oeil nu.</p>
+     */
+    private Node backupPanel() {
+        Button export = new Button("Exporter tout dans un zip...");
+        export.setOnAction(event -> exportBackup());
+
+        backupState.getStyleClass().add("hint");
+        backupState.setWrapText(true);
+        backupState.setText("Palettes, projets, photos, recettes, inventaire et corrections du "
+                + "catalogue. Le catalogue d'origine n'a pas besoin d'etre sauvegarde : il est "
+                + "livre avec l'application.");
+
+        return new Card("Sauvegarde", new VBox(10, export, backupState));
+    }
+
+    private void exportBackup() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Enregistrer la sauvegarde");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archive zip", "*.zip"));
+        chooser.setInitialFileName("palettier-%s.zip".formatted(java.time.LocalDate.now()));
+        File file = chooser.showSaveDialog(modelList.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        backupState.setText("Ecriture en cours...");
+        Task<BackupService.Summary> task = new Task<>() {
+            @Override
+            protected BackupService.Summary call() throws Exception {
+                return backup.export(file.toPath());
+            }
+        };
+        task.setOnSucceeded(event -> {
+            var summary = task.getValue();
+            backupState.setText("%s  -  %d palettes, %d projets, %d photos, %d recettes, %d tubes, %d ko"
+                    .formatted(file.getName(), summary.palettes(), summary.projects(),
+                            summary.photos(), summary.recipes(), summary.paints(),
+                            summary.bytes() / 1024));
+        });
+        task.setOnFailed(event -> {
+            Throwable error = task.getException();
+            backupState.setText("Sauvegarde impossible : "
+                    + (error == null ? "cause inconnue" : error.getMessage()));
+        });
+        // Lecture de toute la base et ecriture d'un fichier : hors du fil d'affichage.
+        Thread.ofPlatform().daemon().name("backup").start(task);
     }
 
     // --- Moteur ------------------------------------------------------------

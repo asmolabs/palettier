@@ -25,8 +25,14 @@ public class ColorMixService {
     /** Au-dela de ce nombre de tubes, le melange tourne au gris quoi qu'on fasse. */
     private static final int MUDDY_MIX_THRESHOLD = 4;
 
-    /** Nombre de tubes retenu par defaut pour une proposition de melange. */
-    private static final int DEFAULT_MAX_PAINTS = 3;
+    /** Plafond absolu : voir {@link MixSearch#MAX_PAINTS}. */
+    public static final int MAX_PAINTS = MixSearch.MAX_PAINTS;
+
+    /** Au-dela, une palette n'est plus une palette : c'est un catalogue. */
+    private static final int SHORT_PALETTE = 8;
+
+    /** Seuil au-dela duquel la recherche redevient econome. */
+    private static final int LARGE_SELECTION = 24;
 
     public MixResult mix(List<PaintPart> parts) {
         if (parts.isEmpty()) {
@@ -111,13 +117,32 @@ public class ColorMixService {
      * @param maxResults nombre de propositions a renvoyer
      */
     public List<MixSuggestion> suggestMixes(Rgb target, List<OilPaint> candidates, int maxResults) {
-        return suggestMixes(target, candidates, maxResults, DEFAULT_MAX_PAINTS);
+        return suggestMixes(target, candidates, maxResults, recommendedMaxPaints(candidates.size()));
     }
 
     /**
-     * @param maxPaints nombre maximal de tubes par proposition, de 1 a 3. Au-dela de
-     *                  trois, un melange devient impossible a reproduire d'une seance
-     *                  a l'autre et tourne au gris.
+     * Combien de tubes il est raisonnable d'autoriser, au vu de ce qui est disponible.
+     *
+     * <p>Les deux extremes ne demandent pas la meme chose. Sur une palette courte, les
+     * tubes supplementaires sont la seule facon d'atteindre certaines teintes : il faut
+     * parfois les trois primaires, un blanc et une terre. Sur le catalogue entier, deux ou
+     * trois tubes atteignent deja la cible a l'oeil pres -- en autoriser davantage coute
+     * beaucoup et n'apporte rien de mesurable.</p>
+     *
+     * @param candidateCount nombre de tubes disponibles
+     */
+    public static int recommendedMaxPaints(int candidateCount) {
+        if (candidateCount <= SHORT_PALETTE) {
+            return MAX_PAINTS;
+        }
+        return candidateCount <= LARGE_SELECTION ? 4 : 3;
+    }
+
+    /**
+     * @param maxPaints nombre maximal de tubes par proposition, de 1 a 5. Certaines
+     *                  teintes ne s'obtiennent pas autrement : les trois primaires pour
+     *                  la couleur, un blanc pour la valeur, une terre pour rompre.
+     *                  Au-dela de cinq, un melange cesse d'etre reproductible.
      */
     public List<MixSuggestion> suggestMixes(Rgb target, List<OilPaint> candidates,
                                             int maxResults, int maxPaints) {
@@ -125,6 +150,6 @@ public class ColorMixService {
             return List.of();
         }
         return new MixSearch(target, candidates)
-                .search(Math.clamp(maxPaints, 1, 3), maxResults);
+                .search(Math.clamp(maxPaints, 1, MAX_PAINTS), maxResults);
     }
 }

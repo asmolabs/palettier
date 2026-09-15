@@ -21,6 +21,9 @@ import javafx.scene.layout.VBox;
  */
 public class PlanRenderer {
 
+    /** Largeur de la colonne des roles, commune a toutes les lignes. */
+    private static final double ROLE_WIDTH = 132;
+
     /**
      * Ce qu'on peut modifier sur un plan enregistre.
      *
@@ -68,6 +71,20 @@ public class PlanRenderer {
             layers.getChildren().add(layerRow(zone.layers().get(i), zoneIndex, i));
         }
 
+        // Les variations locales sont mises a part : elles ne s'inscrivent pas dans le
+        // degrade, on ne doit pas les lire comme une marche de plus.
+        if (!zone.accents().isEmpty()) {
+            Label heading = new Label("VARIATIONS LOCALES");
+            heading.getStyleClass().add("card-title");
+            layers.getChildren().add(heading);
+            VBox.setMargin(heading, new Insets(6, 0, 0, 0));
+
+            int offset = zone.layers().size();
+            for (int i = 0; i < zone.accents().size(); i++) {
+                layers.getChildren().add(layerRow(zone.accents().get(i), zoneIndex, offset + i));
+            }
+        }
+
         String title = zone.material() == null || zone.material().isBlank()
                 ? zone.name()
                 : zone.name() + " - " + zone.material();
@@ -90,9 +107,15 @@ public class PlanRenderer {
         ColorSwatch achieved = new ColorSwatch(38, 44);
         achieved.setColor(layer.achieved());
 
+        // Largeur figee, et non minimale : un nom long comme "rougeur des pommettes"
+        // repoussait les pastilles vers la droite, et plus aucune colonne ne s'alignait
+        // d'une ligne a l'autre.
         Label role = new Label(layer.role().toUpperCase(Locale.FRENCH));
         role.getStyleClass().add("milestone-title");
-        role.setMinWidth(78);
+        role.setWrapText(true);
+        role.setMinWidth(ROLE_WIDTH);
+        role.setPrefWidth(ROLE_WIDTH);
+        role.setMaxWidth(ROLE_WIDTH);
 
         Label recipe = new Label(layer.recipe() == null ? "Palette vide" : layer.recipe().describe());
         recipe.setWrapText(true);

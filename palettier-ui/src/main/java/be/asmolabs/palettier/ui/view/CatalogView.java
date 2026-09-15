@@ -2,6 +2,7 @@ package be.asmolabs.palettier.ui.view;
 
 import be.asmolabs.palettier.core.domain.OilPaint;
 import be.asmolabs.palettier.core.service.MixModels.PaintMatch;
+import be.asmolabs.palettier.ai.TubeRecognitionService;
 import be.asmolabs.palettier.core.service.PaintCatalogService;
 import be.asmolabs.palettier.core.color.Rgb;
 import be.asmolabs.palettier.ui.AppView;
@@ -10,13 +11,18 @@ import be.asmolabs.palettier.ui.component.ColorSwatch;
 import be.asmolabs.palettier.ui.component.Card;
 import be.asmolabs.palettier.ui.component.Formats;
 import be.asmolabs.palettier.ui.component.Pill;
+import java.io.File;
+import java.nio.file.Files;
+import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -33,6 +39,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import org.springframework.stereotype.Component;
 
 /** Consultation du catalogue d'huiles et recherche du tube le plus proche d'une teinte. */
@@ -49,6 +56,7 @@ public class CatalogView implements AppView {
     private static final double SWATCH_COLUMN_WIDTH = 110;
 
     private final PaintCatalogService catalog;
+    private final TubeRecognitionService recognition;
     private final SampledColor sampled;
 
     private final ObservableList<OilPaint> paints = FXCollections.observableArrayList();
@@ -57,6 +65,9 @@ public class CatalogView implements AppView {
     private final CheckBox inStockOnly = new CheckBox("En stock uniquement");
     private final ComboBox<String> brandFilter = new ComboBox<>();
     private final Label countLabel = new Label();
+    private final Label ownedCount = new Label();
+    private final Label recognitionState = new Label();
+    private final ListView<TubeRecognitionService.Identification> recognised = new ListView<>();
     private final ColorPicker targetPicker = new ColorPicker(Color.web("#8A6A4A"));
     private final TableView<OilPaint> table = new TableView<>(paints);
 
@@ -68,8 +79,10 @@ public class CatalogView implements AppView {
     private final Button useSampled = new Button();
     private final Label calibrationState = new Label();
 
-    public CatalogView(PaintCatalogService catalog, SampledColor sampled) {
+    public CatalogView(PaintCatalogService catalog, TubeRecognitionService recognition,
+                       SampledColor sampled) {
         this.catalog = catalog;
+        this.recognition = recognition;
         this.sampled = sampled;
     }
 
@@ -142,7 +155,7 @@ public class CatalogView implements AppView {
         table.getSelectionModel().selectedItemProperty()
                 .addListener((obs, old, paint) -> showCalibration(paint));
 
-        VBox right = new VBox(14, matchPanel(), calibrationPanel());
+        VBox right = new VBox(14, inventoryPanel(), matchPanel(), calibrationPanel());
         SplitPane split = new SplitPane(shelf, right);
         split.setDividerPositions(0.62);
 
@@ -179,7 +192,7 @@ public class CatalogView implements AppView {
                 pillColumn("Opacite", 140, paint -> Pill.forOpacity(paint.getOpacity())),
                 pillColumn("Sechage", 110, paint -> Pill.forDrying(paint.getDryingClass())),
                 column("Pouvoir colorant", 130, p -> Formats.percent(p.getTintingStrength())),
-                column("Stock", 70, p -> p.isInStock() ? "oui" : "-"));
+                ownedColumn());
 
         // Dix colonnes ne tiennent pas dans la moitie d'une fenetre. Une politique
         // "contrainte" les y forcerait en les ecrasant toutes, sans jamais proposer de
@@ -205,6 +218,141 @@ public class CatalogView implements AppView {
                 new javafx.beans.property.SimpleStringProperty(extractor.apply(cell.getValue())));
         column.setPrefWidth(width);
         return column;
+    }
+
+    // --- Inventaire --------------------------------------------------------
+
+    /**
+     * Declarer ce que l'on possede reellement.
+     *
+     * <p>Sans cet inventaire, le filtre "mes tubes" et les recherches de melange
+     * restreintes ne servent a rien : tout le catalogue est marque comme possede a la
+     * livraison.</p>
+     */
+    private Node inventoryPanel() {
+        ownedCount.getStyleClass().add("result-summary");
+
+        Button none = new Button("Je ne possede rien");
+        none.setTooltip(new Tooltip("Decoche tout le catalogue, pour partir de zero"));
+        none.setOnAction(event -> {
+            catalog.declareNothingOwned();
+            table.refresh();
+            refreshOwnedCount();
+        });
+
+        Button markSelection = new Button("J'ai ceux-ci");
+        markSelection.setOnAction(event -> applyToSelection(true));
+
+        Button unmarkSelection = new Button("Je ne les ai pas");
+        unmarkSelection.setOnAction(event -> applyToSelection(false));
+
+        Label hint = new Label(
+                "Cochez la colonne \u00AB J'ai \u00BB tube par tube, ou selectionnez plusieurs "
+                + "lignes du tableau et employez les boutons. La selection multiple se fait avec "
+                + "la touche majuscule ou commande.");
+        hint.setWrapText(true);
+        hint.getStyleClass().add("hint");
+
+        Button fromPhoto = new Button("Reconnaitre depuis une photo...");
+        fromPhoto.setDisable(!recognition.isAvailable());
+        fromPhoto.setTooltip(new Tooltip(recognition.isAvailable()
+                ? "Photographiez votre boite : les etiquettes seront lues et rapprochees du catalogue"
+                : "Demande un assistant configure (voir Parametres)"));
+        fromPhoto.setOnAction(event -> recogniseFromPhoto());
+
+        recognitionState.getStyleClass().add("hint");
+        recognitionState.setWrapText(true);
+        recognised.setPlaceholder(new Label("Aucune lecture."));
+        recognised.setPrefHeight(150);
+        recognised.setCellFactory(view -> new IdentificationCell());
+
+        Button applyRecognised = new Button("Ajouter les tubes reconnus");
+        applyRecognised.setOnAction(event -> applyRecognised());
+
+        VBox content = new VBox(10, ownedCount,
+                new HBox(8, markSelection, unmarkSelection), none, hint,
+                new javafx.scene.control.Separator(),
+                fromPhoto, recognitionState, recognised, applyRecognised);
+
+        table.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
+        refreshOwnedCount();
+        return new Card("Mes tubes", content);
+    }
+
+    /** Lit une photo de tubes et propose les rapprochements, sans rien decider. */
+    private void recogniseFromPhoto() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Photo de vos tubes");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.heic"));
+        File file = chooser.showOpenDialog(table.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        recognised.getItems().clear();
+        recognitionState.setText("Lecture de la photo en cours...");
+
+        Task<List<TubeRecognitionService.Identification>> task = new Task<>() {
+            @Override
+            protected List<TubeRecognitionService.Identification> call() throws Exception {
+                return recognition.identify(Files.readAllBytes(file.toPath()), catalog.findAll(), null);
+            }
+        };
+        task.setOnSucceeded(event -> {
+            var found = task.getValue();
+            recognised.getItems().setAll(found);
+            long matched = found.stream().filter(i -> i.match().isPresent()).count();
+            recognitionState.setText(found.isEmpty()
+                    ? "Aucune etiquette lisible sur cette photo."
+                    : "%d tubes lus, %d rapproches du catalogue. Verifiez avant d'ajouter."
+                            .formatted(found.size(), matched));
+        });
+        task.setOnFailed(event -> {
+            Throwable error = task.getException();
+            recognitionState.setText(error == null ? "La lecture a echoue." : error.getMessage());
+        });
+        Thread.ofPlatform().daemon().name("tube-recognition").start(task);
+    }
+
+    /** N'ajoute que les rapprochements surs : un tube mal reconnu fausserait tout le reste. */
+    private void applyRecognised() {
+        List<OilPaint> reliable = recognised.getItems().stream()
+                .map(TubeRecognitionService.Identification::match)
+                .flatMap(java.util.Optional::stream)
+                .filter(match -> match.isReliable())
+                .map(match -> match.paint())
+                .distinct()
+                .toList();
+
+        if (reliable.isEmpty()) {
+            recognitionState.setText("Aucun rapprochement assez sur pour etre ajoute automatiquement. "
+                    + "Cochez-les a la main dans le tableau.");
+            return;
+        }
+        catalog.setOwned(reliable, true);
+        table.refresh();
+        refreshOwnedCount();
+        recognitionState.setText("%d tubes ajoutes a votre inventaire.".formatted(reliable.size()));
+    }
+
+    private void applyToSelection(boolean owned) {
+        var selected = List.copyOf(table.getSelectionModel().getSelectedItems());
+        if (selected.isEmpty()) {
+            ownedCount.setText("Selectionnez d'abord des lignes dans le tableau.");
+            return;
+        }
+        catalog.setOwned(selected, owned);
+        table.refresh();
+        refreshOwnedCount();
+    }
+
+    private void refreshOwnedCount() {
+        long owned = catalog.countOwned();
+        long total = catalog.findAll().size();
+        ownedCount.setText(owned == total
+                ? "%d tubes, soit tout le catalogue : l'inventaire n'a pas encore ete fait.".formatted(total)
+                : "%d tubes sur %d declares".formatted(owned, total));
     }
 
     // --- Calibrage du tube selectionne -------------------------------------
@@ -307,6 +455,50 @@ public class CatalogView implements AppView {
                 asTint ? " Ce tube passe au melange a deux constantes." : ""));
     }
 
+    /**
+     * Colonne de possession, cochable directement.
+     *
+     * <p>Le catalogue livre tout coche, ce qui ne veut rien dire tant que le peintre n'a
+     * pas fait son inventaire. Le bouton "Je ne possede rien" sert a partir de zero.</p>
+     */
+    private TableColumn<OilPaint, Void> ownedColumn() {
+        TableColumn<OilPaint, Void> column = new TableColumn<>("J'ai");
+        column.setPrefWidth(60);
+        column.setSortable(false);
+        column.setCellFactory(c -> new javafx.scene.control.TableCell<>() {
+
+            private final CheckBox box = new CheckBox();
+
+            {
+                box.setOnAction(event -> {
+                    OilPaint paint = paintAt(getIndex());
+                    if (paint != null) {
+                        catalog.setOwned(paint, box.isSelected());
+                        refreshOwnedCount();
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                OilPaint paint = empty ? null : paintAt(getIndex());
+                if (paint == null) {
+                    setGraphic(null);
+                } else {
+                    box.setSelected(paint.isInStock());
+                    setGraphic(box);
+                }
+            }
+
+            private OilPaint paintAt(int index) {
+                return index >= 0 && index < getTableView().getItems().size()
+                        ? getTableView().getItems().get(index) : null;
+            }
+        });
+        return column;
+    }
+
     /** Colonne dont la valeur est rendue par une etiquette arrondie plutot que par du texte. */
     private static TableColumn<OilPaint, Void> pillColumn(String title, double width,
                                                           java.util.function.Function<OilPaint, javafx.scene.control.Label> renderer) {
@@ -382,6 +574,32 @@ public class CatalogView implements AppView {
                 setText(null);
                 setGraphic(swatch);
             }
+        }
+    }
+
+    /** Un tube lu sur la photo, et ce a quoi on l'a rapproche. */
+    private static class IdentificationCell extends ListCell<TubeRecognitionService.Identification> {
+
+        @Override
+        protected void updateItem(TubeRecognitionService.Identification item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setGraphic(null);
+                return;
+            }
+            Label read = new Label(item.label());
+            Label verdict = new Label(item.match()
+                    .map(m -> "%s  -  confiance %.0f %%%s".formatted(m.paint().displayName(),
+                            m.confidence() * 100, m.isReliable() ? "" : ", a verifier"))
+                    .orElse("aucune fiche correspondante"));
+            verdict.getStyleClass().add("hint");
+            verdict.setWrapText(true);
+
+            VBox layout = new VBox(2, read, verdict);
+            if (item.match().filter(m -> m.isReliable()).isPresent()) {
+                layout.getChildren().add(Pill.of("sera ajoute", "pill-fast"));
+            }
+            setGraphic(layout);
         }
     }
 

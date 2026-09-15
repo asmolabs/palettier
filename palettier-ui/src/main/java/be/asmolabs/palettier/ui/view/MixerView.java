@@ -285,7 +285,7 @@ public class MixerView implements AppView {
         HBox controls = new HBox(10, new Label("Teinte visee"), targetPicker, searchButton);
         controls.setAlignment(Pos.CENTER_LEFT);
 
-        maxPaints.getItems().setAll(1, 2, 3);
+        maxPaints.getItems().setAll(1, 2, 3, 4, 5);
         maxPaints.setValue(3);
         maxPaints.setConverter(new javafx.util.StringConverter<>() {
             @Override

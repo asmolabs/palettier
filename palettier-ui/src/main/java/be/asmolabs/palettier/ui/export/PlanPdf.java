@@ -187,21 +187,35 @@ public class PlanPdf {
         sheet.y -= 2;
 
         for (PaintingPlan.Layer layer : zone.layers()) {
-            sheet.ensure(2 * LINE);
-            float top = sheet.y + SWATCH - 3;
-            sheet.swatch(layer.target(), 0, top);
-            sheet.swatch(layer.achieved(), SWATCH + 3, top);
-
-            sheet.text("%-11s %s".formatted(layer.role(),
-                    layer.recipe() == null ? "palette vide" : layer.recipe().describe()),
-                    regular, 9.5f, 2 * SWATCH + 12);
-            sheet.text("%s  -  %s  -  ecart %.1f, %s".formatted(layer.target().toHex(),
-                    layer.technique() == null || layer.technique().isBlank()
-                            ? "technique non precisee" : layer.technique(),
-                    layer.deltaE(), layer.reachability()),
-                    regular, 8, 2 * SWATCH + 12);
-            sheet.y -= 3;
+            writeLayer(sheet, layer);
         }
+
+        if (!zone.accents().isEmpty()) {
+            sheet.ensure((zone.accents().size() + 1) * 2 * LINE);
+            sheet.y -= 4;
+            sheet.text("Variations locales", bold, 9.5f, 0);
+            for (PaintingPlan.Layer accent : zone.accents()) {
+                writeLayer(sheet, accent);
+            }
+        }
+    }
+
+    /** Une ligne de couche : pastilles visee et obtenue, dosage, ecart. */
+    private void writeLayer(Sheet sheet, PaintingPlan.Layer layer) throws IOException {
+        sheet.ensure(2 * LINE);
+        float top = sheet.y + SWATCH - 3;
+        sheet.swatch(layer.target(), 0, top);
+        sheet.swatch(layer.achieved(), SWATCH + 3, top);
+
+        sheet.text("%-22s %s".formatted(layer.role(),
+                layer.recipe() == null ? "palette vide" : layer.recipe().describe()),
+                regular, 9.5f, 2 * SWATCH + 12);
+        sheet.text("%s  -  %s  -  ecart %.1f, %s".formatted(layer.target().toHex(),
+                layer.technique() == null || layer.technique().isBlank()
+                        ? "technique non precisee" : layer.technique(),
+                layer.deltaE(), layer.reachability()),
+                regular, 8, 2 * SWATCH + 12);
+        sheet.y -= 3;
     }
 
     private static PDColor toPdf(Rgb color) {

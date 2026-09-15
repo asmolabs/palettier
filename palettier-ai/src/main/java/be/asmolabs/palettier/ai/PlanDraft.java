@@ -25,11 +25,26 @@ record PlanDraft(String approach, List<ZoneDraft> zones) {
      * @param shadow2    ombre profonde, dans les creux fermes
      * @param highlight1 premier eclairci, sur les volumes exposes
      * @param highlight2 point lumineux, sur une arete seulement
+     * @param accent1    variation locale, facultative
+     * @param accent2    variation locale, facultative
+     * @param accent3    variation locale, facultative
      */
     record ZoneDraft(String name, String material, String note,
                      LayerDraft base,
                      LayerDraft shadow1, LayerDraft shadow2,
-                     LayerDraft highlight1, LayerDraft highlight2) {
+                     LayerDraft highlight1, LayerDraft highlight2,
+                     AccentDraft accent1, AccentDraft accent2, AccentDraft accent3) {
+    }
+
+    /**
+     * Une couleur qui n'appartient pas a l'echelle des valeurs.
+     *
+     * <p>Elle porte un nom, parce qu'elle se definit par l'endroit ou elle se pose et non
+     * par son rang : "rougeur des pommettes" veut dire quelque chose, "couche 6" non.</p>
+     *
+     * @param name ou la poser, en quelques mots
+     */
+    record AccentDraft(String name, String hex, String technique, String note) {
     }
 
     /**

@@ -4,6 +4,7 @@ import be.asmolabs.palettier.core.color.Colors;
 import be.asmolabs.palettier.core.color.Rgb;
 import be.asmolabs.palettier.core.domain.OilPaint;
 import be.asmolabs.palettier.core.domain.Palette;
+import be.asmolabs.palettier.core.image.ImagePalette;
 import be.asmolabs.palettier.core.image.Photos;
 import be.asmolabs.palettier.core.plan.PaintingPlan;
 import be.asmolabs.palettier.core.service.ColorMixService;
@@ -45,6 +46,9 @@ public class PaintingPlanService {
      */
     private static final int MAX_TOKENS = 16384;
 
+    /** Nombre de teintes relevees sur la photo et soumises au modele. */
+    private static final int MEASURED_COLOURS = 10;
+
     private static final String SYSTEM_PROMPT = """
             Tu es un peintre sur figurine confirme, specialiste de la peinture a l'huile.
 
@@ -55,7 +59,22 @@ public class PaintingPlanService {
 
             shadow1 est une ombre legere dans les demi-tons, shadow2 l'ombre profonde des
             creux fermes ; highlight1 est le premier eclairci sur les volumes exposes,
-            highlight2 le point lumineux, pose sur une arete seulement. Une seule ombre et une seule lumiere suffisent a
+            highlight2 le point lumineux, pose sur une arete seulement.
+
+            Ces cinq couches ne forment qu'une echelle de valeurs, du sombre au clair. Une
+            zone en demande presque toujours davantage : des couleurs qui ne sont ni plus
+            claires ni plus sombres, mais AUTRES. Remplis donc aussi accent1, accent2 et
+            accent3 avec ces variations locales, a peu pres a la valeur de la base.
+
+            Sur une carnation, ce sont elles qui font la difference entre une peau correcte
+            et une peau vivante : les pommettes, le nez et les oreilles tirent au rouge, le
+            front au jaune, la machoire et les tempes au froid ou au vert, le tour des yeux
+            au violet. Sur un tissu, ce sera un reflet de couleur voisine ; sur un metal,
+            une trace de rouille ou de chaleur.
+
+            Chaque accent porte un nom qui dit OU le poser -- "rougeur des pommettes",
+            "front plus jaune" -- et non un rang. Laisse un accent vide quand la zone n'en
+            demande pas : un aplat de bois sec n'a pas de variation locale. Une seule ombre et une seule lumiere suffisent a
             poser un volume, jamais a le rendre : c'est l'etagement des valeurs qui separe
             une piece plate d'une piece modelee. La derniere ombre se loge dans les creux
             les plus fermes, le dernier point lumineux sur une arete seulement.
@@ -99,10 +118,14 @@ public class PaintingPlanService {
             tunique, le ceinturon, les bottes, le paquetage, l'arme, la peau du visage et
             des mains -- et nommer ces zones-la. Une reponse qui se contenterait de
             "metal", "tissu" et "salissures" serait inutilisable : le peintre a besoin de
-            savoir quoi peindre, piece d'equipement par piece d'equipement. Ne te sers jamais des
-            couleurs de la photo comme de mesures : une photo est compressee et prise sous
-            une lumiere quelconque. Elle te sert a identifier les zones, les volumes et
-            l'etat d'avancement, pas a relever une teinte.
+            savoir quoi peindre, piece d'equipement par piece d'equipement.
+
+            Quand des teintes mesurees sur la photo te sont fournies, elles font autorite.
+            Elles ont ete relevees par l'application, pas estimees : tes couleurs doivent
+            s'appuyer dessus, et non sur l'idee generale que tu te fais du sujet. Un visage
+            n'est pas "de la couleur chair", c'est les teintes relevees sur CE visage.
+            Tu peux les eclaircir, les assombrir ou les rompre pour construire le modele,
+            mais tu ne dois pas partir ailleurs.
             """;
 
     private final ObjectProvider<ChatClient.Builder> chatClientBuilder;
@@ -191,7 +214,8 @@ public class PaintingPlanService {
             references.forEach(reference -> photos.add(reduced(reference)));
         }
 
-        String question = userPrompt(subject, palette, figurine != null, photos);
+        String question = userPrompt(subject, palette, figurine != null, photos,
+                measuredColours(figurine, references));
         // Priorite : le modele demande pour cette requete, sinon celui choisi dans les
         // parametres pour la session, sinon celui du fichier de configuration.
         String chosen = model != null && !model.isBlank() ? model : settings.model().orElse(null);
@@ -234,9 +258,64 @@ public class PaintingPlanService {
      * d'outil : c'est l'information dont le modele a besoin a coup sur, autant la lui
      * donner d'emblee que dependre de son initiative.
      */
-    private static String userPrompt(String subject, Palette palette,
-                                     boolean hasFigurine, List<PhotoInput> photos) {
+    /**
+     * Les teintes reellement presentes sur les photos fournies.
+     *
+     * <p>C'est la difference entre un plan fonde sur la piece et un plan fonde sur l'idee
+     * qu'on se fait du sujet. La reference l'emporte sur l'etat actuel quand les deux sont
+     * la : on peint vers ce qu'on veut obtenir.</p>
+     */
+    private record Measured(List<ImagePalette.DominantColour> colours, boolean fromReference) {
+
+        static final Measured NONE = new Measured(List.of(), false);
+
+        boolean isEmpty() {
+            return colours.isEmpty();
+        }
+    }
+
+    private static Measured measuredColours(PhotoInput figurine, List<PhotoInput> references) {
+        boolean hasReference = references != null && !references.isEmpty();
+        byte[] source = hasReference
+                ? references.getFirst().data()
+                : figurine == null ? null : figurine.data();
+        if (source == null) {
+            return Measured.NONE;
+        }
+        try {
+            return new Measured(ImagePalette.dominant(source, MEASURED_COLOURS), hasReference);
+        } catch (RuntimeException e) {
+            log.warn("Teintes de la photo illisibles, le plan se fera sans", e);
+            return Measured.NONE;
+        }
+    }
+
+    private static String userPrompt(String subject, Palette palette, boolean hasFigurine,
+                                     List<PhotoInput> photos,
+                                     Measured measured) {
         StringBuilder prompt = new StringBuilder();
+
+        if (!measured.isEmpty()) {
+            // La distinction est decisive : les teintes d'une reference sont des cibles,
+            // celles d'une piece nue ne sont que du metal ou de l'appret.
+            prompt.append(measured.fromReference()
+                    ? "Teintes relevees par l'application sur la REFERENCE, avec la part de "
+                      + "l'image qu'elles occupent. Ce sont des mesures, et ce sont tes cibles :\n"
+                    : "Teintes relevees par l'application sur la PIECE TELLE QU'ELLE EST, avec la "
+                      + "part de l'image qu'elles occupent :\n");
+            for (ImagePalette.DominantColour colour : measured.colours()) {
+                prompt.append("  ").append(colour.color().toHex())
+                        .append("  ").append(Math.round(colour.share() * 100)).append(" %\n");
+            }
+            prompt.append(measured.fromReference()
+                    ? "Appuie tes couleurs sur ces mesures plutot que sur l'idee generale que tu "
+                      + "te fais du sujet.\n"
+                    : "Attention : c'est l'etat de depart, pas la cible. Si la piece est nue -- "
+                      + "metal, resine, appret gris -- ces teintes ne disent rien de ce qu'il faut "
+                      + "peindre, et tu dois les ignorer completement pour proposer les couleurs "
+                      + "du sujet represente. Elles ne servent que si la piece est deja peinte.\n");
+            prompt.append("Une part tres importante correspond souvent au fond, ignore-la.\n\n");
+        }
 
         // Les images arrivent dans l'ordre ou elles sont ajoutees, sans etiquette : sans
         // cette enumeration, le modele ne sait pas laquelle est la piece et laquelle est
@@ -282,7 +361,8 @@ public class PaintingPlanService {
                     List.of(step("Ombre 1", zone.shadow1(), base, zone.shadow2(), palette, maxPaints),
                             step("Ombre 2", zone.shadow2(), base, zone.shadow1(), palette, maxPaints)),
                     List.of(step("Lumiere 1", zone.highlight1(), base, zone.highlight2(), palette, maxPaints),
-                            step("Lumiere 2", zone.highlight2(), base, zone.highlight1(), palette, maxPaints))));
+                            step("Lumiere 2", zone.highlight2(), base, zone.highlight1(), palette, maxPaints)),
+                    accents(zone, palette, maxPaints)));
         }
         return new PaintingPlan(subject, palette.getName(), draft.approach(), List.copyOf(zones));
     }
@@ -295,6 +375,32 @@ public class PaintingPlanService {
      * invente, c'est le milieu de deux couleurs que le modele a lui-meme choisies, calcule
      * comme n'importe quel autre melange.</p>
      */
+    /**
+     * Les variations locales effectivement proposees.
+     *
+     * <p>Contrairement aux couches de l'echelle, on ne comble pas les manquantes : une
+     * variation locale est une observation, elle ne s'interpole pas. Une zone qui n'en
+     * demande pas n'en recoit aucune.</p>
+     */
+    private List<PaintingPlan.Layer> accents(PlanDraft.ZoneDraft zone, Palette palette, int maxPaints) {
+        List<PaintingPlan.Layer> accents = new ArrayList<>();
+        for (PlanDraft.AccentDraft accent : List.of(
+                java.util.Optional.ofNullable(zone.accent1()),
+                java.util.Optional.ofNullable(zone.accent2()),
+                java.util.Optional.ofNullable(zone.accent3()))
+                .stream().flatMap(java.util.Optional::stream).toList()) {
+            if (accent.hex() == null || accent.hex().isBlank()) {
+                continue;
+            }
+            String name = accent.name() == null || accent.name().isBlank()
+                    ? "Variation " + (accents.size() + 1) : accent.name();
+            accents.add(layer(name,
+                    new PlanDraft.LayerDraft(accent.hex(), accent.technique(), accent.note()),
+                    palette, maxPaints));
+        }
+        return List.copyOf(accents);
+    }
+
     private PaintingPlan.Layer step(String role, PlanDraft.LayerDraft draft, PaintingPlan.Layer base,
                                     PlanDraft.LayerDraft sibling, Palette palette, int maxPaints) {
         if (draft != null && draft.hex() != null && !draft.hex().isBlank()) {

@@ -67,8 +67,12 @@ public class ProjectService {
         for (PaintingPlan.Zone zone : plan.zones()) {
             ProjectZone stored = new ProjectZone(zone.name(), zone.material(), zone.note());
             for (PaintingPlan.Layer layer : zone.layers()) {
-                stored.addLayer(new ProjectLayer(
-                        layer.role(), layer.target(), layer.technique(), layer.note()));
+                stored.addLayer(new ProjectLayer(layer.role(), layer.target(),
+                        layer.technique(), layer.note(), ProjectLayer.Kind.LADDER));
+            }
+            for (PaintingPlan.Layer accent : zone.accents()) {
+                stored.addLayer(new ProjectLayer(accent.role(), accent.target(),
+                        accent.technique(), accent.note(), ProjectLayer.Kind.ACCENT));
             }
             project.addZone(stored);
         }
@@ -162,10 +166,15 @@ public class ProjectService {
         List<be.asmolabs.palettier.core.domain.OilPaint> paints = project.effectivePaints();
 
         for (ProjectZone zone : project.getZones()) {
-            List<PaintingPlan.Layer> layers = zone.getLayers().stream()
+            List<PaintingPlan.Layer> ladder = zone.getLayers().stream()
+                    .filter(layer -> layer.getKind() == ProjectLayer.Kind.LADDER)
                     .map(layer -> recompute(layer, paints))
                     .toList();
-            zones.add(rebuild(zone, layers));
+            List<PaintingPlan.Layer> accents = zone.getLayers().stream()
+                    .filter(layer -> layer.getKind() == ProjectLayer.Kind.ACCENT)
+                    .map(layer -> recompute(layer, paints))
+                    .toList();
+            zones.add(rebuild(zone, ladder, accents));
         }
 
         String paletteName = project.getPalette() == null
@@ -195,7 +204,8 @@ public class ProjectService {
      * Remet les couches dans la forme attendue par le plan. Les roles ont ete conserves
      * tels quels : ce sont eux qui disent ou va chaque couche.
      */
-    private static PaintingPlan.Zone rebuild(ProjectZone zone, List<PaintingPlan.Layer> layers) {
+    private static PaintingPlan.Zone rebuild(ProjectZone zone, List<PaintingPlan.Layer> layers,
+                                             List<PaintingPlan.Layer> accents) {
         List<PaintingPlan.Layer> shadows = layers.stream()
                 .filter(layer -> layer.role().toLowerCase().startsWith("ombre"))
                 .toList();
@@ -210,7 +220,7 @@ public class ProjectService {
         // Les ombres ont ete enregistrees de la plus sombre a la plus claire : on rend
         // l'ordre attendu, de la plus legere a la plus profonde.
         return new PaintingPlan.Zone(zone.getName(), zone.getMaterial(), zone.getNote(),
-                base, shadows.reversed(), highlights);
+                base, shadows.reversed(), highlights, accents);
     }
 
     private String uniqueName(String wanted) {

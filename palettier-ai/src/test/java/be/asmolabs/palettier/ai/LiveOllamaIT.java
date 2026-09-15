@@ -99,11 +99,17 @@ class LiveOllamaIT {
                 new PhotoInput(image, "la piece a peindre, etat actuel"),
                 java.util.List.of());
 
+        System.out.println("=== teintes mesurees sur la photo :");
+        be.asmolabs.palettier.core.image.ImagePalette.dominant(image, 10)
+                .forEach(c -> System.out.printf("    %s  %2.0f %%%n", c.color().toHex(), c.share() * 100));
         System.out.println("=== avec photo, approche : " + plan.approach());
         plan.zones().forEach(zone -> {
             System.out.println("--- zone : " + zone.name() + " (" + zone.material() + ")");
-            zone.layers().forEach(l -> System.out.printf("    %-8s %s -> %s  ecart %.1f  %s%n",
+            zone.layers().forEach(l -> System.out.printf("    %-10s %s -> %s  ecart %.1f  %s%n",
                     l.role(), l.target().toHex(), l.achieved().toHex(), l.deltaE(),
+                    l.recipe() == null ? "-" : l.recipe().describe()));
+            zone.accents().forEach(l -> System.out.printf("    [variation] %s : %s -> %s  %s%n",
+                    l.role(), l.target().toHex(), l.achieved().toHex(),
                     l.recipe() == null ? "-" : l.recipe().describe()));
         });
 
