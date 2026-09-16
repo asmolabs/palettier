@@ -52,6 +52,18 @@ public final class MixModels {
     /** Une proposition de melange pour approcher une couleur cible. */
     public record MixSuggestion(List<PaintPart> parts, Rgb color, double deltaE) {
 
+        /**
+         * Vitesse de sechage du melange : celle de son tube le plus lent.
+         *
+         * <p>Un cadmium glisse dans un point lumineux impose plusieurs jours a lui seul,
+         * quelle que soit sa dose : le sechage ne se moyenne pas.</p>
+         */
+        public DryingClass dryingClass() {
+            return parts.stream()
+                    .map(part -> part.paint().getDryingClass())
+                    .reduce(DryingClass.FAST, DryingClass::slowest);
+        }
+
         /** Description lisible du type "3 parts de X + 1 part de Y". */
         public String describe() {
             return parts.stream()

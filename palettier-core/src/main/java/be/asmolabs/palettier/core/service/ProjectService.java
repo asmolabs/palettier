@@ -2,6 +2,7 @@ package be.asmolabs.palettier.core.service;
 
 import be.asmolabs.palettier.core.color.Colors;
 import be.asmolabs.palettier.core.color.Rgb;
+import be.asmolabs.palettier.core.domain.DryingClass;
 import be.asmolabs.palettier.core.domain.Palette;
 import be.asmolabs.palettier.core.domain.Project;
 import be.asmolabs.palettier.core.domain.ProjectLayer;
@@ -10,7 +11,9 @@ import be.asmolabs.palettier.core.domain.ProjectZone;
 import be.asmolabs.palettier.core.plan.PaintingPlan;
 import be.asmolabs.palettier.core.image.Photos;
 import be.asmolabs.palettier.core.repository.ProjectRepository;
+import be.asmolabs.palettier.core.service.DryingModels.Workshop;
 import be.asmolabs.palettier.core.service.MixModels.MixSuggestion;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -107,11 +110,51 @@ public class ProjectService {
     @Transactional
     public Project updateLayer(Project project, int zoneIndex, int layerIndex,
                                Rgb target, String technique, String note) {
-        ProjectLayer layer = project.getZones().get(zoneIndex).getLayers().get(layerIndex);
+        ProjectLayer layer = layer(project, zoneIndex, layerIndex);
         layer.setTargetHex(target.toHex());
         layer.setTechnique(technique);
         layer.setNote(note);
         return repository.save(project);
+    }
+
+    /**
+     * Consigne qu'une couche vient d'etre peinte.
+     *
+     * <p>Contrairement au reste du projet, ce n'est pas une decision revocable mais un
+     * fait date : c'est lui qui fait courir le sechage, et donc qui permet a l'etabli de
+     * repondre "recouvrable depuis hier" plutot que "comptez trois jours".</p>
+     *
+     * <p>Les conditions de l'atelier et la vitesse de sechage du melange sont figees avec
+     * la pose. Les relire plus tard donnerait une reponse fausse : l'huile a seche dans
+     * l'atelier du jour, avec les tubes du jour.</p>
+     *
+     * @param workshop    conditions au moment de la pose
+     * @param dryingClass vitesse du melange effectivement employe
+     */
+    @Transactional
+    public Project markApplied(Project project, int zoneIndex, int layerIndex,
+                               Workshop workshop, DryingClass dryingClass) {
+        return markApplied(project, zoneIndex, layerIndex, workshop, dryingClass, Instant.now());
+    }
+
+    /** @param when instant de la pose, parametre pour que le comportement soit verifiable */
+    @Transactional
+    public Project markApplied(Project project, int zoneIndex, int layerIndex,
+                               Workshop workshop, DryingClass dryingClass, Instant when) {
+        layer(project, zoneIndex, layerIndex).markApplied(when, workshop.temperatureCelsius(),
+                workshop.relativeHumidity(), workshop.ventilation(), dryingClass);
+        return repository.save(project);
+    }
+
+    /** Annule la pose d'une couche : elle redevient a peindre. */
+    @Transactional
+    public Project clearApplied(Project project, int zoneIndex, int layerIndex) {
+        layer(project, zoneIndex, layerIndex).clearApplied();
+        return repository.save(project);
+    }
+
+    private static ProjectLayer layer(Project project, int zoneIndex, int layerIndex) {
+        return project.getZones().get(zoneIndex).getLayers().get(layerIndex);
     }
 
     /** Modifie l'intitule d'une zone. */

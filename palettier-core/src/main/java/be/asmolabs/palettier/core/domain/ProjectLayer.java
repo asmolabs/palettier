@@ -10,12 +10,20 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Pattern;
+import java.time.Instant;
 
 /**
  * Une couche du projet : le role tenu, la couleur visee, la technique.
  *
  * <p>Aucun dosage n'est stocke. La couleur visee est la decision ; le melange qui y
  * conduit est un calcul, refait a chaque ouverture avec la palette du moment.</p>
+ *
+ * <p>La pose, elle, est un fait et non une decision : une couche a ete peinte tel jour,
+ * dans un atelier qui faisait telle temperature. C'est pourquoi les conditions sont
+ * figees ici plutot que relues au moment de l'affichage -- l'huile a seche avec celles
+ * du jour de la pose, pas avec celles d'aujourd'hui. Meme raison pour la vitesse de
+ * sechage : elle vient des tubes reellement employes, et remanier la palette ensuite ne
+ * doit pas reecrire le passe.</p>
  */
 @Entity
 @Table(name = "project_layer")
@@ -57,6 +65,26 @@ public class ProjectLayer {
     @Column(nullable = false, length = 10)
     private Kind kind = Kind.LADDER;
 
+    /** Date de pose, ou {@code null} tant que la couche n'est pas peinte. */
+    @Column(name = "applied_at")
+    private Instant appliedAt;
+
+    /** Conditions de l'atelier au moment de la pose, figees avec elle. */
+    @Column(name = "applied_temperature")
+    private Double appliedTemperature;
+
+    @Column(name = "applied_humidity")
+    private Double appliedHumidity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "applied_ventilation", length = 10)
+    private Ventilation appliedVentilation;
+
+    /** Vitesse de sechage du melange effectivement pose. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "applied_drying_class", length = 10)
+    private DryingClass appliedDryingClass;
+
     protected ProjectLayer() {
         // requis par JPA
     }
@@ -75,6 +103,55 @@ public class ProjectLayer {
 
     public Rgb target() {
         return Rgb.ofHex(targetHex);
+    }
+
+    /** Vrai quand la couche a ete peinte et que son sechage court. */
+    public boolean isApplied() {
+        return appliedAt != null;
+    }
+
+    /**
+     * Consigne la pose de la couche.
+     *
+     * <p>Les conditions sont prises en parametre plutot que lues ailleurs : ce sont
+     * celles qui ont prevalu, et elles ne bougeront plus.</p>
+     */
+    public void markApplied(Instant when, double temperature, double humidity,
+                            Ventilation ventilation, DryingClass dryingClass) {
+        this.appliedAt = when;
+        this.appliedTemperature = temperature;
+        this.appliedHumidity = humidity;
+        this.appliedVentilation = ventilation;
+        this.appliedDryingClass = dryingClass;
+    }
+
+    /** Annule la pose : la couche redevient a peindre. Sert a corriger une fausse manoeuvre. */
+    public void clearApplied() {
+        this.appliedAt = null;
+        this.appliedTemperature = null;
+        this.appliedHumidity = null;
+        this.appliedVentilation = null;
+        this.appliedDryingClass = null;
+    }
+
+    public Instant getAppliedAt() {
+        return appliedAt;
+    }
+
+    public Double getAppliedTemperature() {
+        return appliedTemperature;
+    }
+
+    public Double getAppliedHumidity() {
+        return appliedHumidity;
+    }
+
+    public Ventilation getAppliedVentilation() {
+        return appliedVentilation;
+    }
+
+    public DryingClass getAppliedDryingClass() {
+        return appliedDryingClass;
     }
 
     public Long getId() {

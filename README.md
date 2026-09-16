@@ -9,11 +9,12 @@ planning. Le logiciel répond à ces trois questions.
 
 | Section | Ce qu'elle résout |
 |---|---|
-| **Catalogue** | 485 huiles de 8 gammes ; laquelle se rapproche le plus d'une teinte visée (écart CIEDE2000) |
+| **Aujourd'hui** | Sur quoi puis-je travailler maintenant : les zones redevenues reprenables, pièce par pièce |
+| **Catalogue** | 680 huiles de 8 gammes ; laquelle se rapproche le plus d'une teinte visée (écart CIEDE2000) |
 | **Palettes** | Une sélection nommée de tubes par sujet, qui sert ensuite de filtre de recherche |
 | **Pipette** | Relever une teinte sur une photo (ou la saisir en hexa) et obtenir le mélange à faire |
 | **Mélangeur** | Quelle couleur donne ce mélange — et, à l'inverse, quel mélange donne cette couleur |
-| **Séchage** | Quand puis-je reprendre la pièce : temps ouvert, recouvrable, sec à cœur, vernissable |
+| **Séchage** | Combien de temps pour une couche à venir : temps ouvert, recouvrable, sec à cœur, vernissable |
 | **Recettes** | Combien de séances représente vraiment cette recette |
 
 ## Stack
@@ -364,6 +365,22 @@ polymérisation complète. Dans une recette, une technique qui exige un support 
 (`Technique.requiresCuredBase`) attend le séchage à cœur de la couche précédente ; les
 autres se contentent du délai de recouvrement.
 
+### De la durée à la date
+
+Ces jalons restaient théoriques tant que rien ne disait *quand* une couche avait été
+posée : le logiciel savait annoncer « comptez trois jours », jamais « recouvrable depuis
+hier soir ». Cocher une couche comme posée (`ProjectLayer.markApplied`) enregistre la
+date, **les conditions de l'atelier de ce jour-là et la classe de séchage du mélange
+réellement employé**. Les trois sont figés avec la pose : l'huile a séché dans l'atelier
+qu'elle a connu, avec les tubes du moment, et ni un coup de chauffage ni un remaniement
+de la palette ne doivent réécrire le passé.
+
+`WorkbenchService` rejoue alors la même formule à partir de cet instantané, et la section
+**Aujourd'hui** en tire l'état de chaque zone. Une pièce y est annoncée reprenable dès
+qu'*une* de ses zones l'est, pas quand toutes le sont — c'est la même raison qui fait
+conseiller ailleurs de mener les zones de front : pendant que le visage prend, la cape
+avance.
+
 ## Limites assumées
 
 - Les valeurs hexadécimales du catalogue sont des **approximations de la teinte sortie de
@@ -381,6 +398,7 @@ autres se contentent du délai de recouvrement.
   beaux-arts (le format CSV est fait pour ça)
 - Corriger les pigments inférés de Scale75 et Abteilung 502 d'après les tubes
 - Édition du catalogue depuis l'interface, ou calibration depuis une photo d'écouvillons
-- Minuteurs de séchage avec notification système, adossés aux jalons déjà calculés
+- Notification système quand une zone redevient reprenable : les dates existent désormais,
+  il ne manque que l'alerte
 - Recettes modifiables depuis l'interface, avec photos d'étape
 - Passage de deux à trois tubes dans la recherche inverse de mélange

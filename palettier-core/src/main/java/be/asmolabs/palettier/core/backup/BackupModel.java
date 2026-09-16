@@ -55,8 +55,20 @@ public final class BackupModel {
     public record Zone(String name, String material, String note, List<Layer> layers) {
     }
 
-    /** @param kind LADDER pour une marche du degrade, ACCENT pour une variation locale */
-    public record Layer(String role, String targetHex, String technique, String note, String kind) {
+    /**
+     * Une couche : ce qui est vise, et ce qui a deja ete pose.
+     *
+     * <p>Les cinq derniers champs decrivent la pose. Ils sont absents des archives
+     * ecrites avant qu'elle soit suivie, et valent alors {@code null} : la couche est
+     * simplement rendue a peindre, ce qu'elle etait. Aucune raison de changer la version
+     * du format pour cela -- une archive ancienne se relit sans perte.</p>
+     *
+     * @param kind       LADDER pour une marche du degrade, ACCENT pour une variation locale
+     * @param appliedAt  date de pose, ou {@code null} si la couche reste a peindre
+     */
+    public record Layer(String role, String targetHex, String technique, String note, String kind,
+                        Instant appliedAt, Double appliedTemperature, Double appliedHumidity,
+                        String appliedVentilation, String appliedDryingClass) {
     }
 
     /**

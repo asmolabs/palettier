@@ -11,6 +11,8 @@ import be.asmolabs.palettier.core.domain.ProjectZone;
 import be.asmolabs.palettier.core.domain.Technique;
 import be.asmolabs.palettier.core.domain.Project;
 import be.asmolabs.palettier.core.domain.ProjectPhoto;
+import be.asmolabs.palettier.core.domain.Ventilation;
+import be.asmolabs.palettier.core.service.DryingModels.Workshop;
 import be.asmolabs.palettier.core.repository.OilPaintRepository;
 import be.asmolabs.palettier.core.repository.PaletteRepository;
 import be.asmolabs.palettier.core.repository.ProjectRepository;
@@ -295,9 +297,7 @@ public class BackupService {
             for (BackupModel.Zone zone : entry.zones()) {
                 ProjectZone restored = new ProjectZone(zone.name(), zone.material(), zone.note());
                 for (BackupModel.Layer layer : zone.layers()) {
-                    restored.addLayer(new ProjectLayer(layer.role(), Rgb.ofHex(layer.targetHex()),
-                            layer.technique(), layer.note(),
-                            ProjectLayer.Kind.valueOf(layer.kind())));
+                    restored.addLayer(restore(layer));
                 }
                 project.addZone(restored);
             }
@@ -365,6 +365,39 @@ public class BackupService {
                 palette.getPaints().stream().map(BackupService::reference).toList());
     }
 
+    /**
+     * Rend une couche, avancement compris.
+     *
+     * <p>Ne pas reporter la pose ferait perdre a la restauration ce qu'une sauvegarde a
+     * de plus precieux sur une piece en cours : ou elle en est. Les archives ecrites
+     * avant que l'avancement soit suivi n'en portent pas, et la couche revient
+     * simplement a peindre.</p>
+     */
+    private static ProjectLayer restore(BackupModel.Layer layer) {
+        ProjectLayer restored = new ProjectLayer(layer.role(), Rgb.ofHex(layer.targetHex()),
+                layer.technique(), layer.note(), ProjectLayer.Kind.valueOf(layer.kind()));
+
+        if (layer.appliedAt() != null) {
+            Workshop fallback = Workshop.standard();
+            restored.markApplied(layer.appliedAt(),
+                    layer.appliedTemperature() == null ? fallback.temperatureCelsius() : layer.appliedTemperature(),
+                    layer.appliedHumidity() == null ? fallback.relativeHumidity() : layer.appliedHumidity(),
+                    layer.appliedVentilation() == null
+                            ? fallback.ventilation() : Ventilation.valueOf(layer.appliedVentilation()),
+                    layer.appliedDryingClass() == null
+                            ? DryingClass.MEDIUM : DryingClass.valueOf(layer.appliedDryingClass()));
+        }
+        return restored;
+    }
+
+    private static BackupModel.Layer describe(ProjectLayer layer) {
+        return new BackupModel.Layer(layer.getRole(), layer.getTargetHex(), layer.getTechnique(),
+                layer.getNote(), layer.getKind().name(), layer.getAppliedAt(),
+                layer.getAppliedTemperature(), layer.getAppliedHumidity(),
+                layer.getAppliedVentilation() == null ? null : layer.getAppliedVentilation().name(),
+                layer.getAppliedDryingClass() == null ? null : layer.getAppliedDryingClass().name());
+    }
+
     private static BackupModel.PaintRef reference(OilPaint paint) {
         return new BackupModel.PaintRef(paint.getBrand(), paint.getName());
     }
@@ -386,8 +419,7 @@ public class BackupService {
         List<BackupModel.Zone> zones = project.getZones().stream()
                 .map(zone -> new BackupModel.Zone(zone.getName(), zone.getMaterial(), zone.getNote(),
                         zone.getLayers().stream()
-                                .map(layer -> new BackupModel.Layer(layer.getRole(), layer.getTargetHex(),
-                                        layer.getTechnique(), layer.getNote(), layer.getKind().name()))
+                                .map(BackupService::describe)
                                 .toList()))
                 .toList();
 

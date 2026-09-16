@@ -117,13 +117,8 @@ public class PlanDryingService {
      * <p>C'est tout l'interet de partir d'un projet plutot que d'un reglage : le peintre
      * n'a pas a savoir que son blanc de titane est lent, l'application le sait.</p>
      */
-    private static DryingClass dryingClassOf(PaintingPlan.Layer layer) {
-        if (layer.recipe() == null) {
-            return DryingClass.MEDIUM;
-        }
-        return layer.recipe().parts().stream()
-                .map(part -> part.paint().getDryingClass())
-                .reduce(DryingClass.FAST, DryingClass::slowest);
+    public static DryingClass dryingClassOf(PaintingPlan.Layer layer) {
+        return layer.recipe() == null ? DryingClass.MEDIUM : layer.recipe().dryingClass();
     }
 
     private static List<String> advice(List<ZoneSchedule> zones, Duration sequential, Duration parallel) {

@@ -3,10 +3,13 @@ package be.asmolabs.palettier.core.backup;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import be.asmolabs.palettier.core.color.Rgb;
+import be.asmolabs.palettier.core.domain.DryingClass;
 import be.asmolabs.palettier.core.domain.Palette;
 import be.asmolabs.palettier.core.domain.Project;
 import be.asmolabs.palettier.core.domain.ProjectPhoto;
+import be.asmolabs.palettier.core.domain.Ventilation;
 import be.asmolabs.palettier.core.plan.PaintingPlan;
+import be.asmolabs.palettier.core.service.DryingModels.Workshop;
 import be.asmolabs.palettier.core.service.PaintCatalogService;
 import be.asmolabs.palettier.core.service.PaletteService;
 import be.asmolabs.palettier.core.service.ProjectService;
@@ -16,6 +19,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -209,6 +213,34 @@ class BackupServiceTest {
                 .filter(paint -> paint.getName().equals("Burnt Umber"))
                 .findFirst().orElseThrow().getTintHex()).isEqualTo("#C9B9AC");
         assertThat(catalog.countOwned()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("l'avancement d'une piece survit a l'aller-retour")
+    void appliedCoatsSurviveTheRoundTrip(@TempDir Path directory) throws Exception {
+        Instant posed = Instant.parse("2026-02-14T18:30:00Z");
+        Project original = projectWithPhoto("Piece a moitie peinte");
+        projects.markApplied(original, 0, 0, new Workshop(24, 40, Ventilation.GOOD),
+                DryingClass.VERY_SLOW, posed);
+
+        Path archive = directory.resolve("sauvegarde.zip");
+        backup.export(archive);
+        projects.delete(original);
+
+        backup.importFrom(archive);
+
+        var layers = projects.findAll().stream()
+                .filter(p -> p.getName().equals("Piece a moitie peinte"))
+                .findFirst().orElseThrow()
+                .getZones().getFirst().getLayers();
+
+        // Une sauvegarde qui perdrait la pose rendrait la piece a peindre : ce qu'elle a
+        // de plus precieux sur un travail en cours, c'est justement ou il en est.
+        assertThat(layers.getFirst().getAppliedAt()).isEqualTo(posed);
+        assertThat(layers.getFirst().getAppliedTemperature()).isEqualTo(24);
+        assertThat(layers.getFirst().getAppliedVentilation()).isEqualTo(Ventilation.GOOD);
+        assertThat(layers.getFirst().getAppliedDryingClass()).isEqualTo(DryingClass.VERY_SLOW);
+        assertThat(layers).filteredOn(layer -> !layer.isApplied()).isNotEmpty();
     }
 
     @Test

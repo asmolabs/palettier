@@ -1,8 +1,10 @@
 package be.asmolabs.palettier.ui.view;
 
 import be.asmolabs.palettier.core.domain.Project;
+import be.asmolabs.palettier.core.domain.ProjectLayer;
 import be.asmolabs.palettier.core.domain.ProjectPhoto;
 import be.asmolabs.palettier.core.plan.PaintingPlan;
+import be.asmolabs.palettier.core.service.PlanDryingService;
 import be.asmolabs.palettier.core.service.ProjectService;
 import be.asmolabs.palettier.ui.AppView;
 import be.asmolabs.palettier.ui.component.Card;
@@ -10,13 +12,16 @@ import be.asmolabs.palettier.ui.component.ColorSwatch;
 import be.asmolabs.palettier.ui.component.Dialogs;
 import be.asmolabs.palettier.ui.component.LayerEditor;
 import be.asmolabs.palettier.ui.component.PlanRenderer;
+import be.asmolabs.palettier.ui.component.WorkshopForm;
 import be.asmolabs.palettier.ui.export.PlanPdf;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import javafx.collections.FXCollections;
@@ -70,6 +75,13 @@ public class ProjectsView implements AppView {
     private final Button syncPalette = new Button("Reprendre la palette actuelle");
     private final Label summary = new Label();
     private final Button exportPdf = new Button("Exporter en PDF");
+
+    // Les conditions servent au moment ou l'on coche une couche : elles sont figees avec
+    // la pose, puisque c'est dans cet atelier-la que l'huile va secher.
+    private final WorkshopForm workshop = new WorkshopForm(
+            "Ces conditions sont enregistrees avec chaque couche que vous marquez posee. "
+            + "Ce sont elles qui donnent la date a laquelle la piece redeviendra reprenable, "
+            + "dans Aujourd'hui.");
 
     private PaintingPlan currentPlan;
     private Project current;
@@ -140,6 +152,20 @@ public class ProjectsView implements AppView {
             }
         });
 
+        // Ce qui est fait, par opposition a ce qui est decide. C'est cette case qui fait
+        // courir le sechage, et donc qui alimente l'etabli.
+        renderer.tracking(new PlanRenderer.Coats() {
+            @Override
+            public Instant appliedAt(int zoneIndex, int layerIndex) {
+                return current == null ? null : storedLayer(zoneIndex, layerIndex).getAppliedAt();
+            }
+
+            @Override
+            public void toggleApplied(int zoneIndex, int layerIndex) {
+                ProjectsView.this.toggleApplied(zoneIndex, layerIndex);
+            }
+        });
+
         exportPdf.setDisable(true);
         exportPdf.setOnAction(event -> exportToPdf());
 
@@ -149,7 +175,7 @@ public class ProjectsView implements AppView {
         // occupaient une hauteur fixe au-dessus du plan, qui se retrouvait ecrase dans
         // une fenetre courte -- alors que c'est lui le contenu principal.
         VBox everything = new VBox(14, summary, new HBox(8, exportPdf),
-                paintsCard(), photosCard(), detail);
+                paintsCard(), photosCard(), workshop, detail);
         everything.setPadding(new Insets(2));
 
         ScrollPane scroll = new ScrollPane(everything);
@@ -311,12 +337,52 @@ public class ProjectsView implements AppView {
         if (current == null || currentPlan == null) {
             return;
         }
-        PaintingPlan.Layer layer = currentPlan.zones().get(zoneIndex).layers().get(layerIndex);
+        PaintingPlan.Layer layer = plannedLayer(zoneIndex, layerIndex);
         LayerEditor.show(layer).ifPresent(result -> {
             current = projects.updateLayer(current, zoneIndex, layerIndex,
                     result.target(), result.technique(), result.note());
             show(current);
         });
+    }
+
+    /**
+     * Consigne qu'une couche vient d'etre peinte, ou revient sur une fausse manoeuvre.
+     *
+     * <p>La vitesse de sechage n'est pas demandee : elle se lit dans le melange calcule
+     * pour cette couche, donc dans les tubes du projet. Elle est figee avec la pose, au
+     * meme titre que les conditions -- remanier la palette ensuite ne doit pas reecrire
+     * ce qui a deja seche.</p>
+     */
+    private void toggleApplied(int zoneIndex, int layerIndex) {
+        if (current == null || currentPlan == null) {
+            return;
+        }
+        if (storedLayer(zoneIndex, layerIndex).isApplied()) {
+            current = projects.clearApplied(current, zoneIndex, layerIndex);
+        } else {
+            current = projects.markApplied(current, zoneIndex, layerIndex, workshop.current(),
+                    PlanDryingService.dryingClassOf(plannedLayer(zoneIndex, layerIndex)));
+        }
+        show(current);
+    }
+
+    private ProjectLayer storedLayer(int zoneIndex, int layerIndex) {
+        return current.getZones().get(zoneIndex).getLayers().get(layerIndex);
+    }
+
+    /**
+     * La couche calculee correspondant a une ligne affichee.
+     *
+     * <p>Les variations locales sont rendues a la suite de l'echelle et portent donc un
+     * rang qui continue le sien : c'est la meme convention que l'enregistrement, ou elles
+     * sont ajoutees apres elle.</p>
+     */
+    private PaintingPlan.Layer plannedLayer(int zoneIndex, int layerIndex) {
+        PaintingPlan.Zone zone = currentPlan.zones().get(zoneIndex);
+        List<PaintingPlan.Layer> ladder = zone.layers();
+        return layerIndex < ladder.size()
+                ? ladder.get(layerIndex)
+                : zone.accents().get(layerIndex - ladder.size());
     }
 
     private void editZone(int zoneIndex) {

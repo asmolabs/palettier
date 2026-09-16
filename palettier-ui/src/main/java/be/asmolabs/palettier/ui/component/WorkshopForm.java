@@ -21,6 +21,11 @@ public class WorkshopForm extends VBox {
     private final ComboBox<Ventilation> ventilation = new ComboBox<>();
 
     public WorkshopForm() {
+        this(null);
+    }
+
+    /** @param hint phrase expliquant a quoi ces conditions servent ici, ou {@code null} */
+    public WorkshopForm(String hint) {
         getStyleClass().addAll("card", "workshop-form");
         setSpacing(12);
 
@@ -48,6 +53,13 @@ public class WorkshopForm extends VBox {
         grid.addRow(2, fieldLabel("Ventilation"), ventilation);
 
         getChildren().addAll(heading, grid);
+
+        if (hint != null) {
+            Label explanation = new Label(hint);
+            explanation.getStyleClass().add("hint");
+            explanation.setWrapText(true);
+            getChildren().add(explanation);
+        }
     }
 
     private static Label fieldLabel(String text) {

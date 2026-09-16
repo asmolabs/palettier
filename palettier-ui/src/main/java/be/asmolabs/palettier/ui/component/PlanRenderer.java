@@ -1,11 +1,15 @@
 package be.asmolabs.palettier.ui.component;
 
 import be.asmolabs.palettier.core.plan.PaintingPlan;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -24,6 +28,9 @@ public class PlanRenderer {
     /** Largeur de la colonne des roles, commune a toutes les lignes. */
     private static final double ROLE_WIDTH = 132;
 
+    private static final DateTimeFormatter APPLIED =
+            DateTimeFormatter.ofPattern("d MMMM 'a' HH'h'mm", Locale.FRENCH).withZone(ZoneId.systemDefault());
+
     /**
      * Ce qu'on peut modifier sur un plan enregistre.
      *
@@ -38,11 +45,33 @@ public class PlanRenderer {
         void editLayer(int zoneIndex, int layerIndex);
     }
 
+    /**
+     * Ce qui a deja ete peint, et de quoi le consigner.
+     *
+     * <p>Distinct des modifications : corriger une couleur visee revient sur une
+     * decision, cocher une couche constate un fait. Un plan qui vient d'etre propose n'a
+     * rien de pose, et n'affiche donc pas ces cases.</p>
+     */
+    public interface Coats {
+
+        /** Date de pose de la couche, ou {@code null} si elle reste a peindre. */
+        Instant appliedAt(int zoneIndex, int layerIndex);
+
+        /** Consigne la pose, ou l'annule si la couche etait deja marquee. */
+        void toggleApplied(int zoneIndex, int layerIndex);
+    }
+
     private Edits edits;
+    private Coats coats;
 
     /** Active les commandes de modification. Sans appel, le plan reste en lecture seule. */
     public void editable(Edits edits) {
         this.edits = edits;
+    }
+
+    /** Affiche l'avancement et permet de le tenir a jour. Sans appel, rien n'apparait. */
+    public void tracking(Coats coats) {
+        this.coats = coats;
     }
 
     /** Remplit le conteneur avec les cartes du plan. Le contenu precedent est remplace. */
@@ -144,6 +173,9 @@ public class PlanRenderer {
         row.setAlignment(Pos.TOP_LEFT);
         row.setPadding(new Insets(1));
 
+        if (coats != null) {
+            row.getChildren().add(appliedBox(zoneIndex, layerIndex));
+        }
         if (edits != null) {
             Button edit = new Button("Modifier");
             edit.getStyleClass().add("link-button");
@@ -151,5 +183,23 @@ public class PlanRenderer {
             row.getChildren().add(edit);
         }
         return row;
+    }
+
+    /**
+     * La case a cocher qui consigne la pose.
+     *
+     * <p>Le libelle porte la date plutot qu'un simple "peinte" : c'est elle qui fait
+     * courir le sechage, et donc la seule information dont on ait besoin ici. La
+     * commande est branchee sur l'action et non sur la propriete, pour que remplir
+     * l'ecran ne se prenne pas pour un clic du peintre.</p>
+     */
+    private Node appliedBox(int zoneIndex, int layerIndex) {
+        Instant appliedAt = coats.appliedAt(zoneIndex, layerIndex);
+
+        CheckBox painted = new CheckBox(appliedAt == null ? "A peindre" : "Posee le " + APPLIED.format(appliedAt));
+        painted.setSelected(appliedAt != null);
+        painted.setMinWidth(170);
+        painted.setOnAction(event -> coats.toggleApplied(zoneIndex, layerIndex));
+        return painted;
     }
 }
