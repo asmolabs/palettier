@@ -240,14 +240,23 @@ public class PaintingPlanService {
                         }
                     })
                     .call()
-                    .entity(PlanDraft.class);
+                    // Le schema est remis au moteur comme contrainte de generation, et non
+                    // ajoute au prompt comme consigne. La difference est de nature : une
+                    // consigne se suit a peu pres, une contrainte interdit au moteur de
+                    // produire le jeton qui casserait le JSON. Chez Ollama, cela passe par
+                    // le champ "format" ; les moteurs qui ne le gerent pas retombent sur la
+                    // consigne en clair, sans rien changer d'autre.
+                    //
+                    // La validation qui suit rattrape ce que la contrainte ne couvre pas :
+                    // un modele a mode de reflexion peut repondre a cote en texte libre,
+                    // auquel cas l'erreur lui est renvoyee et la demande rejouee.
+                    .entity(PlanDraft.class, spec -> spec.useProviderStructuredOutput().validateSchema());
         } catch (RuntimeException e) {
-            // Cas le plus frequent de loin : la reponse a ete tronquee et le JSON ne se
-            // referme pas. Le message technique de l'analyseur n'aide personne.
+            log.warn("Plan inexploitable renvoye par le modele {}", chosen == null ? "(par defaut)" : chosen, e);
             throw new IllegalStateException(
-                    "Le modele n'a pas produit de plan exploitable. Sa reponse a probablement ete "
-                    + "tronquee : essayez un modele plus capable, ou moins de zones en precisant "
-                    + "le sujet. (" + e.getClass().getSimpleName() + ")", e);
+                    "Le modele n'a pas produit de plan exploitable, meme apres plusieurs tentatives. "
+                    + "Essayez un modele plus capable, ou moins de zones en precisant le sujet. ("
+                    + e.getClass().getSimpleName() + ")", e);
         }
 
         return enrich(subject, palette, draft, maxPaints);

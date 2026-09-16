@@ -252,6 +252,21 @@ mesure CIEDE2000, pas une affirmation.
 L'écran montre côte à côte la couleur visée et celle réellement obtenue : quand la
 palette ne suit pas, cela se voit.
 
+### Le JSON est une contrainte, pas une consigne
+
+Le schéma attendu est remis au moteur comme **contrainte de génération**
+(`useProviderStructuredOutput`), et non ajouté au prompt comme une instruction à suivre.
+La différence est de nature : une consigne se suit à peu près, une contrainte interdit au
+moteur de produire le jeton qui casserait le JSON. Chez Ollama elle passe par le champ
+`format` de l'API ; les moteurs qui ne la gèrent pas retombent d'eux-mêmes sur la consigne
+en clair, sans rien changer d'autre.
+
+Un petit modèle produisait sinon, de temps à autre, un objet qui ne se referme pas — la
+réponse s'arrêtait d'elle-même en plein plan, bien avant la limite de jetons, et rien
+n'était exploitable. La validation qui suit (`validateSchema`) rattrape ce que la
+contrainte ne couvre pas : un modèle à mode de réflexion peut répondre à côté en texte
+libre, auquel cas l'erreur lui est renvoyée et la demande rejouée.
+
 ### Photos
 
 Une photo de la pièce, et autant de références que voulu. Les zones sont alors déduites
