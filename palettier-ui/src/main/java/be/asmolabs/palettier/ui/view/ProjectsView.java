@@ -4,8 +4,14 @@ import be.asmolabs.palettier.core.domain.Project;
 import be.asmolabs.palettier.core.domain.ProjectLayer;
 import be.asmolabs.palettier.core.domain.ProjectPhoto;
 import be.asmolabs.palettier.core.plan.PaintingPlan;
+import be.asmolabs.palettier.core.service.FatOverLeanService;
+import be.asmolabs.palettier.core.service.FatOverLeanService.Risk;
 import be.asmolabs.palettier.core.service.PlanDryingService;
+import be.asmolabs.palettier.core.service.ProgressCheckService;
+import be.asmolabs.palettier.core.service.ProgressCheckService.Observed;
 import be.asmolabs.palettier.core.service.ProjectService;
+import be.asmolabs.palettier.core.service.SubstituteService;
+import be.asmolabs.palettier.core.service.SubstituteService.Missing;
 import be.asmolabs.palettier.ui.AppView;
 import be.asmolabs.palettier.ui.component.Card;
 import be.asmolabs.palettier.ui.component.ColorSwatch;
@@ -63,6 +69,9 @@ public class ProjectsView implements AppView {
             DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.FRENCH).withZone(ZoneId.systemDefault());
 
     private final ProjectService projects;
+    private final FatOverLeanService fatOverLean;
+    private final SubstituteService substitutes;
+    private final ProgressCheckService progress;
     private final PlanPdf pdf;
     private final PlanRenderer renderer = new PlanRenderer();
 
@@ -73,8 +82,11 @@ public class ProjectsView implements AppView {
     private final FlowPane paintStrip = new FlowPane(6, 6);
     private final Label paletteState = new Label();
     private final Button syncPalette = new Button("Reprendre la palette actuelle");
+    private final VBox shelf = new VBox(8);
+    private final VBox comparison = new VBox(8);
     private final Label summary = new Label();
     private final Button exportPdf = new Button("Exporter en PDF");
+    private final VBox cracking = new VBox(8);
 
     // Les conditions servent au moment ou l'on coche une couche : elles sont figees avec
     // la pose, puisque c'est dans cet atelier-la que l'huile va secher.
@@ -86,8 +98,12 @@ public class ProjectsView implements AppView {
     private PaintingPlan currentPlan;
     private Project current;
 
-    public ProjectsView(ProjectService projects, PlanPdf pdf) {
+    public ProjectsView(ProjectService projects, FatOverLeanService fatOverLean,
+                        SubstituteService substitutes, ProgressCheckService progress, PlanPdf pdf) {
         this.projects = projects;
+        this.fatOverLean = fatOverLean;
+        this.substitutes = substitutes;
+        this.progress = progress;
         this.pdf = pdf;
     }
 
@@ -179,7 +195,7 @@ public class ProjectsView implements AppView {
         // Tout descend dans le meme defilement. Auparavant les tubes et les photos
         // occupaient une hauteur fixe au-dessus du plan, qui se retrouvait ecrase dans
         // une fenetre courte -- alors que c'est lui le contenu principal.
-        VBox everything = new VBox(14, summary, new HBox(8, exportPdf),
+        VBox everything = new VBox(14, summary, new HBox(8, exportPdf), crackingCard(),
                 paintsCard(), photosCard(), workshop, detail);
         everything.setPadding(new Insets(2));
 
@@ -190,6 +206,47 @@ public class ProjectsView implements AppView {
         Card card = new Card("Plan du projet", scroll);
         VBox.setVgrow(card, Priority.ALWAYS);
         return card;
+    }
+
+    // --- Gras sur maigre ----------------------------------------------------
+
+    /**
+     * L'avertissement qui ne se rattrape pas.
+     *
+     * <p>Une couche maigre sur une couche grasse craquelle, et cela se voit des mois plus
+     * tard sur une piece finie. La carte n'apparait que lorsqu'il y a quelque chose a
+     * dire : un plan sain n'affiche rien du tout.</p>
+     */
+    private Node crackingCard() {
+        cracking.setVisible(false);
+        cracking.setManaged(false);
+        return cracking;
+    }
+
+    private void refreshCracking() {
+        cracking.getChildren().clear();
+
+        List<Risk> risks = current == null ? List.of() : fatOverLean.inspect(current);
+        cracking.setVisible(!risks.isEmpty());
+        cracking.setManaged(!risks.isEmpty());
+        if (risks.isEmpty()) {
+            return;
+        }
+
+        VBox lines = new VBox(8);
+        for (Risk risk : risks) {
+            Label where = new Label("%s : %s sous %s".formatted(risk.zone(), risk.under(), risk.over()));
+            where.getStyleClass().add("milestone-title");
+
+            Label why = new Label(risk.explanation());
+            why.getStyleClass().add("hint");
+            why.setWrapText(true);
+
+            lines.getChildren().add(new VBox(2, where, why));
+        }
+        cracking.getChildren().add(new Card("Gras sur maigre",
+                "Ces empilements peuvent craqueler en vieillissant. C'est le seul defaut de "
+                + "cet atelier qui ne se rattrape pas une fois la piece finie.", lines));
     }
 
     // --- Tubes figes avec le projet ----------------------------------------
@@ -215,7 +272,9 @@ public class ProjectsView implements AppView {
         });
 
         paintStrip.setPrefWrapLength(560);
-        return new Card("Tubes du projet", new VBox(10, paintStrip, paletteState, syncPalette));
+        shelf.setVisible(false);
+        shelf.setManaged(false);
+        return new Card("Tubes du projet", new VBox(10, paintStrip, paletteState, syncPalette, shelf));
     }
 
     private void refreshPaints() {
@@ -235,6 +294,8 @@ public class ProjectsView implements AppView {
         }
         paints.forEach(paint -> paintStrip.getChildren().add(paintTile(paint)));
 
+        refreshShelf();
+
         if (current.divergesFromPalette()) {
             paletteState.setText(("La palette %s a change depuis l'enregistrement. Le projet garde ses "
                     + "propres tubes, donc son plan reste reproductible. Vous pouvez reprendre la "
@@ -245,6 +306,59 @@ public class ProjectsView implements AppView {
         } else {
             paletteState.setText("%d tubes, figes avec le projet.".formatted(paints.size()));
         }
+    }
+
+    /**
+     * Ce que le projet reclame et qui n'est pas sur l'etagere.
+     *
+     * <p>Annoncer le manque ne sert a rien : le peintre le sait. Ce qu'il veut savoir,
+     * c'est avec quoi il s'en sort ce soir -- et si le remplacant est assez proche, le
+     * tube manquant n'a meme pas besoin d'etre achete.</p>
+     */
+    private void refreshShelf() {
+        shelf.getChildren().clear();
+
+        List<Missing> missing = current == null ? List.of() : substitutes.missingFrom(current);
+        shelf.setVisible(!missing.isEmpty());
+        shelf.setManaged(!missing.isEmpty());
+        if (missing.isEmpty()) {
+            return;
+        }
+
+        VBox lines = new VBox(8);
+        for (Missing gap : missing) {
+            ColorSwatch wanted = new ColorSwatch(26, 20);
+            wanted.setColor(gap.paint().color());
+
+            HBox swatches = new HBox(4, wanted);
+            gap.nearest().ifPresent(nearest -> {
+                ColorSwatch replacement = new ColorSwatch(26, 20);
+                replacement.setColor(nearest.color());
+                swatches.getChildren().add(replacement);
+            });
+            swatches.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            Label name = new Label(gap.paint().displayName());
+            name.getStyleClass().add("milestone-title");
+
+            Label verdict = new Label(gap.isComfortable()
+                    ? gap.verdict() + "  (ecart %.1f)".formatted(gap.deltaE())
+                    : gap.verdict());
+            verdict.getStyleClass().add("hint");
+            verdict.setWrapText(true);
+
+            VBox texts = new VBox(2, name, verdict);
+            HBox.setHgrow(texts, Priority.ALWAYS);
+            lines.getChildren().add(new HBox(10, swatches, texts));
+        }
+
+        long comfortable = missing.stream().filter(Missing::isComfortable).count();
+        shelf.getChildren().add(new Card("Pas sur l'etagere",
+                comfortable == missing.size()
+                        ? "Tout ce qui manque a un equivalent chez vous : la piece est faisable ce soir."
+                        : "%d tube(s) manquant(s), dont %d remplacable(s) sans que cela se voie."
+                                .formatted(missing.size(), comfortable),
+                lines));
     }
 
     private Node paintTile(be.asmolabs.palettier.core.domain.OilPaint paint) {
@@ -275,8 +389,22 @@ public class ProjectsView implements AppView {
 
         photoStrip.setPrefWrapLength(560);
 
+        Button compare = new Button("Comparer une photo au plan");
+        compare.setOnAction(event -> compareWithPlan());
+
+        comparison.setVisible(false);
+        comparison.setManaged(false);
+
+        Label how = new Label(
+                "La comparaison lit votre fichier d'origine, pas la photo rangee ici : celle-ci est "
+                + "reduite et reencodee, ses couleurs ont bouge. Meme ainsi, une photo est prise sous "
+                + "une lumiere quelconque -- l'ecart se lit comme une tendance, pas comme un verdict.");
+        how.getStyleClass().add("hint");
+        how.setWrapText(true);
+
         return new Card("Photos", new VBox(10,
-                new HBox(8, addPiece, addReference, addProgress), photoStrip));
+                new HBox(8, addPiece, addReference, addProgress, compare),
+                photoStrip, how, comparison));
     }
 
     private void addPhoto(ProjectPhoto.Role role) {
@@ -334,6 +462,80 @@ public class ProjectsView implements AppView {
         tile.getStyleClass().add("palette-tile");
         tile.setPadding(new Insets(8));
         return tile;
+    }
+
+    // --- Ce qui est sur la piece, compare a ce qui etait vise ---------------
+
+    /**
+     * Releve les teintes d'une photo d'avancement et les confronte au plan.
+     *
+     * <p>Le projet dit ce qui etait vise, la pipette sait relever ce qui est la : il ne
+     * manquait que de les mettre face a face. Le peintre voit alors de combien il a
+     * devie, et dans quel sens.</p>
+     */
+    private void compareWithPlan() {
+        if (current == null) {
+            return;
+        }
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Photo d'avancement a comparer");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp"));
+        File file = chooser.showOpenDialog(detail.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        Project piece = current;
+        Task<List<Observed>> task = new Task<>() {
+            @Override
+            protected List<Observed> call() throws Exception {
+                return progress.compare(piece, Files.readAllBytes(file.toPath()), 8);
+            }
+        };
+        task.setOnSucceeded(event -> showComparison(task.getValue(), file.getName()));
+        task.setOnFailed(event -> {
+            comparison.getChildren().setAll(new Label("Image illisible : "
+                    + task.getException().getMessage()));
+            comparison.setVisible(true);
+            comparison.setManaged(true);
+        });
+        Thread.ofPlatform().daemon().name("progress-check").start(task);
+    }
+
+    private void showComparison(List<Observed> observed, String fileName) {
+        VBox lines = new VBox(8);
+        for (Observed seen : observed) {
+            ColorSwatch measured = new ColorSwatch(30, 24);
+            measured.setColor(seen.measured());
+
+            HBox swatches = new HBox(4, measured);
+            if (seen.matchesPlan()) {
+                ColorSwatch aimed = new ColorSwatch(30, 24);
+                aimed.setColor(seen.target());
+                swatches.getChildren().add(aimed);
+            }
+            swatches.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            Label head = new Label("%s  -  %.0f %% de l'image".formatted(
+                    seen.measured().toHex(), seen.share() * 100));
+            head.getStyleClass().add("milestone-title");
+
+            Label verdict = new Label(seen.matchesPlan()
+                    ? seen.verdict() + "  (ecart %.1f)".formatted(seen.deltaE())
+                    : seen.verdict());
+            verdict.getStyleClass().add("hint");
+            verdict.setWrapText(true);
+
+            VBox texts = new VBox(2, head, verdict);
+            HBox.setHgrow(texts, Priority.ALWAYS);
+            lines.getChildren().add(new HBox(10, swatches, texts));
+        }
+
+        comparison.getChildren().setAll(new Card("Releve sur " + fileName,
+                "A gauche ce qui est sur la piece, a droite ce que le plan visait.", lines));
+        comparison.setVisible(true);
+        comparison.setManaged(true);
     }
 
     // --- Modification du plan ----------------------------------------------
@@ -430,6 +632,10 @@ public class ProjectsView implements AppView {
         current = project;
         exportPdf.setDisable(true);
         photoStrip.getChildren().clear();
+        cracking.setVisible(false);
+        cracking.setManaged(false);
+        comparison.setVisible(false);
+        comparison.setManaged(false);
         refreshPaints();
 
         if (project == null) {
@@ -459,6 +665,7 @@ public class ProjectsView implements AppView {
             current = loaded.project();
             currentPlan = loaded.plan();
             refreshPhotos();
+            refreshCracking();
             renderer.render(detail, currentPlan);
             exportPdf.setDisable(currentPlan.zones().isEmpty());
         });
