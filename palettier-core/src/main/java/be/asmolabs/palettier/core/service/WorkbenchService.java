@@ -11,10 +11,10 @@ import be.asmolabs.palettier.core.service.DryingModels.DryingEstimate;
 import be.asmolabs.palettier.core.service.DryingModels.Workshop;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -243,7 +243,7 @@ public class WorkbenchService {
         ProjectLayer last = applied.stream()
                 .max(Comparator.comparing(ProjectLayer::getAppliedAt))
                 .orElse(null);
-        ProjectLayer next = layers.stream().filter(layer -> !layer.isApplied()).findFirst().orElse(null);
+        ProjectLayer next = nextAfter(layers, last);
 
         CoatState state = last == null ? null : coat(zone, last, next, now);
         return new ZoneState(zone.getName(), zone.getMaterial(), applied.size(), layers.size(), state);
@@ -292,14 +292,55 @@ public class WorkbenchService {
         return layer.getAppliedDryingClass() == null ? DryingClass.MEDIUM : layer.getAppliedDryingClass();
     }
 
-    private static Stage stageOf(Duration elapsed, DryingEstimate estimate) {
-        List<Duration> milestones = new ArrayList<>(List.of(estimate.openTime(), estimate.touchDry(),
-                estimate.recoat(), estimate.throughDry(), estimate.fullCure()));
-        Stage[] stages = Stage.values();
-        for (int i = 0; i < milestones.size(); i++) {
-            if (elapsed.compareTo(milestones.get(i)) < 0) {
-                return stages[i];
+    /**
+     * La couche qui attend son tour : celle qui suit la derniere posee.
+     *
+     * <p>Prendre simplement la premiere non posee serait faux des que le peintre sort de
+     * l'ordre du plan -- annoncer "au tour de la base" alors que la lumiere est deja
+     * dessus n'a aucun sens. Quand il ne reste rien apres la derniere posee, on revient
+     * a la premiere couche manquante : il reste du travail, hors sequence.</p>
+     */
+    private static ProjectLayer nextAfter(List<ProjectLayer> layers, ProjectLayer last) {
+        int from = last == null ? 0 : layers.indexOf(last) + 1;
+        for (int i = from; i < layers.size(); i++) {
+            if (!layers.get(i).isApplied()) {
+                return layers.get(i);
             }
+        }
+        return layers.stream().filter(layer -> !layer.isApplied()).findFirst().orElse(null);
+    }
+
+    /**
+     * Un etat et le jalon avant lequel il vaut.
+     *
+     * <p>La correspondance est nommee plutot que deduite du rang dans l'enumeration :
+     * ecrite par positions, elle devenait fausse en silence des que l'on reordonnait
+     * l'une des deux listes.</p>
+     */
+    private record Step(Stage stage, Function<DryingEstimate, Duration> milestone) {
+    }
+
+    private static final List<Step> STEPS = List.of(
+            new Step(Stage.OPEN, DryingEstimate::openTime),
+            new Step(Stage.SETTING, DryingEstimate::touchDry),
+            new Step(Stage.TOUCH_DRY, DryingEstimate::recoat),
+            new Step(Stage.RECOATABLE, DryingEstimate::throughDry),
+            new Step(Stage.THROUGH_DRY, DryingEstimate::fullCure));
+
+    private static Stage stageOf(Duration elapsed, DryingEstimate estimate) {
+        Duration previous = Duration.ZERO;
+        for (Step step : STEPS) {
+            // Les jalons sont croissants avec les reglages livres, mais les facteurs se
+            // configurent : un reglage qui les croise ferait sauter un etat, ou reculer.
+            // On tient l'ordre plutot que d'annoncer n'importe quoi.
+            Duration bound = step.milestone().apply(estimate);
+            if (bound.compareTo(previous) < 0) {
+                bound = previous;
+            }
+            if (elapsed.compareTo(bound) < 0) {
+                return step.stage();
+            }
+            previous = bound;
         }
         return Stage.CURED;
     }

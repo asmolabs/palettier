@@ -139,6 +139,28 @@ class WorkbenchServiceTest {
     }
 
     @Test
+    @DisplayName("peindre hors de l'ordre du plan n'annonce pas une couche deja recouverte")
+    void outOfOrderPaintingLooksForward() {
+        // Les couches sont rangees [Ombre 1, Base, Lumiere 1].
+        Instant later = NOW.plus(Duration.ofDays(30));
+
+        // On commence par la base : c'est la lumiere qui attend, pas l'ombre restee en
+        // arriere. La prendre par simple rang aurait annonce "Ombre 1".
+        Project skipped = projects.markApplied(piece("Base d'abord"), 0, 1,
+                Workshop.standard(), DryingClass.FAST, NOW);
+        var afterBase = state(skipped, later).zones().getFirst().last();
+        assertThat(afterBase.role()).isEqualTo("Base");
+        assertThat(afterBase.nextRole()).isEqualTo("Lumiere 1");
+
+        // Rien apres la derniere posee : on revient a ce qui manque, hors sequence.
+        Project fromTheTop = projects.markApplied(piece("Lumiere d'abord"), 0, 2,
+                Workshop.standard(), DryingClass.FAST, NOW);
+        var afterHighlight = state(fromTheTop, later).zones().getFirst().last();
+        assertThat(afterHighlight.role()).isEqualTo("Lumiere 1");
+        assertThat(afterHighlight.nextRole()).isEqualTo("Ombre 1");
+    }
+
+    @Test
     @DisplayName("l'etabli met en tete ce qui peut etre repris")
     void whatCanBeResumedComesFirst() {
         Project waiting = piece("Tout frais");
