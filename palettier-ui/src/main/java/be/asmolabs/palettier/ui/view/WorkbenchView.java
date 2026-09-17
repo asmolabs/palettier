@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -52,6 +53,7 @@ public class WorkbenchView implements AppView {
 
     private final Label summary = new Label();
     private final VBox pieces = new VBox(14);
+    private final Button refresh = new Button("Rafraichir");
 
     public WorkbenchView(WorkbenchService workbench) {
         this.workbench = workbench;
@@ -78,7 +80,6 @@ public class WorkbenchView implements AppView {
         summary.getStyleClass().add("result-summary");
         summary.setWrapText(true);
 
-        Button refresh = new Button("Rafraichir");
         refresh.setOnAction(event -> reload());
 
         VBox everything = new VBox(14, summary, new HBox(8, refresh), pieces);
@@ -92,19 +93,47 @@ public class WorkbenchView implements AppView {
         VBox.setVgrow(card, Priority.ALWAYS);
 
         // Le temps passe pendant que l'ecran est ferme : revenir dessus doit donner
-        // l'etat du moment, pas celui de la derniere ouverture.
+        // l'etat du moment, pas celui de la derniere ouverture. C'est aussi ce qui
+        // declenche la premiere lecture -- la fenetre attache la section des qu'elle la
+        // construit, et charger ici en plus la ferait deux fois.
         card.sceneProperty().addListener((obs, old, scene) -> {
             if (scene != null) {
                 reload();
             }
         });
 
-        reload();
         return card;
     }
 
+    /**
+     * Relit l'etabli hors du fil d'affichage.
+     *
+     * <p>La lecture traverse tous les projets et, associations obligent, tout ce qui y
+     * pend. Sur le fil d'affichage, la fenetre se figerait le temps du chargement.</p>
+     */
     private void reload() {
-        Bench bench = workbench.bench();
+        refresh.setDisable(true);
+        summary.setText("Lecture de l'etabli...");
+
+        Task<Bench> task = new Task<>() {
+            @Override
+            protected Bench call() {
+                return workbench.bench();
+            }
+        };
+        task.setOnSucceeded(event -> {
+            refresh.setDisable(false);
+            render(task.getValue());
+        });
+        task.setOnFailed(event -> {
+            refresh.setDisable(false);
+            pieces.getChildren().clear();
+            summary.setText("Lecture impossible : " + task.getException().getMessage());
+        });
+        Thread.ofPlatform().daemon().name("workbench").start(task);
+    }
+
+    private void render(Bench bench) {
         pieces.getChildren().clear();
 
         if (bench.pieces().isEmpty()) {

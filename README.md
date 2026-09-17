@@ -380,6 +380,19 @@ polymérisation complète. Dans une recette, une technique qui exige un support 
 (`Technique.requiresCuredBase`) attend le séchage à cœur de la couche précédente ; les
 autres se contentent du délai de recouvrement.
 
+### Les photos ne se chargent que si on les regarde
+
+Un projet porte ses photos, et elles pèsent. Elles sont donc en `LAZY` : la liste des
+projets, la liste déroulante du séchage et l'établi lisent des noms et des dates sans
+désérialiser une seule image. L'écran qui les affiche les demande explicitement
+(`ProjectService.withPhotos`), en une requête.
+
+Le piège est le retrait d'orphelin : un projet lu sans ses photos puis réenregistré
+pourrait les effacer. Les méthodes qui touchent aux photos relisent donc le projet dans
+leur transaction, et trois tests vérifient qu'une couche cochée, une photo ajoutée ou
+retirée laissent les autres intactes — le contexte de persistance vidé entre chaque étape,
+sans quoi ils ne prouveraient rien.
+
 ### De la durée à la date
 
 Ces jalons restaient théoriques tant que rien ne disait *quand* une couche avait été

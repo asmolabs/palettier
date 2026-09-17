@@ -400,6 +400,13 @@ public class ProjectsView implements AppView {
         });
     }
 
+    /**
+     * Ce qu'une ouverture de projet va chercher en base : le projet avec ses photos, et
+     * le plan dont les dosages viennent d'etre recalcules.
+     */
+    private record Loaded(Project project, PaintingPlan plan) {
+    }
+
     private void reload() {
         Project previous = list.getSelectionModel().getSelectedItem();
         items.setAll(projects.findAll());
@@ -417,7 +424,7 @@ public class ProjectsView implements AppView {
         currentPlan = null;
         current = project;
         exportPdf.setDisable(true);
-        refreshPhotos();
+        photoStrip.getChildren().clear();
         refreshPaints();
 
         if (project == null) {
@@ -434,16 +441,19 @@ public class ProjectsView implements AppView {
                 project.effectivePaints().size(),
                 CREATED.format(project.getCreatedAt())));
 
-        // Le recalcul des dosages parcourt la palette pour chaque couche : hors du fil
-        // d'affichage, comme toute recherche de melange.
-        Task<PaintingPlan> task = new Task<>() {
+        // Le recalcul des dosages parcourt la palette pour chaque couche, et les photos
+        // sont des images entieres : les deux se font hors du fil d'affichage.
+        Task<Loaded> task = new Task<>() {
             @Override
-            protected PaintingPlan call() {
-                return projects.plan(project);
+            protected Loaded call() {
+                return new Loaded(projects.withPhotos(project), projects.plan(project));
             }
         };
         task.setOnSucceeded(event -> {
-            currentPlan = task.getValue();
+            Loaded loaded = task.getValue();
+            current = loaded.project();
+            currentPlan = loaded.plan();
+            refreshPhotos();
             renderer.render(detail, currentPlan);
             exportPdf.setDisable(currentPlan.zones().isEmpty());
         });

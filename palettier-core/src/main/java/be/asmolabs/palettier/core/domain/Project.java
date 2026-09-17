@@ -83,8 +83,15 @@ public class Project {
     @OrderColumn(name = "zone_position")
     private List<ProjectZone> zones = new ArrayList<>();
 
-    /** Photos de la piece : celle qui a servi au plan, les references, l'avancement. */
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    /**
+     * Photos de la piece : celle qui a servi au plan, les references, l'avancement.
+     *
+     * <p>Chargees a la demande, contrairement aux zones. Ce sont des images entieres :
+     * les tirer avec chaque projet reviendrait a lire plusieurs megaoctets pour afficher
+     * une liste de noms, ou pour calculer des durees de sechage. Les ecrans qui les
+     * montrent demandent explicitement un projet charge avec elles.</p>
+     */
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     @OrderColumn(name = "photo_position")
     private List<ProjectPhoto> photos = new ArrayList<>();

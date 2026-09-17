@@ -84,21 +84,52 @@ public class ProjectService {
     }
 
     /**
+     * Le projet avec ses photos chargees.
+     *
+     * <p>Elles ne le sont pas d'office : ce sont des images entieres, et la plupart des
+     * ecrans n'en ont que faire. Celui qui les affiche les demande ici.</p>
+     */
+    public Project withPhotos(Project project) {
+        return project == null || project.getId() == null
+                ? project
+                : repository.findWithPhotosById(project.getId()).orElse(project);
+    }
+
+    /**
      * Attache une photo au projet.
      *
      * <p>L'image est reduite ici et non chez l'appelant : une base qui accueille des
      * photos doit garantir elle-meme qu'elles restent d'une taille raisonnable.</p>
+     *
+     * <p>Le projet est relu dans la transaction plutot que modifie tel quel : celui que
+     * l'appelant detient a pu etre charge sans ses photos, et y ajouter une image sans
+     * connaitre les autres les effacerait.</p>
      */
     @Transactional
     public Project addPhoto(Project project, byte[] original, ProjectPhoto.Role role, String caption) {
-        project.addPhoto(new ProjectPhoto(Photos.prepare(original), role, caption));
-        return repository.save(project);
+        Project managed = reloadWithPhotos(project);
+        managed.addPhoto(new ProjectPhoto(Photos.prepare(original), role, caption));
+        return repository.save(managed);
     }
 
+    /**
+     * Retire une photo du projet.
+     *
+     * <p>Le retrait se fait sur l'identifiant et non sur l'objet : apres relecture, la
+     * photo que l'appelant designe n'est plus la meme instance que celle du projet.</p>
+     */
     @Transactional
     public Project removePhoto(Project project, ProjectPhoto photo) {
-        project.getPhotos().remove(photo);
-        return repository.save(project);
+        Project managed = reloadWithPhotos(project);
+        managed.getPhotos().removeIf(candidate -> candidate.getId() != null
+                && candidate.getId().equals(photo.getId()));
+        return repository.save(managed);
+    }
+
+    private Project reloadWithPhotos(Project project) {
+        return project.getId() == null
+                ? project
+                : repository.findWithPhotosById(project.getId()).orElse(project);
     }
 
     /**
