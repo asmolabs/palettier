@@ -447,8 +447,12 @@ Une couche maigre posée sur une couche grasse sèche avant elle. Le dessous con
 bouger quand le dessus a pris : la couche supérieure tire, et craquelle — des mois plus
 tard, sur une pièce finie. C'est le seul défaut de cet atelier qui ne se rattrape pas.
 
-`FatOverLeanService` lit le gras de chaque couche dans sa technique, qui porte déjà son
-médium et sa proportion usuelle (`Medium.fatness`). Rien n'est demandé au peintre.
+`FatOverLeanService` s'applique aux deux endroits où l'ordre des couches se décide. Sur un
+**projet**, le gras se lit dans la technique, qui porte déjà son médium et sa proportion
+usuelle (`Medium.fatness`) : rien n'est demandé au peintre. Sur une **recette**, où médium,
+dilution et épaisseur sont saisis un par un, le contrôle porte sur ces valeurs-là sans rien
+déduire — c'est le plus sûr des deux, et c'est là qu'il sert le plus : une recette se rejoue
+sur chaque pièce, la faute s'y reproduirait à chaque fois.
 
 La règle est **volontairement silencieuse sur ce qui se pratique tous les jours**. Un
 glacis très dilué sur un aplat de base est plus maigre que lui, et pourtant personne n'a
@@ -497,7 +501,7 @@ sous une lumière quelconque — l'écart se lit comme une tendance, pas comme u
   beaux-arts (le format CSV est fait pour ça)
 - Corriger les pigments inférés de Scale75 et Abteilung 502 d'après les tubes
 - Édition du catalogue depuis l'interface, ou calibration depuis une photo d'écouvillons
-- Étendre la règle du gras sur maigre aux recettes, qui portent déjà médium, proportion
-  et épaisseur explicites
+- Calibrer le seuil du gras sur maigre et le modèle de gras des médiums sur des cas réels :
+  ils sont aujourd'hui réglés au jugement
 - Recettes modifiables depuis l'interface, avec photos d'étape
 - Passage de deux à trois tubes dans la recherche inverse de mélange

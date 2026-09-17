@@ -235,7 +235,7 @@ public class ProjectsView implements AppView {
 
         VBox lines = new VBox(8);
         for (Risk risk : risks) {
-            Label where = new Label("%s : %s sous %s".formatted(risk.zone(), risk.under(), risk.over()));
+            Label where = new Label("%s : %s sous %s".formatted(risk.where(), risk.under(), risk.over()));
             where.getStyleClass().add("milestone-title");
 
             Label why = new Label(risk.explanation());

@@ -3,9 +3,13 @@ package be.asmolabs.palettier.core.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import be.asmolabs.palettier.core.color.Rgb;
+import be.asmolabs.palettier.core.domain.LayerThickness;
+import be.asmolabs.palettier.core.domain.Medium;
 import be.asmolabs.palettier.core.domain.Project;
 import be.asmolabs.palettier.core.domain.ProjectLayer;
 import be.asmolabs.palettier.core.domain.ProjectZone;
+import be.asmolabs.palettier.core.domain.Recipe;
+import be.asmolabs.palettier.core.domain.RecipeStep;
 import be.asmolabs.palettier.core.domain.Technique;
 import be.asmolabs.palettier.core.service.FatOverLeanService.Risk;
 import org.junit.jupiter.api.DisplayName;
@@ -60,7 +64,7 @@ class FatOverLeanServiceTest {
 
         assertThat(risks).hasSize(1);
         Risk risk = risks.getFirst();
-        assertThat(risk.zone()).isEqualTo("Visage");
+        assertThat(risk.where()).isEqualTo("Visage");
         assertThat(risk.under()).isEqualTo("Couche 1");
         assertThat(risk.over()).isEqualTo("Couche 2");
         assertThat(risk.drop()).isGreaterThan(0.4);
@@ -76,6 +80,37 @@ class FatOverLeanServiceTest {
         assertThat(service.inspect(pieceWith(
                 Technique.STREAKING_GRIME.label(), Technique.BLENDING.label())))
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("une recette est verifiee sur ses valeurs saisies, pas sur des moyennes")
+    void arecipeIsCheckedOnItsOwnValues() {
+        // Deux etapes au meme medium et a la meme epaisseur : c'est la dilution saisie,
+        // et elle seule, qui fait passer la seconde du gras au maigre.
+        Recipe recipe = new Recipe("Cape rouge", "Tissu");
+        recipe.addStep(new RecipeStep(Technique.BLENDING, "Rouge + noir",
+                Medium.LINSEED_OIL, 0.30, LayerThickness.NORMAL));
+        recipe.addStep(new RecipeStep(Technique.BLENDING, "Rouge pur",
+                Medium.ODORLESS_THINNER, 0.80, LayerThickness.NORMAL));
+
+        var risks = service.inspect(recipe);
+
+        assertThat(risks).hasSize(1);
+        assertThat(risks.getFirst().where()).isEqualTo("Cape rouge");
+        assertThat(risks.getFirst().under()).isEqualTo("Etape 1");
+        assertThat(risks.getFirst().over()).isEqualTo("Etape 2");
+    }
+
+    @Test
+    @DisplayName("la meme recette dans le bon ordre ne declenche rien")
+    void therightOrderIsSilent() {
+        Recipe recipe = new Recipe("Cape rouge", "Tissu");
+        recipe.addStep(new RecipeStep(Technique.BLENDING, "Rouge pur",
+                Medium.ODORLESS_THINNER, 0.80, LayerThickness.NORMAL));
+        recipe.addStep(new RecipeStep(Technique.BLENDING, "Rouge + noir",
+                Medium.LINSEED_OIL, 0.30, LayerThickness.NORMAL));
+
+        assertThat(service.inspect(recipe)).isEmpty();
     }
 
     @Test

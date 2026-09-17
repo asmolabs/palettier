@@ -3,6 +3,8 @@ package be.asmolabs.palettier.ui.view;
 import be.asmolabs.palettier.core.domain.DryingClass;
 import be.asmolabs.palettier.core.domain.Recipe;
 import be.asmolabs.palettier.core.repository.RecipeRepository;
+import be.asmolabs.palettier.core.service.FatOverLeanService;
+import be.asmolabs.palettier.core.service.FatOverLeanService.Risk;
 import be.asmolabs.palettier.core.service.RecipeTimelineService;
 import be.asmolabs.palettier.core.service.RecipeTimelineService.Timeline;
 import be.asmolabs.palettier.core.service.RecipeTimelineService.TimelineEntry;
@@ -37,6 +39,7 @@ public class RecipeView implements AppView {
 
     private final RecipeRepository repository;
     private final RecipeTimelineService timelineService;
+    private final FatOverLeanService fatOverLean;
 
     private final ObservableList<Recipe> recipes = FXCollections.observableArrayList();
     private final ObservableList<TimelineEntry> entries = FXCollections.observableArrayList();
@@ -45,10 +48,13 @@ public class RecipeView implements AppView {
     private final WorkshopForm workshop = new WorkshopForm();
     private final Label summary = new Label();
     private final Label notes = new Label();
+    private final VBox cracking = new VBox(8);
 
-    public RecipeView(RecipeRepository repository, RecipeTimelineService timelineService) {
+    public RecipeView(RecipeRepository repository, RecipeTimelineService timelineService,
+                      FatOverLeanService fatOverLean) {
         this.repository = repository;
         this.timelineService = timelineService;
+        this.fatOverLean = fatOverLean;
     }
 
     @Override
@@ -109,7 +115,9 @@ public class RecipeView implements AppView {
         notes.setWrapText(true);
         notes.getStyleClass().add("hint");
 
-        VBox header = new VBox(6, summary, notes);
+        cracking.setVisible(false);
+        cracking.setManaged(false);
+        VBox header = new VBox(6, summary, notes, cracking);
 
         BorderPane content = new BorderPane(timelineTable());
         content.setTop(header);
@@ -163,6 +171,40 @@ public class RecipeView implements AppView {
         return column;
     }
 
+    /**
+     * Le gras sur maigre, verifie sur les valeurs saisies de la recette.
+     *
+     * <p>Une recette enonce son medium, sa dilution et son epaisseur etape par etape :
+     * le controle porte dessus, sans rien deduire. C'est aussi l'endroit ou il sert le
+     * plus -- une recette est ecrite pour etre suivie telle quelle, et la faute s'y
+     * reproduira sur chaque piece.</p>
+     */
+    private void refreshCracking(Recipe recipe) {
+        cracking.getChildren().clear();
+
+        var risks = fatOverLean.inspect(recipe);
+        cracking.setVisible(!risks.isEmpty());
+        cracking.setManaged(!risks.isEmpty());
+        if (risks.isEmpty()) {
+            return;
+        }
+
+        VBox lines = new VBox(8);
+        for (Risk risk : risks) {
+            Label where = new Label("%s apres %s".formatted(risk.over(), risk.under()));
+            where.getStyleClass().add("milestone-title");
+
+            Label why = new Label(risk.explanation());
+            why.getStyleClass().add("hint");
+            why.setWrapText(true);
+
+            lines.getChildren().add(new VBox(2, where, why));
+        }
+        cracking.getChildren().add(new Card("Gras sur maigre",
+                "Une recette se rejoue sur chaque piece : la faute s'y reproduirait a chaque fois.",
+                lines));
+    }
+
     private Recipe selected() {
         return recipeList.getSelectionModel().getSelectedItem();
     }
@@ -172,8 +214,12 @@ public class RecipeView implements AppView {
             entries.clear();
             summary.setText("");
             notes.setText("");
+            cracking.setVisible(false);
+            cracking.setManaged(false);
             return;
         }
+
+        refreshCracking(recipe);
 
         Timeline timeline = timelineService.plan(recipe, dryingClass.getValue(), workshop.current());
         entries.setAll(timeline.entries());
