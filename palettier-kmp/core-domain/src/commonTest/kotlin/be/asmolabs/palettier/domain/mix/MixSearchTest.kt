@@ -3,6 +3,7 @@ package be.asmolabs.palettier.domain.mix
 import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.color.deltaE2000
 import be.asmolabs.palettier.domain.paint.Paint
+import kotlinx.coroutines.test.runTest
 import kotlin.math.abs
 import kotlin.math.round
 import kotlin.test.Test
@@ -29,7 +30,7 @@ class MixSearchTest {
         catalog.first { it.brand == "Winsor & Newton" && it.name == name }
 
     @Test
-    fun `une couleur du catalogue est retrouvee a l'identique par un seul tube`() {
+    fun `une couleur du catalogue est retrouvee a l'identique par un seul tube`() = runTest {
         val reference = catalog.first { it.name == "Burnt Umber" }
 
         val best = service.suggestMixes(reference.color, catalog, 1).first()
@@ -39,7 +40,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `chaque proposition annonce l'ecart du dosage propose`() {
+    fun `chaque proposition annonce l'ecart du dosage propose`() = runTest {
         for (hex in targets) {
             val target = Rgb.ofHex(hex)
             for (suggestion in service.suggestMixes(target, catalog, 5)) {
@@ -53,7 +54,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `les dosages proposes sont des rapports d'entiers simples`() {
+    fun `les dosages proposes sont des rapports d'entiers simples`() = runTest {
         for (hex in targets) {
             for (suggestion in service.suggestMixes(Rgb.ofHex(hex), catalog, 5)) {
                 for (part in suggestion.parts) {
@@ -65,7 +66,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `le nombre de tubes demande est respecte`() {
+    fun `le nombre de tubes demande est respecte`() = runTest {
         for (hex in targets) {
             for (max in 1..5) {
                 service.suggestMixes(Rgb.ofHex(hex), catalog, 8, max).forEach {
@@ -76,7 +77,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `une palette courte tire profit des tubes supplementaires`() {
+    fun `une palette courte tire profit des tubes supplementaires`() = runTest {
         // Trois primaires, un blanc et une terre : le cas ou trois tubes ne suffisent pas.
         val shortPalette = listOf(
             find("Cadmium Yellow Pale"), find("Permanent Rose"),
@@ -94,7 +95,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `la liste propose des combinaisons differentes, pas des variantes de dosage`() {
+    fun `la liste propose des combinaisons differentes, pas des variantes de dosage`() = runTest {
         val suggestions = service.suggestMixes(Rgb.ofHex("#C98F72"), catalog, 8)
 
         val combinations = suggestions.map { s -> s.parts.map { it.paint.displayName }.sorted() }
@@ -102,7 +103,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `autoriser un tube de plus ne degrade jamais le resultat`() {
+    fun `autoriser un tube de plus ne degrade jamais le resultat`() = runTest {
         for (hex in targets) {
             val target = Rgb.ofHex(hex)
             var previous = Double.MAX_VALUE
@@ -115,7 +116,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `les propositions sont classees par palier perceptuel`() {
+    fun `les propositions sont classees par palier perceptuel`() = runTest {
         val suggestions = service.suggestMixes(Rgb.ofHex("#6B5A42"), catalog, 8)
 
         // A l'interieur d'un palier de 0,5 l'oeil ne fait pas la difference : l'ordre y
@@ -125,7 +126,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `a ecart imperceptible, le melange le plus simple passe devant`() {
+    fun `a ecart imperceptible, le melange le plus simple passe devant`() = runTest {
         val reference = catalog.first { it.name == "Yellow Ochre" }
 
         val best = service.suggestMixes(reference.color, catalog, 5).first()
@@ -135,7 +136,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `le nombre de tubes s'adapte a ce qui est disponible`() {
+    fun `le nombre de tubes s'adapte a ce qui est disponible`() = runTest {
         assertEquals(5, ColorMixService.recommendedMaxPaints(4))
         assertEquals(5, ColorMixService.recommendedMaxPaints(8))
         assertEquals(4, ColorMixService.recommendedMaxPaints(9))
@@ -145,7 +146,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `sans consigne, une palette courte recoit des melanges plus riches que le catalogue`() {
+    fun `sans consigne, une palette courte recoit des melanges plus riches que le catalogue`() = runTest {
         val shortPalette = listOf(
             find("Cadmium Yellow Pale"), find("Permanent Rose"),
             find("Winsor Blue (Green Shade)"), find("Titanium White"), find("Burnt Umber"),
@@ -159,7 +160,7 @@ class MixSearchTest {
     }
 
     @Test
-    fun `cout de la recherche sur le catalogue complet`() {
+    fun `cout de la recherche sur le catalogue complet`() = runTest {
         val start = TimeSource.Monotonic.markNow()
         var worst = 0.0
         for (hex in targets) {

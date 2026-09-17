@@ -81,7 +81,7 @@ class ColorMixService {
      * <p>Les dosages proposes sont des rapports d'entiers simples : l'ecart annonce est
      * celui du melange qu'on peut reellement faire, pas celui d'un optimum theorique.</p>
      */
-    fun suggestMixes(
+    suspend fun suggestMixes(
         target: Rgb,
         candidates: List<Paint>,
         maxResults: Int,

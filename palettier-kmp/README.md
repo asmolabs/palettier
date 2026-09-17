@@ -50,23 +50,26 @@ Le pire écart est la sortie de toute la chaîne d'optimisation — passe grossi
 dosages, vivier, classement par palier perceptuel. Qu'il tombe au même centième signifie
 que le portage est fidèle jusque dans ses arbitrages.
 
-## Ce qui régresse : 5,8× plus lent
+## Le coût, après parallélisation
 
-| | Java | Kotlin |
-|---|---|---|
-| Recherche sur 680 tubes | 120 ms / cible | 710 ms / cible |
+| | Java | Kotlin séquentiel | Kotlin parallèle |
+|---|---|---|---|
+| Recherche sur 680 tubes | 120 ms / cible | 710 ms | **179 ms** |
+| Pire écart | 0,85 | 0,8537644933880194 | 0,8537644933880194 |
 
-Mesuré sur la même machine, dans la même session. La cause est connue et unique :
-`MixSearch.pairs()` et `combinations()` utilisaient `.parallel()` sur des flux Java.
-`commonMain` n'a pas d'équivalent — le portage est séquentiel.
+Mesuré sur la même machine, dans la même session. Le portage séquentiel perdait le
+`.parallel()` des flux Java ; `mapChunkedParallel` le rend avec des coroutines sur
+`Dispatchers.Default`.
 
-Ce n'est pas un défaut de traduction, c'est une décision en attente. La lever demande
-`kotlinx-coroutines-core` dans `core-domain` et une `suspend fun search`, ce qui contredit
-la règle « le domaine ne dépend de rien » et change tous les appelants. À trancher avant
-`core-data`, pas après.
+**Le pire écart est identique au chiffre près entre les deux versions Kotlin**, et c'est la
+seule chose qui prouve que la parallélisation n'a rien changé au résultat. Ce n'était pas
+acquis : deux mélanges à écart strictement égal sont départagés par leur rang de rencontre,
+et un tri stable sur une liste réassemblée dans le désordre aurait rendu une autre
+proposition. Les morceaux sont donc contigus et remis dans l'ordre, et volontairement plus
+nombreux que les cœurs — une boucle triangulaire donne bien plus de travail à ses premiers
+indices qu'aux derniers.
 
-Nuance utile : le cas à 680 tubes est celui du Catalogue et de la Pipette. Un plan de
-projet cherche dans une palette de six à douze tubes, où le coût est sans commune mesure.
+`search` et `suggestMixes` sont désormais des `suspend fun`.
 
 ## Ce qui a changé volontairement
 
@@ -85,9 +88,12 @@ projet cherche dans une palette de six à douze tubes, où le coût est sans com
 depuis un domaine change la nature de cette promesse, et Wasm imposerait `wa-sqlite` sur
 OPFS pour le catalogue et les photos. Écarté.
 
-**Le domaine ne dépend de rien.** `core-domain/build.gradle.kts` n'a aucune dépendance
-`commonMain`. Ce n'est pas une élégance : c'est ce qui garantit que le moteur compile sur
-iOS sans qu'on ait à le découvrir six mois plus tard.
+**Le domaine ne dépend de rien qui ne soit du Kotlin multiplateforme pur.** La règle était
+d'abord « zéro dépendance ». Elle ne survivait pas à la phase 2 : les ports du domaine
+doivent exposer des `Flow`, et `Flow` vit dans `kotlinx-coroutines-core`. Plutôt que de la
+contourner en silence, elle est reformulée — coroutines passe, SQLDelight, Compose et tout
+framework ne passent pas. L'intention est intacte : pas de plateforme, pas de persistance,
+pas d'interface. Et la recherche de mélange y gagne sa parallélisation.
 
 **La migration des données passe par la sauvegarde.** `BackupService` exporte déjà tout
 dans un ZIP JSON indépendant des entités. L'ancienne application exporte, la nouvelle

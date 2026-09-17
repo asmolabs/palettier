@@ -15,11 +15,15 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // Aucune. C'est la regle du module : le domaine ne depend de rien.
-            // kotlin.time.Duration remplace java.time.Duration sans dependance.
+            // La seule dependance autorisee ici, et la regle est celle-ci : rien qui ne
+            // soit du Kotlin multiplateforme pur. Coroutines passe -- elle porte Flow,
+            // dont les ports du domaine ont besoin, et le parallelisme de la recherche
+            // de melange. SQLDelight, Compose et tout framework ne passent pas.
+            implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

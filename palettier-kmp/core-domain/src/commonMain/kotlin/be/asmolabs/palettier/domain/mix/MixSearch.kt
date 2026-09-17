@@ -6,6 +6,10 @@ import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.color.deltaE2000
 import be.asmolabs.palettier.domain.color.toLab
 import be.asmolabs.palettier.domain.paint.Paint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.hypot
@@ -65,13 +69,34 @@ internal class MixSearch(target: Rgb, paints: List<Paint>) {
         val deltaE: Double,
     )
 
-    fun search(maxPaints: Int, maxResults: Int): List<MixSuggestion> {
+    suspend fun search(maxPaints: Int, maxResults: Int): List<MixSuggestion> {
         val found = ArrayList<Evaluation>(singles())
         if (maxPaints >= 2) found += pairs()
         for (count in 3..minOf(maxPaints, MAX_PAINTS)) {
             found += combinations(count)
         }
         return best(found, maxResults)
+    }
+
+    /**
+     * Repartit un travail sur plusieurs coeurs sans changer l'ordre du resultat.
+     *
+     * <p>L'ordre compte : deux melanges a ecart strictement egal sont departages par leur
+     * rang de rencontre, et un tri stable sur une liste melangee ne rendrait pas la meme
+     * proposition. Les morceaux sont donc contigus et reassembles dans l'ordre.</p>
+     *
+     * <p>Plus de morceaux que de coeurs, parce que le travail est inegal : les premiers
+     * indices d'une boucle triangulaire en font bien plus que les derniers.</p>
+     */
+    private suspend fun <T, R> List<T>.mapChunkedParallel(transform: (T) -> R): List<R> {
+        if (size < PARALLEL_THRESHOLD) return map(transform)
+        val chunkSize = (size / CHUNKS).coerceAtLeast(1)
+        return coroutineScope {
+            chunked(chunkSize)
+                .map { chunk -> async(Dispatchers.Default) { chunk.map(transform) } }
+                .awaitAll()
+                .flatten()
+        }
     }
 
     // --- Un seul tube ------------------------------------------------------
@@ -89,16 +114,19 @@ internal class MixSearch(target: Rgb, paints: List<Paint>) {
      * La parallelisation appartiendra a l'appelant, qui sait sur quel repartiteur il
      * travaille.</p>
      */
-    private fun pairs(): List<Evaluation> {
-        val coarse = ArrayList<Evaluation>()
-        for (i in candidates.indices) {
-            for (j in i + 1 until candidates.size) {
-                coarse += coarseBest(candidates[i], candidates[j])
+    private suspend fun pairs(): List<Evaluation> {
+        val size = candidates.size
+        val coarse = candidates.indices.toList()
+            .mapChunkedParallel { i ->
+                val row = ArrayList<Evaluation>(size - i - 1)
+                for (j in i + 1 until size) row += coarseBest(candidates[i], candidates[j])
+                row
             }
-        }
+            .flatten()
+
         return coarse.sortedBy { it.deltaE }
             .take(PAIRS_KEPT)
-            .map { refine(it.paints, PAIR_RATIOS) }
+            .mapChunkedParallel { refine(it.paints, PAIR_RATIOS) }
     }
 
     /** Meilleur des cinq dosages de reperage : sert uniquement a classer la paire. */
@@ -117,7 +145,7 @@ internal class MixSearch(target: Rgb, paints: List<Paint>) {
 
     // --- Trois tubes et plus -----------------------------------------------
 
-    private fun combinations(count: Int): List<Evaluation> {
+    private suspend fun combinations(count: Int): List<Evaluation> {
         val pool = poolFor(count)
         val ratios = RATIOS[count]
         if (pool.size < count || ratios == null) return emptyList()
@@ -125,7 +153,7 @@ internal class MixSearch(target: Rgb, paints: List<Paint>) {
         val picks = ArrayList<IntArray>()
         combine(pool.size, count, 0, 0, IntArray(count), picks)
 
-        return picks.map { indexes -> refine(indexes.map { pool[it] }, ratios) }
+        return picks.mapChunkedParallel { indexes -> refine(indexes.map { pool[it] }, ratios) }
     }
 
     /**
@@ -202,6 +230,12 @@ internal class MixSearch(target: Rgb, paints: List<Paint>) {
 
         /** Secteurs de teinte couverts par le vivier, en degres. */
         private const val HUE_SECTORS = 6
+
+        /** En deca, la mise en parallele coute plus qu'elle ne rapporte. */
+        private const val PARALLEL_THRESHOLD = 64
+
+        /** Morceaux decoupes, volontairement plus nombreux que les coeurs. */
+        private const val CHUNKS = 32
 
         /**
          * En deca de cet ecart, l'oeil ne distingue plus deux teintes. Deux propositions
