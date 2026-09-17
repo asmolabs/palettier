@@ -11,18 +11,20 @@ ne la remplace qu'une fois à parité.
 | Partie | État | Vérification |
 |---|---|---|
 | `color` — Rgb, Lab, CIEDE2000, Kubelka-Munk, Colorant | **porté** | 16 tests, valeurs identiques au Java |
-| `paint` — DryingClass, Medium, Opacity, LayerThickness, Ventilation, Technique | **porté** | couvert indirectement |
-| `drying` — Workshop, DryingContext, DryingEstimate, DryingTimeService | **porté** | 7 tests, valeurs identiques |
+| `paint` — 6 énumérations + `Paint` | **porté** | |
+| `drying` — Workshop, DryingContext, DryingTimeService | **porté** | 7 tests, valeurs identiques |
 | `mix` — MixSearch, ColorMixService | **porté** | 12 tests sur le vrai catalogue, même pire écart |
-| modèle — `Paint` | **porté** | |
-| modèle — Palette, Project, Recipe | à faire | |
+| modèle — Palette, Project, Recipe, PaintingPlan | **porté** | |
+| `project` — FatOverLean, Substitute, ProgressCheck | **porté** | 14 tests |
+| `workbench` — Stage, Bench, WorkbenchService | **porté** | 8 tests |
+| `plan` — PlanDryingService | **porté** | 5 tests |
+| domaine — ReadinessWatch, PaletteMix, PaintMatcher | à faire | demandent des ports |
 | `core-data` — SQLDelight | à faire | |
 | `feature-ui` — Compose | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 1 700 lignes portées sur 14 639.** C'est peu en volume et beaucoup en risque retiré :
-la colorimétrie, le séchage et la recherche de mélange sont ce que tout le reste suppose
-juste.
+**≈ 3 000 lignes portées sur 14 639, 62 tests.** La phase 1 est près d'être close : il ne
+reste du domaine que ce qui demande un port de dépôt, et qui relève donc déjà de `core-data`.
 
 ## La méthode, et pourquoi elle tient
 
@@ -70,6 +72,22 @@ nombreux que les cœurs — une boucle triangulaire donne bien plus de travail �
 indices qu'aux derniers.
 
 `search` et `suggestMixes` sont désormais des `suspend fun`.
+
+## Les services sont des fonctions, plus des beans
+
+Là où Spring injectait un dépôt, le service prend désormais sa donnée en paramètre :
+`WorkbenchService.bench(projects, now)`, `SubstituteService.missingAmong(wanted, owned)`,
+`ProgressCheckService.compare(project, measured)`. Trois conséquences, toutes bonnes :
+
+- ils se testent sans faux dépôt ni contexte Spring — les tests Java correspondants
+  étaient des `@SpringBootTest` à trois secondes de démarrage, les Kotlin sont instantanés ;
+- l'instant de référence est un paramètre, donc le temps devient vérifiable ;
+- c'est l'appelant qui décide quand relire la base, ce qui est précisément le rôle du
+  `Flow` de SQLDelight en phase 2.
+
+`ProgressCheckService` ne décode plus l'image : il reçoit des `DominantColour`. Le décodage
+est ce qui n'a rien de commun entre une machine de bureau, un téléphone et un iPhone —
+c'est le premier `expect`/`actual` identifié, et le domaine n'a pas à le connaître.
 
 ## Ce qui a changé volontairement
 
