@@ -361,7 +361,8 @@ public class PaintingPlanService {
 
     // --- Deuxieme temps : les melanges, calcules et non demandes -------------
 
-    private PaintingPlan enrich(String subject, Palette palette, PlanDraft draft, int maxPaints) {
+    /** Package-prive : c'est la partie hors ligne du service, et elle merite d'etre testee sans moteur. */
+    PaintingPlan enrich(String subject, Palette palette, PlanDraft draft, int maxPaints) {
         List<PaintingPlan.Zone> zones = new ArrayList<>();
         for (PlanDraft.ZoneDraft zone : draft.zones()) {
             PaintingPlan.Layer base = layer("Base", zone.base(), palette, maxPaints);
