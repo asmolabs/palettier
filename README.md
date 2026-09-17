@@ -415,6 +415,71 @@ qu'*une* de ses zones l'est, pas quand toutes le sont — c'est la même raison 
 conseiller ailleurs de mener les zones de front : pendant que le visage prend, la cape
 avance.
 
+### Sur la palette, un mélange est une pâte
+
+Partout ailleurs un mélange est un calcul, refait à la demande avec les tubes du moment.
+Celui posé sur la palette est d'une autre nature : il existe physiquement, il est daté, et
+il ne passera pas forcément la nuit. `PaletteMix` le garde avec l'heure et les conditions
+de sa préparation ; le temps ouvert se calcule avec la même formule que le reste, mais en
+épaisseur chargée — un tas sur la palette n'est pas un film sur la pièce, il prend
+beaucoup plus lentement.
+
+La teinte vient de la pipette : on relève la couleur sur sa vraie palette, on la nomme
+dans **Aujourd'hui**, elle est posée.
+
+### Prévenir sans qu'on regarde
+
+Le séchage se compte en heures. Personne ne rafraîchit un écran pendant six heures pour
+apprendre que la cape est prête. Une surveillance tourne donc en fond
+(`DryingNotifier`, toutes les cinq minutes) et passe par la zone de notification du
+système quand la plateforme la propose.
+
+`ReadinessWatch` est ce qui rend l'alerte lisible : elle ne dit que ce qui **vient** de
+basculer, jamais ce qui est disponible depuis hier. Le premier passage ne dit rien du tout
+— en ouvrant l'application, on ne veut pas la liste de tout ce qui a séché pendant
+l'absence, elle est déjà à l'écran.
+
+## Ce que le logiciel refuse de laisser passer
+
+### Gras sur maigre
+
+Une couche maigre posée sur une couche grasse sèche avant elle. Le dessous continue de
+bouger quand le dessus a pris : la couche supérieure tire, et craquelle — des mois plus
+tard, sur une pièce finie. C'est le seul défaut de cet atelier qui ne se rattrape pas.
+
+`FatOverLeanService` lit le gras de chaque couche dans sa technique, qui porte déjà son
+médium et sa proportion usuelle (`Medium.fatness`). Rien n'est demandé au peintre.
+
+La règle est **volontairement silencieuse sur ce qui se pratique tous les jours**. Un
+glacis très dilué sur un aplat de base est plus maigre que lui, et pourtant personne n'a
+jamais fait craqueler une figurine ainsi : le glacis est un voile, il n'a pas de quoi
+tirer. L'alerte demande donc deux conditions à la fois — un écart de gras franc, et une
+couche qui n'est pas plus fine que celle qu'elle recouvre. Une alerte qui crierait à
+chaque glacis serait ignorée le premier soir.
+
+### Ce qui manque, et ce qui le remplace
+
+L'inventaire savait dire qu'un tube manquait. La question du peintre n'est pas celle-là —
+il le sait — mais « avec quoi je m'en sors ce soir ». `SubstituteService` propose, pour
+chaque tube absent de l'étagère, le plus proche de ceux qu'on possède avec son écart
+CIEDE2000. Un tube manquant dont on a l'équivalent à écart invisible n'a pas besoin
+d'être acheté, et c'est plus utile que sa seule absence.
+
+### De combien j'ai raté
+
+Le projet dit la couleur visée de chaque couche, la pipette sait relever celles d'une
+image. `ProgressCheckService` les met face à face : pour chaque teinte qui occupe
+réellement la pièce, à quelle couche du plan elle répond et de combien elle s'en écarte.
+
+Le sens de lecture va de la pièce vers le plan, pas l'inverse : partir des couleurs visées
+pour chercher la plus proche sur la photo trouverait toujours quelque chose, une photo
+contenant des milliers de teintes. Partir de ce qui est là se trompe moins, et signale au
+passage ce qui n'était prévu nulle part.
+
+La mesure se fait sur **le fichier d'origine**, jamais sur la photo rangée avec le projet :
+celle-ci est réduite et réencodée, ses couleurs ont bougé. Même ainsi, une photo est prise
+sous une lumière quelconque — l'écart se lit comme une tendance, pas comme un verdict.
+
 ## Limites assumées
 
 - Les valeurs hexadécimales du catalogue sont des **approximations de la teinte sortie de
@@ -432,7 +497,7 @@ avance.
   beaux-arts (le format CSV est fait pour ça)
 - Corriger les pigments inférés de Scale75 et Abteilung 502 d'après les tubes
 - Édition du catalogue depuis l'interface, ou calibration depuis une photo d'écouvillons
-- Notification système quand une zone redevient reprenable : les dates existent désormais,
-  il ne manque que l'alerte
+- Étendre la règle du gras sur maigre aux recettes, qui portent déjà médium, proportion
+  et épaisseur explicites
 - Recettes modifiables depuis l'interface, avec photos d'étape
 - Passage de deux à trois tubes dans la recherche inverse de mélange
