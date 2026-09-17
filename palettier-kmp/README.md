@@ -18,13 +18,16 @@ ne la remplace qu'une fois à parité.
 | `project` — FatOverLean, Substitute, ProgressCheck | **porté** | 14 tests |
 | `workbench` — Stage, Bench, WorkbenchService | **porté** | 8 tests |
 | `plan` — PlanDryingService | **porté** | 5 tests |
-| domaine — ReadinessWatch, PaletteMix, PaintMatcher | à faire | demandent des ports |
-| `core-data` — SQLDelight | à faire | |
+| domaine — ports (`PaintCatalogRepository`, `ProjectRepository`) | **porté** | |
+| domaine — ReadinessWatch, PaletteMix, PaintMatcher | à faire | |
+| `core-data` — schéma + catalogue | **porté** | 6 tests sur une vraie base SQLite |
+| `core-data` — projets, palettes, recettes | à faire | |
+| `core-data` — import de la sauvegarde | à faire | |
 | `feature-ui` — Compose | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 3 000 lignes portées sur 14 639, 62 tests.** La phase 1 est près d'être close : il ne
-reste du domaine que ce qui demande un port de dépôt, et qui relève donc déjà de `core-data`.
+**≈ 3 400 lignes portées sur 14 639, 68 tests.** La phase 1 est close pour tout ce qui est
+du calcul ; la phase 2 a commencé.
 
 ## La méthode, et pourquoi elle tient
 
@@ -99,6 +102,25 @@ c'est le premier `expect`/`actual` identifié, et le domaine n'a pas à le conna
   composantes hors bornes par `copy()`.
 - Les fonctions libres remplacent les classes utilitaires : `deltaE2000(a, b)` au lieu de
   `Colors.deltaE2000(a, b)`, `rgb.toLab()` en extension.
+
+## Le schéma repart à neuf
+
+`core-data` n'essaie pas de convertir la base H2. Les sept changesets Liquibase se soldent :
+ils décrivent l'histoire d'un schéma qui n'existera plus. SQLDelight repart d'un `CREATE
+TABLE` propre, et les données arrivent par l'import de sauvegarde.
+
+Deux choix de schéma qui ne sont pas neutres :
+
+- **Les pigments ont leur propre table.** Les coller dans une colonne séparée par des
+  virgules aurait interdit la recherche par pigment — qui est précisément ce qui donne la
+  vitesse de séchage. Ils sont relus en une requête pour tout le catalogue puis regroupés
+  en mémoire : une requête par tube ferait sept cents allers-retours pour afficher une liste.
+- **`(marque, nom)` est une clé unique.** C'est ainsi que la sauvegarde désigne un tube,
+  jamais par un identifiant de base — « un numéro de ligne ne veut rien dire dans une autre
+  installation ». La contrainte rend l'import idempotent par construction.
+
+Le fichier reste sous `~/.palettier`, comme du temps de H2 : le peintre n'a pas à savoir
+que le moteur a changé, et ses sauvegardes sont déjà rangées à côté.
 
 ## Décisions
 

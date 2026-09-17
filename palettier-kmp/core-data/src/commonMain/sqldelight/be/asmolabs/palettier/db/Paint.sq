@@ -1,0 +1,67 @@
+-- Le catalogue des huiles. Repart a neuf : les sept changesets Liquibase de
+-- l'application Java se soldent, ils ne se rejouent pas. La donnee arrive par
+-- l'import de sauvegarde.
+CREATE TABLE paint (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    brand              TEXT    NOT NULL,
+    name               TEXT    NOT NULL,
+    code               TEXT    NOT NULL DEFAULT '',
+    legacy_code        TEXT    NOT NULL DEFAULT '',
+    hex_color          TEXT    NOT NULL,
+    tint_hex           TEXT,
+    opacity            TEXT    NOT NULL,
+    drying_class       TEXT    NOT NULL,
+    tinting_strength   REAL    NOT NULL,
+    colour_derived     INTEGER NOT NULL DEFAULT 0,
+    pigments_verified  INTEGER NOT NULL DEFAULT 0,
+    user_added         INTEGER NOT NULL DEFAULT 0,
+    in_stock           INTEGER NOT NULL DEFAULT 1,
+    notes              TEXT    NOT NULL DEFAULT ''
+);
+
+-- La marque et le nom sont la cle naturelle : c'est ainsi que la sauvegarde
+-- designe un tube, jamais par un identifiant de base.
+CREATE UNIQUE INDEX paint_natural_key ON paint(brand, name);
+CREATE INDEX paint_in_stock ON paint(in_stock);
+
+CREATE TABLE paint_pigment (
+    paint_id INTEGER NOT NULL REFERENCES paint(id) ON DELETE CASCADE,
+    pigment  TEXT    NOT NULL,
+    position INTEGER NOT NULL,
+    PRIMARY KEY (paint_id, pigment)
+);
+
+selectAll:
+SELECT * FROM paint ORDER BY brand, name;
+
+selectInStock:
+SELECT * FROM paint WHERE in_stock = 1 ORDER BY brand, name;
+
+selectById:
+SELECT * FROM paint WHERE id = ?;
+
+pigmentsOf:
+SELECT pigment FROM paint_pigment WHERE paint_id = ? ORDER BY position;
+
+allPigments:
+SELECT paint_id, pigment FROM paint_pigment ORDER BY paint_id, position;
+
+insert:
+INSERT INTO paint(brand, name, code, legacy_code, hex_color, tint_hex, opacity, drying_class,
+                  tinting_strength, colour_derived, pigments_verified, user_added, in_stock, notes)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+addPigment:
+INSERT OR IGNORE INTO paint_pigment(paint_id, pigment, position) VALUES (?, ?, ?);
+
+setInStock:
+UPDATE paint SET in_stock = ? WHERE id = ?;
+
+setTint:
+UPDATE paint SET tint_hex = ? WHERE id = ?;
+
+lastInsertedId:
+SELECT last_insert_rowid();
+
+count:
+SELECT count(*) FROM paint;
