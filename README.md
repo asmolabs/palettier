@@ -10,12 +10,18 @@ planning. Le logiciel répond à ces trois questions.
 | Section | Ce qu'elle résout |
 |---|---|
 | **Aujourd'hui** | Sur quoi puis-je travailler maintenant : les zones redevenues reprenables, pièce par pièce |
-| **Catalogue** | 680 huiles de 8 gammes ; laquelle se rapproche le plus d'une teinte visée (écart CIEDE2000) |
+| **Projets** | Les pièces en cours, leur plan, leurs photos, et ce qui est déjà peint |
 | **Palettes** | Une sélection nommée de tubes par sujet, qui sert ensuite de filtre de recherche |
 | **Pipette** | Relever une teinte sur une photo (ou la saisir en hexa) et obtenir le mélange à faire |
+| **Assistant** | Faire proposer un plan par zones à un modèle de langage, à partir du sujet et de photos |
 | **Mélangeur** | Quelle couleur donne ce mélange — et, à l'inverse, quel mélange donne cette couleur |
+| **Catalogue** | 680 huiles de 8 gammes ; laquelle se rapproche le plus d'une teinte visée (écart CIEDE2000) |
 | **Séchage** | Combien de temps pour une couche à venir : temps ouvert, recouvrable, sec à cœur, vernissable |
 | **Recettes** | Combien de séances représente vraiment cette recette |
+
+L'ordre est celui de la barre latérale. Le raccourci clavier d'une section est déclaré par
+elle (`AppView.shortcut`) et non déduit de son rang : insérer une section en tête ne
+déplace plus tout ce qui suit sous les doigts.
 
 ## Stack
 
@@ -57,7 +63,7 @@ Le module expose une seule porte d'entrée, `CoreConfiguration`, que l'applicati
 ### Points d'extension
 
 - **Une section** = un bean qui implémente `AppView` (`title`, `subtitle`, `create`,
-  `order`). `MainWindow` collecte tous ceux présents dans le contexte, construit la
+  `order`, et `shortcut` si elle en veut un). `MainWindow` collecte tous ceux présents dans le contexte, construit la
   navigation et n'instancie le contenu qu'à la première ouverture. Rien d'autre à déclarer.
 - **Le catalogue de départ** est dans `CatalogSeeder`, chargé au premier démarrage
   seulement.

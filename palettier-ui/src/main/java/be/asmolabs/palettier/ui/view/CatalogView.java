@@ -105,6 +105,11 @@ public class CatalogView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 6;
+    }
+
+    @Override
     public Node create() {
         searchField.setPromptText("Rechercher une marque, un nom ou une reference");
         searchField.setPrefWidth(360);

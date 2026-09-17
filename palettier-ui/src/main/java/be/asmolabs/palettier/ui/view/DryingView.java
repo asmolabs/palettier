@@ -94,6 +94,11 @@ public class DryingView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 7;
+    }
+
+    @Override
     public Node create() {
         SplitPane split = new SplitPane(form(), results());
         split.setDividerPositions(0.42);

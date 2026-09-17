@@ -24,6 +24,18 @@ public interface AppView {
     int order();
 
     /**
+     * Chiffre du raccourci clavier, de 0 a 9, ou -1 pour aucun.
+     *
+     * <p>Declare par la section plutot que deduit de son rang. Une section inseree en
+     * tete decalerait sinon tous les raccourcis d'un cran, et le peintre qui tape
+     * machinalement sur 3 pour la pipette tomberait ailleurs. L'ordre d'affichage se
+     * reorganise librement, les raccourcis ne bougent pas.</p>
+     */
+    default int shortcut() {
+        return -1;
+    }
+
+    /**
      * Vrai pour detacher cette section de celles qui precedent par un filet.
      *
      * <p>Sert a separer ce qui releve du travail courant de ce qui n'en releve pas :

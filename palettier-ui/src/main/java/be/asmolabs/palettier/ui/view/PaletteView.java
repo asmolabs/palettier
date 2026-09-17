@@ -85,6 +85,11 @@ public class PaletteView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 2;
+    }
+
+    @Override
     public Node create() {
         SplitPane split = new SplitPane(listPanel(), contentPanel());
         split.setDividerPositions(0.28);

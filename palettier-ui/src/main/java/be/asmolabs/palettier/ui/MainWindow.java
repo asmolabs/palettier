@@ -111,9 +111,8 @@ public class MainWindow {
         Label label = new Label(view.title());
         label.getStyleClass().add("nav-label");
 
-        // Le rang sert de raccourci : on l'affiche, sinon personne ne le devine.
-        int rank = views.indexOf(view) + 1;
-        Label hint = new Label(rank <= 9 ? String.valueOf(rank) : "");
+        // Le raccourci s'affiche, sinon personne ne le devine.
+        Label hint = new Label(view.shortcut() < 0 ? "" : String.valueOf(view.shortcut()));
         hint.getStyleClass().add("nav-shortcut");
 
         Region spacer = new Region();
@@ -149,10 +148,13 @@ public class MainWindow {
      * du releve au melange doit pouvoir se faire sans lacher le pinceau.</p>
      */
     private void installShortcuts(Scene scene) {
-        for (int i = 0; i < Math.min(views.size(), 9); i++) {
-            AppView view = views.get(i);
+        for (AppView view : views) {
+            int digit = view.shortcut();
+            if (digit < 0 || digit > 9) {
+                continue;
+            }
             KeyCombination shortcut = new KeyCodeCombination(
-                    KeyCode.getKeyCode(String.valueOf(i + 1)), KeyCombination.SHORTCUT_DOWN);
+                    KeyCode.getKeyCode(String.valueOf(digit)), KeyCombination.SHORTCUT_DOWN);
             scene.getAccelerators().put(shortcut, () -> select(view));
         }
     }

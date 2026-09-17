@@ -111,6 +111,11 @@ public class MixerView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 5;
+    }
+
+    @Override
     public Node create() {
         SplitPane split = new SplitPane(mixPanel(), suggestionPanel());
         split.setDividerPositions(0.58);

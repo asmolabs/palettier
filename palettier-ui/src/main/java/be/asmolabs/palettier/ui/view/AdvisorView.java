@@ -109,6 +109,11 @@ public class AdvisorView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 4;
+    }
+
+    @Override
     public Node create() {
         SplitPane split = new SplitPane(settingsPanel(), resultsPanel());
         split.setDividerPositions(0.36);

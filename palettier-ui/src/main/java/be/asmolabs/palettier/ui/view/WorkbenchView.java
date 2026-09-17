@@ -76,6 +76,11 @@ public class WorkbenchView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 0;
+    }
+
+    @Override
     public Node create() {
         summary.getStyleClass().add("result-summary");
         summary.setWrapText(true);

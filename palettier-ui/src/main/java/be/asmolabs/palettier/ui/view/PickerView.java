@@ -182,6 +182,11 @@ public class PickerView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 3;
+    }
+
+    @Override
     public Node create() {
         SplitPane split = new SplitPane(imagePanel(), analysisPanel());
         split.setDividerPositions(0.56);

@@ -68,6 +68,11 @@ public class RecipeView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 8;
+    }
+
+    @Override
     public Node create() {
         recipes.setAll(repository.findAllByOrderByNameAsc());
         recipeList.getSelectionModel().selectedItemProperty()

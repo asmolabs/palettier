@@ -83,6 +83,11 @@ public class SettingsView implements AppView {
     }
 
     @Override
+    public int shortcut() {
+        return 9;
+    }
+
+    @Override
     public boolean separatorBefore() {
         return true;
     }
