@@ -1,3 +1,7 @@
+palettier-kmp/build/
+palettier-kmp/*/build/
+palettier-kmp/.gradle/
+palettier-kmp/.kotlin/
 target/
 *.iml
 .idea/
