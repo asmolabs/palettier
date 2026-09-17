@@ -1,6 +1,10 @@
 package be.asmolabs.palettier.ui.view;
 
 import be.asmolabs.palettier.core.color.Rgb;
+import be.asmolabs.palettier.core.domain.DryingClass;
+import be.asmolabs.palettier.core.domain.PaletteMix;
+import be.asmolabs.palettier.core.service.PaletteMixService;
+import be.asmolabs.palettier.core.service.PaletteMixService.MixState;
 import be.asmolabs.palettier.core.service.WorkbenchService;
 import be.asmolabs.palettier.core.service.WorkbenchService.Bench;
 import be.asmolabs.palettier.core.service.WorkbenchService.CoatState;
@@ -8,21 +12,30 @@ import be.asmolabs.palettier.core.service.WorkbenchService.PieceState;
 import be.asmolabs.palettier.core.service.WorkbenchService.Stage;
 import be.asmolabs.palettier.core.service.WorkbenchService.ZoneState;
 import be.asmolabs.palettier.ui.AppView;
+import be.asmolabs.palettier.ui.SampledColor;
 import be.asmolabs.palettier.ui.component.Card;
 import be.asmolabs.palettier.ui.component.ColorSwatch;
 import be.asmolabs.palettier.ui.component.Formats;
 import be.asmolabs.palettier.ui.component.Pill;
+import be.asmolabs.palettier.ui.component.WorkshopForm;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -50,13 +63,36 @@ public class WorkbenchView implements AppView {
             DateTimeFormatter.ofPattern("d MMMM 'a' HH'h'mm", Locale.FRENCH).withZone(ZoneId.systemDefault());
 
     private final WorkbenchService workbench;
+    private final PaletteMixService mixes;
+    private final SampledColor sampled;
 
     private final Label summary = new Label();
     private final VBox pieces = new VBox(14);
+    private final VBox palette = new VBox(10);
+    private final TextField mixName = new TextField();
+    private final TextField mixRecipe = new TextField();
+    private final ComboBox<DryingClass> mixDrying = new ComboBox<>();
+    private final ColorSwatch mixColour = new ColorSwatch(34, 28);
+    private final WorkshopForm workshop = new WorkshopForm(
+            "Ces conditions sont figees avec le melange : c'est cet atelier-la qui commande "
+            + "son temps ouvert.");
     private final Button refresh = new Button("Rafraichir");
 
-    public WorkbenchView(WorkbenchService workbench) {
+    /**
+     * Relecture periodique tant que l'ecran est affiche.
+     *
+     * <p>C'est le seul ecran dont le contenu change sans que personne n'y touche : une
+     * zone se libere au bout de six heures, pas sur un clic. Laisse ouvert une
+     * apres-midi, il mentirait doucement. La minuterie s'arrete des qu'on le quitte --
+     * relire la base pour un ecran que personne ne regarde ne sert a rien.</p>
+     */
+    private final Timeline ticker = new Timeline(
+            new KeyFrame(javafx.util.Duration.minutes(1), event -> reload()));
+
+    public WorkbenchView(WorkbenchService workbench, PaletteMixService mixes, SampledColor sampled) {
         this.workbench = workbench;
+        this.mixes = mixes;
+        this.sampled = sampled;
     }
 
     @Override
@@ -87,7 +123,7 @@ public class WorkbenchView implements AppView {
 
         refresh.setOnAction(event -> reload());
 
-        VBox everything = new VBox(14, summary, new HBox(8, refresh), pieces);
+        VBox everything = new VBox(14, summary, new HBox(8, refresh), pieces, paletteCard());
         everything.setPadding(new Insets(2));
 
         ScrollPane scroll = new ScrollPane(everything);
@@ -101,9 +137,14 @@ public class WorkbenchView implements AppView {
         // l'etat du moment, pas celui de la derniere ouverture. C'est aussi ce qui
         // declenche la premiere lecture -- la fenetre attache la section des qu'elle la
         // construit, et charger ici en plus la ferait deux fois.
+        ticker.setCycleCount(Animation.INDEFINITE);
         card.sceneProperty().addListener((obs, old, scene) -> {
             if (scene != null) {
                 reload();
+                refreshMixes();
+                ticker.play();
+            } else {
+                ticker.stop();
             }
         });
 
@@ -152,6 +193,128 @@ public class WorkbenchView implements AppView {
 
         summary.setText(headline(bench));
         bench.pieces().forEach(piece -> pieces.getChildren().add(pieceCard(piece)));
+    }
+
+    // --- Sur votre palette --------------------------------------------------
+
+    /**
+     * Les melanges reellement poses sur la palette.
+     *
+     * <p>Ailleurs un melange est un calcul, refait a la demande. Celui-ci est une pate :
+     * elle existe, elle est datee, et elle ne durera pas la nuit. La couleur vient de la
+     * pipette -- relevez la teinte sur votre palette, nommez-la ici, elle est posee.</p>
+     */
+    private Node paletteCard() {
+        mixName.setPromptText("a quoi il sert : gris rompu des ombres...");
+        mixRecipe.setPromptText("de quoi il est fait, pour pouvoir le refaire");
+        mixDrying.getItems().setAll(DryingClass.values());
+        mixDrying.setValue(DryingClass.MEDIUM);
+        mixDrying.setTooltip(new Tooltip("Vitesse du tube le plus lent du melange"));
+        HBox.setHgrow(mixName, Priority.ALWAYS);
+        HBox.setHgrow(mixRecipe, Priority.ALWAYS);
+
+        Button add = new Button("Poser sur la palette");
+        add.setOnAction(event -> recordMix());
+
+        Button clean = new Button("Retirer ce qui a pris");
+        clean.setOnAction(event -> {
+            mixes.forgetSpent();
+            refreshMixes();
+        });
+
+        // La teinte vient de la pipette : c'est deja le lien entre les ecrans.
+        sampled.valueProperty().addListener((obs, old, colour) -> showSampled(colour));
+        showSampled(sampled.get());
+
+        VBox form = new VBox(8,
+                new HBox(8, mixColour, mixName),
+                new HBox(8, mixRecipe, mixDrying),
+                new HBox(8, add, clean));
+
+        return new Card("Sur votre palette",
+                "Une pate a l'huile reste travaillable des heures et survit parfois la nuit. "
+                + "Notez-la, et l'ecran vous dira combien de temps elle tient encore.",
+                new VBox(12, form, workshop, palette));
+    }
+
+    private void showSampled(Rgb colour) {
+        mixColour.setColor(colour == null ? new Rgb(0.13, 0.11, 0.10) : colour,
+                colour == null ? "?" : null);
+    }
+
+    private void recordMix() {
+        Rgb colour = sampled.get();
+        String name = mixName.getText() == null ? "" : mixName.getText().trim();
+        if (colour == null || name.isEmpty()) {
+            palette.getChildren().setAll(hint(
+                    "Relevez d'abord la teinte a la pipette, et donnez un nom au melange."));
+            return;
+        }
+        mixes.record(name, colour, mixRecipe.getText(), mixDrying.getValue(), workshop.current());
+        mixName.clear();
+        mixRecipe.clear();
+        refreshMixes();
+    }
+
+    private void refreshMixes() {
+        palette.getChildren().clear();
+        List<MixState> states = mixes.states();
+
+        if (states.isEmpty()) {
+            palette.getChildren().add(hint("Rien sur la palette."));
+            return;
+        }
+        states.forEach(state -> palette.getChildren().add(mixRow(state)));
+    }
+
+    private Node mixRow(MixState state) {
+        PaletteMix mix = state.mix();
+
+        ColorSwatch swatch = new ColorSwatch(30, 24);
+        swatch.setColor(Rgb.ofHex(mix.getHexColor()));
+
+        Label name = new Label(mix.getName());
+        name.getStyleClass().add("milestone-title");
+
+        Label detail = hint(mix.getRecipe() == null || mix.getRecipe().isBlank()
+                ? state(state) : mix.getRecipe() + "  -  " + state(state));
+
+        VBox texts = new VBox(2, name, detail);
+        HBox.setHgrow(texts, Priority.ALWAYS);
+
+        Button forget = new Button("\u2715");
+        forget.getStyleClass().add("icon-button");
+        forget.setTooltip(new Tooltip("Retirer de la palette"));
+        forget.setOnAction(event -> {
+            mixes.forget(mix);
+            refreshMixes();
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox row = new HBox(10, swatch, texts, spacer, mixPill(state), forget);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
+    }
+
+    private static String state(MixState state) {
+        if (state.isSpent()) {
+            return "Il a pris : plus rien a en tirer.";
+        }
+        if (state.isOpen()) {
+            return "Encore travaillable %s, jusqu'a %s."
+                    .formatted(Formats.duration(state.workable()), Formats.clockAfter(state.workable()));
+        }
+        return "Il ne s'etale plus, mais il n'a pas encore pris : bon a jeter dans %s."
+                .formatted(Formats.duration(state.unusable()));
+    }
+
+    private static Node mixPill(MixState state) {
+        if (state.isSpent()) {
+            return Pill.of("Pris", "pill-ghost");
+        }
+        return state.isOpen() ? Pill.of("Ouvert", "pill-fast") : Pill.of("En prise", "pill-slow");
     }
 
     private static String headline(Bench bench) {

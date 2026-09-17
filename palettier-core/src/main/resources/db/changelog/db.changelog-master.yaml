@@ -12,3 +12,5 @@ databaseChangeLog:
       file: db/changelog/003-reference-ancienne.sql
   - include:
       file: db/changelog/004-couches-posees.sql
+  - include:
+      file: db/changelog/005-melanges-sur-palette.sql
