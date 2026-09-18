@@ -31,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.asmolabs.palettier.data.di.dataModule
 import be.asmolabs.palettier.data.di.domainModule
 import be.asmolabs.palettier.data.di.platformModule
+import be.asmolabs.palettier.ui.catalog.CatalogScreen
+import be.asmolabs.palettier.ui.catalog.CatalogViewModel
 import be.asmolabs.palettier.ui.projects.ProjectsScreen
 import be.asmolabs.palettier.ui.projects.ProjectsViewModel
 import be.asmolabs.palettier.ui.workbench.WorkbenchScreen
@@ -65,6 +67,8 @@ fun main() = application {
 
                 val projectsModel: ProjectsViewModel = koinViewModel()
                 val projectsState by projectsModel.state.collectAsStateWithLifecycle()
+                val catalogModel: CatalogViewModel = koinViewModel()
+                val catalogState by catalogModel.state.collectAsStateWithLifecycle()
                 var section by remember { mutableStateOf(0) }
 
                 Surface(Modifier.fillMaxSize()) {
@@ -78,10 +82,14 @@ fun main() = application {
                             Tab(section == 1, { section = 1 }) {
                                 Text("Projets", Modifier.padding(vertical = 12.dp))
                             }
+                            Tab(section == 2, { section = 2 }) {
+                                Text("Catalogue", Modifier.padding(vertical = 12.dp))
+                            }
                         }
                         when (section) {
                             0 -> WorkbenchScreen(state, Modifier.weight(1f))
-                            else -> ProjectsScreen(projectsState, projectsModel::onIntent, Modifier.weight(1f))
+                            1 -> ProjectsScreen(projectsState, projectsModel::onIntent, Modifier.weight(1f))
+                            else -> CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
                         }
                     }
                 }
@@ -117,6 +125,7 @@ private fun ImportBar(import: ImportState) {
 private val uiModule = module {
     factory { WorkbenchViewModel(get(), get(), get(), get()) }
     factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
+    factory { CatalogViewModel(get()) }
     single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
 }
 

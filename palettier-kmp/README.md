@@ -30,10 +30,11 @@ ne la remplace qu'une fois à parité.
 | `feature-ui` — Aujourd'hui | **porté** | 5 tests |
 | `feature-ui` — Projets | **porté** | 4 tests, plus 5 sur `ProjectPlanner` |
 | `desktopApp` — client Compose + import | **porté** | lancé et vérifié |
-| `feature-ui` — les sept autres écrans | à faire | |
+| `feature-ui` — Catalogue | **porté** | 5 tests |
+| `feature-ui` — les six autres écrans | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 7 400 lignes portées sur 14 639. 117 tests sur JVM, 89 sur Android. Le domaine, la
+**≈ 7 900 lignes portées sur 14 639. 122 tests sur JVM, 94 sur Android. Le domaine, la
 persistance et le câblage sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
@@ -262,8 +263,8 @@ rejouent pas.
 
 | Cible | Tests exécutés |
 |---|---|
-| JVM (Desktop) | **117** |
-| Android (debug) | **89** |
+| JVM (Desktop) | **122** |
+| Android (debug) | **94** |
 
 Les 75 d'Android sont l'intégralité de `commonTest` du domaine — y compris `MixSearch` sur
 le catalogue de 680 huiles. Le moteur tourne donc réellement sur la cible mobile, ce n'était
