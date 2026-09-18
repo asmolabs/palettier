@@ -22,13 +22,14 @@ ne la remplace qu'une fois à parité.
 | domaine — ReadinessWatch, PaletteMix, PaintMatcher | à faire | |
 | `core-data` — schéma + catalogue | **porté** | 6 tests sur une vraie base SQLite |
 | `core-data` — palettes et projets | **porté** | 8 tests, dont le piège des photos |
-| `core-data` — recettes, mélanges de palette | à faire | |
-| `core-data` — import de la sauvegarde | à faire | |
+| `core-data` — recettes | **porté** | |
+| `core-data` — import de la sauvegarde | **porté** | 7 tests sur une vraie archive Java |
+| `core-data` — mélanges de palette | à faire | |
 | `feature-ui` — Compose | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 4 100 lignes portées sur 14 639, 76 tests.** La phase 1 est close pour tout ce qui est
-du calcul ; la phase 2 tient debout jusqu'aux projets.
+**≈ 5 000 lignes portées sur 14 639, 83 tests.** Le pont entre les deux applications est
+ouvert : une sauvegarde Java se relit dans SQLite.
 
 ## La méthode, et pourquoi elle tient
 
@@ -142,6 +143,35 @@ liste de pièces — et ne se verrait pas sur un jeu d'essai de trois lignes.
 
 À l'enregistrement, les zones sont effacées puis réécrites. Un arbre se remplace en bloc :
 réconcilier des rangs qui ont bougé coûte plus cher que de tout reposer.
+
+## Le pont fonctionne
+
+`BackupImporter` relit une archive produite par l'application Java. L'essai ne travaille
+pas sur un fichier fabriqué à la main : l'archive est **sortie du `BackupService` Java**,
+catalogue de 680 huiles compris, avec un projet, une couche posée et une photo.
+
+Ce qui traverse, vérifié un par un : les 680 tubes avec leurs pigments, les corrections du
+peintre (possession, teinte diluée relevée), les palettes, le projet avec ses zones, ses
+six couches dont une variation locale, ses tubes figés, **la pose de la couche avec son
+atelier et sa vitesse de séchage**, et la photo rangée à côté du JSON.
+
+Et le dernier essai ferme la boucle entière : `WorkbenchService` calcule l'établi sur les
+données restaurées. Archive Java → SQLite → domaine Kotlin, sans adaptateur.
+
+Réimporter la même archive ne duplique rien : le catalogue se met à jour, le travail en
+cours est laissé intact. C'est la contrainte `(marque, nom)` qui le garantit, pas du code
+de déduplication.
+
+### Ce que l'essai a attrapé
+
+Le premier passage a échoué sur `#C9B9AC` attendu, `#A59CA9` obtenu. Le portage avait
+raison : cinq gammes vendent un « Burnt Umber », et l'outil qui a produit l'archive avait
+enregistré la teinte sur celui de Gamblin en filtrant sur le nom sans la marque. C'est
+exactement le genre d'écart qu'un import « qui a l'air de marcher » laisse passer, et que
+seule une vraie archive révèle.
+
+L'essai vérifie maintenant aussi que les quatre homonymes ont gardé la leur : une
+correction ne déborde pas sur ses voisins.
 
 ## Décisions
 

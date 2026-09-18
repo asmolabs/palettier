@@ -5,6 +5,7 @@ import be.asmolabs.palettier.domain.paint.Paint
 import be.asmolabs.palettier.domain.palette.Palette
 import be.asmolabs.palettier.domain.project.Project
 import be.asmolabs.palettier.domain.project.ProjectPhoto
+import be.asmolabs.palettier.domain.recipe.Recipe
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -68,6 +69,19 @@ interface ProjectRepository {
     suspend fun removePhoto(project: Project, photoId: Long): Project
 
     suspend fun delete(project: Project)
+}
+
+interface RecipeRepository {
+
+    fun observeAll(): Flow<List<Recipe>>
+
+    suspend fun all(): List<Recipe>
+
+    suspend fun exists(name: String): Boolean
+
+    suspend fun save(recipe: Recipe): Recipe
+
+    suspend fun delete(recipe: Recipe)
 }
 
 interface PaletteRepository {

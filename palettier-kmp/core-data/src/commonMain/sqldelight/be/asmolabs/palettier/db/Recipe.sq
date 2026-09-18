@@ -1,0 +1,45 @@
+CREATE TABLE recipe (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    name    TEXT NOT NULL,
+    subject TEXT NOT NULL DEFAULT '',
+    notes   TEXT NOT NULL DEFAULT ''
+);
+
+CREATE UNIQUE INDEX recipe_name ON recipe(name);
+
+CREATE TABLE recipe_step (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    recipe_id    INTEGER NOT NULL REFERENCES recipe(id) ON DELETE CASCADE,
+    technique    TEXT    NOT NULL,
+    paint_mix    TEXT    NOT NULL DEFAULT '',
+    medium       TEXT    NOT NULL,
+    medium_ratio REAL    NOT NULL,
+    thickness    TEXT    NOT NULL,
+    notes        TEXT    NOT NULL DEFAULT '',
+    position     INTEGER NOT NULL
+);
+
+selectAll:
+SELECT * FROM recipe ORDER BY name;
+
+existsByName:
+SELECT count(*) FROM recipe WHERE name = ? COLLATE NOCASE;
+
+allSteps:
+SELECT * FROM recipe_step ORDER BY recipe_id, position;
+
+insert:
+INSERT INTO recipe(name, subject, notes) VALUES (?, ?, ?);
+
+clearSteps:
+DELETE FROM recipe_step WHERE recipe_id = ?;
+
+insertStep:
+INSERT INTO recipe_step(recipe_id, technique, paint_mix, medium, medium_ratio, thickness, notes, position)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+delete:
+DELETE FROM recipe WHERE id = ?;
+
+lastInsertedId:
+SELECT last_insert_rowid();
