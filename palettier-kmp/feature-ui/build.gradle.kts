@@ -22,6 +22,7 @@ kotlin {
             // L'interface connait le domaine, jamais la persistance : c'est le module
             // applicatif qui les met en presence.
             implementation(project(":core-domain"))
+            implementation(project(":core-image"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -37,6 +38,10 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+        }
+        jvmTest.dependencies {
+            // La pipette s'essaie la ou l'on sait fabriquer une image : ImageIO.
+            implementation(project(":core-image"))
         }
     }
 }

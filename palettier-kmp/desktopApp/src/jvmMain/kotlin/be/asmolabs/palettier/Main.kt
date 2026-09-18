@@ -31,8 +31,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.asmolabs.palettier.data.di.dataModule
 import be.asmolabs.palettier.data.di.domainModule
 import be.asmolabs.palettier.data.di.platformModule
+import be.asmolabs.palettier.image.imageDecoder
 import be.asmolabs.palettier.ui.catalog.CatalogScreen
 import be.asmolabs.palettier.ui.catalog.CatalogViewModel
+import be.asmolabs.palettier.ui.picker.PickerIntent
+import be.asmolabs.palettier.ui.picker.PickerScreen
+import be.asmolabs.palettier.ui.picker.PickerViewModel
 import be.asmolabs.palettier.ui.projects.ProjectsScreen
 import be.asmolabs.palettier.ui.projects.ProjectsViewModel
 import be.asmolabs.palettier.ui.workbench.WorkbenchScreen
@@ -69,6 +73,8 @@ fun main() = application {
                 val projectsState by projectsModel.state.collectAsStateWithLifecycle()
                 val catalogModel: CatalogViewModel = koinViewModel()
                 val catalogState by catalogModel.state.collectAsStateWithLifecycle()
+                val pickerModel: PickerViewModel = koinViewModel()
+                val pickerState by pickerModel.state.collectAsStateWithLifecycle()
                 var section by remember { mutableStateOf(0) }
 
                 Surface(Modifier.fillMaxSize()) {
@@ -83,12 +89,25 @@ fun main() = application {
                                 Text("Projets", Modifier.padding(vertical = 12.dp))
                             }
                             Tab(section == 2, { section = 2 }) {
+                                Text("Pipette", Modifier.padding(vertical = 12.dp))
+                            }
+                            Tab(section == 3, { section = 3 }) {
                                 Text("Catalogue", Modifier.padding(vertical = 12.dp))
                             }
                         }
                         when (section) {
                             0 -> WorkbenchScreen(state, Modifier.weight(1f))
                             1 -> ProjectsScreen(projectsState, projectsModel::onIntent, Modifier.weight(1f))
+                            2 -> PickerScreen(
+                                pickerState,
+                                pickerModel::onIntent,
+                                onChooseImage = {
+                                    // Le choix du fichier appartient a la plateforme ;
+                                    // le ViewModel ne connait que des octets.
+                                    pickPhoto()?.let { pickerModel.onIntent(PickerIntent.Load(it)) }
+                                },
+                                Modifier.weight(1f),
+                            )
                             else -> CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
                         }
                     }
@@ -121,11 +140,21 @@ private fun ImportBar(import: ImportState) {
     }
 }
 
+/** Le fichier choisi par le peintre, lu tel quel : reduire deplacerait les couleurs. */
+private fun pickPhoto(): ByteArray? {
+    val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Photo a relever", java.awt.FileDialog.LOAD)
+    dialog.isVisible = true
+    val directory = dialog.directory ?: return null
+    val name = dialog.file ?: return null
+    return java.nio.file.Files.readAllBytes(java.nio.file.Path.of(directory, name))
+}
+
 /** Les ViewModels : declares ici, parce que c'est l'application qui sait ce qu'elle affiche. */
 private val uiModule = module {
     factory { WorkbenchViewModel(get(), get(), get(), get()) }
     factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
     factory { CatalogViewModel(get()) }
+    factory { PickerViewModel(imageDecoder(), get()) }
     single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
 }
 

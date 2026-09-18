@@ -31,10 +31,12 @@ ne la remplace qu'une fois à parité.
 | `feature-ui` — Projets | **porté** | 4 tests, plus 5 sur `ProjectPlanner` |
 | `desktopApp` — client Compose + import | **porté** | lancé et vérifié |
 | `feature-ui` — Catalogue | **porté** | 5 tests |
-| `feature-ui` — les six autres écrans | à faire | |
+| `core-image` — décodage `expect`/`actual` | **porté** | 5 tests sur JVM |
+| `feature-ui` — Pipette | **porté** | 5 tests sur de vraies images |
+| `feature-ui` — les cinq autres écrans | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 7 900 lignes portées sur 14 639. 122 tests sur JVM, 94 sur Android. Le domaine, la
+**≈ 8 900 lignes portées sur 14 639. 132 tests sur JVM, 94 sur Android. Le domaine, la
 persistance et le câblage sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
@@ -263,7 +265,7 @@ rejouent pas.
 
 | Cible | Tests exécutés |
 |---|---|
-| JVM (Desktop) | **122** |
+| JVM (Desktop) | **132** |
 | Android (debug) | **94** |
 
 Les 75 d'Android sont l'intégralité de `commonTest` du domaine — y compris `MixSearch` sur
