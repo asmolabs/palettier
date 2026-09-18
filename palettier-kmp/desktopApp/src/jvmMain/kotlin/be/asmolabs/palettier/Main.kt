@@ -10,12 +10,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.asmolabs.palettier.data.di.dataModule
 import be.asmolabs.palettier.data.di.domainModule
 import be.asmolabs.palettier.data.di.platformModule
+import be.asmolabs.palettier.ui.projects.ProjectsScreen
+import be.asmolabs.palettier.ui.projects.ProjectsViewModel
 import be.asmolabs.palettier.ui.workbench.WorkbenchScreen
 import be.asmolabs.palettier.ui.workbench.WorkbenchViewModel
 import org.koin.compose.KoinApplication
@@ -57,10 +63,26 @@ fun main() = application {
                 val importer = koinInject<be.asmolabs.palettier.data.backup.BackupImporter>()
                 val import = remember { ImportState(importer, scope) }
 
+                val projectsModel: ProjectsViewModel = koinViewModel()
+                val projectsState by projectsModel.state.collectAsStateWithLifecycle()
+                var section by remember { mutableStateOf(0) }
+
                 Surface(Modifier.fillMaxSize()) {
                     Column {
                         ImportBar(import)
-                        WorkbenchScreen(state, Modifier.weight(1f))
+                        TabRow(selectedTabIndex = section) {
+                            // Aujourd'hui d'abord : c'est la question du matin.
+                            Tab(section == 0, { section = 0 }) {
+                                Text("Aujourd'hui", Modifier.padding(vertical = 12.dp))
+                            }
+                            Tab(section == 1, { section = 1 }) {
+                                Text("Projets", Modifier.padding(vertical = 12.dp))
+                            }
+                        }
+                        when (section) {
+                            0 -> WorkbenchScreen(state, Modifier.weight(1f))
+                            else -> ProjectsScreen(projectsState, projectsModel::onIntent, Modifier.weight(1f))
+                        }
                     }
                 }
             }
@@ -94,6 +116,8 @@ private fun ImportBar(import: ImportState) {
 /** Les ViewModels : declares ici, parce que c'est l'application qui sait ce qu'elle affiche. */
 private val uiModule = module {
     factory { WorkbenchViewModel(get(), get(), get(), get()) }
+    factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
+    single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
 }
 
 /**

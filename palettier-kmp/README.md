@@ -27,12 +27,13 @@ ne la remplace qu'une fois à parité.
 | `core-data` — import de la sauvegarde | **porté** | 7 tests sur une vraie archive Java |
 | `core-data` — mélanges de palette | **porté** | 2 tests |
 | module Koin | **porté** | 3 tests, le graphe se résout |
-| `feature-ui` — écran Aujourd'hui | **porté** | 5 tests sur le ViewModel |
-| `desktopApp` — client Compose | **porté** | lancé et vérifié |
-| `feature-ui` — les huit autres écrans | à faire | |
+| `feature-ui` — Aujourd'hui | **porté** | 5 tests |
+| `feature-ui` — Projets | **porté** | 4 tests, plus 5 sur `ProjectPlanner` |
+| `desktopApp` — client Compose + import | **porté** | lancé et vérifié |
+| `feature-ui` — les sept autres écrans | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 6 500 lignes portées sur 14 639. 108 tests sur JVM, 80 sur Android. Le domaine, la
+**≈ 7 400 lignes portées sur 14 639. 117 tests sur JVM, 89 sur Android. Le domaine, la
 persistance et le câblage sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
@@ -205,6 +206,16 @@ devient une propriété du cadre au lieu d'une ligne à ne pas oublier.
 Ce qui ne se prouve plus : la mise en page, la lisibilité au fond d'un atelier, le confort.
 Il faut regarder.
 
+### Les rangs d'affichage ne servent plus à désigner une couche
+
+Côté JavaFX, cocher ou modifier une couche passait par son rang d'affichage, qui différait
+du rang stocké pour les variations locales : cliquer « Modifier » sur l'une d'elles levait
+une erreur, et il a fallu la corriger.
+
+Ici l'écran montre les couches **telles qu'elles sont rangées** et retrouve leur mélange
+par le rôle. C'est plus laborieux qu'un rang commun, et c'est délibéré : les deux ordres ont
+divergé une fois déjà, et un mélange attribué à la mauvaise couche ne se voit pas.
+
 ### Deux défauts que seule l'exécution a révélés
 
 **`Dispatchers.Main` n'existe pas sur le bureau** sans `kotlinx-coroutines-swing`. Tout
@@ -251,8 +262,8 @@ rejouent pas.
 
 | Cible | Tests exécutés |
 |---|---|
-| JVM (Desktop) | **108** |
-| Android (debug) | **80** |
+| JVM (Desktop) | **117** |
+| Android (debug) | **89** |
 
 Les 75 d'Android sont l'intégralité de `commonTest` du domaine — y compris `MixSearch` sur
 le catalogue de 680 huiles. Le moteur tourne donc réellement sur la cible mobile, ce n'était
