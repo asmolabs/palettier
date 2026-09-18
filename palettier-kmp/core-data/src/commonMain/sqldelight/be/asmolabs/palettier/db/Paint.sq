@@ -40,6 +40,11 @@ SELECT * FROM paint WHERE in_stock = 1 ORDER BY brand, name;
 selectById:
 SELECT * FROM paint WHERE id = ?;
 
+-- La cle naturelle : c'est ainsi que la sauvegarde designe un tube, et c'est ce qui
+-- rend son import idempotent.
+selectByNaturalKey:
+SELECT * FROM paint WHERE brand = ? AND name = ?;
+
 pigmentsOf:
 SELECT pigment FROM paint_pigment WHERE paint_id = ? ORDER BY position;
 

@@ -21,13 +21,14 @@ ne la remplace qu'une fois à parité.
 | domaine — ports (`PaintCatalogRepository`, `ProjectRepository`) | **porté** | |
 | domaine — ReadinessWatch, PaletteMix, PaintMatcher | à faire | |
 | `core-data` — schéma + catalogue | **porté** | 6 tests sur une vraie base SQLite |
-| `core-data` — projets, palettes, recettes | à faire | |
+| `core-data` — palettes et projets | **porté** | 8 tests, dont le piège des photos |
+| `core-data` — recettes, mélanges de palette | à faire | |
 | `core-data` — import de la sauvegarde | à faire | |
 | `feature-ui` — Compose | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 3 400 lignes portées sur 14 639, 68 tests.** La phase 1 est close pour tout ce qui est
-du calcul ; la phase 2 a commencé.
+**≈ 4 100 lignes portées sur 14 639, 76 tests.** La phase 1 est close pour tout ce qui est
+du calcul ; la phase 2 tient debout jusqu'aux projets.
 
 ## La méthode, et pourquoi elle tient
 
@@ -121,6 +122,26 @@ Deux choix de schéma qui ne sont pas neutres :
 
 Le fichier reste sous `~/.palettier`, comme du temps de H2 : le peintre n'a pas à savoir
 que le moteur a changé, et ses sauvegardes sont déjà rangées à côté.
+
+### Les photos ne peuvent plus disparaître
+
+`ProjectRepository.save` ne touche jamais aux photos, et ce n'est pas un oubli : c'est la
+signature qui l'interdit. Côté JPA, un projet lu sans ses photos puis réenregistré les
+effaçait — `orphanRemoval` faisait son travail sur une collection vide. Le correctif
+consistait à relire le projet dans la transaction, donc à se souvenir de le faire.
+
+Ici les photos ont leurs propres méthodes (`addPhoto`, `removePhoto`) et `save` ne les
+voit pas. Le défaut n'est plus évité, il est impossible. Un test le vérifie quand même,
+parce qu'une garantie structurelle se casse au premier refactor distrait.
+
+### Les arbres se relisent en quatre requêtes
+
+Projets, tubes figés, zones, couches : quatre requêtes, puis assemblage en mémoire. Une
+requête par zone et par couche ferait des centaines d'allers-retours pour afficher une
+liste de pièces — et ne se verrait pas sur un jeu d'essai de trois lignes.
+
+À l'enregistrement, les zones sont effacées puis réécrites. Un arbre se remplace en bloc :
+réconcilier des rangs qui ont bougé coûte plus cher que de tout reposer.
 
 ## Décisions
 

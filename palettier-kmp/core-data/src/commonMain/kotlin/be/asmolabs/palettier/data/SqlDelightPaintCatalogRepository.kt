@@ -48,6 +48,12 @@ class SqlDelightPaintCatalogRepository(
         }
     }
 
+    override suspend fun findByNaturalKey(brand: String, name: String): Paint? = withContext(io) {
+        queries.selectByNaturalKey(brand, name).executeAsOneOrNull()?.let { row ->
+            row.toDomain(queries.pigmentsOf(row.id).executeAsList().toSet())
+        }
+    }
+
     override suspend fun save(paint: Paint): Paint = withContext(io) {
         database.transactionWithResult {
             queries.insert(

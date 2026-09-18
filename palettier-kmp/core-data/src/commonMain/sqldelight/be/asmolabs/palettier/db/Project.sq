@@ -1,0 +1,116 @@
+CREATE TABLE project (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL,
+    subject    TEXT    NOT NULL DEFAULT '',
+    approach   TEXT    NOT NULL DEFAULT '',
+    notes      TEXT    NOT NULL DEFAULT '',
+    palette_id INTEGER REFERENCES palette(id) ON DELETE SET NULL,
+    created_at INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX project_name ON project(name);
+
+-- Les tubes figes avec le projet : c'est eux qui rendent un plan reproductible,
+-- quoi qu'il arrive a la palette ensuite.
+CREATE TABLE project_paint (
+    project_id INTEGER NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+    paint_id   INTEGER NOT NULL REFERENCES paint(id) ON DELETE CASCADE,
+    position   INTEGER NOT NULL,
+    PRIMARY KEY (project_id, paint_id)
+);
+
+CREATE TABLE project_zone (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+    name       TEXT    NOT NULL,
+    material   TEXT    NOT NULL DEFAULT '',
+    note       TEXT    NOT NULL DEFAULT '',
+    position   INTEGER NOT NULL
+);
+
+-- Les cinq colonnes de pose vont ensemble ou pas du tout : une couche est posee, avec
+-- l'atelier qu'elle a connu et la vitesse du melange employe, ou elle reste a peindre.
+CREATE TABLE project_layer (
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    zone_id              INTEGER NOT NULL REFERENCES project_zone(id) ON DELETE CASCADE,
+    role                 TEXT    NOT NULL,
+    target_hex           TEXT    NOT NULL,
+    technique            TEXT    NOT NULL DEFAULT '',
+    note                 TEXT    NOT NULL DEFAULT '',
+    kind                 TEXT    NOT NULL DEFAULT 'LADDER',
+    position             INTEGER NOT NULL,
+    applied_at           INTEGER,
+    applied_temperature  REAL,
+    applied_humidity     REAL,
+    applied_ventilation  TEXT,
+    applied_drying_class TEXT
+);
+
+CREATE TABLE project_photo (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+    data       BLOB    NOT NULL,
+    role       TEXT    NOT NULL,
+    caption    TEXT    NOT NULL DEFAULT '',
+    added_at   INTEGER NOT NULL,
+    position   INTEGER NOT NULL
+);
+
+selectAll:
+SELECT * FROM project ORDER BY created_at DESC;
+
+selectById:
+SELECT * FROM project WHERE id = ?;
+
+existsByName:
+SELECT count(*) FROM project WHERE name = ? COLLATE NOCASE;
+
+allProjectPaints:
+SELECT project_id, paint_id FROM project_paint ORDER BY project_id, position;
+
+allZones:
+SELECT * FROM project_zone ORDER BY project_id, position;
+
+allLayers:
+SELECT * FROM project_layer ORDER BY zone_id, position;
+
+photosOf:
+SELECT * FROM project_photo WHERE project_id = ? ORDER BY position;
+
+insertProject:
+INSERT INTO project(name, subject, approach, notes, palette_id, created_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
+updateProject:
+UPDATE project SET name = ?, subject = ?, approach = ?, notes = ?, palette_id = ? WHERE id = ?;
+
+clearProjectPaints:
+DELETE FROM project_paint WHERE project_id = ?;
+
+addProjectPaint:
+INSERT INTO project_paint(project_id, paint_id, position) VALUES (?, ?, ?);
+
+clearZones:
+DELETE FROM project_zone WHERE project_id = ?;
+
+insertZone:
+INSERT INTO project_zone(project_id, name, material, note, position) VALUES (?, ?, ?, ?, ?);
+
+insertLayer:
+INSERT INTO project_layer(zone_id, role, target_hex, technique, note, kind, position,
+                          applied_at, applied_temperature, applied_humidity,
+                          applied_ventilation, applied_drying_class)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+insertPhoto:
+INSERT INTO project_photo(project_id, data, role, caption, added_at, position)
+VALUES (?, ?, ?, ?, ?, ?);
+
+deletePhoto:
+DELETE FROM project_photo WHERE id = ?;
+
+deleteProject:
+DELETE FROM project WHERE id = ?;
+
+lastInsertedId:
+SELECT last_insert_rowid();
