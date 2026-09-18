@@ -34,6 +34,10 @@ import be.asmolabs.palettier.data.di.platformModule
 import be.asmolabs.palettier.image.imageDecoder
 import be.asmolabs.palettier.ui.catalog.CatalogScreen
 import be.asmolabs.palettier.ui.catalog.CatalogViewModel
+import be.asmolabs.palettier.ui.mixer.MixerScreen
+import be.asmolabs.palettier.ui.mixer.MixerViewModel
+import be.asmolabs.palettier.ui.palettes.PalettesScreen
+import be.asmolabs.palettier.ui.palettes.PalettesViewModel
 import be.asmolabs.palettier.ui.picker.PickerIntent
 import be.asmolabs.palettier.ui.picker.PickerScreen
 import be.asmolabs.palettier.ui.picker.PickerViewModel
@@ -75,6 +79,10 @@ fun main() = application {
                 val catalogState by catalogModel.state.collectAsStateWithLifecycle()
                 val pickerModel: PickerViewModel = koinViewModel()
                 val pickerState by pickerModel.state.collectAsStateWithLifecycle()
+                val palettesModel: PalettesViewModel = koinViewModel()
+                val palettesState by palettesModel.state.collectAsStateWithLifecycle()
+                val mixerModel: MixerViewModel = koinViewModel()
+                val mixerState by mixerModel.state.collectAsStateWithLifecycle()
                 var section by remember { mutableStateOf(0) }
 
                 Surface(Modifier.fillMaxSize()) {
@@ -92,6 +100,12 @@ fun main() = application {
                                 Text("Pipette", Modifier.padding(vertical = 12.dp))
                             }
                             Tab(section == 3, { section = 3 }) {
+                                Text("Palettes", Modifier.padding(vertical = 12.dp))
+                            }
+                            Tab(section == 4, { section = 4 }) {
+                                Text("Melangeur", Modifier.padding(vertical = 12.dp))
+                            }
+                            Tab(section == 5, { section = 5 }) {
                                 Text("Catalogue", Modifier.padding(vertical = 12.dp))
                             }
                         }
@@ -108,6 +122,8 @@ fun main() = application {
                                 },
                                 Modifier.weight(1f),
                             )
+                            3 -> PalettesScreen(palettesState, palettesModel::onIntent, Modifier.weight(1f))
+                            4 -> MixerScreen(mixerState, mixerModel::onIntent, Modifier.weight(1f))
                             else -> CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
                         }
                     }
@@ -155,6 +171,8 @@ private val uiModule = module {
     factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
     factory { CatalogViewModel(get()) }
     factory { PickerViewModel(imageDecoder(), get()) }
+    factory { PalettesViewModel(get(), get()) }
+    factory { MixerViewModel(get(), get()) }
     single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
 }
 
