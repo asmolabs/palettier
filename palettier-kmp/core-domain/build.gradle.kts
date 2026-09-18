@@ -4,12 +4,11 @@ plugins {
 
 kotlin {
     jvm()
-    // Android et iOS s'ajoutent ici. Laisses de cote pour l'instant : le SDK Android
-    // et Xcode ne sont pas installes sur cette machine, et declarer une cible qu'on ne
-    // peut pas compiler donnerait une illusion de verification.
+    // Android s'ajoute ici. Laisse de cote pour l'instant : le SDK n'est pas installe
+    // sur cette machine, et declarer une cible qu'on ne peut pas compiler donnerait une
+    // illusion de verification.
     //
     //   androidTarget()
-    //   iosArm64(); iosSimulatorArm64()
 
     jvmToolchain(25)
 

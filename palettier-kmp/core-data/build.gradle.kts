@@ -28,6 +28,7 @@ kotlin {
             implementation(libs.sqldelight.coroutines)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
+            api(libs.koin.core)
         }
         jvmMain.dependencies {
             implementation(libs.sqldelight.sqlite)
@@ -38,6 +39,7 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(libs.sqldelight.sqlite)
+            implementation(libs.koin.test)
         }
     }
 }

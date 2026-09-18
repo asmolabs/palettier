@@ -1,7 +1,8 @@
 # Palettier — migration Kotlin Multiplatform
 
 Portage de l'application Java / JavaFX / Spring Boot vers une base Kotlin unique.
-**Cibles retenues : Android, iOS, Desktop.** Le Web a été écarté — voir *Décisions*.
+**Cibles retenues : Android et Desktop.** Le Web a été écarté, iOS est repoussé — voir
+*Décisions*.
 
 L'application Java du dépôt reste la version en service. Ce module vit à côté d'elle et
 ne la remplace qu'une fois à parité.
@@ -25,12 +26,12 @@ ne la remplace qu'une fois à parité.
 | `core-data` — recettes | **porté** | |
 | `core-data` — import de la sauvegarde | **porté** | 7 tests sur une vraie archive Java |
 | `core-data` — mélanges de palette | **porté** | 2 tests |
-| module Koin | à faire | |
+| module Koin | **porté** | 3 tests, le graphe se résout |
 | `feature-ui` — Compose | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 5 600 lignes portées sur 14 639, 98 tests. Le domaine est complet et la persistance
-aussi.** Tout ce qui n'est ni interface ni assistant est porté.
+**≈ 5 800 lignes portées sur 14 639, 101 tests. Le domaine, la persistance et le câblage
+sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
 
@@ -190,6 +191,16 @@ trois implémentations à tenir pour replier une trentaine de caractères.
 depuis un domaine change la nature de cette promesse, et Wasm imposerait `wa-sqlite` sur
 OPFS pour le catalogue et les photos. Écarté.
 
+**iOS repoussé, Android d'abord.** Le périmètre se resserre sur deux cibles. Rien de ce qui
+est écrit ne s'y oppose — le domaine n'utilise aucune API de plateforme — mais viser deux
+cibles plutôt que trois évite de porter le coût d'iOS (cinterop pour le décodage d'images,
+Xcode dans la boucle de vérification) avant d'avoir une application qui marche.
+
+**Le domaine ignore Koin.** Les modules Koin sont déclarés dans `core-data`, pas dans
+`core-domain`. Koin est du Kotlin multiplateforme pur, donc il passerait la règle — mais
+c'est un framework d'injection, et le domaine n'a pas à savoir qu'on l'injecte. Ce sont des
+classes ordinaires qu'on construit à la main, et tous leurs essais le font.
+
 **Le domaine ne dépend de rien qui ne soit du Kotlin multiplateforme pur.** La règle était
 d'abord « zéro dépendance ». Elle ne survivait pas à la phase 2 : les ports du domaine
 doivent exposer des `Flow`, et `Flow` vit dans `kotlinx-coroutines-core`. Plutôt que de la
@@ -204,10 +215,19 @@ rejouent pas.
 
 ## Limites de vérification sur cette machine
 
-Ni SDK Android ni Xcode installés. Seule la cible `jvm()` est déclarée et testée. Les
-cibles Android et iOS sont commentées dans `core-domain/build.gradle.kts` avec la ligne
-exacte à décommenter : déclarer une cible qu'on ne peut pas compiler donnerait une
-illusion de vérification.
+**Le SDK Android n'est pas installé.** Seule la cible `jvm()` est déclarée et testée, et
+c'est la seule limite qui compte maintenant qu'iOS est repoussé.
+
+Tout le code écrit est du Kotlin commun sans API de plateforme, donc il *devrait* compiler
+pour Android — mais « devrait » n'est pas « compile ». Une seule commande lèverait
+l'incertitude :
+
+```bash
+brew install --cask android-commandlinetools
+```
+
+Déclarer une cible qu'on ne peut pas compiler donnerait une illusion de vérification, d'où
+son absence plutôt qu'une ligne optimiste.
 
 ## Construire
 
