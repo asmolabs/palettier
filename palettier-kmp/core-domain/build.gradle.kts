@@ -1,14 +1,15 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidLibrary)
 }
 
 kotlin {
     jvm()
-    // Android s'ajoute ici. Laisse de cote pour l'instant : le SDK n'est pas installe
-    // sur cette machine, et declarer une cible qu'on ne peut pas compiler donnerait une
-    // illusion de verification.
-    //
-    //   androidTarget()
+    androidTarget {
+        compilations.all {
+            compileTaskProvider.configure { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+        }
+    }
 
     jvmToolchain(25)
 
@@ -24,5 +25,15 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+    }
+}
+
+android {
+    namespace = "be.asmolabs.palettier.domain"
+    compileSdk = 36
+    defaultConfig { minSdk = 26 }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }

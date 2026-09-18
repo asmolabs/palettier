@@ -30,8 +30,8 @@ ne la remplace qu'une fois à parité.
 | `feature-ui` — Compose | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 5 800 lignes portées sur 14 639, 101 tests. Le domaine, la persistance et le câblage
-sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
+**≈ 5 800 lignes portées sur 14 639. 101 tests sur JVM, 75 sur Android. Le domaine, la
+persistance et le câblage sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
 
@@ -213,21 +213,35 @@ dans un ZIP JSON indépendant des entités. L'ancienne application exporte, la n
 importera. Aucun convertisseur H2 → SQLite à écrire, et les 7 changesets Liquibase ne se
 rejouent pas.
 
-## Limites de vérification sur cette machine
+## Les deux cibles sont vérifiées
 
-**Le SDK Android n'est pas installé.** Seule la cible `jvm()` est déclarée et testée, et
-c'est la seule limite qui compte maintenant qu'iOS est repoussé.
+`androidTarget()` est déclaré sur les deux modules, avec `compileSdk 36` et `minSdk 26`.
 
-Tout le code écrit est du Kotlin commun sans API de plateforme, donc il *devrait* compiler
-pour Android — mais « devrait » n'est pas « compile ». Une seule commande lèverait
-l'incertitude :
+| Cible | Tests exécutés |
+|---|---|
+| JVM (Desktop) | **101** |
+| Android (debug) | **75** |
 
-```bash
-brew install --cask android-commandlinetools
-```
+Les 75 d'Android sont l'intégralité de `commonTest` du domaine — y compris `MixSearch` sur
+le catalogue de 680 huiles. Le moteur tourne donc réellement sur la cible mobile, ce n'était
+plus une supposition.
 
-Déclarer une cible qu'on ne peut pas compiler donnerait une illusion de vérification, d'où
-son absence plutôt qu'une ligne optimiste.
+`core-data` n'a pas d'essais Android : les siens s'appuient sur le pilote SQLite JVM. Le
+code, lui, compile pour les deux et produit ses AAR.
+
+Le SDK est pointé par `local.properties`, hors du dépôt : Gradle le lit sans qu'on ait à
+toucher au shell.
+
+### La vérification des migrations est éteinte
+
+`verifyMigrations` épuise la mémoire de la JVM Gradle, même à 4 Go — et elle n'a rien à
+vérifier : le schéma est à sa version 1, il n'existe aucun `.sqm`. Régler le drapeau à
+`false` ne suffit pas à empêcher la tâche de s'exécuter, elle est donc désactivée
+explicitement.
+
+À rallumer avec la première migration, où elle reprendra tout son sens : elle vérifie alors
+qu'appliquer les migrations à l'ancien schéma redonne bien le nouveau. C'est la garantie que
+Liquibase ne donnait pas, et on ne veut pas la perdre.
 
 ## Construire
 
