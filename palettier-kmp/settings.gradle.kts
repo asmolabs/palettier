@@ -17,3 +17,5 @@ dependencyResolutionManagement {
 
 include(":core-domain")
 include(":core-data")
+include(":feature-ui")
+include(":desktopApp")

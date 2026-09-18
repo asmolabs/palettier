@@ -27,10 +27,12 @@ ne la remplace qu'une fois à parité.
 | `core-data` — import de la sauvegarde | **porté** | 7 tests sur une vraie archive Java |
 | `core-data` — mélanges de palette | **porté** | 2 tests |
 | module Koin | **porté** | 3 tests, le graphe se résout |
-| `feature-ui` — Compose | à faire | |
+| `feature-ui` — écran Aujourd'hui | **porté** | 5 tests sur le ViewModel |
+| `desktopApp` — client Compose | **porté** | lancé et vérifié |
+| `feature-ui` — les huit autres écrans | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 5 800 lignes portées sur 14 639. 101 tests sur JVM, 75 sur Android. Le domaine, la
+**≈ 6 500 lignes portées sur 14 639. 108 tests sur JVM, 80 sur Android. Le domaine, la
 persistance et le câblage sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
@@ -185,6 +187,36 @@ C'est moins puissant qu'une normalisation Unicode, et c'est assumé : une table 
 on voit ce qu'elle couvre et ce qu'elle ne couvre pas. Un `expect`/`actual` aurait donné
 trois implémentations à tenir pour replier une trentaine de caractères.
 
+## L'interface, et ce qui change de nature
+
+Le premier écran est **Aujourd'hui**, celui qu'on a le plus travaillé côté Java.
+
+Ce qui se prouve encore, et qui l'est : le comportement réactif du `WorkbenchViewModel`.
+Cinq essais, dont celui qui compte — **le temps qui passe change l'état sans la moindre
+écriture en base**. C'est ce que le `combine(observeAll(), ticker)` garantit, et c'est ce
+qui fait disparaître tout le rafraîchissement manuel de la version JavaFX : la minuterie, le
+bouton *Rafraîchir*, l'écouteur sur la scène, et les appels après chaque écriture. Une
+couche cochée dans l'écran Projets rafraîchira celui-ci sans que personne ne relie les deux.
+
+`SharingStarted.WhileSubscribed(5_000)` remplace le `ticker.stop()` que la version JavaFX
+plaçait dans un `else` : « ne pas relire la base pour un écran que personne ne regarde »
+devient une propriété du cadre au lieu d'une ligne à ne pas oublier.
+
+Ce qui ne se prouve plus : la mise en page, la lisibilité au fond d'un atelier, le confort.
+Il faut regarder.
+
+### Deux défauts que seule l'exécution a révélés
+
+**`Dispatchers.Main` n'existe pas sur le bureau** sans `kotlinx-coroutines-swing`. Tout
+compilait, tous les essais passaient, et l'application s'arrêtait au premier affichage.
+
+**Le schéma était créé à chaque démarrage.** Le premier lancement marchait, le second
+échouait sur `table paint already exists` — et l'application ne s'ouvrait plus du tout. Le
+défaut ne peut pas se voir sur une base en mémoire, qui est neuve à chaque essai : il a
+fallu lancer deux fois. `desktopDriver` lit désormais le pragma `user_version` de SQLite,
+crée un schéma neuf, migre un schéma ancien, et laisse tranquille un schéma à jour. C'est ce
+qui prend la suite de Liquibase, et deux essais le couvrent maintenant.
+
 ## Décisions
 
 **Pas de Web.** L'application affiche « aucune donnée ne part ailleurs » ; la servir
@@ -219,8 +251,8 @@ rejouent pas.
 
 | Cible | Tests exécutés |
 |---|---|
-| JVM (Desktop) | **101** |
-| Android (debug) | **75** |
+| JVM (Desktop) | **108** |
+| Android (debug) | **80** |
 
 Les 75 d'Android sont l'intégralité de `commonTest` du domaine — y compris `MixSearch` sur
 le catalogue de 680 huiles. Le moteur tourne donc réellement sur la cible mobile, ce n'était
