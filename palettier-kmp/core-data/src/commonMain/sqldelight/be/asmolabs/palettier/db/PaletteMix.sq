@@ -1,0 +1,30 @@
+-- Les melanges poses sur la palette.
+--
+-- Le reste de l'application ne stocke aucun melange : ce sont des calculs, refaits a la
+-- demande. Celui-ci est d'une autre nature -- une pate reellement posee a une heure
+-- donnee, qui reste travaillable quelques heures. Un calcul ne peut pas repondre a
+-- "est-il encore ouvert ?" : il faut savoir quand il a ete fait.
+CREATE TABLE palette_mix (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    name         TEXT    NOT NULL,
+    hex_color    TEXT    NOT NULL,
+    recipe       TEXT    NOT NULL DEFAULT '',
+    drying_class TEXT    NOT NULL,
+    mixed_at     INTEGER NOT NULL,
+    temperature  REAL    NOT NULL,
+    humidity     REAL    NOT NULL,
+    ventilation  TEXT    NOT NULL
+);
+
+selectAll:
+SELECT * FROM palette_mix ORDER BY mixed_at DESC;
+
+insert:
+INSERT INTO palette_mix(name, hex_color, recipe, drying_class, mixed_at, temperature, humidity, ventilation)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+delete:
+DELETE FROM palette_mix WHERE id = ?;
+
+lastInsertedId:
+SELECT last_insert_rowid();

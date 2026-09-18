@@ -19,17 +19,18 @@ ne la remplace qu'une fois à parité.
 | `workbench` — Stage, Bench, WorkbenchService | **porté** | 8 tests |
 | `plan` — PlanDryingService | **porté** | 5 tests |
 | domaine — ports (`PaintCatalogRepository`, `ProjectRepository`) | **porté** | |
-| domaine — ReadinessWatch, PaletteMix, PaintMatcher | à faire | |
+| domaine — ReadinessWatch, PaletteMix, PaintMatcher | **porté** | 13 tests |
 | `core-data` — schéma + catalogue | **porté** | 6 tests sur une vraie base SQLite |
 | `core-data` — palettes et projets | **porté** | 8 tests, dont le piège des photos |
 | `core-data` — recettes | **porté** | |
 | `core-data` — import de la sauvegarde | **porté** | 7 tests sur une vraie archive Java |
-| `core-data` — mélanges de palette | à faire | |
+| `core-data` — mélanges de palette | **porté** | 2 tests |
+| module Koin | à faire | |
 | `feature-ui` — Compose | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 5 000 lignes portées sur 14 639, 83 tests.** Le pont entre les deux applications est
-ouvert : une sauvegarde Java se relit dans SQLite.
+**≈ 5 600 lignes portées sur 14 639, 98 tests. Le domaine est complet et la persistance
+aussi.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
 
@@ -172,6 +173,16 @@ seule une vraie archive révèle.
 
 L'essai vérifie maintenant aussi que les quatre homonymes ont gardé la leur : une
 correction ne déborde pas sur ses voisins.
+
+## Un `java.text.Normalizer` qui n'existe pas
+
+`PaintMatcher` repliait les accents avec `java.text.Normalizer` — absent du Kotlin commun.
+Le remplacement est une table explicite des caractères qui apparaissent réellement dans des
+noms d'huiles (français, allemand, italien).
+
+C'est moins puissant qu'une normalisation Unicode, et c'est assumé : une table se lit, donc
+on voit ce qu'elle couvre et ce qu'elle ne couvre pas. Un `expect`/`actual` aurait donné
+trois implémentations à tenir pour replier une trentaine de caractères.
 
 ## Décisions
 

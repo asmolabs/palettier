@@ -93,3 +93,50 @@ class PaintCatalogRepositoryTest {
         assertEquals(setOf("PBr7"), seen.first().pigments)
     }
 }
+
+/** Les melanges poses sur la palette, et leur etat calcule sur ce que rend la base. */
+class PaletteMixRepositoryTest {
+
+    private val database = PalettierDatabase(inMemoryDriver())
+    private val repository = SqlDelightPaletteMixRepository(database, Dispatchers.Default)
+    private val service = be.asmolabs.palettier.domain.palette.PaletteMixService()
+
+    private val mixedAt = kotlin.time.Instant.parse("2026-03-01T10:00:00Z")
+
+    @Test
+    fun `un melange se relit avec les conditions de sa preparation`() = runTest {
+        repository.save(
+            be.asmolabs.palettier.domain.palette.PaletteMix(
+                name = "Gris rompu des ombres", hexColor = "#6B6259",
+                recipe = "2 parts de terre d'ombre + 1 part de blanc",
+                dryingClass = DryingClass.MEDIUM, mixedAt = mixedAt,
+                workshop = be.asmolabs.palettier.domain.drying.Workshop(
+                    24.0, 40.0, be.asmolabs.palettier.domain.paint.Ventilation.GOOD
+                ),
+            )
+        )
+
+        val read = repository.all().single()
+        assertEquals("Gris rompu des ombres", read.name)
+        assertEquals(mixedAt, read.mixedAt)
+        assertEquals(24.0, read.workshop.temperatureCelsius)
+        assertEquals(be.asmolabs.palettier.domain.paint.Ventilation.GOOD, read.workshop.ventilation)
+
+        // Et l'etat se calcule directement dessus, sans adaptation.
+        assertTrue(service.state(read, mixedAt).isOpen)
+        assertTrue(service.state(read, mixedAt + kotlin.time.Duration.parse("20d")).isSpent)
+    }
+
+    @Test
+    fun `un melange retire ne revient pas`() = runTest {
+        val saved = repository.save(
+            be.asmolabs.palettier.domain.palette.PaletteMix(
+                name = "A jeter", hexColor = "#6B6259", mixedAt = mixedAt,
+            )
+        )
+
+        repository.delete(saved.id!!)
+
+        assertTrue(repository.all().isEmpty())
+    }
+}

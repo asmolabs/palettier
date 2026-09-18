@@ -3,6 +3,7 @@ package be.asmolabs.palettier.domain.port
 import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.paint.Paint
 import be.asmolabs.palettier.domain.palette.Palette
+import be.asmolabs.palettier.domain.palette.PaletteMix
 import be.asmolabs.palettier.domain.project.Project
 import be.asmolabs.palettier.domain.project.ProjectPhoto
 import be.asmolabs.palettier.domain.recipe.Recipe
@@ -69,6 +70,17 @@ interface ProjectRepository {
     suspend fun removePhoto(project: Project, photoId: Long): Project
 
     suspend fun delete(project: Project)
+}
+
+interface PaletteMixRepository {
+
+    fun observeAll(): Flow<List<PaletteMix>>
+
+    suspend fun all(): List<PaletteMix>
+
+    suspend fun save(mix: PaletteMix): PaletteMix
+
+    suspend fun delete(id: Long)
 }
 
 interface RecipeRepository {
