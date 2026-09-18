@@ -1,8 +1,23 @@
 package be.asmolabs.palettier
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -15,6 +30,7 @@ import be.asmolabs.palettier.data.di.platformModule
 import be.asmolabs.palettier.ui.workbench.WorkbenchScreen
 import be.asmolabs.palettier.ui.workbench.WorkbenchViewModel
 import org.koin.compose.KoinApplication
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.module
 
@@ -37,7 +53,39 @@ fun main() = application {
             MaterialTheme(colorScheme = atelier) {
                 val model: WorkbenchViewModel = koinViewModel()
                 val state by model.state.collectAsStateWithLifecycle()
-                WorkbenchScreen(state)
+                val scope = rememberCoroutineScope()
+                val importer = koinInject<be.asmolabs.palettier.data.backup.BackupImporter>()
+                val import = remember { ImportState(importer, scope) }
+
+                Surface(Modifier.fillMaxSize()) {
+                    Column {
+                        ImportBar(import)
+                        WorkbenchScreen(state, Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * La barre d'import.
+ *
+ * <p>Tant qu'une sauvegarde n'a pas ete relue, la base est vide : c'est le seul chemin par
+ * lequel les donnees de l'application Java entrent, et il merite d'etre visible.</p>
+ */
+@androidx.compose.runtime.Composable
+private fun ImportBar(import: ImportState) {
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = import::choose, enabled = !import.busy) {
+                    Text("Importer une sauvegarde")
+                }
+                if (import.busy) CircularProgressIndicator(Modifier.size(18.dp))
+            }
+            import.message?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
             }
         }
     }
