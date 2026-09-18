@@ -34,6 +34,8 @@ import be.asmolabs.palettier.data.di.platformModule
 import be.asmolabs.palettier.image.imageDecoder
 import be.asmolabs.palettier.ui.catalog.CatalogScreen
 import be.asmolabs.palettier.ui.catalog.CatalogViewModel
+import be.asmolabs.palettier.ui.drying.DryingScreen
+import be.asmolabs.palettier.ui.drying.DryingViewModel
 import be.asmolabs.palettier.ui.mixer.MixerScreen
 import be.asmolabs.palettier.ui.mixer.MixerViewModel
 import be.asmolabs.palettier.ui.palettes.PalettesScreen
@@ -42,6 +44,8 @@ import be.asmolabs.palettier.ui.picker.PickerIntent
 import be.asmolabs.palettier.ui.picker.PickerScreen
 import be.asmolabs.palettier.ui.picker.PickerViewModel
 import be.asmolabs.palettier.ui.projects.ProjectsScreen
+import be.asmolabs.palettier.ui.recipes.RecipesScreen
+import be.asmolabs.palettier.ui.recipes.RecipesViewModel
 import be.asmolabs.palettier.ui.projects.ProjectsViewModel
 import be.asmolabs.palettier.ui.workbench.WorkbenchScreen
 import be.asmolabs.palettier.ui.workbench.WorkbenchViewModel
@@ -83,6 +87,10 @@ fun main() = application {
                 val palettesState by palettesModel.state.collectAsStateWithLifecycle()
                 val mixerModel: MixerViewModel = koinViewModel()
                 val mixerState by mixerModel.state.collectAsStateWithLifecycle()
+                val dryingModel: DryingViewModel = koinViewModel()
+                val dryingState by dryingModel.state.collectAsStateWithLifecycle()
+                val recipesModel: RecipesViewModel = koinViewModel()
+                val recipesState by recipesModel.state.collectAsStateWithLifecycle()
                 var section by remember { mutableStateOf(0) }
 
                 Surface(Modifier.fillMaxSize()) {
@@ -108,6 +116,12 @@ fun main() = application {
                             Tab(section == 5, { section = 5 }) {
                                 Text("Catalogue", Modifier.padding(vertical = 12.dp))
                             }
+                            Tab(section == 6, { section = 6 }) {
+                                Text("Sechage", Modifier.padding(vertical = 12.dp))
+                            }
+                            Tab(section == 7, { section = 7 }) {
+                                Text("Recettes", Modifier.padding(vertical = 12.dp))
+                            }
                         }
                         when (section) {
                             0 -> WorkbenchScreen(state, Modifier.weight(1f))
@@ -124,7 +138,9 @@ fun main() = application {
                             )
                             3 -> PalettesScreen(palettesState, palettesModel::onIntent, Modifier.weight(1f))
                             4 -> MixerScreen(mixerState, mixerModel::onIntent, Modifier.weight(1f))
-                            else -> CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
+                            5 -> CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
+                            6 -> DryingScreen(dryingState, dryingModel::onIntent, Modifier.weight(1f))
+                            else -> RecipesScreen(recipesState, recipesModel::onIntent, Modifier.weight(1f))
                         }
                     }
                 }
@@ -173,6 +189,9 @@ private val uiModule = module {
     factory { PickerViewModel(imageDecoder(), get()) }
     factory { PalettesViewModel(get(), get()) }
     factory { MixerViewModel(get(), get()) }
+    factory { DryingViewModel(get()) }
+    factory { RecipesViewModel(get(), get()) }
+    single { be.asmolabs.palettier.domain.recipe.RecipeTimelineService(get()) }
     single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
 }
 

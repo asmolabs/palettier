@@ -35,10 +35,13 @@ ne la remplace qu'une fois à parité.
 | `feature-ui` — Pipette | **porté** | 5 tests sur de vraies images |
 | `feature-ui` — Palettes | **porté** | 6 tests |
 | `feature-ui` — Mélangeur | **porté** | 6 tests |
-| `feature-ui` — Séchage, Recettes, Paramètres | à faire | |
+| `feature-ui` — Séchage | **porté** | 5 tests |
+| `feature-ui` — Recettes | **porté** | 4 tests, plus 6 sur `RecipeTimelineService` |
+| `feature-ui` — Paramètres | à faire | |
+| export de sauvegarde | à faire | |
 | `ai` — Ktor | à faire | |
 
-**≈ 10 100 lignes portées sur 14 639. 144 tests sur JVM, 106 sur Android. Le domaine, la
+**≈ 11 400 lignes portées sur 14 639. 159 tests sur JVM, 121 sur Android. Le domaine, la
 persistance et le câblage sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
@@ -267,8 +270,8 @@ rejouent pas.
 
 | Cible | Tests exécutés |
 |---|---|
-| JVM (Desktop) | **144** |
-| Android (debug) | **106** |
+| JVM (Desktop) | **159** |
+| Android (debug) | **121** |
 
 Les 75 d'Android sont l'intégralité de `commonTest` du domaine — y compris `MixSearch` sur
 le catalogue de 680 huiles. Le moteur tourne donc réellement sur la cible mobile, ce n'était
