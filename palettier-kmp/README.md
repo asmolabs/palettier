@@ -39,13 +39,25 @@ ne la remplace qu'une fois à parité.
 | `feature-ui` — Recettes | **porté** | 4 tests, plus 6 sur `RecipeTimelineService` |
 | `feature-ui` — Paramètres | **porté** | |
 | export de sauvegarde | **porté** | 4 tests d'aller-retour, plus un côté Java |
-| `ai` — Ktor | à faire | |
+| `ai` — moteurs Ollama, OpenAI, Gemini | **porté** | 18 tests, plus un essai en direct |
+| `ai` — plan de peinture et schéma | **porté** | 19 tests |
+| `ai` — lecture d'étiquettes | **porté** | 6 tests |
+| `feature-ui` — Assistant | **porté** | 9 tests |
+| amorçage du catalogue | **porté** | 8 tests sur le chargeur, 8 sur l'amorçage |
+| outils de reprise des données | **porté** | trois outils, hors suite |
+| `androidApp` — client Android | **à faire** | |
+| export PDF du plan (`PlanPdf`) | **à faire** | |
+| notifications de séchage (`DryingNotifier`) | **à faire** | |
+| parité de détail des écrans | **en cours** | il faut regarder |
 
-**≈ 12 300 lignes portées sur 14 639. 164 tests sur JVM, 121 sur Android. Les neuf écrans
-sont là.**
+**244 essais sur JVM, 186 sur Android.** Le domaine, la persistance, l'assistant et
+l'amorçage sont faits : tout ce qui n'est pas interface est porté.
 
-**≈ 12 300 lignes portées sur 14 639. 164 tests sur JVM, 121 sur Android. Le domaine, la
-persistance et le câblage sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
+Hors interface, les deux bases sont du même ordre — **6 937 lignes de Kotlin contre 6 949
+de Java**. L'interface, elle, ne l'est pas : **3 495 lignes de Compose contre 6 714 de
+JavaFX**. Les neuf écrans sont là et se tiennent, mais le détail des plus chargés — le
+zoom de la Pipette, la carte de calibrage du Catalogue, les éditeurs de couche et de tube
+— ne l'est pas encore. C'est le gros de ce qui reste.
 
 ## La méthode, et pourquoi elle tient
 
@@ -208,6 +220,74 @@ seule une vraie archive révèle.
 L'essai vérifie maintenant aussi que les quatre homonymes ont gardé la leur : une
 correction ne déborde pas sur ses voisins.
 
+## Le catalogue arrive tout seul
+
+Sans amorçage, une installation neuve restait vide indéfiniment : les 680 huiles
+n'existaient que dans les ressources du module Java, et le seul chemin pour les obtenir
+était d'importer une sauvegarde — qu'un peintre qui découvre l'application n'a pas.
+
+**Le catalogue est compilé dans l'application, pas lu à l'exécution.** `core-domain`
+n'admet que du Kotlin multiplateforme pur, et il n'y a pas de classpath sur un téléphone :
+une ressource lue au démarrage aurait demandé un `expect`/`actual` par plateforme, plus un
+index des fichiers écrit à la main. La tâche `generateCatalogFiles` relève les fichiers à
+la compilation et en fait des constantes — 80 ko de texte — ce qui garde la propriété qui
+comptait : **ajouter une gamme, c'est déposer un fichier, pas modifier du code.**
+
+La source reste celle du module Java. Une seule copie de la donnée, donc aucune dérive
+possible tant que les deux applications vivent ; le jour où `palettier-core` disparaît,
+ces fichiers emménagent dans `core-domain/catalog` et une seule ligne change.
+
+### Ce qui vient du fabricant, et ce qui vient du peintre
+
+L'amorçage ne se contente pas de remplir une base vide, il aligne une base déjà en
+service. Trois mouvements, et la même ligne de partage dans les trois :
+
+- une **gamme complétée** arrive chez qui utilise déjà l'application ;
+- une **fiche corrigée par le fabricant** est reprise — référence, pigments, opacité,
+  séchage — mais la teinte relevée sur les écouvillons, la teinte diluée, la possession et
+  les notes restent intactes ;
+- une **fiche périmée** est retirée, sauf si une palette ou un projet s'en sert encore.
+
+Ce dernier point n'est pas une précaution de forme : la contrainte céderait et emporterait
+la palette avec elle. On demande donc lesquels sont utilisés *avant* de supprimer, plutôt
+que de tenter la suppression pour voir. Un tube saisi par le peintre n'est jamais retiré,
+quoi qu'il arrive.
+
+Le rattrapage des teintes diluées répare les bases anciennes : ces teintes sont arrivées
+avec le modèle à deux constantes, et sans lui leurs propriétaires resteraient sur
+l'ancien modèle indéfiniment.
+
+L'amorçage est **idempotent par construction**, ce qui permet de l'appeler sans condition
+à chaque démarrage. Du temps de Spring, c'était un `ApplicationRunner` que le conteneur
+déclenchait ; ici, personne ne déclenche rien tout seul.
+
+`saveAll` existe pour une seule raison : six cent quatre-vingts appels à `save` font autant
+de transactions, et le premier démarrage s'en ressent.
+
+## Faire passer les données de son poste
+
+Le pont de sauvegarde était prouvé par des essais, il n'était pas utilisable à la main.
+Trois outils le rendent praticable. Aucun n'est un essai — sans chemin donné, ils ne font
+rien et se taisent, ce qui leur permet de vivre dans les suites.
+
+```bash
+# 1. L'ancienne application écrit, depuis une copie de sa vraie base H2
+mvn -pl palettier-core test -Dtest=RealBackupExporter -DfailIfNoTests=false \
+    -Dpalettier.export.db=/chemin/vers/db -Dpalettier.export.to=~/sauvegarde.zip
+
+# 2. La nouvelle relit, dans ~/.palettier
+./gradlew :core-data:jvmTest --tests '*RealBackupImport*' \
+    -Dpalettier.import.from=~/sauvegarde.zip
+
+# 3. Et l'on regarde ce qu'un démarrage changerait, avant de le laisser arriver
+./gradlew :core-data:jvmTest --tests '*RealCatalogSeed*' \
+    -Dpalettier.seed.home=~/.palettier
+```
+
+Gradle garde les `-D` pour lui : sans le relais déclaré dans `core-data/build.gradle.kts`,
+l'outil d'import ne voyait rien et ne faisait rien, sans le dire. La tâche dépend de la
+valeur, faute de quoi un deuxième import la trouverait « à jour ».
+
 ## Un `java.text.Normalizer` qui n'existe pas
 
 `PaintMatcher` repliait les accents avec `java.text.Normalizer` — absent du Kotlin commun.
@@ -292,11 +372,11 @@ rejouent pas.
 
 | Cible | Tests exécutés |
 |---|---|
-| JVM (Desktop) | **164** |
-| Android (debug) | **121** |
+| JVM (Desktop) | **244** |
+| Android (debug) | **186** |
 
-Les 75 d'Android sont l'intégralité de `commonTest` du domaine — y compris `MixSearch` sur
-le catalogue de 680 huiles. Le moteur tourne donc réellement sur la cible mobile, ce n'était
+Ceux d'Android sont l'intégralité de `commonTest` du domaine, de l'assistant et des
+ViewModels — y compris `MixSearch` sur le catalogue de 680 huiles. Le moteur tourne donc réellement sur la cible mobile, ce n'était
 plus une supposition.
 
 `core-data` n'a pas d'essais Android : les siens s'appuient sur le pilote SQLite JVM. Le
@@ -319,5 +399,7 @@ Liquibase ne donnait pas, et on ne veut pas la perdre.
 ## Construire
 
 ```bash
-./gradlew :core-domain:jvmTest
+./gradlew jvmTest              # les 244 essais du bureau
+./gradlew testDebugUnitTest    # les 186 d'Android
+./gradlew :desktopApp:run      # l'application
 ```
