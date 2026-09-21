@@ -108,3 +108,21 @@ interface PaletteRepository {
 
     suspend fun delete(palette: Palette)
 }
+
+/**
+ * Les reglages du peintre, en clef et valeur.
+ *
+ * <p>Du temps de Spring, le choix du moteur d'assistance vivait dans un fichier de
+ * configuration lu au demarrage. Sur un telephone, il n'y a pas de fichier a editer : le
+ * reglage se choisit dans l'application, et doit donc se ranger quelque part.</p>
+ */
+interface SettingsRepository {
+
+    fun observe(key: String): Flow<String?>
+
+    suspend fun get(key: String): String?
+
+    suspend fun put(key: String, value: String)
+
+    suspend fun remove(key: String)
+}

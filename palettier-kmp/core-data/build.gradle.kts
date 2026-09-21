@@ -18,6 +18,20 @@ sqldelight {
     }
 }
 
+/**
+ * La tache de verification des migrations reste eteinte, et ce n'est pas un renoncement.
+ *
+ * Elle epuise la memoire de la JVM Gradle sur un schema de cent kilo-octets -- huit
+ * minutes puis "Java heap space", a 4 Go, avec ou sans verifyMigrations. Ce n'est pas une
+ * question de volume : c'est la tache qui est en cause.
+ *
+ * La garantie, elle, est gardee : MigrationTest ouvre le schema d'hier, lui applique les
+ * migrations, et compare table par table avec le schema d'aujourd'hui. C'est exactement
+ * ce que la tache promettait, en une seconde et sous notre controle.
+ */
+tasks.matching { it.name.startsWith("verify") && it.name.contains("Migration") }
+    .configureEach { enabled = false }
+
 kotlin {
     jvm()
     androidTarget {
@@ -55,20 +69,6 @@ kotlin {
         }
     }
 }
-
-/**
- * La verification des migrations est mise de cote tant qu'il n'y en a aucune.
- *
- * Le schema est a sa version 1 et le repertoire ne contient aucun .sqm : la tache n'a rien
- * a comparer, et elle epuise la memoire de la JVM Gradle a essayer -- meme a 4 Go, meme
- * avec verifyMigrations a false, qui ne suffit pas a l'empecher de s'executer.
- *
- * A rallumer avec le premier .sqm, ou elle reprendra tout son sens : elle verifie alors
- * qu'appliquer les migrations a l'ancien schema redonne bien le nouveau. C'est la garantie
- * qui manquait a Liquibase et qu'on ne veut pas perdre.
- */
-tasks.matching { it.name.startsWith("verify") && it.name.contains("Migration") }
-    .configureEach { enabled = false }
 
 android {
     namespace = "be.asmolabs.palettier.data"

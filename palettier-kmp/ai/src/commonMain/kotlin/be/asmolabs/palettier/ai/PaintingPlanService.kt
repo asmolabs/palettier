@@ -20,7 +20,7 @@ import be.asmolabs.palettier.image.ImageDecoder
  * utile, pas un echec a masquer.</p>
  */
 class PaintingPlanService(
-    private val engine: ChatEngine?,
+    private val engines: ChatEngines,
     private val enricher: PlanEnricher,
     private val decoder: ImageDecoder,
 ) {
@@ -30,7 +30,7 @@ class PaintingPlanService(
      * l'application fonctionne a l'identique : l'assistant est un supplement, pas une
      * dependance.
      */
-    val isAvailable: Boolean get() = engine != null
+    suspend fun isAvailable(): Boolean = engines.current() != null
 
     /**
      * @param subject    description libre du sujet, par exemple "buste de grognard
@@ -49,7 +49,7 @@ class PaintingPlanService(
         references: List<PhotoInput> = emptyList(),
         model: String? = null,
     ): PaintingPlan {
-        val engine = engine ?: throw PlanUnavailable(
+        val engine = engines.current() ?: throw PlanUnavailable(
             "Aucun moteur de conversation configure. Choisissez-en un dans les parametres."
         )
 

@@ -72,12 +72,12 @@ class PaintingPlanServiceTest {
     )
 
     private fun service(engine: ChatEngine?, decoder: ImageDecoder = Plain(0xFF808080.toInt())) =
-        PaintingPlanService(engine, PlanEnricher(ColorMixService()), decoder)
+        PaintingPlanService(ChatEngines { engine }, PlanEnricher(ColorMixService()), decoder)
 
     @Test
     fun `sans moteur, le service se declare indisponible`() = runTest {
         val service = service(null)
-        assertFalse(service.isAvailable)
+        assertFalse(service.isAvailable())
         val refus = assertFailsWith<PlanUnavailable> { service.plan("buste", palette, 3) }
         assertContains(refus.message!!, "parametres")
     }

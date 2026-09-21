@@ -1,0 +1,21 @@
+-- Les reglages du peintre, en clef et valeur.
+--
+-- Une table plutot qu'un fichier de preferences : Android et le poste de travail n'ont
+-- pas le meme, et la base est deja la, sauvegardee et restauree avec le reste. La cle
+-- d'un service distant fait exception -- elle est ecrite ici, mais jamais exportee.
+CREATE TABLE setting (
+    key   TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+selectAll:
+SELECT * FROM setting;
+
+find:
+SELECT value FROM setting WHERE key = ?;
+
+put:
+INSERT OR REPLACE INTO setting(key, value) VALUES (?, ?);
+
+remove:
+DELETE FROM setting WHERE key = ?;

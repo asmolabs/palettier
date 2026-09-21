@@ -6,6 +6,7 @@ import be.asmolabs.palettier.data.SqlDelightPaletteMixRepository
 import be.asmolabs.palettier.data.SqlDelightPaletteRepository
 import be.asmolabs.palettier.data.SqlDelightProjectRepository
 import be.asmolabs.palettier.data.SqlDelightRecipeRepository
+import be.asmolabs.palettier.data.SqlDelightSettingsRepository
 import be.asmolabs.palettier.data.backup.BackupExporter
 import be.asmolabs.palettier.data.backup.BackupImporter
 import be.asmolabs.palettier.db.PalettierDatabase
@@ -19,6 +20,7 @@ import be.asmolabs.palettier.domain.port.PaletteMixRepository
 import be.asmolabs.palettier.domain.port.PaletteRepository
 import be.asmolabs.palettier.domain.port.ProjectRepository
 import be.asmolabs.palettier.domain.port.RecipeRepository
+import be.asmolabs.palettier.domain.port.SettingsRepository
 import be.asmolabs.palettier.domain.project.FatOverLeanService
 import be.asmolabs.palettier.domain.project.ProgressCheckService
 import be.asmolabs.palettier.domain.project.SubstituteService
@@ -73,6 +75,7 @@ val dataModule = module {
     single<ProjectRepository> { SqlDelightProjectRepository(get(), get(), get(), get(IO)) }
     single<RecipeRepository> { SqlDelightRecipeRepository(get(), get(IO)) }
     single<PaletteMixRepository> { SqlDelightPaletteMixRepository(get(), get(IO)) }
+    single<SettingsRepository> { SqlDelightSettingsRepository(get(), get(IO)) }
 
     single { BackupImporter(get(), get(), get(), get()) }
     single { BackupExporter(get(), get(), get(), get()) }

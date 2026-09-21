@@ -1,0 +1,9 @@
+-- Version 1 vers 2 : les reglages de l'assistant.
+--
+-- Le choix du moteur ne vit plus dans un fichier de configuration lu au demarrage, comme
+-- du temps de Spring : sur un telephone, il n'y a pas de fichier a editer. Il se choisit
+-- donc dans l'application, et se retient ici.
+CREATE TABLE setting (
+    key   TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
