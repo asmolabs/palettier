@@ -42,6 +42,7 @@ class RealCatalogSeed {
             println("  tubes avant : ${before.size}, apres : ${after.size}")
             println("  crees ${report.paintsCreated}, rafraichis ${report.paintsRefreshed}")
             println("  perimes retires ${report.paintsRemoved}, epargnes car cites ${report.paintsKeptInUse}")
+            report.paintsKeptCalibrated.forEach { println("  EPARGNE car mesure : $it") }
             println("  teintes diluees rattrapees ${report.tintsBackfilled}")
             println("  palettes ajoutees ${report.palettesAdded}, recettes ajoutees ${report.recipesAdded}")
 
