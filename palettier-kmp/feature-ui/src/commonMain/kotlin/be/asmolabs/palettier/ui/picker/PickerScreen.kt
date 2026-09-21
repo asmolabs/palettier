@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.ui.component.Chip
+import be.asmolabs.palettier.ui.app.TWO_COLUMNS
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -70,8 +71,12 @@ fun PickerScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxSize().padding(20.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            Column(Modifier.weight(1.4f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            // Etroit : la photo au-dessus, le releve en dessous, dans la meme colonne.
+            // Cote a cote sur un telephone, aucune des deux n'aurait la place de servir.
+            val wide = maxWidth >= TWO_COLUMNS
+            val photoPane = @Composable { modifier: Modifier ->
+            Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     TextButton(onChooseImage) { Text("Choisir une photo") }
                     if (state.loading) CircularProgressIndicator(Modifier.size(18.dp))
@@ -79,9 +84,11 @@ fun PickerScreen(
                 }
                 Photo(state, onIntent, Modifier.weight(1f))
             }
+            }
 
+            val panel = @Composable { modifier: Modifier ->
             Column(
-                Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 if (state.dominant.isNotEmpty()) {
@@ -96,10 +103,29 @@ fun PickerScreen(
                     Groups(state, onIntent)
                 } else if (!state.loading) {
                     Text(
-                        "Ouvrez une photo, puis cliquez dessus pour relever une teinte. " +
+                        "Ouvrez une photo, puis touchez-la pour relever une teinte. " +
                             "La mesure se fait sur votre fichier d'origine.",
                         style = MaterialTheme.typography.bodySmall,
                     )
+                }
+            }
+            }
+
+            if (wide) {
+                Row(
+                    Modifier.fillMaxSize().padding(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                ) {
+                    photoPane(Modifier.weight(1.4f))
+                    panel(Modifier.weight(1f))
+                }
+            } else {
+                Column(
+                    Modifier.fillMaxSize().padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    photoPane(Modifier.weight(1f).fillMaxWidth())
+                    panel(Modifier.weight(1f).fillMaxWidth())
                 }
             }
         }

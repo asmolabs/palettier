@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -43,6 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.project.Project
+import be.asmolabs.palettier.ui.component.Chip
+import be.asmolabs.palettier.ui.app.TWO_COLUMNS
 import be.asmolabs.palettier.domain.project.ProjectPhoto
 
 /**
@@ -71,9 +75,21 @@ fun ProjectsScreen(
                 )
             }
 
-            else -> Row(Modifier.fillMaxSize()) {
-                ProjectList(state, onIntent, Modifier.width(260.dp).fillMaxHeight())
-                Detail(state, onIntent, onChoosePhoto, onCompare, onExport, Modifier.weight(1f).fillMaxHeight())
+            else -> BoxWithConstraints(Modifier.fillMaxSize()) {
+                if (maxWidth >= TWO_COLUMNS) {
+                    Row(Modifier.fillMaxSize()) {
+                        ProjectList(state, onIntent, Modifier.width(260.dp).fillMaxHeight())
+                        Detail(state, onIntent, onChoosePhoto, onCompare, onExport, Modifier.weight(1f).fillMaxHeight())
+                    }
+                } else {
+                    // Etroit : les pieces en une rangee d'etiquettes, la piece choisie en
+                    // dessous. Une colonne de 260 points prendrait la moitie de l'ecran
+                    // pour une liste qu'on ne consulte qu'en changeant de piece.
+                    Column(Modifier.fillMaxSize()) {
+                        ProjectStrip(state, onIntent)
+                        Detail(state, onIntent, onChoosePhoto, onCompare, onExport, Modifier.weight(1f).fillMaxWidth())
+                    }
+                }
             }
         }
     }
@@ -85,6 +101,23 @@ private fun ProjectList(state: ProjectsUiState, onIntent: (ProjectsIntent) -> Un
         LazyColumn(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             items(state.projects, key = { it.id ?: it.name.hashCode().toLong() }) { project ->
                 ProjectRow(project, project.id == state.selected?.id) { onIntent(ProjectsIntent.Select(project)) }
+            }
+        }
+    }
+}
+
+/** Les pieces en une rangee, quand la largeur ne permet pas une colonne. */
+@Composable
+private fun ProjectStrip(state: ProjectsUiState, onIntent: (ProjectsIntent) -> Unit) {
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
+        LazyRow(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            items(state.projects, key = { it.id ?: it.name.hashCode().toLong() }) { project ->
+                Chip(project.name, project.id == state.selected?.id) {
+                    onIntent(ProjectsIntent.Select(project))
+                }
             }
         }
     }

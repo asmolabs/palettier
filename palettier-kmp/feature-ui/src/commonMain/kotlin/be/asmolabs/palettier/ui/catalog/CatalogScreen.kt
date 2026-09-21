@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import be.asmolabs.palettier.domain.color.Rgb
+import be.asmolabs.palettier.ui.app.TWO_COLUMNS
 
 /**
  * Le catalogue : ce qui existe, et ce qui approche une teinte.
@@ -60,13 +62,31 @@ fun CatalogScreen(
                     Text("Aucun tube ne correspond.", style = MaterialTheme.typography.bodyLarge)
                 }
 
-                else -> Row(Modifier.fillMaxSize()) {
-                    LazyColumn(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 20.dp)) {
-                        items(state.rows, key = { it.paint.id ?: it.paint.displayName.hashCode().toLong() }) { row ->
-                            PaintLine(row, row.paint.id == state.selected?.id, onIntent)
+                else -> BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val list = @Composable { modifier: Modifier ->
+                        LazyColumn(modifier.padding(horizontal = 20.dp)) {
+                            items(state.rows, key = { it.paint.id ?: it.paint.displayName.hashCode().toLong() }) { row ->
+                                PaintLine(row, row.paint.id == state.selected?.id, onIntent)
+                            }
                         }
                     }
-                    CalibrationCard(state, onIntent)
+
+                    if (maxWidth >= TWO_COLUMNS) {
+                        Row(Modifier.fillMaxSize()) {
+                            list(Modifier.weight(1f).fillMaxHeight())
+                            CalibrationCard(state, onIntent, Modifier.width(320.dp).fillMaxHeight())
+                        }
+                    } else {
+                        // Etroit : la carte ne parait qu'une fois un tube choisi, et au
+                        // dessus de la liste. La montrer vide prendrait la moitie de
+                        // l'ecran pour dire qu'il n'y a rien a dire.
+                        Column(Modifier.fillMaxSize()) {
+                            if (state.selected != null) {
+                                CalibrationCard(state, onIntent, Modifier.fillMaxWidth())
+                            }
+                            list(Modifier.weight(1f).fillMaxWidth())
+                        }
+                    }
                 }
             }
         }
@@ -150,13 +170,13 @@ private fun PaintLine(row: CatalogRow, selected: Boolean, onIntent: (CatalogInte
  * filtres et de la colonne coupee de blanc.</p>
  */
 @Composable
-private fun CalibrationCard(state: CatalogUiState, onIntent: (CatalogIntent) -> Unit) {
+private fun CalibrationCard(state: CatalogUiState, onIntent: (CatalogIntent) -> Unit, modifier: Modifier) {
     val paint = state.selected
     var measured by remember(paint?.id) { mutableStateOf(paint?.hexColor.orEmpty()) }
     val valid = runCatching { Rgb.ofHex(measured) }.isSuccess
 
     Surface(
-        Modifier.width(320.dp).fillMaxHeight().verticalScroll(rememberScrollState()),
+        modifier.verticalScroll(rememberScrollState()),
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
