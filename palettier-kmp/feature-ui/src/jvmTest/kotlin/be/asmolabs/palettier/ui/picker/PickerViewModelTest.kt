@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -149,6 +150,103 @@ class PickerViewModelTest {
         val before = Rgb.ofHex("#D9A070")
         val after = Rgb.ofHex(corrected)
         assertTrue((after.r - after.b) < (before.r - before.b), "avant ${before.toHex()}, apres $corrected")
+    }
+
+
+    @Test
+    fun `un clic sur la photo releve la teinte de ce point, pas une dominante`() = runTest(dispatcher) {
+        val model = model()
+        // Trois bandes de 66 pixels : l'ocre, la terre d'ombre, le blanc.
+        model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427", "#F4F2EC")))
+        model.await { it.closest.isNotEmpty() }
+
+        // Au milieu de la bande du milieu, loin des frontieres.
+        model.onIntent(PickerIntent.PickAt(100, 50))
+        val state = model.await { it.selectedHex == "#4A3427" && it.closest.isNotEmpty() }
+
+        assertEquals(PickPoint(100, 50), state.pickedAt)
+        assertEquals("Burnt Umber", state.closest.first().paint.name)
+    }
+
+    @Test
+    fun `la photo ouverte est gardee telle quelle, pour etre affichee`() = runTest(dispatcher) {
+        val model = model()
+        val bytes = image("#C98F72", "#4A3427")
+
+        model.onIntent(PickerIntent.Load(bytes))
+        val state = model.await { it.image != null }
+
+        assertEquals(200, state.image?.width)
+        assertEquals(100, state.image?.height)
+        // Les octets d'origine, non reencodes : c'est sur eux que porte la mesure.
+        assertTrue(bytes.contentEquals(state.image?.bytes))
+    }
+
+    @Test
+    fun `un clic hors de l'image ne releve rien`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
+        val before = model.await { it.closest.isNotEmpty() }
+
+        model.onIntent(PickerIntent.PickAt(500, 500))
+        // Le releve hors bornes ne touche a aucun repartiteur : laisser tourner la boucle
+        // suffit a le mener a son terme, et prouve donc qu'il n'a rien fait.
+        advanceUntilIdle()
+
+        // Rien n'a bouge : ni la teinte retenue, ni le repere.
+        val after = model.state.value
+        assertEquals(before.selectedHex, after.selectedHex)
+        assertNull(after.pickedAt)
+    }
+
+    @Test
+    fun `le point neutre s'arme, se prend au clic, et se desarme aussitot`() = runTest(dispatcher) {
+        val model = model()
+        // Une carnation sous lampe chaude, et un blanc de socle qui en subit la dominante.
+        model.onIntent(PickerIntent.Load(image("#D9A070", "#E8D2A8")))
+        model.await { it.closest.isNotEmpty() }
+
+        model.onIntent(PickerIntent.PickAt(50, 50))
+        model.await { it.selectedHex == "#D9A070" }
+
+        model.onIntent(PickerIntent.PickGrey(true))
+        assertTrue(model.state.value.pickingGrey)
+
+        // Le clic suivant designe le gris, et ne change pas la teinte visee.
+        model.onIntent(PickerIntent.PickAt(150, 50))
+        val state = model.await { it.greyPointHex != null && it.correctedHex != null }
+
+        assertEquals("#E8D2A8", state.greyPointHex)
+        assertEquals("#D9A070", state.selectedHex)
+        assertTrue(!state.pickingGrey, "un point neutre se designe, il ne s'enchaine pas")
+    }
+
+    @Test
+    fun `le rayon moyenne autour du clic, et un rayon nul releve le seul pixel`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
+        model.await { it.closest.isNotEmpty() }
+
+        // A cheval sur la frontiere des deux aplats, avec un large rayon.
+        model.onIntent(PickerIntent.SetRadius(10))
+        model.onIntent(PickerIntent.PickAt(100, 50))
+        val mixed = model.await { it.pickedAt != null }.selectedHex
+        assertNotNull(mixed)
+        assertTrue(mixed != "#C98F72" && mixed != "#4A3427", "a cheval, le releve est un melange : $mixed")
+
+        // Le meme point a rayon nul rend le pixel, sans melange.
+        model.onIntent(PickerIntent.SetRadius(0))
+        model.onIntent(PickerIntent.PickAt(100, 50))
+        assertEquals("#4A3427", model.await { it.selectedHex == "#4A3427" }.selectedHex)
+    }
+
+    @Test
+    fun `le rayon choisi survit a l'ouverture d'une autre photo`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.SetRadius(12))
+        model.onIntent(PickerIntent.Load(image("#C98F72")))
+
+        assertEquals(12, model.await { it.image != null }.sampleRadius)
     }
 
     @Test

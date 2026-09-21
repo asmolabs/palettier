@@ -1,10 +1,15 @@
 package be.asmolabs.palettier.ui.picker
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -24,20 +31,35 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.decodeToImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import be.asmolabs.palettier.domain.color.Rgb
+import be.asmolabs.palettier.ui.component.Chip
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * La pipette : relever une teinte sur une photo, et voir avec quoi la faire.
  *
- * <p>Deux precautions y sont visibles. La mesure porte sur le fichier d'origine, jamais
- * sur une image reduite -- reduire reencode, et reencoder deplace les couleurs. Et une
- * photo prise sous lampe chaude tire au jaune : designer un point cense etre gris annule
- * cette dominante.</p>
+ * <p>Trois precautions y sont visibles. La mesure porte sur le fichier d'origine, jamais
+ * sur l'image telle qu'elle est affichee -- le zoom interpole, et relever dessus
+ * reviendrait a mesurer le travail de la carte graphique. Le clic moyenne un petit carre
+ * plutot qu'un pixel seul, sans quoi le bruit du capteur deciderait a la place du
+ * peintre. Et une photo prise sous lampe chaude tire au jaune : designer un point cense
+ * etre gris annule cette dominante.</p>
  */
 @Composable
 fun PickerScreen(
@@ -47,26 +69,161 @@ fun PickerScreen(
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TextButton(onChooseImage) { Text("Choisir une photo") }
-                if (state.loading) CircularProgressIndicator(Modifier.size(18.dp))
-                state.error?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+        Row(Modifier.fillMaxSize().padding(20.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            Column(Modifier.weight(1.4f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TextButton(onChooseImage) { Text("Choisir une photo") }
+                    if (state.loading) CircularProgressIndicator(Modifier.size(18.dp))
+                    state.error?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                }
+                Photo(state, onIntent, Modifier.weight(1f))
             }
 
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                if (state.dominant.isNotEmpty()) {
+                    Swatches(state, onIntent)
+                    HorizontalDivider()
+                    Working(state, onIntent)
+                    Closest(state, onIntent)
+                } else if (!state.loading) {
+                    Text(
+                        "Ouvrez une photo, puis cliquez dessus pour relever une teinte. " +
+                            "La mesure se fait sur votre fichier d'origine.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * La photo, son zoom, et le clic qui releve.
+ *
+ * <p>Le facteur d'ajustement se recalcule avec la taille disponible : une fenetre
+ * redimensionnee ne laisse pas la photo a moitie dehors. Au-dela de la taille reelle, le
+ * lissage est coupe -- on veut voir les pixels, pas un flou d'interpolation, sans quoi on
+ * releverait une couleur que le fichier ne contient pas.</p>
+ */
+@Composable
+private fun Photo(state: PickerUiState, onIntent: (PickerIntent) -> Unit, modifier: Modifier) {
+    val image = state.image
+    if (image == null) {
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Text("Aucune photo ouverte.", style = MaterialTheme.typography.bodySmall)
+        }
+        return
+    }
+
+    // Le decodage d'affichage est refait quand la photo change, pas a chaque recomposition.
+    val bitmap = remember(image) { runCatching { image.bytes.decodeToImageBitmap() }.getOrNull() }
+    if (bitmap == null) {
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Text("Cette image se lit mais ne s'affiche pas.", style = MaterialTheme.typography.bodySmall)
+        }
+        return
+    }
+
+    // null tant que le peintre n'a pas choisi : l'echelle suit alors la fenetre.
+    var chosenScale: Float? by remember(image) { mutableStateOf(null) }
+    val density = LocalDensity.current
+
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        BoxWithConstraints(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp)),
+        ) {
+            val viewport = with(density) { Pair(maxWidth.toPx(), maxHeight.toPx()) }
+            val fit = min(viewport.first / image.width, viewport.second / image.height)
+                .coerceIn(MIN_SCALE, MAX_SCALE)
+            val scale = chosenScale ?: fit
+
+            val shownWidth = image.width * scale
+            val shownHeight = image.height * scale
+
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .horizontalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState()),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    Modifier
+                        .size(with(density) { shownWidth.toDp() }, with(density) { shownHeight.toDp() })
+                        .pointerInput(image, scale, state.sampleRadius) {
+                            detectTapGestures { offset ->
+                                // De l'ecran vers les coordonnees de l'image, quel que soit le zoom.
+                                val x = (offset.x / scale).roundToInt()
+                                val y = (offset.y / scale).roundToInt()
+                                onIntent(PickerIntent.PickAt(x, y))
+                            }
+                        },
+                ) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = "La photo a relever",
+                        modifier = Modifier.fillMaxSize(),
+                        // Au-dela de la taille reelle : les pixels, pas un flou.
+                        filterQuality = if (scale > 1f) FilterQuality.None else FilterQuality.Medium,
+                    )
+                    state.pickedAt?.let { point ->
+                        Marker(point, scale, state.sampleRadius)
+                    }
+                }
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val viewportScale = chosenScale
+            TextButton({
+                chosenScale = ((viewportScale ?: 1f) / ZOOM_STEP).coerceIn(MIN_SCALE, MAX_SCALE)
+            }) { Text("−") }
+            TextButton({
+                chosenScale = ((viewportScale ?: 1f) * ZOOM_STEP).coerceIn(MIN_SCALE, MAX_SCALE)
+            }) { Text("+") }
+            TextButton({ chosenScale = null }) { Text("Ajuster") }
+            TextButton({ chosenScale = 1f }) { Text("100 %") }
             Text(
-                "La mesure se fait sur votre fichier d'origine. Une photo reste prise sous une " +
-                    "lumiere quelconque : designez un point cense etre gris pour annuler la dominante.",
+                viewportScale?.let { "%.0f %%".format(it * 100) } ?: "ajuste",
                 style = MaterialTheme.typography.bodySmall,
             )
 
-            if (state.dominant.isNotEmpty()) {
-                Swatches(state, onIntent)
-                HorizontalDivider()
-                Working(state, onIntent)
-                Closest(state, onIntent)
+            Spacer(Modifier.width(12.dp))
+            Text("Rayon", style = MaterialTheme.typography.bodySmall)
+            listOf(0, 1, 3, 6, 12).forEach { radius ->
+                Chip("$radius", radius == state.sampleRadius) { onIntent(PickerIntent.SetRadius(radius)) }
             }
         }
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Chip(
+                if (state.pickingGrey) "Cliquez un point gris sur la photo" else "Definir le point neutre",
+                state.pickingGrey,
+            ) { onIntent(PickerIntent.PickGrey(!state.pickingGrey)) }
+            if (state.greyPointHex != null) {
+                TextButton({ onIntent(PickerIntent.UseAsGrey(null)) }) { Text("Retirer") }
+            }
+        }
+    }
+}
+
+/** Le cercle qui montre ou le releve a ete pris, et sur quelle etendue. */
+@Composable
+private fun Marker(point: PickPoint, scale: Float, radius: Int) {
+    val ring = MaterialTheme.colorScheme.primary
+    Canvas(Modifier.fillMaxSize()) {
+        drawCircle(
+            color = ring,
+            radius = max(MIN_MARKER_PX, radius * scale),
+            center = androidx.compose.ui.geometry.Offset(point.x * scale, point.y * scale),
+            style = Stroke(width = 2f),
+        )
     }
 }
 
@@ -107,6 +264,9 @@ private fun Working(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
                 state.greyPointHex?.let {
                     Text("dominante annulee d'apres $it", style = MaterialTheme.typography.bodySmall)
                 }
+                state.pickedAt?.let {
+                    Text("releve en ${it.x}, ${it.y}", style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
 
@@ -136,7 +296,7 @@ private fun Closest(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
             Text("seulement ce que je possede", style = MaterialTheme.typography.bodySmall)
         }
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        LazyColumn(Modifier.size(width = 420.dp, height = 240.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             items(state.closest, key = { it.paint.id ?: it.paint.displayName.hashCode().toLong() }) { match ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Swatch(match.paint.hexColor, size = 26)
@@ -177,3 +337,11 @@ private fun Swatch(hex: String, size: Int, selected: Boolean = false, onClick: (
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     )
 }
+
+/** Les bornes du zoom, celles de la version JavaFX. */
+private const val MIN_SCALE = 0.05f
+private const val MAX_SCALE = 16f
+private const val ZOOM_STEP = 1.25f
+
+/** Un repere plus petit que cela ne se verrait pas, meme a rayon nul. */
+private const val MIN_MARKER_PX = 5f
