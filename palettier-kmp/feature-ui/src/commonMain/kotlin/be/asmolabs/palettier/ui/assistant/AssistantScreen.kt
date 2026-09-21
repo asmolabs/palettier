@@ -60,12 +60,21 @@ fun AssistantScreen(
     onExport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Le reglage du moteur se fait une fois, la demande de plan a chaque piece. Il ne
+    // reste ouvert que tant qu'il n'y a pas de moteur : sans lui, la page n'a rien d'autre
+    // a proposer que ce choix.
+    var settingsOpen by remember { mutableStateOf(false) }
+
     Surface(modifier.fillMaxSize()) {
         LazyColumn(
             Modifier.fillMaxSize().padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item { EngineCard(state, onIntent) }
+            if (!state.settings.usable || settingsOpen) {
+                item { EngineCard(state, onIntent) }
+            } else {
+                item { EngineLine(state) { settingsOpen = true } }
+            }
 
             if (state.settings.usable) {
                 item { RequestCard(state, onIntent, onChooseFigurine, onChooseReference) }
@@ -178,6 +187,26 @@ private fun Thumbnail(photo: AttachedPhoto, onRemove: () -> Unit) {
             modifier = Modifier.widthIn(max = 80.dp),
         )
         TextButton(onRemove) { Text("\u2715", style = MaterialTheme.typography.labelSmall) }
+    }
+}
+
+/**
+ * Le moteur en une ligne, une fois qu'il est choisi.
+ *
+ * <p>C'est un reglage : on y revient rarement, et il n'a pas a occuper le haut de l'ecran
+ * devant la demande, qui est le geste de tous les jours. La ligne dit quand meme lequel
+ * repondra -- le plan depend fortement du modele, et l'ignorer se paierait a la lecture du
+ * resultat.</p>
+ */
+@Composable
+private fun EngineLine(state: AssistantUiState, onOpen: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "Moteur : ${state.settings.provider.label}" +
+                state.settings.model.takeIf { it.isNotBlank() }?.let { " - $it" }.orEmpty(),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        TextButton(onOpen) { Text("Changer") }
     }
 }
 
