@@ -5,6 +5,7 @@ import be.asmolabs.palettier.domain.project.DominantColour
 import be.asmolabs.palettier.domain.palette.Palette
 import be.asmolabs.palettier.domain.plan.PaintingPlan
 import be.asmolabs.palettier.image.ImageDecoder
+import kotlinx.serialization.json.Json
 
 /**
  * Etablit un plan de peinture par zones pour un sujet donne, avec la palette du peintre.
@@ -30,6 +31,8 @@ class PaintingPlanService(
      * l'application fonctionne a l'identique : l'assistant est un supplement, pas une
      * dependance.
      */
+    private val json = Json { ignoreUnknownKeys = true }
+
     suspend fun isAvailable(): Boolean = engines.current() != null
 
     /**
@@ -65,8 +68,10 @@ class PaintingPlanService(
             measuredColours(figurine, references),
         )
 
-        val draft = engine.draft(PlanRequest(SYSTEM_PROMPT, question, photos, model))
-        return enricher.enrich(subject, palette, draft, maxPaints)
+        val answer = engine.ask(
+            JsonRequest(SYSTEM_PROMPT, question, PlanSchema.plan, photos, model)
+        )
+        return enricher.enrich(subject, palette, answer.toPlanDraft(json), maxPaints)
     }
 
     private suspend fun reduced(photo: PhotoInput) =

@@ -7,6 +7,7 @@ import be.asmolabs.palettier.domain.paint.Paint
 import be.asmolabs.palettier.domain.palette.Palette
 import be.asmolabs.palettier.image.ImageDecoder
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -25,22 +26,24 @@ class PaintingPlanServiceTest {
     /** Retient la demande au lieu de l'envoyer, et rend un plan minimal. */
     private class Recorder : ChatEngine {
         override val name = "enregistreur"
-        var last: PlanRequest? = null
+        var last: JsonRequest? = null
 
-        override suspend fun draft(request: PlanRequest): PlanDraft {
+        override suspend fun ask(request: JsonRequest): String {
             last = request
-            return PlanDraft(
-                approach = "Palette courte.",
-                zones = listOf(
-                    ZoneDraft(
-                        name = "Visage", material = "Peau", note = "",
-                        base = LayerDraft("#C98F72", "Glacis", ""),
-                        shadow1 = LayerDraft("#8A5F4A", "Glacis", ""),
-                        shadow2 = LayerDraft("#5A3B2E", "Glacis", ""),
-                        highlight1 = LayerDraft("#E0B49A", "Glacis", ""),
-                        highlight2 = LayerDraft("#F2D6C0", "Glacis", ""),
-                    )
-                ),
+            return Json.encodeToString(
+                PlanDraft(
+                    approach = "Palette courte.",
+                    zones = listOf(
+                        ZoneDraft(
+                            name = "Visage", material = "Peau", note = "",
+                            base = LayerDraft("#C98F72", "Glacis", ""),
+                            shadow1 = LayerDraft("#8A5F4A", "Glacis", ""),
+                            shadow2 = LayerDraft("#5A3B2E", "Glacis", ""),
+                            highlight1 = LayerDraft("#E0B49A", "Glacis", ""),
+                            highlight2 = LayerDraft("#F2D6C0", "Glacis", ""),
+                        )
+                    ),
+                )
             )
         }
     }
@@ -164,5 +167,19 @@ class PaintingPlanServiceTest {
         assertTrue(base.recipe != null, "la base doit porter un melange calcule")
         assertTrue(base.deltaE >= 0.0)
         assertEquals("Zorn", plan.paletteName)
+    }
+
+    @Test
+    fun `une reponse qui n'est pas un plan donne un message exploitable`() = runTest {
+        val bavard = object : ChatEngine {
+            override val name = "bavard"
+            // Un modele a mode de reflexion repond parfois a cote, malgre la contrainte.
+            override suspend fun ask(request: JsonRequest) = "Voici mon raisonnement : d'abord..."
+        }
+
+        val refus = assertFailsWith<PlanUnavailable> {
+            service(bavard).plan("buste", palette, 3)
+        }
+        assertContains(refus.message!!, "plan exploitable")
     }
 }

@@ -2,8 +2,10 @@ package be.asmolabs.palettier.ai.di
 
 import be.asmolabs.palettier.ai.AiSettingsStore
 import be.asmolabs.palettier.ai.ChatEngines
+import be.asmolabs.palettier.ai.ModelCatalog
 import be.asmolabs.palettier.ai.PaintingPlanService
 import be.asmolabs.palettier.ai.PlanEnricher
+import be.asmolabs.palettier.ai.TubeRecognitionService
 import be.asmolabs.palettier.ai.SettingsChatEngines
 import be.asmolabs.palettier.image.imageDecoder
 import io.ktor.client.HttpClient
@@ -34,4 +36,6 @@ val aiModule = module {
     single<ChatEngines> { SettingsChatEngines(get(), get()) }
     single { PlanEnricher(get()) }
     single { PaintingPlanService(get(), get(), imageDecoder()) }
+    single { TubeRecognitionService(get(), get(), imageDecoder()) }
+    single { ModelCatalog(get(), get()) }
 }

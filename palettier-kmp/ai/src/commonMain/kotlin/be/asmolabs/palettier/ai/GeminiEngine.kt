@@ -44,7 +44,7 @@ class GeminiEngine(
     private val json = Json { ignoreUnknownKeys = true }
 
     @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun draft(request: PlanRequest): PlanDraft {
+    override suspend fun ask(request: JsonRequest): String {
         val model = request.model?.takeIf { it.isNotBlank() } ?: defaultModel
 
         val body = buildJsonObject {
@@ -69,9 +69,9 @@ class GeminiEngine(
             }
             putJsonObject("generationConfig") {
                 put("temperature", 0.2)
-                put("maxOutputTokens", MAX_TOKENS)
+                put("maxOutputTokens", request.maxTokens)
                 put("responseMimeType", "application/json")
-                put("responseSchema", PlanSchema.gemini)
+                put("responseSchema", Schemas.openApi(request.schema))
             }
         }
 
@@ -96,12 +96,11 @@ class GeminiEngine(
         }.getOrNull()
             ?: throw PlanUnavailable("Reponse de Gemini inattendue : pas de contenu.")
 
-        return content.toPlanDraft(json)
+        return content
     }
 
     companion object {
         const val DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta"
         const val DEFAULT_MODEL = "gemini-2.5-pro"
-        const val MAX_TOKENS = 16384
     }
 }

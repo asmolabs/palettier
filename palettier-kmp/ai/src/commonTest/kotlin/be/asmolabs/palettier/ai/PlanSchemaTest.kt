@@ -21,6 +21,9 @@ import kotlin.test.assertTrue
  */
 class PlanSchemaTest {
 
+    private val strict = Schemas.strict(PlanSchema.plan)
+    private val gemini = Schemas.openApi(PlanSchema.plan)
+
     private val zone get() = PlanSchema.plan
         .jsonObject["properties"]!!.jsonObject["zones"]!!.jsonObject["items"]!!.jsonObject
 
@@ -33,7 +36,7 @@ class PlanSchemaTest {
 
     @Test
     fun `la vue stricte declare tout obligatoire et ferme les objets`() {
-        walk(PlanSchema.strict) { node ->
+        walk(strict) { node ->
             val properties = node["properties"]?.jsonObject ?: return@walk
             assertEquals(false, node["additionalProperties"]!!.jsonPrimitive.content.toBoolean())
             val required = node["required"]!!.jsonArray.map { it.jsonPrimitive.content }.toSet()
@@ -43,7 +46,7 @@ class PlanSchemaTest {
 
     @Test
     fun `un champ facultatif devient nullable plutot qu'absent`() {
-        val zones = PlanSchema.strict["properties"]!!.jsonObject["zones"]!!.jsonObject
+        val zones = strict["properties"]!!.jsonObject["zones"]!!.jsonObject
         val properties = zones["items"]!!.jsonObject["properties"]!!.jsonObject
 
         // accent1 etait facultatif : il reste declare, mais admet le nul.
@@ -56,7 +59,7 @@ class PlanSchemaTest {
 
     @Test
     fun `une enumeration nullable admet le nul parmi ses valeurs`() {
-        val technique = PlanSchema.strict["properties"]!!.jsonObject["zones"]!!.jsonObject["items"]!!
+        val technique = strict["properties"]!!.jsonObject["zones"]!!.jsonObject["items"]!!
             .jsonObject["properties"]!!.jsonObject["base"]!!.jsonObject["properties"]!!
             .jsonObject["technique"]!!.jsonObject
         assertContains(technique["enum"]!!.jsonArray, JsonNull)
@@ -65,12 +68,12 @@ class PlanSchemaTest {
 
     @Test
     fun `la vue Gemini ne porte ni motif ni champ supplementaire`() {
-        walk(PlanSchema.gemini) { node ->
+        walk(gemini) { node ->
             assertFalse(node.containsKey("pattern"), "Gemini rejette les motifs")
             assertFalse(node.containsKey("additionalProperties"))
         }
         // Ce qu'elle garde : la structure, les enumerations et les bornes de zones.
-        val zones = PlanSchema.gemini["properties"]!!.jsonObject["zones"]!!.jsonObject
+        val zones = gemini["properties"]!!.jsonObject["zones"]!!.jsonObject
         assertEquals(6, zones["maxItems"]!!.jsonPrimitive.content.toInt())
         assertTrue(zones["items"]!!.jsonObject["required"]!!.jsonArray.isNotEmpty())
     }

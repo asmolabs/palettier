@@ -29,6 +29,10 @@ kotlin {
         }
         jvmMain.dependencies { implementation(libs.ktor.client.cio) }
         androidMain.dependencies { implementation(libs.ktor.client.okhttp) }
+        jvmTest.dependencies {
+            // L'essai en direct lit une vraie image : il lui faut le decodeur du poste.
+            implementation(project(":core-image"))
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)

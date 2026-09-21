@@ -9,7 +9,7 @@ import be.asmolabs.palettier.ai.LayerDraft
 import be.asmolabs.palettier.ai.PaintingPlanService
 import be.asmolabs.palettier.ai.PlanDraft
 import be.asmolabs.palettier.ai.PlanEnricher
-import be.asmolabs.palettier.ai.PlanRequest
+import be.asmolabs.palettier.ai.JsonRequest
 import be.asmolabs.palettier.ai.PlanUnavailable
 import be.asmolabs.palettier.ai.ZoneDraft
 import be.asmolabs.palettier.domain.image.PixelMap
@@ -29,6 +29,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.json.Json
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -97,10 +98,10 @@ class AssistantViewModelTest {
 
     private fun answering(reply: PlanDraft) = object : ChatEngine {
         override val name = "essai"
-        var asked: PlanRequest? = null
-        override suspend fun draft(request: PlanRequest): PlanDraft {
+        var asked: JsonRequest? = null
+        override suspend fun ask(request: JsonRequest): String {
             asked = request
-            return reply
+            return Json.encodeToString(reply)
         }
     }
 
@@ -165,7 +166,7 @@ class AssistantViewModelTest {
     fun `un moteur qui echoue laisse l'ecran utilisable`() = runTest(dispatcher) {
         val brise = object : ChatEngine {
             override val name = "casse"
-            override suspend fun draft(request: PlanRequest): PlanDraft =
+            override suspend fun ask(request: JsonRequest): String =
                 throw PlanUnavailable("Le modele n'a pas produit de plan exploitable.")
         }
         val model = model(brise)
@@ -187,7 +188,7 @@ class AssistantViewModelTest {
     fun `une panne de reseau est dite, et non avalee`() = runTest(dispatcher) {
         val muet = object : ChatEngine {
             override val name = "muet"
-            override suspend fun draft(request: PlanRequest): PlanDraft =
+            override suspend fun ask(request: JsonRequest): String =
                 throw IllegalStateException("connexion refusee")
         }
         val model = model(muet)

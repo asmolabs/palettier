@@ -46,16 +46,16 @@ class OpenAiEngine(
     private val json = Json { ignoreUnknownKeys = true }
 
     @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun draft(request: PlanRequest): PlanDraft {
+    override suspend fun ask(request: JsonRequest): String {
         val body = buildJsonObject {
             put("model", request.model?.takeIf { it.isNotBlank() } ?: defaultModel)
-            put("max_completion_tokens", MAX_TOKENS)
+            put("max_completion_tokens", request.maxTokens)
             putJsonObject("response_format") {
                 put("type", "json_schema")
                 putJsonObject("json_schema") {
-                    put("name", "plan_de_peinture")
+                    put("name", "reponse")
                     put("strict", true)
-                    put("schema", PlanSchema.strict)
+                    put("schema", Schemas.strict(request.schema))
                 }
             }
             putJsonArray("messages") {
@@ -99,18 +99,11 @@ class OpenAiEngine(
         }.getOrNull()
             ?: throw PlanUnavailable("Reponse d'OpenAI inattendue : pas de contenu.")
 
-        return content.toPlanDraft(json)
+        return content
     }
 
     companion object {
         const val DEFAULT_URL = "https://api.openai.com/v1"
         const val DEFAULT_MODEL = "gpt-5"
-
-        /**
-         * Plafond de generation. Un plan a six zones fait plusieurs milliers de mots de
-         * JSON : avec la limite par defaut, la reponse est coupee en plein objet et rien
-         * n'est exploitable.
-         */
-        const val MAX_TOKENS = 16384
     }
 }

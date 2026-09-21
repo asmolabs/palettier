@@ -48,6 +48,12 @@ class OllamaEngineTest {
         HttpClient(MockEngine { respondError(status) })
     )
 
+    private fun request(
+        system: String,
+        user: String,
+        photos: List<PhotoInput> = emptyList(),
+    ) = JsonRequest(system, user, PlanSchema.plan, photos)
+
     private val plan = """
         {"approach":"Palette courte.","zones":[{"name":"Visage","material":"Peau","note":"",
         "base":{"hex":"#C98F72","technique":"Glacis","note":""},
@@ -59,7 +65,7 @@ class OllamaEngineTest {
 
     @Test
     fun `le schema part avec la demande, pas une consigne dans le texte`() = runTest {
-        okWith(plan).draft(PlanRequest("systeme", "utilisateur"))
+        okWith(plan).ask(request("systeme", "utilisateur"))
 
         val sent = Json.parseToJsonElement(lastBody).jsonObject
         // C'est la contrainte qui rend le JSON invalide impossible : elle doit etre la.
@@ -75,19 +81,15 @@ class OllamaEngineTest {
     }
 
     @Test
-    fun `une reponse conforme devient un plan`() = runTest {
-        val draft = okWith(plan).draft(PlanRequest("systeme", "utilisateur"))
-
-        assertEquals("Palette courte.", draft.approach)
-        assertEquals(1, draft.zones.size)
-        assertEquals("#C98F72", draft.zones.single().base?.hex)
-        assertEquals("#5A3B2E", draft.zones.single().shadow2?.hex)
+    fun `le contenu de la reponse est rendu tel quel`() = runTest {
+        val answer = okWith(plan).ask(request("systeme", "utilisateur"))
+        assertEquals(plan, answer)
     }
 
     @Test
     fun `les photos partent en base64, et sont annoncees`() = runTest {
-        okWith(plan).draft(
-            PlanRequest("systeme", "utilisateur", listOf(PhotoInput(byteArrayOf(1, 2, 3), "la piece")))
+        okWith(plan).ask(
+            request("systeme", "utilisateur", listOf(PhotoInput(byteArrayOf(1, 2, 3), "la piece")))
         )
 
         val messages = Json.parseToJsonElement(lastBody).jsonObject["messages"]!!.jsonArray
@@ -97,17 +99,9 @@ class OllamaEngineTest {
     }
 
     @Test
-    fun `une reponse illisible donne un message exploitable, pas une erreur technique`() = runTest {
-        val failure = assertFailsWith<PlanUnavailable> {
-            okWith("{\"approach\": \"coupe en plein").draft(PlanRequest("s", "u"))
-        }
-        assertTrue("plan exploitable" in failure.message!!)
-    }
-
-    @Test
     fun `un refus du serveur est signale tel quel`() = runTest {
         val failure = assertFailsWith<PlanUnavailable> {
-            failing(HttpStatusCode.NotFound).draft(PlanRequest("s", "u"))
+            failing(HttpStatusCode.NotFound).ask(request("s", "u"))
         }
         assertTrue("404" in failure.message!!)
     }

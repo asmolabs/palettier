@@ -68,7 +68,7 @@ class RemoteEnginesTest {
     @Test
     fun `OpenAI recoit le schema strict, et la cle en entete`() = runTest {
         OpenAiEngine(client(openAiReply(plan)), "cle-secrete")
-            .draft(PlanRequest("systeme", "utilisateur"))
+            .ask(JsonRequest("systeme", "utilisateur", PlanSchema.plan))
 
         val sent = Json.parseToJsonElement(lastBody).jsonObject
         val format = sent["response_format"]!!.jsonObject
@@ -89,7 +89,7 @@ class RemoteEnginesTest {
     @Test
     fun `OpenAI recoit les photos en URL de donnees`() = runTest {
         OpenAiEngine(client(openAiReply(plan)), "cle")
-            .draft(PlanRequest("s", "u", listOf(PhotoInput(byteArrayOf(1, 2, 3), "la piece"))))
+            .ask(JsonRequest("s", "u", PlanSchema.plan, listOf(PhotoInput(byteArrayOf(1, 2, 3), "la piece"))))
 
         val content = Json.parseToJsonElement(lastBody).jsonObject["messages"]!!
             .jsonArray.last().jsonObject["content"]!!.jsonArray
@@ -101,16 +101,15 @@ class RemoteEnginesTest {
     }
 
     @Test
-    fun `une reponse conforme d'OpenAI devient un plan`() = runTest {
-        val draft = OpenAiEngine(client(openAiReply(plan)), "cle").draft(PlanRequest("s", "u"))
-        assertEquals("Palette courte.", draft.approach)
-        assertEquals("#C98F72", draft.zones.single().base?.hex)
+    fun `le contenu de la reponse d'OpenAI est rendu tel quel`() = runTest {
+        val answer = OpenAiEngine(client(openAiReply(plan)), "cle").ask(JsonRequest("s", "u", PlanSchema.plan))
+        assertEquals(plan, answer)
     }
 
     @Test
     fun `un refus d'OpenAI est signale tel quel`() = runTest {
         val failure = assertFailsWith<PlanUnavailable> {
-            OpenAiEngine(refusing(HttpStatusCode.Unauthorized), "mauvaise cle").draft(PlanRequest("s", "u"))
+            OpenAiEngine(refusing(HttpStatusCode.Unauthorized), "mauvaise cle").ask(JsonRequest("s", "u", PlanSchema.plan))
         }
         assertTrue("401" in failure.message!!)
     }
@@ -120,7 +119,7 @@ class RemoteEnginesTest {
     @Test
     fun `Gemini recoit un schema sans motif, et le modele dans l'URL`() = runTest {
         GeminiEngine(client(geminiReply(plan)), "cle", defaultModel = "gemini-2.5-pro")
-            .draft(PlanRequest("systeme", "utilisateur"))
+            .ask(JsonRequest("systeme", "utilisateur", PlanSchema.plan))
 
         val config = Json.parseToJsonElement(lastBody).jsonObject["generationConfig"]!!.jsonObject
         assertEquals("application/json", config["responseMimeType"]!!.jsonPrimitive.content)
@@ -137,7 +136,7 @@ class RemoteEnginesTest {
     @Test
     fun `le modele demande pour une seule question l'emporte sur celui du moteur`() = runTest {
         GeminiEngine(client(geminiReply(plan)), "cle", defaultModel = "gemini-2.5-pro")
-            .draft(PlanRequest("s", "u", model = "gemini-2.5-flash"))
+            .ask(JsonRequest("s", "u", PlanSchema.plan, model = "gemini-2.5-flash"))
 
         assertTrue(lastRequest!!.url.toString().contains("gemini-2.5-flash"))
     }
@@ -145,7 +144,7 @@ class RemoteEnginesTest {
     @Test
     fun `Gemini recoit les photos en pieces jointes`() = runTest {
         GeminiEngine(client(geminiReply(plan)), "cle")
-            .draft(PlanRequest("s", "u", listOf(PhotoInput(byteArrayOf(1, 2, 3), "la piece"))))
+            .ask(JsonRequest("s", "u", PlanSchema.plan, listOf(PhotoInput(byteArrayOf(1, 2, 3), "la piece"))))
 
         val parts = Json.parseToJsonElement(lastBody).jsonObject["contents"]!!
             .jsonArray.single().jsonObject["parts"]!!.jsonArray
@@ -170,19 +169,16 @@ class RemoteEnginesTest {
                 )
             )
         )
-        val draft = GeminiEngine(client(reply), "cle").draft(PlanRequest("s", "u"))
-        assertEquals("Palette courte.", draft.approach)
+        val answer = GeminiEngine(client(reply), "cle").ask(JsonRequest("s", "u", PlanSchema.plan))
+        assertEquals(plan, answer)
     }
 
     @Test
-    fun `une reponse illisible donne le meme message pour les trois moteurs`() = runTest {
-        val openAi = assertFailsWith<PlanUnavailable> {
-            OpenAiEngine(client(openAiReply("{\"approach\": \"coupe en plein")), "cle").draft(PlanRequest("s", "u"))
+    fun `une reponse vide est signalee, et non rendue telle quelle`() = runTest {
+        val vide = Json.encodeToString(mapOf("candidates" to emptyList<String>()))
+        val failure = assertFailsWith<PlanUnavailable> {
+            GeminiEngine(client(vide), "cle").ask(JsonRequest("s", "u", PlanSchema.plan))
         }
-        val gemini = assertFailsWith<PlanUnavailable> {
-            GeminiEngine(client(geminiReply("pas du JSON du tout")), "cle").draft(PlanRequest("s", "u"))
-        }
-        assertTrue("plan exploitable" in openAi.message!!)
-        assertEquals(openAi.message, gemini.message)
+        assertTrue("pas de contenu" in failure.message!!)
     }
 }

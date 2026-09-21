@@ -45,17 +45,17 @@ class OllamaEngine(
     private val json = Json { ignoreUnknownKeys = true }
 
     @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun draft(request: PlanRequest): PlanDraft {
+    override suspend fun ask(request: JsonRequest): String {
         val body = buildJsonObject {
             put("model", request.model?.takeIf { it.isNotBlank() } ?: defaultModel)
             put("stream", false)
             // Le schema, et non une consigne : c'est lui qui rend le JSON invalide
             // impossible plutot qu'improbable.
-            put("format", PlanSchema.plan)
+            put("format", request.schema)
             putJsonObject("options") {
                 put("temperature", 0.2)
                 put("num_ctx", 32768)
-                put("num_predict", 16384)
+                put("num_predict", request.maxTokens)
             }
             put("messages", buildJsonArray {
                 add(buildJsonObject {
@@ -88,7 +88,8 @@ class OllamaEngine(
         }.getOrNull()
             ?: throw PlanUnavailable("Reponse d'Ollama inattendue : pas de contenu.")
 
-        return content.toPlanDraft(json)
+
+        return content
     }
 
     companion object {
