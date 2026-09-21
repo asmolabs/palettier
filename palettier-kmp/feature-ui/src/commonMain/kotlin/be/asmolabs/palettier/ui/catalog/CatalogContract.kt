@@ -16,6 +16,10 @@ data class CatalogUiState(
     val targetHex: String? = null,
     /** La derniere teinte relevee a la pipette, quand elle differe de la teinte visee. */
     val sampledHex: String? = null,
+    /** Le tube en cours de calibration, choisi dans le tableau. */
+    val selected: Paint? = null,
+    /** Ce que la derniere attribution a donne. */
+    val calibrationMessage: String? = null,
     val error: String? = null,
 ) {
     /** Vrai quand le classement se fait par ecart plutot que par marque et nom. */
@@ -31,4 +35,18 @@ sealed interface CatalogIntent {
 
     /** Declare qu'un tube est, ou n'est plus, sur l'etagere. */
     data class SetOwned(val paint: Paint, val owned: Boolean) : CatalogIntent
+
+    /** Choisit le tube a calibrer. Le meme tube deux fois le deselectionne. */
+    data class Select(val paint: Paint) : CatalogIntent
+
+    /**
+     * Attribue une couleur mesuree au tube choisi.
+     *
+     * <p>Le partage est deliberé : la pipette mesure, le catalogue attribue. C'est dans le
+     * tableau qu'on voit ce qui manque, et c'est la qu'on dispose deja de la recherche et
+     * des filtres.</p>
+     *
+     * @param asTint vrai pour la teinte coupee de blanc, faux pour le ton de masse
+     */
+    data class Calibrate(val hex: String, val asTint: Boolean) : CatalogIntent
 }

@@ -95,6 +95,7 @@ class ProjectsViewModelTest {
         override suspend fun save(paint: Paint) = paint
         override suspend fun setOwned(paint: Paint, owned: Boolean) {}
         override suspend fun recordTint(paint: Paint, tint: Rgb) {}
+        override suspend fun recordMasstone(paint: Paint, measured: Rgb) {}
         override suspend fun countOwned() = paints.count { it.inStock }.toLong()
         // Catalogue fige : cet ecran ne l'ecrit pas.
         override suspend fun saveAll(paints: List<Paint>) {}

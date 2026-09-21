@@ -1,12 +1,16 @@
 package be.asmolabs.palettier.ui.catalog
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,6 +26,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,10 +60,13 @@ fun CatalogScreen(
                     Text("Aucun tube ne correspond.", style = MaterialTheme.typography.bodyLarge)
                 }
 
-                else -> LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
-                    items(state.rows, key = { it.paint.id ?: it.paint.displayName.hashCode().toLong() }) { row ->
-                        PaintLine(row, onIntent)
+                else -> Row(Modifier.fillMaxSize()) {
+                    LazyColumn(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 20.dp)) {
+                        items(state.rows, key = { it.paint.id ?: it.paint.displayName.hashCode().toLong() }) { row ->
+                            PaintLine(row, row.paint.id == state.selected?.id, onIntent)
+                        }
                     }
+                    CalibrationCard(state, onIntent)
                 }
             }
         }
@@ -106,9 +117,19 @@ private fun Filters(state: CatalogUiState, onIntent: (CatalogIntent) -> Unit) {
 }
 
 @Composable
-private fun PaintLine(row: CatalogRow, onIntent: (CatalogIntent) -> Unit) {
+private fun PaintLine(row: CatalogRow, selected: Boolean, onIntent: (CatalogIntent) -> Unit) {
     val paint = row.paint
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent,
+                RoundedCornerShape(6.dp),
+            )
+            .clickable { onIntent(CatalogIntent.Select(paint)) }
+            .padding(vertical = 6.dp, horizontal = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Swatch(paint.hexColor)
         Spacer(Modifier.width(12.dp))
 
@@ -118,6 +139,99 @@ private fun PaintLine(row: CatalogRow, onIntent: (CatalogIntent) -> Unit) {
         }
 
         Checkbox(paint.inStock, { onIntent(CatalogIntent.SetOwned(paint, it)) })
+    }
+}
+
+/**
+ * Calibrer le tube choisi d'apres ses propres ecouvillons.
+ *
+ * <p>Le partage est deliberé : la pipette mesure, le catalogue attribue. C'est dans le
+ * tableau qu'on voit ce qui manque, et c'est la qu'on dispose deja de la recherche, des
+ * filtres et de la colonne coupee de blanc.</p>
+ */
+@Composable
+private fun CalibrationCard(state: CatalogUiState, onIntent: (CatalogIntent) -> Unit) {
+    val paint = state.selected
+    var measured by remember(paint?.id) { mutableStateOf(paint?.hexColor.orEmpty()) }
+    val valid = runCatching { Rgb.ofHex(measured) }.isSuccess
+
+    Surface(
+        Modifier.width(320.dp).fillMaxHeight().verticalScroll(rememberScrollState()),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Calibrer le tube choisi", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+            if (paint == null) {
+                Text(
+                    "Choisissez une ligne du tableau pour la calibrer.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                return@Column
+            }
+
+            Text(paint.displayName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Actuel", style = MaterialTheme.typography.bodySmall)
+                Swatch(paint.hexColor)
+                Text("coupe de blanc", style = MaterialTheme.typography.bodySmall)
+                if (paint.tintHex == null) {
+                    Text("?", style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    Swatch(paint.tintHex!!)
+                }
+            }
+
+            if (paint.tintHex == null) {
+                Text(
+                    "Teinte diluee inconnue : ce tube se melange encore avec le modele a une " +
+                        "seule constante.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (valid) Swatch(measured)
+                OutlinedTextField(
+                    value = measured,
+                    onValueChange = { measured = it },
+                    label = { Text("Couleur mesuree") },
+                    isError = !valid,
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            // Le pont avec la pipette, dans l'autre sens que la teinte visee : ici la
+            // mesure ne sert pas a chercher, elle s'attribue.
+            state.sampledHex?.let { relieved ->
+                TextButton({ measured = relieved }) { Text("Utiliser la teinte relevee $relieved") }
+            }
+
+            Text("Enregistrer comme", style = MaterialTheme.typography.bodySmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(
+                    { onIntent(CatalogIntent.Calibrate(measured, asTint = false)) },
+                    enabled = valid,
+                ) { Text("Ton de masse") }
+                TextButton(
+                    { onIntent(CatalogIntent.Calibrate(measured, asTint = true)) },
+                    enabled = valid,
+                ) { Text("Teinte diluee 1:9") }
+            }
+
+            state.calibrationMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+
+            Text(
+                "Peignez un ecouvillon de couleur pure et un autre d'une part de couleur pour " +
+                    "neuf de blanc de titane, photographiez-les sous lumiere neutre, relevez-les " +
+                    "dans la Pipette puis revenez ici les attribuer. C'est la seconde mesure qui " +
+                    "fait passer le tube au modele a deux constantes, et elle vaut mieux que " +
+                    "toute valeur de catalogue : elle vient de votre peinture, sous votre lumiere.",
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
     }
 }
 

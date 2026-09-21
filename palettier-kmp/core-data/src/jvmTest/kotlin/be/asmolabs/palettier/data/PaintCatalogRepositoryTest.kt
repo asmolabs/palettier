@@ -8,6 +8,7 @@ import be.asmolabs.palettier.domain.paint.Paint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlin.test.assertFalse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -92,6 +93,24 @@ class PaintCatalogRepositoryTest {
         assertEquals(listOf("Burnt Umber"), seen.map { it.name })
         assertEquals(setOf("PBr7"), seen.first().pigments)
     }
+
+    @Test
+    fun `le ton de masse releve remplace celui du catalogue, et n'est plus deduit`() = runTest {
+        val stored = repository.save(
+            Paint(
+                brand = "Gamblin", name = "Transparent Earth Red", hexColor = "#8A2E15",
+                // Une teinte deduite de ses pigments, comme le chargeur en produit.
+                colorDerived = true,
+            )
+        )
+
+        repository.recordMasstone(stored, Rgb.ofHex("#7E3A22"))
+
+        val after = assertNotNull(repository.findById(stored.id!!))
+        assertEquals("#7E3A22", after.hexColor)
+        // La fiche cesse d'etre marquee comme deduite : sa couleur vient d'une mesure.
+        assertFalse(after.colorDerived)
+    }
 }
 
 /** Les melanges poses sur la palette, et leur etat calcule sur ce que rend la base. */
@@ -139,4 +158,5 @@ class PaletteMixRepositoryTest {
 
         assertTrue(repository.all().isEmpty())
     }
+
 }

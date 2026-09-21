@@ -18,6 +18,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -60,7 +62,12 @@ class CatalogViewModelTest {
         override suspend fun setOwned(paint: Paint, owned: Boolean) {
             paints.value = paints.value.map { if (it.id == paint.id) it.copy(inStock = owned) else it }
         }
-        override suspend fun recordTint(paint: Paint, tint: Rgb) {}
+        override suspend fun recordTint(paint: Paint, tint: Rgb) {
+            paints.value = paints.value.map { if (it.id == paint.id) it.copy(tintHex = tint.toHex()) else it }
+        }
+        override suspend fun recordMasstone(paint: Paint, measured: Rgb) {
+            paints.value = paints.value.map { if (it.id == paint.id) it.copy(hexColor = measured.toHex(), colorDerived = false) else it }
+        }
         override suspend fun countOwned() = paints.value.count { it.inStock }.toLong()
         override suspend fun saveAll(paints: List<Paint>) {
             this.paints.value = this.paints.value + paints
@@ -171,5 +178,50 @@ class CatalogViewModelTest {
         model.onIntent(CatalogIntent.AimAt("#C98F72"))
         val aimed = model.state.first { it.targetHex == "#C98F72" }
         assertNull(aimed.sampledHex)
+    }
+
+    @Test
+    fun `choisir un tube le propose a la calibration, le rechoisir le laisse`() = runTest(dispatcher) {
+        val model = backgroundScope.model(FakeCatalog(catalogue))
+        val first = model.state.value.rows.first().paint
+
+        model.onIntent(CatalogIntent.Select(first))
+        assertEquals(first.id, model.state.first { it.selected != null }.selected?.id)
+
+        // Le meme tube deux fois le deselectionne : on referme la carte comme on l'ouvre.
+        model.onIntent(CatalogIntent.Select(first))
+        assertNull(model.state.first { it.selected == null }.selected)
+    }
+
+    @Test
+    fun `la teinte relevee s'attribue en ton de masse, ou en teinte diluee`() = runTest(dispatcher) {
+        val catalog = FakeCatalog(catalogue)
+        val model = backgroundScope.model(catalog)
+        val paint = model.state.value.rows.first().paint
+        model.onIntent(CatalogIntent.Select(paint))
+        model.state.first { it.selected != null }
+
+        model.onIntent(CatalogIntent.Calibrate("#7E3A22", asTint = false))
+        val masstone = model.state.first { it.selected?.hexColor == "#7E3A22" }
+        assertNotNull(masstone.calibrationMessage)
+        assertFalse(masstone.selected!!.colorDerived, "une mesure n'est plus une deduction")
+
+        model.onIntent(CatalogIntent.Calibrate("#D9B9A4", asTint = true))
+        val tinted = model.state.first { it.selected?.tintHex == "#D9B9A4" }
+        // C'est la seconde mesure qui fait passer le tube au modele a deux constantes.
+        assertTrue(tinted.calibrationMessage!!.contains("deux constantes"), tinted.calibrationMessage!!)
+    }
+
+    @Test
+    fun `une couleur illisible le dit, et n'ecrit rien`() = runTest(dispatcher) {
+        val model = backgroundScope.model(FakeCatalog(catalogue))
+        val paint = model.state.value.rows.first().paint
+        model.onIntent(CatalogIntent.Select(paint))
+        model.state.first { it.selected != null }
+
+        model.onIntent(CatalogIntent.Calibrate("pas une couleur", asTint = false))
+        val state = model.state.first { it.calibrationMessage != null }
+
+        assertEquals(paint.hexColor, state.selected?.hexColor)
     }
 }

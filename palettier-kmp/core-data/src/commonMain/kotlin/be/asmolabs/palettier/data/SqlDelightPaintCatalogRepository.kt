@@ -115,6 +115,10 @@ class SqlDelightPaintCatalogRepository(
         queries.setTint(tint.toHex(), requireNotNull(paint.id) { "Tube sans identifiant" })
     }
 
+    override suspend fun recordMasstone(paint: Paint, measured: Rgb): Unit = withContext(io) {
+        queries.setMasstone(measured.toHex(), requireNotNull(paint.id) { "Tube sans identifiant" })
+    }
+
     override suspend fun countOwned(): Long = withContext(io) {
         queries.selectInStock().executeAsList().size.toLong()
     }

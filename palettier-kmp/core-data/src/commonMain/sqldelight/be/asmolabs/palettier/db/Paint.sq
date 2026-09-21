@@ -65,6 +65,10 @@ UPDATE paint SET in_stock = ? WHERE id = ?;
 setTint:
 UPDATE paint SET tint_hex = ? WHERE id = ?;
 
+-- La fiche cesse d'etre marquee comme deduite : sa couleur vient d'une mesure.
+setMasstone:
+UPDATE paint SET hex_color = ?, colour_derived = 0 WHERE id = ?;
+
 lastInsertedId:
 SELECT last_insert_rowid();
 

@@ -31,6 +31,8 @@ class CatalogViewModel(
     private val query = MutableStateFlow("")
     private val onlyInStock = MutableStateFlow(false)
     private val target = MutableStateFlow<String?>(null)
+    private val selectedId = MutableStateFlow<Long?>(null)
+    private val calibration = MutableStateFlow<String?>(null)
 
     val state: StateFlow<CatalogUiState> =
         combine(
@@ -39,7 +41,17 @@ class CatalogViewModel(
             onlyInStock,
             target,
             sampled.colour,
-        ) { paints, text, inStock, hex, measured ->
+            selectedId,
+            calibration,
+        ) { values ->
+            @Suppress("UNCHECKED_CAST")
+            val paints = values[0] as List<Paint>
+            val text = values[1] as String
+            val inStock = values[2] as Boolean
+            val hex = values[3] as String?
+            val measured = values[4] as Rgb?
+            val chosen = values[5] as Long?
+            val message = values[6] as String?
             val kept = paints
                 .filter { !inStock || it.inStock }
                 .filter { matches(it, text) }
@@ -54,6 +66,10 @@ class CatalogViewModel(
                 // Proposee, jamais imposee : une teinte relevee il y a une heure n'a pas a
                 // ecraser celle qu'on vient de taper.
                 sampledHex = measured?.toHex()?.takeIf { it != hex },
+                // Relu dans la liste plutot que garde de cote : une attribution enregistree
+                // doit se voir dans la carte, et c'est le flux de la base qui la rapporte.
+                selected = paints.firstOrNull { it.id == chosen },
+                calibrationMessage = message,
             )
         }
             .catch { emit(CatalogUiState(loading = false, error = it.message ?: "Lecture impossible")) }
@@ -67,6 +83,38 @@ class CatalogViewModel(
             is CatalogIntent.SetOwned -> viewModelScope.launch {
                 catalog.setOwned(intent.paint, intent.owned)
             }
+
+            is CatalogIntent.Select -> {
+                selectedId.value = intent.paint.id?.takeIf { it != selectedId.value }
+                calibration.value = null
+            }
+
+            is CatalogIntent.Calibrate -> viewModelScope.launch { calibrate(intent) }
+        }
+    }
+
+/**
+     * Attribue une couleur mesuree au tube choisi.
+     *
+     * <p>Une valeur venue de la peinture du peintre, sous sa lumiere, vaut mieux que
+     * n'importe quel nuancier imprime -- un meme code de pigment couvre des teintes tres
+     * differentes selon le gisement. C'est la seconde mesure, celle de l'ecouvillon coupe
+     * de blanc, qui fait passer le tube au modele a deux constantes.</p>
+     */
+    private suspend fun calibrate(intent: CatalogIntent.Calibrate) {
+        val paint = state.value.selected ?: return
+        val measured = runCatching { Rgb.ofHex(intent.hex) }.getOrNull() ?: run {
+            calibration.value = "Cette couleur ne se lit pas."
+            return
+        }
+
+        if (intent.asTint) {
+            catalog.recordTint(paint, measured)
+            calibration.value = "Teinte diluee de ${paint.name} enregistree : ${measured.toHex()}. " +
+                "Ce tube passe au melange a deux constantes."
+        } else {
+            catalog.recordMasstone(paint, measured)
+            calibration.value = "Ton de masse de ${paint.name} enregistre : ${measured.toHex()}."
         }
     }
 

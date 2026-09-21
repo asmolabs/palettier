@@ -51,6 +51,17 @@ interface PaintCatalogRepository {
     /** Consigne la teinte diluee relevee sur un ecouvillon. */
     suspend fun recordTint(paint: Paint, tint: Rgb)
 
+    /**
+     * Consigne le ton de masse releve sur un ecouvillon de couleur pure.
+     *
+     * <p>Il remplace la valeur du catalogue, qui n'est au mieux qu'une approximation d'un
+     * nuancier imprime -- un meme code de pigment couvre des teintes tres differentes
+     * selon le gisement. La fiche cesse donc d'etre marquee comme deduite : sa couleur
+     * vient desormais d'une mesure, faite sur la peinture du peintre et sous sa
+     * lumiere.</p>
+     */
+    suspend fun recordMasstone(paint: Paint, measured: Rgb)
+
     suspend fun countOwned(): Long
 
     suspend fun count(): Long

@@ -41,6 +41,9 @@ internal class FakeCatalogRepository(paints: List<Paint>) : PaintCatalogReposito
         paints.value = paints.value.map { if (it.id == paint.id) it.copy(inStock = owned) else it }
     }
     override suspend fun recordTint(paint: Paint, tint: Rgb) {}
+    override suspend fun recordMasstone(paint: Paint, measured: Rgb) {
+        paints.value = paints.value.map { if (it.id == paint.id) it.copy(hexColor = measured.toHex(), colorDerived = false) else it }
+    }
     override suspend fun countOwned() = paints.value.count { it.inStock }.toLong()
     override suspend fun count() = paints.value.size.toLong()
     override suspend fun refreshIdentity(paint: Paint) {
