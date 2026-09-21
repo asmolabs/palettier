@@ -50,6 +50,7 @@ import be.asmolabs.palettier.ui.assistant.AssistantIntent
 import be.asmolabs.palettier.ui.assistant.AssistantScreen
 import be.asmolabs.palettier.ui.assistant.AssistantViewModel
 import be.asmolabs.palettier.ui.catalog.CatalogScreen
+import be.asmolabs.palettier.ui.export.PdfPlanExporter
 import be.asmolabs.palettier.ui.catalog.CatalogViewModel
 import be.asmolabs.palettier.ui.drying.DryingScreen
 import be.asmolabs.palettier.ui.drying.DryingViewModel
@@ -189,7 +190,12 @@ fun main() = application {
                                         projectsModel.onIntent(ProjectsIntent.CompareWithPlan(it))
                                     }
                                 },
-                                Modifier.weight(1f),
+                                onExport = {
+                                    projectsState.plan?.let { plan ->
+                                        exportPlan(plan, projectsState.selected?.name.orEmpty())
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
                             )
                             Section.Palettes ->
                                 PalettesScreen(palettesState, palettesModel::onIntent, Modifier.weight(1f))
@@ -214,6 +220,11 @@ fun main() = application {
                                 },
                                 onChooseShelf = {
                                     pickPhoto()?.let { assistantModel.onIntent(AssistantIntent.ReadTubes(it)) }
+                                },
+                                onExport = {
+                                    assistantState.plan?.let { plan ->
+                                        exportPlan(plan, assistantState.suggestedProjectName)
+                                    }
                                 },
                                 modifier = Modifier.weight(1f),
                             )
@@ -368,6 +379,25 @@ private fun NavItem(section: Section, selected: Boolean, expanded: Boolean, onCl
                 )
             }
         }
+    }
+}
+
+/**
+ * Met le plan sur papier, la ou le peintre le demande.
+ *
+ * <p>Le rendu ne connait pas de chemin : il rend des octets, et c'est ici -- la seule
+ * couche qui sache ce qu'est un dossier -- qu'on demande ou les poser.</p>
+ */
+private fun exportPlan(plan: be.asmolabs.palettier.domain.plan.PaintingPlan, suggested: String) {
+    val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Enregistrer le plan", java.awt.FileDialog.SAVE)
+    dialog.file = (suggested.ifBlank { "plan" }.replace(Regex("[^A-Za-z0-9 _-]"), "")) + ".pdf"
+    dialog.isVisible = true
+    val directory = dialog.directory ?: return
+    val name = dialog.file ?: return
+
+    kotlinx.coroutines.runBlocking {
+        val bytes = PdfPlanExporter().render(plan)
+        java.nio.file.Files.write(java.nio.file.Path.of(directory, name), bytes)
     }
 }
 

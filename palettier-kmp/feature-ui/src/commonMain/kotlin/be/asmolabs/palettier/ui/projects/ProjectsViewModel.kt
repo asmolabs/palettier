@@ -62,6 +62,7 @@ class ProjectsViewModel(
         val photos: List<ProjectPhoto> = emptyList(),
         val comparison: List<ProgressCheckService.Observed> = emptyList(),
         val comparing: Boolean = false,
+        val plan: PaintingPlan? = null,
         val busy: Boolean = false,
         val message: String? = null,
     )
@@ -80,6 +81,7 @@ class ProjectsViewModel(
                 photos = detail.photos,
                 comparison = detail.comparison,
                 comparing = detail.comparing,
+                plan = detail.plan,
                 paletteDiverges = selected?.divergesFromPalette() == true,
                 busy = detail.busy,
                 message = detail.message,
@@ -262,6 +264,7 @@ class ProjectsViewModel(
             val photos = project.id?.let { projects.findWithPhotos(it)?.photos }.orEmpty()
             detail.value = Detail(
                 computing = false,
+                plan = plan,
                 zones = rows(project, plan),
                 risks = fatOverLean.inspect(project),
                 missing = substitutes.missingFrom(project, owned),

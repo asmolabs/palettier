@@ -57,6 +57,7 @@ fun ProjectsScreen(
     onIntent: (ProjectsIntent) -> Unit,
     onChoosePhoto: (ProjectPhoto.Role) -> Unit,
     onCompare: () -> Unit,
+    onExport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier.fillMaxSize()) {
@@ -72,7 +73,7 @@ fun ProjectsScreen(
 
             else -> Row(Modifier.fillMaxSize()) {
                 ProjectList(state, onIntent, Modifier.width(260.dp).fillMaxHeight())
-                Detail(state, onIntent, onChoosePhoto, onCompare, Modifier.weight(1f).fillMaxHeight())
+                Detail(state, onIntent, onChoosePhoto, onCompare, onExport, Modifier.weight(1f).fillMaxHeight())
             }
         }
     }
@@ -115,12 +116,13 @@ private fun Detail(
     onIntent: (ProjectsIntent) -> Unit,
     onChoosePhoto: (ProjectPhoto.Role) -> Unit,
     onCompare: () -> Unit,
+    onExport: () -> Unit,
     modifier: Modifier,
 ) {
     val project = state.selected ?: return
 
     LazyColumn(modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { Header(state, onIntent) }
+        item { Header(state, onIntent, onExport) }
         item { PhotosCard(state, onIntent, onChoosePhoto, onCompare) }
         if (state.comparison.isNotEmpty() || state.comparing) item { ComparisonCard(state, onIntent) }
 
@@ -134,7 +136,7 @@ private fun Detail(
 
 /** L'en-tete : ce que la piece est, et les trois gestes qui la tiennent a jour. */
 @Composable
-private fun Header(state: ProjectsUiState, onIntent: (ProjectsIntent) -> Unit) {
+private fun Header(state: ProjectsUiState, onIntent: (ProjectsIntent) -> Unit, onExport: () -> Unit) {
     val project = state.selected ?: return
     var renaming by remember(project.id) { mutableStateOf(false) }
     var name by remember(project.id) { mutableStateOf(project.name) }
@@ -170,6 +172,11 @@ private fun Header(state: ProjectsUiState, onIntent: (ProjectsIntent) -> Unit) {
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!renaming) TextButton({ renaming = true }) { Text("Renommer") }
+
+            // Le plan sert a l'etabli, ou l'on ne consulte pas un ecran les mains grasses
+            // de diluant. Propose seulement une fois le plan calcule : sans lui, il n'y a
+            // rien a mettre sur papier.
+            if (state.plan != null) TextButton(onExport) { Text("Exporter en PDF") }
 
             // La suppression demande confirmation : elle emporte les couches posees, et
             // rien dans l'application ne les rendrait.

@@ -57,6 +57,7 @@ fun AssistantScreen(
     onChooseFigurine: () -> Unit,
     onChooseReference: () -> Unit,
     onChooseShelf: () -> Unit,
+    onExport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier.fillMaxSize()) {
@@ -93,7 +94,7 @@ fun AssistantScreen(
                                 Text(plan.approach, style = MaterialTheme.typography.bodySmall)
                             }
 
-                            SaveRow(state, onIntent)
+                            SaveRow(state, onIntent, onExport)
                         }
                     }
                 }
@@ -112,7 +113,7 @@ fun AssistantScreen(
  * s'appliquait.</p>
  */
 @Composable
-private fun SaveRow(state: AssistantUiState, onIntent: (AssistantIntent) -> Unit) {
+private fun SaveRow(state: AssistantUiState, onIntent: (AssistantIntent) -> Unit, onExport: () -> Unit) {
     // Le sujet decrit fait un nom de depart : on tape rarement deux fois la meme chose.
     var name by remember(state.plan) { mutableStateOf(state.suggestedProjectName) }
 
@@ -129,6 +130,7 @@ private fun SaveRow(state: AssistantUiState, onIntent: (AssistantIntent) -> Unit
                 { onIntent(AssistantIntent.SaveProject(name)) },
                 enabled = !state.saving,
             ) { Text("Enregistrer le projet") }
+            TextButton(onExport) { Text("Exporter en PDF") }
             if (state.saving) CircularProgressIndicator(Modifier.size(18.dp))
         }
         state.savedMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }

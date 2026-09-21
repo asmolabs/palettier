@@ -36,6 +36,11 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.kotlinx.coroutines.core)
         }
+        jvmMain.dependencies {
+            // La mise sur papier, cote bureau seulement. Une cible qui n'a pas encore
+            // d'application n'a pas a porter une bibliotheque de PDF.
+            implementation(libs.pdfbox)
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.serialization.json)

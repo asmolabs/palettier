@@ -48,6 +48,8 @@ data class ProjectsUiState(
      */
     val comparison: List<ProgressCheckService.Observed> = emptyList(),
     val comparing: Boolean = false,
+    /** Le plan calcule de la piece choisie, celui que l'export met sur papier. */
+    val plan: PaintingPlan? = null,
     val busy: Boolean = false,
     val message: String? = null,
     val error: String? = null,
