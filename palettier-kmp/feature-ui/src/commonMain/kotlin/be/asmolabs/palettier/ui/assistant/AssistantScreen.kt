@@ -1,6 +1,11 @@
 package be.asmolabs.palettier.ui.assistant
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -18,6 +23,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
@@ -25,6 +31,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.decodeToImageBitmap
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import be.asmolabs.palettier.ai.AiProvider
@@ -123,6 +132,50 @@ private fun SaveRow(state: AssistantUiState, onIntent: (AssistantIntent) -> Unit
             if (state.saving) CircularProgressIndicator(Modifier.size(18.dp))
         }
         state.savedMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+    }
+}
+
+/**
+ * Une photo jointe, telle qu'on la reconnait.
+ *
+ * <p>Une ligne de texte ne dit pas qu'on s'est trompe de fichier. Une vignette, si -- et
+ * c'est la seule facon de le voir avant que le modele ne travaille plusieurs minutes sur
+ * la mauvaise image.</p>
+ *
+ * <p>Ce qui est decode est la copie reduite, jamais la photo d'origine : un cliche de
+ * telephone rendu dans un carre de quatre-vingts points ferait decoder plusieurs millions
+ * de pixels pour rien.</p>
+ */
+@Composable
+private fun Thumbnail(photo: AttachedPhoto, onRemove: () -> Unit) {
+    val bitmap = remember(photo) { runCatching { photo.thumbnail.decodeToImageBitmap() }.getOrNull() }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            Modifier
+                .size(80.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (bitmap == null) {
+                // Lisible par le modele, mais pas par le decodeur local : cela arrive, et
+                // ce n'est pas une raison pour refuser la photo.
+                Text("?", style = MaterialTheme.typography.titleMedium)
+            } else {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = photo.caption,
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(6.dp)),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+        }
+        Text(
+            photo.caption,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.widthIn(max = 80.dp),
+        )
+        TextButton(onRemove) { Text("\u2715", style = MaterialTheme.typography.labelSmall) }
     }
 }
 
@@ -243,12 +296,18 @@ private fun RequestCard(
                     OutlinedButton({ onIntent(AssistantIntent.ClearPhotos) }) { Text("Retirer les photos") }
                 }
             }
-            val joined = listOfNotNull(state.figurine) + state.references
-            if (joined.isNotEmpty()) {
-                Text(
-                    joined.joinToString(", ") { it.caption },
-                    style = MaterialTheme.typography.bodySmall,
-                )
+            if (state.figurine != null || state.references.isNotEmpty()) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    state.figurine?.let { photo ->
+                        Thumbnail(photo) { onIntent(AssistantIntent.RemoveFigurine) }
+                    }
+                    state.references.forEachIndexed { index, photo ->
+                        Thumbnail(photo) { onIntent(AssistantIntent.RemoveReference(index)) }
+                    }
+                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {

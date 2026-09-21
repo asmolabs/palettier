@@ -6,11 +6,22 @@ import be.asmolabs.palettier.ai.ModelInfo
 import be.asmolabs.palettier.domain.palette.Palette
 import be.asmolabs.palettier.domain.plan.PaintingPlan
 
-/** Une photo jointe, telle que l'ecran la montre : on n'affiche pas ses octets. */
-data class AttachedPhoto(val caption: String, val bytes: ByteArray) {
-    override fun equals(other: Any?) = other is AttachedPhoto &&
-        caption == other.caption && bytes.contentEquals(other.bytes)
-    override fun hashCode() = caption.hashCode() * 31 + bytes.contentHashCode()
+/**
+ * Une photo jointe : ses octets pour l'envoi, sa vignette pour l'ecran.
+ *
+ * <p>La vignette est une copie reduite, calculee une fois a l'ouverture du fichier. Rendre
+ * les octets d'origine a l'ecran ferait decoder plusieurs millions de pixels pour occuper
+ * un carre de quatre-vingts points, a chaque recomposition -- une photo de telephone y
+ * suffit a faire ramer la page.</p>
+ */
+class AttachedPhoto(val caption: String, val bytes: ByteArray, val thumbnail: ByteArray) {
+    /**
+     * Egalite d'identite, volontairement. L'etat est un StateFlow, qui compare chaque
+     * emission a la precedente : comparer les octets de deux photos de telephone a chaque
+     * frappe au clavier couterait plus cher que tout le reste de l'ecran.
+     */
+    override fun equals(other: Any?) = this === other
+    override fun hashCode() = super.hashCode()
 }
 
 /**
@@ -76,6 +87,18 @@ sealed interface AssistantIntent {
     data class AttachFigurine(val bytes: ByteArray) : AssistantIntent
     data class AttachReference(val bytes: ByteArray) : AssistantIntent
     data object ClearPhotos : AssistantIntent
+
+    /** Retire la photo de la piece. */
+    data object RemoveFigurine : AssistantIntent
+
+    /**
+     * Retire une reference par son rang.
+     *
+     * <p>Par le rang et non par la photo : deux fois le meme fichier est un cas normal --
+     * on glisse volontiers deux cadrages de la meme image -- et retirer l'un ne doit pas
+     * emporter l'autre.</p>
+     */
+    data class RemoveReference(val index: Int) : AssistantIntent
 
     data object Ask : AssistantIntent
     data class SaveSettings(val settings: AiSettings) : AssistantIntent

@@ -299,6 +299,69 @@ class AssistantViewModelTest {
     }
 
     @Test
+    fun `une photo jointe porte sa vignette, prete a etre montree`() = runTest(dispatcher) {
+        val model = model(null)
+        model.await { it.palettes.isNotEmpty() }
+
+        model.onIntent(AssistantIntent.AttachFigurine(byteArrayOf(1, 2, 3)))
+        val state = model.await { it.figurine != null }
+
+        val photo = assertNotNull(state.figurine)
+        assertEquals("la piece telle qu'elle est", photo.caption)
+        // Les octets d'origine partent au modele, la vignette va a l'ecran.
+        assertTrue(photo.bytes.contentEquals(byteArrayOf(1, 2, 3)))
+        assertTrue(photo.thumbnail.isNotEmpty())
+    }
+
+    @Test
+    fun `retirer une reference renumerote celles qui restent`() = runTest(dispatcher) {
+        val model = model(null)
+        model.await { it.palettes.isNotEmpty() }
+
+        model.onIntent(AssistantIntent.AttachReference(byteArrayOf(1)))
+        model.onIntent(AssistantIntent.AttachReference(byteArrayOf(2)))
+        model.onIntent(AssistantIntent.AttachReference(byteArrayOf(3)))
+        model.await { it.references.size == 3 }
+
+        model.onIntent(AssistantIntent.RemoveReference(1))
+        val left = model.await { it.references.size == 2 }
+
+        // La premiere et la troisieme, mais numerotees 1 et 2 : garder "reference 3"
+        // ferait mentir la legende que le modele recoit avec la photo.
+        assertEquals(listOf("reference 1", "reference 2"), left.references.map { it.caption })
+        assertEquals(listOf<Byte>(1, 3), left.references.map { it.bytes.single() })
+    }
+
+    @Test
+    fun `deux fois le meme fichier restent deux references distinctes`() = runTest(dispatcher) {
+        val model = model(null)
+        model.await { it.palettes.isNotEmpty() }
+
+        // Deux cadrages de la meme image : un cas normal, pas une erreur a corriger.
+        model.onIntent(AssistantIntent.AttachReference(byteArrayOf(7)))
+        model.onIntent(AssistantIntent.AttachReference(byteArrayOf(7)))
+        model.await { it.references.size == 2 }
+
+        model.onIntent(AssistantIntent.RemoveReference(0))
+        val left = model.await { it.references.size == 1 }
+        assertEquals("reference 1", left.references.single().caption)
+    }
+
+    @Test
+    fun `la photo de la piece se retire seule, sans emporter les references`() = runTest(dispatcher) {
+        val model = model(null)
+        model.await { it.palettes.isNotEmpty() }
+
+        model.onIntent(AssistantIntent.AttachFigurine(byteArrayOf(1)))
+        model.onIntent(AssistantIntent.AttachReference(byteArrayOf(2)))
+        model.await { it.figurine != null && it.references.size == 1 }
+
+        model.onIntent(AssistantIntent.RemoveFigurine)
+        val left = model.await { it.figurine == null }
+        assertEquals(1, left.references.size)
+    }
+
+    @Test
     fun `le reglage se retient d'une session a l'autre`() = runTest(dispatcher) {
         val repository = InMemorySettings()
         val premier = model(answering(draft), repository)

@@ -85,13 +85,27 @@ class AssistantViewModel(
             is AssistantIntent.SetMaxPaints ->
                 _state.value = _state.value.copy(maxPaints = intent.count.coerceIn(1, 5))
 
-            is AssistantIntent.AttachFigurine -> _state.value = _state.value.copy(
-                figurine = AttachedPhoto("la piece telle qu'elle est", intent.bytes),
-            )
+            is AssistantIntent.AttachFigurine -> viewModelScope.launch {
+                _state.value = _state.value.copy(
+                    figurine = attach("la piece telle qu'elle est", intent.bytes),
+                )
+            }
 
-            is AssistantIntent.AttachReference -> _state.value = _state.value.copy(
-                references = _state.value.references +
-                    AttachedPhoto("reference ${_state.value.references.size + 1}", intent.bytes),
+            is AssistantIntent.AttachReference -> viewModelScope.launch {
+                val joined = attach("reference ${_state.value.references.size + 1}", intent.bytes)
+                _state.value = _state.value.copy(references = _state.value.references + joined)
+            }
+
+            AssistantIntent.RemoveFigurine -> _state.value = _state.value.copy(figurine = null)
+
+            is AssistantIntent.RemoveReference -> _state.value = _state.value.copy(
+                references = _state.value.references
+                    .filterIndexed { index, _ -> index != intent.index }
+                    // Renumerotees : garder "reference 3" apres avoir retire la deuxieme
+                    // ferait mentir la legende que le modele recoit avec la photo.
+                    .mapIndexed { index, photo ->
+                        AttachedPhoto("reference ${index + 1}", photo.bytes, photo.thumbnail)
+                    },
             )
 
             AssistantIntent.ClearPhotos ->
@@ -227,6 +241,18 @@ class AssistantViewModel(
     }
 
 
+/**
+     * Prepare une photo jointe : ses octets d'origine, et une vignette pour l'ecran.
+     *
+     * <p>Une reduction qui echoue n'empeche pas de joindre la photo : on rend alors les
+     * octets d'origine comme vignette. Le fichier peut tres bien etre lisible par le
+     * modele et rebuter le decodeur local, et le plan compte plus que l'apercu.</p>
+     */
+    private suspend fun attach(caption: String, bytes: ByteArray): AttachedPhoto {
+        val thumbnail = runCatching { decoder.scaleTo(bytes, THUMBNAIL_EDGE) }.getOrDefault(bytes)
+        return AttachedPhoto(caption, bytes, thumbnail)
+    }
+
     private companion object {
         /**
          * Cote maximal d'une photo rangee avec le projet.
@@ -235,5 +261,8 @@ class AssistantViewModel(
          * lire une piece, pas a un peintre qui rouvre la sienne dans six mois.</p>
          */
         const val STORED_EDGE = 1024
+
+        /** Cote d'une vignette : elle s'affiche dans un carre, pas sur un mur. */
+        const val THUMBNAIL_EDGE = 256
     }
 }
