@@ -40,6 +40,7 @@ import io.ktor.client.engine.mock.respondError
 import kotlinx.serialization.json.Json
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import be.asmolabs.palettier.domain.project.ProjectPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -98,6 +99,8 @@ class AssistantViewModelTest {
         ),
     )
 
+    private val projects = be.asmolabs.palettier.ui.FakeProjectRepository()
+
     private fun model(engine: ChatEngine?, repository: SettingsRepository = InMemorySettings()): AssistantViewModel {
         val store = AiSettingsStore(repository)
         val engines = ChatEngines { engine }
@@ -111,6 +114,8 @@ class AssistantViewModelTest {
             ModelCatalog(io.ktor.client.HttpClient(io.ktor.client.engine.mock.MockEngine {
                 respondError(io.ktor.http.HttpStatusCode.ServiceUnavailable)
             }), store),
+            projects,
+            Plain,
         )
     }
 
@@ -234,6 +239,63 @@ class AssistantViewModelTest {
         model.onIntent(AssistantIntent.Ask)
 
         assertTrue("connexion refusee" in model.await { it.error != null }.error!!)
+    }
+
+    @Test
+    fun `le plan propose devient un projet, avec les photos qui l'ont etabli`() = runTest(dispatcher) {
+        val model = model(answering(draft))
+        model.await { it.palettes.isNotEmpty() }
+        model.onIntent(AssistantIntent.SaveSettings(AiSettings(AiProvider.OLLAMA)))
+        model.onIntent(AssistantIntent.SetSubject("buste de grognard"))
+        model.onIntent(AssistantIntent.AttachFigurine(byteArrayOf(1, 2, 3)))
+        model.onIntent(AssistantIntent.AttachReference(byteArrayOf(4, 5, 6)))
+        model.onIntent(AssistantIntent.Ask)
+        model.await { it.plan != null }
+
+        model.onIntent(AssistantIntent.SaveProject("Grognard"))
+        val done = model.await { it.savedMessage != null }
+
+        assertFalse(done.saving)
+        val project = projects.saved.value.single()
+        assertEquals("Grognard", project.name)
+        assertEquals("buste de grognard", project.subject)
+        assertEquals(listOf("Visage"), project.zones.map { it.name })
+        // Les tubes de la palette sont figes : le plan doit rester reproductible.
+        assertEquals(4, project.paints.size)
+
+        // Sans les photos, on relit dans six mois un plan dont on ne sait plus a quoi il
+        // s'appliquait.
+        assertEquals(
+            listOf(ProjectPhoto.Role.PIECE, ProjectPhoto.Role.REFERENCE),
+            project.photos.map { it.role },
+        )
+        assertTrue(done.savedMessage!!.contains("2 photos"), done.savedMessage!!)
+    }
+
+    @Test
+    fun `le nom propose vient du sujet, ecourte s'il est bavard`() = runTest(dispatcher) {
+        val model = model(null)
+        model.await { it.palettes.isNotEmpty() }
+
+        assertEquals("Projet sans titre", model.state.value.suggestedProjectName)
+
+        model.onIntent(AssistantIntent.SetSubject("  buste de grognard  "))
+        assertEquals("buste de grognard", model.state.value.suggestedProjectName)
+
+        model.onIntent(AssistantIntent.SetSubject("b".repeat(80)))
+        assertEquals(50, model.state.value.suggestedProjectName.length)
+    }
+
+    @Test
+    fun `sans plan propose, il n'y a rien a enregistrer`() = runTest(dispatcher) {
+        val model = model(null)
+        model.await { it.palettes.isNotEmpty() }
+
+        model.onIntent(AssistantIntent.SaveProject("Grognard"))
+        advanceUntilIdle()
+
+        assertTrue(projects.saved.value.isEmpty())
+        assertNull(model.state.value.savedMessage)
     }
 
     @Test

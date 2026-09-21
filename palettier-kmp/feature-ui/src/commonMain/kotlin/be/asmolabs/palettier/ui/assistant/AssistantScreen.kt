@@ -19,6 +19,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -79,12 +83,46 @@ fun AssistantScreen(
                             if (plan.approach.isNotBlank()) {
                                 Text(plan.approach, style = MaterialTheme.typography.bodySmall)
                             }
+
+                            SaveRow(state, onIntent)
                         }
                     }
                 }
                 items(plan.zones) { zone -> ZoneCard(zone) }
             }
         }
+    }
+}
+
+/**
+ * Figer le plan en projet.
+ *
+ * <p>Sans cela, un plan propose disparait a la demande suivante : le modele a travaille
+ * plusieurs minutes pour rien. Les photos qui ont servi a l'etablir partent avec lui --
+ * sans elles, on relit dans six mois un plan dont on ne sait plus a quoi il
+ * s'appliquait.</p>
+ */
+@Composable
+private fun SaveRow(state: AssistantUiState, onIntent: (AssistantIntent) -> Unit) {
+    // Le sujet decrit fait un nom de depart : on tape rarement deux fois la meme chose.
+    var name by remember(state.plan) { mutableStateOf(state.suggestedProjectName) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nom du projet") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            Button(
+                { onIntent(AssistantIntent.SaveProject(name)) },
+                enabled = !state.saving,
+            ) { Text("Enregistrer le projet") }
+            if (state.saving) CircularProgressIndicator(Modifier.size(18.dp))
+        }
+        state.savedMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
     }
 }
 

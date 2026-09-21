@@ -72,3 +72,46 @@ internal class FakePaletteRepository(initial: List<Palette> = emptyList()) : Pal
         palettes.value = palettes.value.filterNot { it.id == palette.id }
     }
 }
+
+/** Un depot de projets en memoire : on veut voir ce qui s'y enregistre. */
+internal class FakeProjectRepository(
+    initial: List<be.asmolabs.palettier.domain.project.Project> = emptyList(),
+) : be.asmolabs.palettier.domain.port.ProjectRepository {
+
+    val saved = MutableStateFlow(initial)
+    private var nextId = (initial.mapNotNull { it.id }.maxOrNull() ?: 0L) + 1
+
+    override fun observeAll(): Flow<List<be.asmolabs.palettier.domain.project.Project>> = saved
+    override suspend fun all() = saved.value
+    override suspend fun findWithPhotos(id: Long) = saved.value.firstOrNull { it.id == id }
+
+    override suspend fun save(
+        project: be.asmolabs.palettier.domain.project.Project,
+    ): be.asmolabs.palettier.domain.project.Project {
+        val stored = project.copy(id = project.id ?: nextId++)
+        saved.value = saved.value.filterNot { it.id == stored.id } + stored
+        return stored
+    }
+
+    override suspend fun delete(project: be.asmolabs.palettier.domain.project.Project) {
+        saved.value = saved.value.filterNot { it.id == project.id }
+    }
+
+    override suspend fun addPhoto(
+        project: be.asmolabs.palettier.domain.project.Project,
+        photo: be.asmolabs.palettier.domain.project.ProjectPhoto,
+    ): be.asmolabs.palettier.domain.project.Project {
+        val grown = project.copy(photos = project.photos + photo.copy(id = nextId++))
+        saved.value = saved.value.map { if (it.id == grown.id) grown else it }
+        return grown
+    }
+
+    override suspend fun removePhoto(
+        project: be.asmolabs.palettier.domain.project.Project,
+        photoId: Long,
+    ): be.asmolabs.palettier.domain.project.Project {
+        val shrunk = project.copy(photos = project.photos.filterNot { it.id == photoId })
+        saved.value = saved.value.map { if (it.id == shrunk.id) shrunk else it }
+        return shrunk
+    }
+}

@@ -39,7 +39,27 @@ data class AssistantUiState(
     /** Les tubes lus sur une photo d'etagere, en attente de la decision du peintre. */
     val tubes: List<Identification> = emptyList(),
     val reading: Boolean = false,
+
+    /** Vrai le temps que le plan devienne un projet, photos comprises. */
+    val saving: Boolean = false,
+    /** Ce que le dernier enregistrement a donne, nomme pour qu'on puisse le retrouver. */
+    val savedMessage: String? = null,
 ) {
+    /**
+     * Le nom propose pour le projet : le sujet decrit, ecourte s'il est bavard.
+     *
+     * <p>Un sujet vaut mieux qu'un champ vide : on tape rarement deux fois la meme
+     * description, et c'est sous elle qu'on reconnaitra la piece dans six mois.</p>
+     */
+    val suggestedProjectName: String
+        get() = subject.trim().let {
+            when {
+                it.isBlank() -> "Projet sans titre"
+                it.length <= 50 -> it
+                else -> it.take(50).trim()
+            }
+        }
+
     val palette: Palette? get() = palettes.firstOrNull { it.id == paletteId }
 
     /** Vrai quand la demande a de quoi partir : un moteur, une palette, et un sujet. */
@@ -66,4 +86,12 @@ sealed interface AssistantIntent {
     /** Le peintre confirme qu'il possede ce tube : c'est lui qui tranche, pas le modele. */
     data class KeepTube(val identification: Identification) : AssistantIntent
     data object ForgetTubes : AssistantIntent
+
+    /**
+     * Fige le plan propose en projet.
+     *
+     * <p>Les photos qui ont servi a l'etablir partent avec lui : sans elles, on relit dans
+     * six mois un plan dont on ne sait plus a quoi il s'appliquait.</p>
+     */
+    data class SaveProject(val name: String) : AssistantIntent
 }

@@ -377,7 +377,7 @@ private val uiModule = module {
     factory { MixerViewModel(get(), get(), get(), get()) }
     factory { DryingViewModel(get()) }
     factory { RecipesViewModel(get(), get()) }
-    factory { AssistantViewModel(get(), get(), get(), get(), get(), get()) }
+    factory { AssistantViewModel(get(), get(), get(), get(), get(), get(), get(), imageDecoder()) }
     single { be.asmolabs.palettier.domain.recipe.RecipeTimelineService(get()) }
     single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
     single { be.asmolabs.palettier.domain.plan.SampledPlanService(get()) }

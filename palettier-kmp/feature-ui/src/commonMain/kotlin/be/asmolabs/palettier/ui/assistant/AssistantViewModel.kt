@@ -9,8 +9,13 @@ import be.asmolabs.palettier.ai.PhotoInput
 import be.asmolabs.palettier.ai.ModelCatalog
 import be.asmolabs.palettier.ai.PlanUnavailable
 import be.asmolabs.palettier.ai.TubeRecognitionService
+import be.asmolabs.palettier.domain.plan.asProject
+import be.asmolabs.palettier.domain.plan.uniqueName
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
 import be.asmolabs.palettier.domain.port.PaletteRepository
+import be.asmolabs.palettier.domain.port.ProjectRepository
+import be.asmolabs.palettier.domain.project.ProjectPhoto
+import be.asmolabs.palettier.image.ImageDecoder
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +40,8 @@ class AssistantViewModel(
     private val tubes: TubeRecognitionService,
     private val catalogue: PaintCatalogRepository,
     private val models: ModelCatalog,
+    private val projects: ProjectRepository,
+    private val decoder: ImageDecoder,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AssistantUiState())
@@ -103,6 +110,8 @@ class AssistantViewModel(
                 )
             }
 
+            is AssistantIntent.SaveProject -> viewModelScope.launch { saveProject(intent.name) }
+
             AssistantIntent.ForgetTubes -> _state.value = _state.value.copy(tubes = emptyList())
         }
     }
@@ -166,5 +175,65 @@ class AssistantViewModel(
                 )
             }
         }
+    }
+
+    /**
+     * Fige le plan propose en projet, avec les photos qui ont servi a l'etablir.
+     *
+     * <p>Les photos sont reduites avant d'etre rangees : une base locale qui accueille des
+     * cliches de telephone doit garantir elle-meme qu'ils restent d'une taille
+     * raisonnable. Celle envoyee au modele l'etait deja, mais plus fort -- ce qui suffit a
+     * un modele de langage ne suffit pas a un peintre qui rouvre sa piece.</p>
+     *
+     * <p>Une photo illisible ne fait pas echouer l'enregistrement : le plan vaut plus que
+     * la vignette, et le refuser en bloc perdrait le travail du modele.</p>
+     */
+    private suspend fun saveProject(wanted: String) {
+        val current = _state.value
+        val plan = current.plan ?: return
+
+        _state.value = current.copy(saving = true, savedMessage = null)
+        try {
+            val name = uniqueName(wanted, projects.all().map { it.name })
+            val saved = projects.save(plan.asProject(name, current.palette))
+
+            val photos = listOfNotNull(current.figurine?.let { it to ProjectPhoto.Role.PIECE }) +
+                current.references.map { it to ProjectPhoto.Role.REFERENCE }
+            var kept = 0
+            var project = saved
+            for ((photo, role) in photos) {
+                runCatching { decoder.scaleTo(photo.bytes, STORED_EDGE) }
+                    .onSuccess { reduced ->
+                        project = projects.addPhoto(
+                            project,
+                            ProjectPhoto(data = reduced, role = role, caption = photo.caption),
+                        )
+                        kept++
+                    }
+            }
+
+            _state.value = _state.value.copy(
+                saving = false,
+                savedMessage = "Projet enregistre : ${saved.name}" +
+                    (if (kept == 0) "" else ", avec $kept photo" + (if (kept > 1) "s" else "")) +
+                    ". Retrouvez-le dans Projets.",
+            )
+        } catch (e: Exception) {
+            _state.value = _state.value.copy(
+                saving = false,
+                savedMessage = e.message ?: "Le projet n'a pas pu etre enregistre.",
+            )
+        }
+    }
+
+
+    private companion object {
+        /**
+         * Cote maximal d'une photo rangee avec le projet.
+         *
+         * <p>Plus large que ce qu'on envoie au modele : 768 pixels suffisent a lui faire
+         * lire une piece, pas a un peintre qui rouvre la sienne dans six mois.</p>
+         */
+        const val STORED_EDGE = 1024
     }
 }
