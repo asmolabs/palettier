@@ -81,34 +81,6 @@ class PickerViewModelTest {
         return ByteArrayOutputStream().also { ImageIO.write(image, "png", it) }.toByteArray()
     }
 
-    /** Un depot de projets en memoire : on veut voir ce qui s'y enregistre. */
-    private class FakeProjects : be.asmolabs.palettier.domain.port.ProjectRepository {
-        val saved = MutableStateFlow<List<be.asmolabs.palettier.domain.project.Project>>(emptyList())
-        private var nextId = 1L
-
-        override fun observeAll(): Flow<List<be.asmolabs.palettier.domain.project.Project>> = saved
-        override suspend fun all() = saved.value
-        override suspend fun findWithPhotos(id: Long) = saved.value.firstOrNull { it.id == id }
-        override suspend fun save(
-            project: be.asmolabs.palettier.domain.project.Project,
-        ): be.asmolabs.palettier.domain.project.Project {
-            val stored = project.copy(id = project.id ?: nextId++)
-            saved.value = saved.value.filterNot { it.id == stored.id } + stored
-            return stored
-        }
-        override suspend fun delete(project: be.asmolabs.palettier.domain.project.Project) {
-            saved.value = saved.value.filterNot { it.id == project.id }
-        }
-        override suspend fun addPhoto(
-            project: be.asmolabs.palettier.domain.project.Project,
-            photo: be.asmolabs.palettier.domain.project.ProjectPhoto,
-        ) = project
-        override suspend fun removePhoto(
-            project: be.asmolabs.palettier.domain.project.Project,
-            photoId: Long,
-        ) = project
-    }
-
     /** Une palette qui ne contient que la terre d'ombre : de quoi voir la portee mordre. */
     private fun palettes() = be.asmolabs.palettier.ui.FakePaletteRepository(
         listOf(
@@ -122,7 +94,7 @@ class PickerViewModelTest {
 
     private val shared = be.asmolabs.palettier.ui.SampledColour()
 
-    private val projects = FakeProjects()
+    private val projects = be.asmolabs.palettier.ui.FakeProjectRepository()
 
     private fun model() = PickerViewModel(
         imageDecoder(), FakeCatalog(catalogue), palettes(), shared, ColorMixService(),
@@ -140,67 +112,88 @@ class PickerViewModelTest {
         withContext(Dispatchers.Default) { state.first(condition) }
 
     @Test
-    fun `une photo chargee rend ses teintes et propose les tubes les plus proches`() = runTest(dispatcher) {
+    fun `une photo chargee rend ses teintes dominantes`() = runTest(dispatcher) {
         val model = model()
 
         model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
-        val state = model.await { it.closest.isNotEmpty() }
+        val state = model.await { it.dominant.isNotEmpty() }
 
         assertTrue(!state.loading)
         assertEquals(2, state.dominant.size)
-        assertNotNull(state.selectedHex)
-        // Le tube le plus proche de la teinte dominante est celui de meme couleur.
-        assertEquals("Flesh Tint", state.closest.first().paint.name)
-        assertTrue(state.closest.first().deltaE < 1.0)
+        assertEquals("#C98F72", state.selectedHex)
+        // Rien de plus n'arrive tout seul : la recette se demande.
+        assertTrue(state.suggestions.isEmpty())
     }
 
     @Test
-    fun `choisir une autre teinte change les tubes proposes`() = runTest(dispatcher) {
+    fun `un melange a un tube rend le tube le plus proche, quand c'est ce qu'on veut`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
+
+        // Chercher un tube seul est un cas particulier du melange, pas une liste a part.
+        model.onIntent(PickerIntent.SetMaxPaints(1))
+        model.onIntent(PickerIntent.FindMixes)
+        val state = model.await { it.suggestions.isNotEmpty() }
+
+        val best = state.suggestions.first()
+        assertEquals(1, best.parts.size)
+        assertEquals("Flesh Tint", best.parts.single().paint.name)
+        assertTrue(best.deltaE < 1.0)
+    }
+
+    @Test
+    fun `choisir une autre teinte repose la question, et la reponse change`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
+        model.await { it.dominant.isNotEmpty() }
+        model.onIntent(PickerIntent.SetMaxPaints(1))
+        model.onIntent(PickerIntent.FindMixes)
+        model.await { it.suggestions.isNotEmpty() }
 
         model.onIntent(PickerIntent.Select("#4A3427"))
-        // Les propositions ont ete videes le temps du calcul : quand elles reviennent,
-        // elles portent bien sur la nouvelle teinte.
-        val state = model.await { it.selectedHex == "#4A3427" && it.closest.isNotEmpty() }
+        // La reponse precedente est oubliee : elle portait sur une autre teinte.
+        assertTrue(model.await { it.selectedHex == "#4A3427" }.suggestions.isEmpty())
 
-        assertEquals("Burnt Umber", state.closest.first().paint.name)
+        model.onIntent(PickerIntent.FindMixes)
+        val state = model.await { it.suggestions.isNotEmpty() }
+        assertEquals("Burnt Umber", state.suggestions.first().parts.single().paint.name)
     }
 
     @Test
-    fun `l'etagere se filtre, et le tube absent disparait des propositions`() = runTest(dispatcher) {
+    fun `l'etagere borne la recherche, et le tube absent n'entre dans aucun melange`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#B22222")))
-        val owned = model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
+        model.onIntent(PickerIntent.FindMixes)
 
-        // Par defaut on ne propose que ce qu'on possede.
-        assertTrue(owned.closest.none { it.paint.name == "Cadmium Red" })
+        // Par defaut on ne cherche que dans ce qu'on possede.
+        val owned = model.await { it.suggestions.isNotEmpty() }
+        assertTrue(owned.suggestions.none { s -> s.parts.any { it.paint.name == "Cadmium Red" } })
 
         model.onIntent(PickerIntent.ChooseScope(SearchScope.Catalogue))
-        val all = model.await {
-            it.scope == SearchScope.Catalogue && it.closest.any { match -> match.paint.name == "Cadmium Red" }
-        }
-        assertEquals("Cadmium Red", all.closest.first().paint.name)
+        model.onIntent(PickerIntent.FindMixes)
+        val all = model.await { it.scope == SearchScope.Catalogue && it.suggestions.isNotEmpty() }
+        assertTrue(all.suggestions.any { s -> s.parts.any { it.paint.name == "Cadmium Red" } })
     }
 
     @Test
-    fun `chercher dans une palette ne propose plus que ses tubes`() = runTest(dispatcher) {
+    fun `chercher dans une palette ne melange plus que ses tubes`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72")))
-        val shelf = model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
-        // Sur l'etagere, c'est la carnation qui gagne : elle est de la meme couleur.
-        assertEquals("Flesh Tint", shelf.closest.first().paint.name)
         val zorn = model.await { it.scopes.any { scope -> scope.label == "Zorn" } }
             .scopes.first { it.label == "Zorn" }
-
         model.onIntent(PickerIntent.ChooseScope(zorn))
-        val inPalette = model.await { it.scope == zorn && it.closest.isNotEmpty() }
+        model.onIntent(PickerIntent.FindMixes)
+        val inPalette = model.await { it.scope == zorn && it.suggestions.isNotEmpty() }
 
-        // Dans la palette, la seule reponse possible est celle qu'on a sortie sur la table,
-        // meme si elle est loin : une recette faisable plutot qu'une recette juste.
-        assertEquals(listOf("Burnt Umber"), inPalette.closest.map { it.paint.name })
+        // La palette ne contient que la terre d'ombre : la reponse est faisable, pas juste.
+        assertTrue(
+            inPalette.suggestions.all { s -> s.parts.all { it.paint.name == "Burnt Umber" } },
+            inPalette.suggestions.map { s -> s.parts.map { it.paint.name } }.toString(),
+        )
     }
 
     @Test
@@ -210,17 +203,17 @@ class PickerViewModelTest {
         )
         val model = PickerViewModel(
             imageDecoder(), FakeCatalog(catalogue), palettes, shared, ColorMixService(),
-            FakeProjects(), be.asmolabs.palettier.domain.plan.SampledPlanService(ColorMixService()),
+            be.asmolabs.palettier.ui.FakeProjectRepository(), be.asmolabs.palettier.domain.plan.SampledPlanService(ColorMixService()),
         )
         model.onIntent(PickerIntent.Load(image("#C98F72")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         val empty = model.await { it.scopes.any { scope -> scope.label == "A composer" } }
             .scopes.first { it.label == "A composer" }
         model.onIntent(PickerIntent.ChooseScope(empty))
 
         val state = model.await { it.scope == empty && it.emptyScope }
-        assertTrue(state.closest.isEmpty())
+        assertTrue(state.suggestions.isEmpty())
     }
 
     @Test
@@ -228,7 +221,7 @@ class PickerViewModelTest {
         val model = model()
         // Une carnation et un blanc de socle, tous deux photographies sous lampe chaude.
         model.onIntent(PickerIntent.Load(image("#D9A070", "#E8D2A8")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
         model.onIntent(PickerIntent.Select("#D9A070"))
         assertNull(model.await { it.selectedHex == "#D9A070" }.correctedHex, "sans point gris, rien n'est corrige")
 
@@ -247,14 +240,15 @@ class PickerViewModelTest {
         val model = model()
         // Trois bandes de 66 pixels : l'ocre, la terre d'ombre, le blanc.
         model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427", "#F4F2EC")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         // Au milieu de la bande du milieu, loin des frontieres.
         model.onIntent(PickerIntent.PickAt(100, 50))
-        val state = model.await { it.selectedHex == "#4A3427" && it.closest.isNotEmpty() }
+        val state = model.await { it.selectedHex == "#4A3427" }
 
         assertEquals(PickPoint(100, 50), state.pickedAt)
-        assertEquals("Burnt Umber", state.closest.first().paint.name)
+        // La teinte relevee est celle du pixel vise, pas une dominante du lot.
+        assertEquals("#4A3427", state.workingHex)
     }
 
     @Test
@@ -275,7 +269,7 @@ class PickerViewModelTest {
     fun `un clic hors de l'image ne releve rien`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
-        val before = model.await { it.closest.isNotEmpty() }
+        val before = model.await { it.dominant.isNotEmpty() }
 
         model.onIntent(PickerIntent.PickAt(500, 500))
         // Le releve hors bornes ne touche a aucun repartiteur : laisser tourner la boucle
@@ -293,7 +287,7 @@ class PickerViewModelTest {
         val model = model()
         // Une carnation sous lampe chaude, et un blanc de socle qui en subit la dominante.
         model.onIntent(PickerIntent.Load(image("#D9A070", "#E8D2A8")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         model.onIntent(PickerIntent.PickAt(50, 50))
         model.await { it.selectedHex == "#D9A070" }
@@ -314,7 +308,7 @@ class PickerViewModelTest {
     fun `le rayon moyenne autour du clic, et un rayon nul releve le seul pixel`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         // A cheval sur la frontiere des deux aplats, avec un large rayon.
         model.onIntent(PickerIntent.SetRadius(10))
@@ -342,7 +336,7 @@ class PickerViewModelTest {
     fun `la teinte relevee part vers les autres ecrans, corrigee si elle l'a ete`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#D9A070", "#E8D2A8")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         model.onIntent(PickerIntent.PickAt(50, 50))
         model.await { it.selectedHex == "#D9A070" }
@@ -359,7 +353,7 @@ class PickerViewModelTest {
     fun `la pipette propose un melange, et seulement quand on le demande`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         // Rien n'arrive tout seul : la recherche coute, et on clique souvent avant de
         // retenir un point.
@@ -376,7 +370,7 @@ class PickerViewModelTest {
     fun `le nombre de tubes borne le melange propose`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#8A6A55")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         model.onIntent(PickerIntent.SetMaxPaints(1))
         model.onIntent(PickerIntent.FindMixes)
@@ -397,7 +391,7 @@ class PickerViewModelTest {
     fun `un nouveau releve oublie le melange, qui repondait a une autre question`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
         model.onIntent(PickerIntent.FindMixes)
         model.await { it.suggestions.isNotEmpty() }
 
@@ -411,7 +405,7 @@ class PickerViewModelTest {
     fun `des releves groupes deviennent un projet, ses groupes en zones`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427", "#E8D2BE")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
         model.await { it.palettes.isNotEmpty() }
 
         model.onIntent(PickerIntent.CreateGroup("Peau"))
@@ -442,7 +436,7 @@ class PickerViewModelTest {
     fun `sans le moindre point, le projet est refuse et rien ne s'enregistre`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         model.onIntent(PickerIntent.CreateGroup("Peau"))
         model.onIntent(PickerIntent.CreateProject("Grognard"))
@@ -456,7 +450,7 @@ class PickerViewModelTest {
     fun `un nom de projet deja pris est numerote plutot que refuse`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
         model.await { it.palettes.isNotEmpty() }
 
         repeat(2) {
@@ -490,7 +484,7 @@ class PickerViewModelTest {
     fun `retirer un releve n'emporte pas son jumeau de meme teinte`() = runTest(dispatcher) {
         val model = model()
         model.onIntent(PickerIntent.Load(image("#C98F72")))
-        model.await { it.closest.isNotEmpty() }
+        model.await { it.dominant.isNotEmpty() }
 
         model.onIntent(PickerIntent.CreateGroup("Peau"))
         // Deux points pris au meme endroit : la meme teinte, deux fois.

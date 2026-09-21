@@ -88,7 +88,6 @@ fun PickerScreen(
                     Swatches(state, onIntent)
                     HorizontalDivider()
                     Working(state, onIntent)
-                    Closest(state, onIntent)
                     HorizontalDivider()
                     Mixes(state, onIntent)
                     HorizontalDivider()
@@ -292,43 +291,6 @@ private fun Working(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
     }
 }
 
-/** Les tubes les plus proches de la teinte retenue. */
-@Composable
-private fun Closest(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Ce qui s'en approche", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-
-        // Chercher dans une palette ne filtre pas une liste : cela change la question, et
-        // c'est ce qui separe une reponse theorique d'une recette faisable ce soir.
-        Text("Chercher dans", style = MaterialTheme.typography.bodySmall)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            state.scopes.forEach { scope ->
-                Chip(scope.label, scope == state.scope) { onIntent(PickerIntent.ChooseScope(scope)) }
-            }
-        }
-
-        if (state.emptyScope) {
-            Text("Cet ensemble ne contient aucun tube.", style = MaterialTheme.typography.bodySmall)
-        }
-
-        LazyColumn(Modifier.size(width = 420.dp, height = 240.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            items(state.closest, key = { it.paint.id ?: it.paint.displayName.hashCode().toLong() }) { match ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Swatch(match.paint.hexColor, size = 26)
-                    Spacer(Modifier.width(10.dp))
-                    Column {
-                        Text(match.paint.displayName, style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            "ecart %.1f  -  %s".format(match.deltaE, verdict(match.deltaE)),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
 /**
  * Le melange a faire pour obtenir la teinte relevee.
  *
@@ -341,6 +303,18 @@ private fun Closest(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
 private fun Mixes(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Le melange a faire", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+        // Chercher dans une palette ne filtre pas un resultat : cela change la question, et
+        // c'est ce qui separe une reponse theorique d'une recette faisable ce soir.
+        Text("Chercher dans", style = MaterialTheme.typography.bodySmall)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            state.scopes.forEach { scope ->
+                Chip(scope.label, scope == state.scope) { onIntent(PickerIntent.ChooseScope(scope)) }
+            }
+        }
+        if (state.emptyScope) {
+            Text("Cet ensemble ne contient aucun tube.", style = MaterialTheme.typography.bodySmall)
+        }
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Au plus", style = MaterialTheme.typography.bodySmall)
@@ -376,7 +350,8 @@ private fun Mixes(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
 
         if (state.suggestions.isEmpty() && !state.searching) {
             Text(
-                "Un tube seul s'approche rarement d'une carnation : demandez le melange.",
+                "Un tube seul s'approche rarement d'une carnation. Pour n'en chercher " +
+                    "qu'un, demandez le melange a un tube.",
                 style = MaterialTheme.typography.bodySmall,
             )
         }

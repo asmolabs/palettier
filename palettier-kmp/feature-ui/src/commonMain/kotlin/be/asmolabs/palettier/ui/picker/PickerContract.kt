@@ -3,7 +3,6 @@ package be.asmolabs.palettier.ui.picker
 import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.mix.MixSuggestion
 import be.asmolabs.palettier.domain.palette.Palette
-import be.asmolabs.palettier.domain.paint.PaintMatchByColour
 import be.asmolabs.palettier.domain.project.DominantColour
 import be.asmolabs.palettier.ui.SearchScope
 
@@ -51,8 +50,6 @@ data class PickerUiState(
     val greyPointHex: String? = null,
     /** La teinte retenue une fois la dominante de la photo annulee. */
     val correctedHex: String? = null,
-    /** Les tubes les plus proches de la teinte retenue, dans la portee choisie. */
-    val closest: List<PaintMatchByColour> = emptyList(),
     /** Ou chercher : l'etagere, le catalogue entier, ou une palette. */
     val scope: SearchScope = SearchScope.Shelf,
     /** Les portees proposees, les palettes du peintre comprises. */

@@ -12,7 +12,6 @@ import be.asmolabs.palettier.domain.plan.uniqueName
 import be.asmolabs.palettier.domain.port.ProjectRepository
 import be.asmolabs.palettier.domain.image.PixelMap
 import be.asmolabs.palettier.domain.image.sampleAround
-import be.asmolabs.palettier.domain.paint.findClosest
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
 import be.asmolabs.palettier.domain.port.PaletteRepository
 import be.asmolabs.palettier.image.ImageDecoder
@@ -82,16 +81,21 @@ class PickerViewModel(
 
             // Les propositions sont videes avant de recalculer : les garder afficherait,
             // le temps du calcul, des tubes choisis pour une autre teinte. Bref, mais faux.
-            is PickerIntent.Select -> viewModelScope.launch {
-                _state.value = _state.value.copy(selectedHex = intent.hex, closest = emptyList())
+            // La question change tout de suite, le calcul suit. Passer le changement d'etat
+            // par la coroutine le remettrait a plus tard : une recherche demandee dans la
+            // foulee partirait sur la question precedente, et son resultat serait annule
+            // quand la nouvelle arriverait enfin. Un essai a montre que cela ne rendait
+            // alors plus rien du tout.
+            is PickerIntent.Select -> {
+                _state.value = _state.value.copy(selectedHex = intent.hex)
                 forgetMixes()
-                recompute()
+                viewModelScope.launch { recompute() }
             }
 
-            is PickerIntent.UseAsGrey -> viewModelScope.launch {
-                _state.value = _state.value.copy(greyPointHex = intent.hex, closest = emptyList())
+            is PickerIntent.UseAsGrey -> {
+                _state.value = _state.value.copy(greyPointHex = intent.hex)
                 forgetMixes()
-                recompute()
+                viewModelScope.launch { recompute() }
             }
 
             is PickerIntent.PickAt -> viewModelScope.launch { pick(intent.x, intent.y) }
@@ -187,10 +191,10 @@ class PickerViewModel(
 
             is PickerIntent.CreateProject -> viewModelScope.launch { createProject(intent.name) }
 
-            is PickerIntent.ChooseScope -> viewModelScope.launch {
-                _state.value = _state.value.copy(scope = intent.scope, closest = emptyList())
+            is PickerIntent.ChooseScope -> {
+                _state.value = _state.value.copy(scope = intent.scope)
                 forgetMixes()
-                recompute()
+                viewModelScope.launch { recompute() }
             }
         }
     }
@@ -210,7 +214,6 @@ class PickerViewModel(
             pickingGrey = false,
             greyPointHex = null,
             correctedHex = null,
-            closest = emptyList(),
             suggestions = emptyList(),
             searching = false,
         )
@@ -254,9 +257,9 @@ class PickerViewModel(
         val current = _state.value
         _state.value = if (current.pickingGrey) {
             // Le point neutre se desarme apres usage : on en designe un, pas une suite.
-            current.copy(greyPointHex = hex, pickingGrey = false, closest = emptyList())
+            current.copy(greyPointHex = hex, pickingGrey = false)
         } else {
-            current.copy(selectedHex = hex, pickedAt = PickPoint(x, y), closest = emptyList())
+            current.copy(selectedHex = hex, pickedAt = PickPoint(x, y))
         }
         recompute()
     }
@@ -282,7 +285,6 @@ class PickerViewModel(
         _state.value = current.copy(
             correctedHex = grey?.let { working.toHex() },
             emptyScope = candidates.isEmpty(),
-            closest = findClosest(working, candidates, CLOSEST),
         )
     }
 
@@ -364,9 +366,6 @@ class PickerViewModel(
     companion object {
         /** Teintes relevees sur la photo : assez pour couvrir une piece, pas pour noyer. */
         private const val COLOURS = 8
-
-        /** Tubes proposes : au-dela, on ne compare plus, on parcourt. */
-        private const val CLOSEST = 6
 
         /** Rayon maximal, comme du temps de JavaFX : au-dela on ne releve plus, on moyenne. */
         const val MAX_RADIUS = 30
