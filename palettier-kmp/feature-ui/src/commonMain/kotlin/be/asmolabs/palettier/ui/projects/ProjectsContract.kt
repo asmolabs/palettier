@@ -3,6 +3,7 @@ package be.asmolabs.palettier.ui.projects
 import be.asmolabs.palettier.domain.plan.PaintingPlan
 import be.asmolabs.palettier.domain.project.FatOverLeanService
 import be.asmolabs.palettier.domain.project.Project
+import be.asmolabs.palettier.domain.project.ProjectPhoto
 import be.asmolabs.palettier.domain.project.SubstituteService
 
 /** Une couche telle que l'ecran la montre : la decision, et le melange qui en decoule. */
@@ -13,6 +14,7 @@ data class LayerRow(
     val targetHex: String,
     val technique: String,
     val isApplied: Boolean,
+    val note: String = "",
     /** Ce que la palette permet d'atteindre, ou null tant que le calcul n'est pas fini. */
     val mix: PaintingPlan.Layer?,
 )
@@ -28,6 +30,17 @@ data class ProjectsUiState(
     val computing: Boolean = false,
     val risks: List<FatOverLeanService.Risk> = emptyList(),
     val missing: List<SubstituteService.Missing> = emptyList(),
+    /**
+     * Les photos de la piece choisie.
+     *
+     * <p>A part du projet, parce qu'elles se lisent a part : ce sont des images entieres,
+     * et la liste des pieces n'en a que faire.</p>
+     */
+    val photos: List<ProjectPhoto> = emptyList(),
+    /** Vrai quand la palette a ete remaniee depuis que le plan a ete etabli. */
+    val paletteDiverges: Boolean = false,
+    val busy: Boolean = false,
+    val message: String? = null,
     val error: String? = null,
 )
 
@@ -36,4 +49,36 @@ sealed interface ProjectsIntent {
 
     /** Coche ou decoche une couche. La pose est un fait, pas une decision revocable. */
     data class ToggleApplied(val zoneIndex: Int, val layerIndex: Int) : ProjectsIntent
+
+    data class Rename(val name: String) : ProjectsIntent
+
+    data object Delete : ProjectsIntent
+
+    /**
+     * Reprend les tubes de la palette telle qu'elle est aujourd'hui.
+     *
+     * <p>Les couleurs visees ne bougent pas : seuls les melanges qui y menent sont
+     * recalcules. C'est ce qui permet de profiter d'un tube achete depuis, sans refaire
+     * le plan.</p>
+     */
+    data object SyncPalette : ProjectsIntent
+
+    /** La plateforme a lu un fichier ; le ViewModel ne connait que des octets. */
+    data class AddPhoto(val bytes: ByteArray, val role: ProjectPhoto.Role) : ProjectsIntent
+
+    data class RemovePhoto(val id: Long) : ProjectsIntent
+
+    /**
+     * Corrige une couche : la couleur visee, la technique, la note.
+     *
+     * <p>Seule la decision se modifie. Le dosage n'est pas la parce qu'il ne se decide
+     * pas : il se calcule a partir de la couleur retenue et des tubes du projet.</p>
+     */
+    data class EditLayer(
+        val zoneIndex: Int,
+        val layerIndex: Int,
+        val targetHex: String,
+        val technique: String,
+        val note: String,
+    ) : ProjectsIntent
 }

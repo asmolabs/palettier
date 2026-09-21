@@ -60,6 +60,7 @@ import be.asmolabs.palettier.ui.palettes.PalettesViewModel
 import be.asmolabs.palettier.ui.picker.PickerIntent
 import be.asmolabs.palettier.ui.picker.PickerScreen
 import be.asmolabs.palettier.ui.picker.PickerViewModel
+import be.asmolabs.palettier.ui.projects.ProjectsIntent
 import be.asmolabs.palettier.ui.projects.ProjectsScreen
 import be.asmolabs.palettier.ui.recipes.RecipesScreen
 import be.asmolabs.palettier.ui.settings.SettingsScreen
@@ -173,8 +174,16 @@ fun main() = application {
 
                         when (section) {
                             Section.Today -> WorkbenchScreen(state, Modifier.weight(1f))
-                            Section.Projects ->
-                                ProjectsScreen(projectsState, projectsModel::onIntent, Modifier.weight(1f))
+                            Section.Projects -> ProjectsScreen(
+                                projectsState,
+                                projectsModel::onIntent,
+                                onChoosePhoto = { role ->
+                                    pickPhoto()?.let {
+                                        projectsModel.onIntent(ProjectsIntent.AddPhoto(it, role))
+                                    }
+                                },
+                                Modifier.weight(1f),
+                            )
                             Section.Palettes ->
                                 PalettesScreen(palettesState, palettesModel::onIntent, Modifier.weight(1f))
                             Section.Picker -> PickerScreen(
@@ -370,7 +379,7 @@ private val uiModule = module {
     // catalogue, le melangeur et l'etabli la retrouvent sans se connaitre.
     single { be.asmolabs.palettier.ui.SampledColour() }
     factory { WorkbenchViewModel(get(), get(), get(), get(), get()) }
-    factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
+    factory { ProjectsViewModel(get(), get(), get(), get(), get(), imageDecoder()) }
     factory { CatalogViewModel(get(), get()) }
     factory { PickerViewModel(imageDecoder(), get(), get(), get(), get(), get(), get()) }
     factory { PalettesViewModel(get(), get()) }

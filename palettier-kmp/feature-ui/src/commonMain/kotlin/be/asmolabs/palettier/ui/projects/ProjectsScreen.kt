@@ -1,10 +1,12 @@
 package be.asmolabs.palettier.ui.projects
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -23,15 +25,25 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.decodeToImageBitmap
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.project.Project
+import be.asmolabs.palettier.domain.project.ProjectPhoto
 
 /**
  * Les pieces en cours et leur plan.
@@ -43,6 +55,7 @@ import be.asmolabs.palettier.domain.project.Project
 fun ProjectsScreen(
     state: ProjectsUiState,
     onIntent: (ProjectsIntent) -> Unit,
+    onChoosePhoto: (ProjectPhoto.Role) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier.fillMaxSize()) {
@@ -58,7 +71,7 @@ fun ProjectsScreen(
 
             else -> Row(Modifier.fillMaxSize()) {
                 ProjectList(state, onIntent, Modifier.width(260.dp).fillMaxHeight())
-                Detail(state, onIntent, Modifier.weight(1f).fillMaxHeight())
+                Detail(state, onIntent, onChoosePhoto, Modifier.weight(1f).fillMaxHeight())
             }
         }
     }
@@ -96,25 +109,158 @@ private fun ProjectRow(project: Project, selected: Boolean, onClick: () -> Unit)
 }
 
 @Composable
-private fun Detail(state: ProjectsUiState, onIntent: (ProjectsIntent) -> Unit, modifier: Modifier) {
+private fun Detail(
+    state: ProjectsUiState,
+    onIntent: (ProjectsIntent) -> Unit,
+    onChoosePhoto: (ProjectPhoto.Role) -> Unit,
+    modifier: Modifier,
+) {
     val project = state.selected ?: return
 
     LazyColumn(modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item {
-            Column {
-                Text(project.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(project.subject, style = MaterialTheme.typography.bodySmall)
-                if (project.approach.isNotBlank()) {
-                    Text(project.approach, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
-                }
-            }
-        }
+        item { Header(state, onIntent) }
+        item { PhotosCard(state, onIntent, onChoosePhoto) }
 
         if (state.risks.isNotEmpty()) item { CrackingCard(state) }
         if (state.missing.isNotEmpty()) item { ShelfCard(state) }
         if (state.computing) item { Row { CircularProgressIndicator(Modifier.size(18.dp)) } }
 
         items(state.zones) { zone -> ZoneCard(zone, onIntent) }
+    }
+}
+
+/** L'en-tete : ce que la piece est, et les trois gestes qui la tiennent a jour. */
+@Composable
+private fun Header(state: ProjectsUiState, onIntent: (ProjectsIntent) -> Unit) {
+    val project = state.selected ?: return
+    var renaming by remember(project.id) { mutableStateOf(false) }
+    var name by remember(project.id) { mutableStateOf(project.name) }
+    var confirming by remember(project.id) { mutableStateOf(false) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (renaming) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nom du projet") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton({
+                    onIntent(ProjectsIntent.Rename(name))
+                    renaming = false
+                }) { Text("Valider") }
+                TextButton({
+                    name = project.name
+                    renaming = false
+                }) { Text("Annuler") }
+            }
+        } else {
+            Text(project.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        }
+
+        Text(project.subject, style = MaterialTheme.typography.bodySmall)
+        if (project.approach.isNotBlank()) {
+            Text(project.approach, style = MaterialTheme.typography.bodySmall)
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!renaming) TextButton({ renaming = true }) { Text("Renommer") }
+
+            // La suppression demande confirmation : elle emporte les couches posees, et
+            // rien dans l'application ne les rendrait.
+            if (confirming) {
+                TextButton({
+                    onIntent(ProjectsIntent.Delete)
+                    confirming = false
+                }) { Text("Confirmer la suppression") }
+                TextButton({ confirming = false }) { Text("Annuler") }
+            } else {
+                TextButton({ confirming = true }) { Text("Supprimer") }
+            }
+        }
+
+        // Proposee seulement quand elle a lieu d'etre : une palette remaniee depuis que le
+        // plan a ete etabli.
+        if (state.paletteDiverges) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "La palette a change depuis ce plan.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                TextButton({ onIntent(ProjectsIntent.SyncPalette) }) { Text("Reprendre la palette actuelle") }
+            }
+        }
+
+        state.message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+    }
+}
+
+/**
+ * Les photos de la piece.
+ *
+ * <p>Trois roles, parce qu'ils ne servent pas a la meme chose : la piece telle qu'elle
+ * est, la reference qu'on vise, et l'avancement qu'on voudra comparer plus tard.</p>
+ */
+@Composable
+private fun PhotosCard(
+    state: ProjectsUiState,
+    onIntent: (ProjectsIntent) -> Unit,
+    onChoosePhoto: (ProjectPhoto.Role) -> Unit,
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Photos", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+                ProjectPhoto.Role.entries.forEach { role ->
+                    TextButton({ onChoosePhoto(role) }) { Text(role.label) }
+                }
+                if (state.busy) CircularProgressIndicator(Modifier.size(16.dp))
+            }
+
+            if (state.photos.isEmpty()) {
+                Text(
+                    "Aucune photo. Celles de l'assistant sont conservees a l'enregistrement.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    state.photos.forEach { photo ->
+                        PhotoTile(photo) { photo.id?.let { onIntent(ProjectsIntent.RemovePhoto(it)) } }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhotoTile(photo: ProjectPhoto, onRemove: () -> Unit) {
+    val bitmap = remember(photo.id) { runCatching { photo.data.decodeToImageBitmap() }.getOrNull() }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            Modifier.size(96.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (bitmap == null) {
+                Text("?", style = MaterialTheme.typography.titleMedium)
+            } else {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = photo.caption.ifBlank { photo.role.label },
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(6.dp)),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+        }
+        Text(photo.role.label, style = MaterialTheme.typography.labelSmall)
+        TextButton(onRemove) { Text("\u2715", style = MaterialTheme.typography.labelSmall) }
     }
 }
 
@@ -174,6 +320,13 @@ private fun ZoneCard(zone: ZoneRow, onIntent: (ProjectsIntent) -> Unit) {
 
 @Composable
 private fun LayerLine(layer: LayerRow, onIntent: (ProjectsIntent) -> Unit) {
+    var editing by remember(layer.zoneIndex, layer.layerIndex) { mutableStateOf(false) }
+
+    if (editing) {
+        LayerEditor(layer, onIntent) { editing = false }
+        return
+    }
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Swatch(layer.targetHex)
         layer.mix?.let { Spacer(Modifier.width(4.dp)); Swatch(it.achieved.toHex()) }
@@ -188,10 +341,78 @@ private fun LayerLine(layer: LayerRow, onIntent: (ProjectsIntent) -> Unit) {
             )
         }
 
+        TextButton({ editing = true }) { Text("Modifier") }
+
         Checkbox(
             checked = layer.isApplied,
             onCheckedChange = { onIntent(ProjectsIntent.ToggleApplied(layer.zoneIndex, layer.layerIndex)) },
         )
+    }
+}
+
+/**
+ * Correction d'une couche : la couleur visee, la technique, la note.
+ *
+ * <p>Seule la decision se modifie. Le dosage n'apparait pas dans ce formulaire parce
+ * qu'il ne se decide pas : il se calcule a partir de la couleur retenue et des tubes du
+ * projet. Une couche deja posee garde sa date et son atelier -- corriger la couleur pour
+ * la suite ne doit pas reecrire ce qui a deja seche.</p>
+ */
+@Composable
+private fun LayerEditor(layer: LayerRow, onIntent: (ProjectsIntent) -> Unit, onDone: () -> Unit) {
+    var hex by remember(layer) { mutableStateOf(layer.targetHex) }
+    var technique by remember(layer) { mutableStateOf(layer.technique) }
+    var note by remember(layer) { mutableStateOf(layer.note) }
+
+    val valid = runCatching { Rgb.ofHex(if (hex.startsWith("#")) hex else "#$hex") }.isSuccess
+
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(layer.role, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (valid) Swatch(if (hex.startsWith("#")) hex else "#$hex")
+            OutlinedTextField(
+                value = hex,
+                onValueChange = { hex = it },
+                label = { Text("Couleur visee") },
+                isError = !valid,
+                singleLine = true,
+                modifier = Modifier.width(150.dp),
+            )
+            OutlinedTextField(
+                value = technique,
+                onValueChange = { technique = it },
+                label = { Text("Technique") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+        }
+
+        OutlinedTextField(
+            value = note,
+            onValueChange = { note = it },
+            label = { Text("Note") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(
+                {
+                    onIntent(
+                        ProjectsIntent.EditLayer(
+                            layer.zoneIndex,
+                            layer.layerIndex,
+                            if (hex.startsWith("#")) hex else "#$hex",
+                            technique,
+                            note,
+                        )
+                    )
+                    onDone()
+                },
+                enabled = valid,
+            ) { Text("Valider") }
+            TextButton(onDone) { Text("Annuler") }
+        }
     }
 }
 
