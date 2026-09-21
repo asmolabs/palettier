@@ -10,6 +10,7 @@ import be.asmolabs.palettier.domain.plan.ProjectPlanner
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
 import be.asmolabs.palettier.domain.port.ProjectRepository
 import be.asmolabs.palettier.domain.project.FatOverLeanService
+import be.asmolabs.palettier.domain.project.ProgressCheckService
 import be.asmolabs.palettier.domain.project.Project
 import be.asmolabs.palettier.domain.project.ProjectLayer
 import be.asmolabs.palettier.domain.project.ProjectPhoto
@@ -61,6 +62,25 @@ class ProjectsViewModelTest {
     private object PassThrough : be.asmolabs.palettier.image.ImageDecoder {
         override suspend fun decode(bytes: ByteArray) =
             be.asmolabs.palettier.domain.image.PixelMap(1, 1, IntArray(1))
+        override suspend fun scaleTo(bytes: ByteArray, maxEdge: Int) = bytes
+    }
+
+    /** Une photo d'aplats connus : c'est la comparaison qu'on verifie, pas le decodage. */
+    private class Flat(private vararg val argb: Int) : be.asmolabs.palettier.image.ImageDecoder {
+        override suspend fun decode(bytes: ByteArray): be.asmolabs.palettier.domain.image.PixelMap {
+            val band = 40
+            val pixels = IntArray(band * argb.size * 10) { index ->
+                argb[(index % (band * argb.size)) / band]
+            }
+            return be.asmolabs.palettier.domain.image.PixelMap(band * argb.size, 10, pixels)
+        }
+        override suspend fun scaleTo(bytes: ByteArray, maxEdge: Int) = bytes
+    }
+
+    /** Un decodeur qui refuse tout : le cas du fichier qui n'est pas une image. */
+    private object Unreadable : be.asmolabs.palettier.image.ImageDecoder {
+        override suspend fun decode(bytes: ByteArray): be.asmolabs.palettier.domain.image.PixelMap =
+            throw IllegalArgumentException("Format d'image non reconnu")
         override suspend fun scaleTo(bytes: ByteArray, maxEdge: Int) = bytes
     }
 
@@ -123,13 +143,17 @@ class ProjectsViewModelTest {
         ),
     )
 
-    private fun viewModel(projects: FakeProjects) = ProjectsViewModel(
+    private fun viewModel(
+        projects: FakeProjects,
+        decoder: be.asmolabs.palettier.image.ImageDecoder = PassThrough,
+    ) = ProjectsViewModel(
         projects = projects,
         catalog = FakeCatalog(listOf(white, umber, absent)),
         planner = ProjectPlanner(ColorMixService()),
         fatOverLean = FatOverLeanService(),
         substitutes = SubstituteService(),
-        decoder = PassThrough,
+        decoder = decoder,
+        progress = ProgressCheckService(),
         clock = FixedClock(now),
         workshop = { Workshop(24.0, 40.0, be.asmolabs.palettier.domain.paint.Ventilation.GOOD) },
     )
@@ -327,5 +351,64 @@ class ProjectsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(hex, model.state.value.selected!!.zones.first().layers.first().targetHex)
+    }
+
+    @Test
+    fun `une photo d'avancement se lit contre le plan, de la piece vers le plan`() = runTest(dispatcher) {
+        val projects = FakeProjects(listOf(piece()))
+        // Deux aplats : la base du plan, et un gris de socle que rien ne prevoit.
+        val model = viewModel(projects, Flat(0xFFC98F72.toInt(), 0xFF7A7A7A.toInt()))
+        backgroundScope.launch { model.state.collect { } }
+        model.state.first { !it.loading }
+        model.onIntent(ProjectsIntent.Select(piece()))
+        model.state.first { it.zones.isNotEmpty() }
+
+        model.onIntent(ProjectsIntent.CompareWithPlan(byteArrayOf(1)))
+        val seen = model.state.first { it.comparison.isNotEmpty() }.comparison
+
+        val planned = seen.first { it.matchesPlan }
+        assertEquals("Visage", planned.zone)
+        assertEquals("Base", planned.role)
+        assertTrue(planned.deltaE < 2, "l'aplat est celui de la base : ${planned.deltaE}")
+
+        // Ce qui n'etait prevu nulle part est signale, au lieu d'etre rattache de force.
+        val unplanned = seen.first { !it.matchesPlan }
+        assertTrue(unplanned.verdict().contains("Rien de prevu"), unplanned.verdict())
+    }
+
+    @Test
+    fun `la comparaison n'enregistre rien, ni la photo ni le constat`() = runTest(dispatcher) {
+        val projects = FakeProjects(listOf(piece()))
+        val model = viewModel(projects, Flat(0xFFC98F72.toInt()))
+        backgroundScope.launch { model.state.collect { } }
+        model.state.first { !it.loading }
+        model.onIntent(ProjectsIntent.Select(piece()))
+        model.state.first { it.zones.isNotEmpty() }
+
+        model.onIntent(ProjectsIntent.CompareWithPlan(byteArrayOf(1)))
+        model.state.first { it.comparison.isNotEmpty() }
+
+        // C'est un constat a un instant : la photo comparee n'est pas rangee.
+        assertTrue(model.state.value.photos.isEmpty())
+        assertEquals(piece().zones, projects.projects.value.single().zones)
+
+        model.onIntent(ProjectsIntent.ForgetComparison)
+        assertTrue(model.state.first { it.comparison.isEmpty() }.comparison.isEmpty())
+    }
+
+    @Test
+    fun `un fichier illisible le dit, sans faire tomber l'ecran`() = runTest(dispatcher) {
+        val projects = FakeProjects(listOf(piece()))
+        val model = viewModel(projects, Unreadable)
+        backgroundScope.launch { model.state.collect { } }
+        model.state.first { !it.loading }
+        model.onIntent(ProjectsIntent.Select(piece()))
+        model.state.first { it.zones.isNotEmpty() }
+
+        model.onIntent(ProjectsIntent.CompareWithPlan(byteArrayOf(1)))
+        val state = model.state.first { it.message != null }
+
+        assertTrue(state.message!!.contains("illisible"), state.message!!)
+        assertTrue(!state.comparing)
     }
 }

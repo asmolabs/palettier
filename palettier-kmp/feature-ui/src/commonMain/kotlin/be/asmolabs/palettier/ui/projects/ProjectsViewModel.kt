@@ -11,6 +11,8 @@ import be.asmolabs.palettier.domain.port.PaintCatalogRepository
 import be.asmolabs.palettier.domain.port.ProjectRepository
 import be.asmolabs.palettier.domain.project.FatOverLeanService
 import be.asmolabs.palettier.domain.project.Project
+import be.asmolabs.palettier.domain.image.ImagePalette
+import be.asmolabs.palettier.domain.project.ProgressCheckService
 import be.asmolabs.palettier.domain.project.ProjectPhoto
 import be.asmolabs.palettier.domain.plan.uniqueName
 import be.asmolabs.palettier.domain.project.SubstituteService
@@ -44,6 +46,7 @@ class ProjectsViewModel(
     private val fatOverLean: FatOverLeanService,
     private val substitutes: SubstituteService,
     private val decoder: ImageDecoder,
+    private val progress: ProgressCheckService,
     private val clock: Clock = Clock.System,
     private val workshop: () -> Workshop = { Workshop.standard() },
 ) : ViewModel() {
@@ -57,6 +60,8 @@ class ProjectsViewModel(
         val risks: List<FatOverLeanService.Risk> = emptyList(),
         val missing: List<SubstituteService.Missing> = emptyList(),
         val photos: List<ProjectPhoto> = emptyList(),
+        val comparison: List<ProgressCheckService.Observed> = emptyList(),
+        val comparing: Boolean = false,
         val busy: Boolean = false,
         val message: String? = null,
     )
@@ -73,6 +78,8 @@ class ProjectsViewModel(
                 risks = detail.risks,
                 missing = detail.missing,
                 photos = detail.photos,
+                comparison = detail.comparison,
+                comparing = detail.comparing,
                 paletteDiverges = selected?.divergesFromPalette() == true,
                 busy = detail.busy,
                 message = detail.message,
@@ -126,6 +133,11 @@ class ProjectsViewModel(
             }
 
             is ProjectsIntent.EditLayer -> viewModelScope.launch { editLayer(intent) }
+
+            is ProjectsIntent.CompareWithPlan -> viewModelScope.launch { compare(intent.bytes) }
+
+            ProjectsIntent.ForgetComparison ->
+                detail.value = detail.value.copy(comparison = emptyList(), message = null)
         }
     }
 
@@ -210,6 +222,34 @@ class ProjectsViewModel(
         refreshDetail(projects.save(updated))
     }
 
+/**
+     * Confronte une photo d'avancement aux couleurs visees par le plan.
+     *
+     * <p>La mesure porte sur le fichier d'origine, jamais sur la photo rangee avec le
+     * projet : celle-ci est reduite et reencodee, et ses couleurs ont bouge. Meme ainsi,
+     * une photo reste prise sous une lumiere quelconque -- l'ecart se lit comme une
+     * tendance, pas comme un verdict.</p>
+     *
+     * <p>Rien n'est enregistre. C'est un constat a un instant, et la photo comparee n'est
+     * pas rangee : on compare, on regarde, on referme.</p>
+     */
+    private suspend fun compare(bytes: ByteArray) {
+        val project = state.value.selected ?: return
+        detail.value = detail.value.copy(comparing = true, comparison = emptyList(), message = null)
+        try {
+            val dominant = ImagePalette.dominant(decoder.decode(bytes), OBSERVED)
+            detail.value = detail.value.copy(
+                comparing = false,
+                comparison = progress.compare(project, dominant),
+            )
+        } catch (e: Exception) {
+            detail.value = detail.value.copy(
+                comparing = false,
+                message = "Image illisible : ${e.message ?: "format non reconnu"}",
+            )
+        }
+    }
+
     /** Recalcule le plan de la piece choisie, hors du fil d'affichage. */
     private fun refreshDetail(project: Project) {
         selectedId.value = project.id
@@ -263,5 +303,8 @@ class ProjectsViewModel(
     private companion object {
         /** Cote maximal d'une photo rangee : assez pour rouvrir sa piece dans six mois. */
         const val STORED_EDGE = 1024
+
+        /** Teintes relevees sur la photo : assez pour couvrir une piece, pas pour noyer. */
+        const val OBSERVED = 8
     }
 }

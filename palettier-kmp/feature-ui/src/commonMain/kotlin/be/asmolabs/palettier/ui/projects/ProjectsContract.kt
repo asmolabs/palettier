@@ -2,6 +2,7 @@ package be.asmolabs.palettier.ui.projects
 
 import be.asmolabs.palettier.domain.plan.PaintingPlan
 import be.asmolabs.palettier.domain.project.FatOverLeanService
+import be.asmolabs.palettier.domain.project.ProgressCheckService
 import be.asmolabs.palettier.domain.project.Project
 import be.asmolabs.palettier.domain.project.ProjectPhoto
 import be.asmolabs.palettier.domain.project.SubstituteService
@@ -39,6 +40,14 @@ data class ProjectsUiState(
     val photos: List<ProjectPhoto> = emptyList(),
     /** Vrai quand la palette a ete remaniee depuis que le plan a ete etabli. */
     val paletteDiverges: Boolean = false,
+    /**
+     * Ce que la derniere photo d'avancement a montre, confronte au plan.
+     *
+     * <p>Rien n'est enregistre : c'est un constat a un instant, pas une decision. La
+     * photo elle-meme n'est pas rangee non plus -- on compare, on regarde, on referme.</p>
+     */
+    val comparison: List<ProgressCheckService.Observed> = emptyList(),
+    val comparing: Boolean = false,
     val busy: Boolean = false,
     val message: String? = null,
     val error: String? = null,
@@ -67,6 +76,17 @@ sealed interface ProjectsIntent {
     data class AddPhoto(val bytes: ByteArray, val role: ProjectPhoto.Role) : ProjectsIntent
 
     data class RemovePhoto(val id: Long) : ProjectsIntent
+
+    /**
+     * Confronte une photo d'avancement aux couleurs visees par le plan.
+     *
+     * <p>La lecture va de la piece vers le plan et non l'inverse : partir des couleurs
+     * visees pour chercher la plus proche sur la photo trouverait toujours quelque chose,
+     * une photo contenant des milliers de teintes.</p>
+     */
+    data class CompareWithPlan(val bytes: ByteArray) : ProjectsIntent
+
+    data object ForgetComparison : ProjectsIntent
 
     /**
      * Corrige une couche : la couleur visee, la technique, la note.

@@ -56,6 +56,7 @@ fun ProjectsScreen(
     state: ProjectsUiState,
     onIntent: (ProjectsIntent) -> Unit,
     onChoosePhoto: (ProjectPhoto.Role) -> Unit,
+    onCompare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier.fillMaxSize()) {
@@ -71,7 +72,7 @@ fun ProjectsScreen(
 
             else -> Row(Modifier.fillMaxSize()) {
                 ProjectList(state, onIntent, Modifier.width(260.dp).fillMaxHeight())
-                Detail(state, onIntent, onChoosePhoto, Modifier.weight(1f).fillMaxHeight())
+                Detail(state, onIntent, onChoosePhoto, onCompare, Modifier.weight(1f).fillMaxHeight())
             }
         }
     }
@@ -113,13 +114,15 @@ private fun Detail(
     state: ProjectsUiState,
     onIntent: (ProjectsIntent) -> Unit,
     onChoosePhoto: (ProjectPhoto.Role) -> Unit,
+    onCompare: () -> Unit,
     modifier: Modifier,
 ) {
     val project = state.selected ?: return
 
     LazyColumn(modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { Header(state, onIntent) }
-        item { PhotosCard(state, onIntent, onChoosePhoto) }
+        item { PhotosCard(state, onIntent, onChoosePhoto, onCompare) }
+        if (state.comparison.isNotEmpty() || state.comparing) item { ComparisonCard(state, onIntent) }
 
         if (state.risks.isNotEmpty()) item { CrackingCard(state) }
         if (state.missing.isNotEmpty()) item { ShelfCard(state) }
@@ -208,6 +211,7 @@ private fun PhotosCard(
     state: ProjectsUiState,
     onIntent: (ProjectsIntent) -> Unit,
     onChoosePhoto: (ProjectPhoto.Role) -> Unit,
+    onCompare: () -> Unit,
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -218,6 +222,11 @@ private fun PhotosCard(
                     TextButton({ onChoosePhoto(role) }) { Text(role.label) }
                 }
                 if (state.busy) CircularProgressIndicator(Modifier.size(16.dp))
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onCompare, enabled = !state.comparing) { Text("Comparer une photo au plan") }
+                if (state.comparing) CircularProgressIndicator(Modifier.size(16.dp))
             }
 
             if (state.photos.isEmpty()) {
@@ -261,6 +270,51 @@ private fun PhotoTile(photo: ProjectPhoto, onRemove: () -> Unit) {
         }
         Text(photo.role.label, style = MaterialTheme.typography.labelSmall)
         TextButton(onRemove) { Text("\u2715", style = MaterialTheme.typography.labelSmall) }
+    }
+}
+
+/**
+ * Ce qu'il y a sur la piece, confronte a ce qui etait vise.
+ *
+ * <p>La lecture va de la piece vers le plan. Partir des couleurs visees pour chercher la
+ * plus proche sur la photo trouverait toujours quelque chose -- une photo contient des
+ * milliers de teintes. Partir de ce qui occupe reellement la piece se trompe moins, et
+ * signale au passage ce qui n'etait prevu nulle part.</p>
+ */
+@Composable
+private fun ComparisonCard(state: ProjectsUiState, onIntent: (ProjectsIntent) -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Ce que montre la photo", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+                TextButton({ onIntent(ProjectsIntent.ForgetComparison) }) { Text("Fermer") }
+            }
+
+            state.comparison.forEach { seen ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Swatch(seen.measured.toHex())
+                    seen.target?.let { Spacer(Modifier.width(4.dp)); Swatch(it.toHex()) }
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(seen.verdict(), style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            if (seen.matchesPlan) "%.0f %% de l'image  -  ecart %.1f".format(seen.share * 100, seen.deltaE)
+                            else "%.0f %% de l'image".format(seen.share * 100),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+            }
+
+            Text(
+                "La comparaison lit votre fichier d'origine, pas la photo rangee ici : celle-ci " +
+                    "est reduite et reencodee, ses couleurs ont bouge. Meme ainsi, une photo est " +
+                    "prise sous une lumiere quelconque -- l'ecart se lit comme une tendance, pas " +
+                    "comme un verdict.",
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
     }
 }
 

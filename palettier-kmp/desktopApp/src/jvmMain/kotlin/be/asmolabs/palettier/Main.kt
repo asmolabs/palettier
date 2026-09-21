@@ -182,6 +182,13 @@ fun main() = application {
                                         projectsModel.onIntent(ProjectsIntent.AddPhoto(it, role))
                                     }
                                 },
+                                onCompare = {
+                                    // La comparaison lit le fichier d'origine, pas la photo
+                                    // rangee : celle-ci est reduite, ses couleurs ont bouge.
+                                    pickPhoto()?.let {
+                                        projectsModel.onIntent(ProjectsIntent.CompareWithPlan(it))
+                                    }
+                                },
                                 Modifier.weight(1f),
                             )
                             Section.Palettes ->
@@ -379,7 +386,7 @@ private val uiModule = module {
     // catalogue, le melangeur et l'etabli la retrouvent sans se connaitre.
     single { be.asmolabs.palettier.ui.SampledColour() }
     factory { WorkbenchViewModel(get(), get(), get(), get(), get()) }
-    factory { ProjectsViewModel(get(), get(), get(), get(), get(), imageDecoder()) }
+    factory { ProjectsViewModel(get(), get(), get(), get(), get(), imageDecoder(), get()) }
     factory { CatalogViewModel(get(), get()) }
     factory { PickerViewModel(imageDecoder(), get(), get(), get(), get(), get(), get()) }
     factory { PalettesViewModel(get(), get()) }
