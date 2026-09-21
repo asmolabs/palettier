@@ -332,7 +332,7 @@ private val uiModule = module {
     factory { WorkbenchViewModel(get(), get(), get(), get(), get()) }
     factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
     factory { CatalogViewModel(get(), get()) }
-    factory { PickerViewModel(imageDecoder(), get(), get(), get()) }
+    factory { PickerViewModel(imageDecoder(), get(), get(), get(), get()) }
     factory { PalettesViewModel(get(), get()) }
     factory { MixerViewModel(get(), get(), get(), get()) }
     factory { DryingViewModel(get()) }

@@ -1,6 +1,7 @@
 package be.asmolabs.palettier.ui.picker
 
 import be.asmolabs.palettier.domain.color.Rgb
+import be.asmolabs.palettier.domain.mix.ColorMixService
 import be.asmolabs.palettier.domain.paint.DryingClass
 import be.asmolabs.palettier.domain.paint.Opacity
 import be.asmolabs.palettier.domain.paint.Paint
@@ -93,7 +94,7 @@ class PickerViewModelTest {
 
     private val shared = be.asmolabs.palettier.ui.SampledColour()
 
-    private fun model() = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes(), shared)
+    private fun model() = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes(), shared, ColorMixService())
 
     /**
      * Attend que l'etat remplisse une condition.
@@ -174,7 +175,7 @@ class PickerViewModelTest {
         val palettes = be.asmolabs.palettier.ui.FakePaletteRepository(
             listOf(be.asmolabs.palettier.domain.palette.Palette(id = 9, name = "A composer"))
         )
-        val model = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes, shared)
+        val model = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes, shared, ColorMixService())
         model.onIntent(PickerIntent.Load(image("#C98F72")))
         model.await { it.closest.isNotEmpty() }
 
@@ -316,6 +317,58 @@ class PickerViewModelTest {
         model.onIntent(PickerIntent.UseAsGrey("#E8D2A8"))
         val corrected = model.await { it.correctedHex != null }.correctedHex
         assertEquals(corrected, shared.colour.value?.toHex())
+    }
+
+    @Test
+    fun `la pipette propose un melange, et seulement quand on le demande`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72")))
+        model.await { it.closest.isNotEmpty() }
+
+        // Rien n'arrive tout seul : la recherche coute, et on clique souvent avant de
+        // retenir un point.
+        assertTrue(model.state.value.suggestions.isEmpty())
+
+        model.onIntent(PickerIntent.FindMixes)
+        val found = model.await { it.suggestions.isNotEmpty() }
+
+        assertTrue(!found.searching)
+        assertTrue(found.suggestions.first().parts.isNotEmpty())
+    }
+
+    @Test
+    fun `le nombre de tubes borne le melange propose`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#8A6A55")))
+        model.await { it.closest.isNotEmpty() }
+
+        model.onIntent(PickerIntent.SetMaxPaints(1))
+        model.onIntent(PickerIntent.FindMixes)
+        val single = model.await { it.suggestions.isNotEmpty() }
+        assertTrue(
+            single.suggestions.all { it.parts.size == 1 },
+            "un seul tube demande : ${single.suggestions.map { s -> s.parts.size }}",
+        )
+
+        // Changer le nombre repose la question : la reponse se refait sans qu'on la
+        // redemande, puisqu'on en avait deja demande une.
+        model.onIntent(PickerIntent.SetMaxPaints(3))
+        val wider = model.await { it.suggestions.isNotEmpty() && it.suggestions.any { s -> s.parts.size > 1 } }
+        assertTrue(wider.suggestions.any { it.parts.size > 1 })
+    }
+
+    @Test
+    fun `un nouveau releve oublie le melange, qui repondait a une autre question`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427")))
+        model.await { it.closest.isNotEmpty() }
+        model.onIntent(PickerIntent.FindMixes)
+        model.await { it.suggestions.isNotEmpty() }
+
+        model.onIntent(PickerIntent.PickAt(150, 50))
+        val after = model.await { it.selectedHex == "#4A3427" }
+
+        assertTrue(after.suggestions.isEmpty(), "une recette pour la teinte precedente serait fausse")
     }
 
     @Test

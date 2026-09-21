@@ -1,5 +1,6 @@
 package be.asmolabs.palettier.ui.picker
 
+import be.asmolabs.palettier.domain.mix.MixSuggestion
 import be.asmolabs.palettier.domain.paint.PaintMatchByColour
 import be.asmolabs.palettier.domain.project.DominantColour
 import be.asmolabs.palettier.ui.SearchScope
@@ -42,6 +43,20 @@ data class PickerUiState(
     val scopes: List<SearchScope> = listOf(SearchScope.Shelf, SearchScope.Catalogue),
     /** Vrai quand la portee choisie ne contient aucun tube : une palette vide, par exemple. */
     val emptyScope: Boolean = false,
+
+    /**
+     * Les melanges proposes pour atteindre la teinte relevee.
+     *
+     * <p>Un tube s'approche rarement d'une carnation ou d'une ombre : la reponse utile
+     * est un melange, pas un nom de tube. Elle se demande, elle n'arrive pas toute seule
+     * -- la recherche explore les dosages realisables et coute plusieurs centaines de
+     * millisecondes sur le catalogue entier, ce qui n'a pas sa place derriere chaque clic
+     * sur la photo.</p>
+     */
+    val suggestions: List<MixSuggestion> = emptyList(),
+    val searching: Boolean = false,
+    /** Nombre de tubes que la recherche s'autorise : a trois un melange se refait. */
+    val maxPaints: Int = DEFAULT_MAX_PAINTS,
     val error: String? = null,
 ) {
     /** La teinte sur laquelle tout le reste travaille : corrigee si elle l'a ete. */
@@ -50,6 +65,9 @@ data class PickerUiState(
     companion object {
         /** Trois pixels de rayon : assez pour noyer le bruit, trop peu pour deborder. */
         const val DEFAULT_RADIUS = 3
+
+        /** Trois tubes : au-dela, un melange vire au gris et ne se refait pas a l'identique. */
+        const val DEFAULT_MAX_PAINTS = 3
     }
 }
 
@@ -85,4 +103,9 @@ sealed interface PickerIntent {
      * contient.</p>
      */
     data class ChooseScope(val scope: SearchScope) : PickerIntent
+
+    /** Cherche avec quel melange faire la teinte retenue, dans la portee choisie. */
+    data object FindMixes : PickerIntent
+
+    data class SetMaxPaints(val count: Int) : PickerIntent
 }

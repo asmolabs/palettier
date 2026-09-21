@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.color.neutralise
 import be.asmolabs.palettier.domain.image.ImagePalette
+import be.asmolabs.palettier.domain.mix.ColorMixService
 import be.asmolabs.palettier.domain.image.PixelMap
 import be.asmolabs.palettier.domain.image.sampleAround
 import be.asmolabs.palettier.domain.paint.findClosest
@@ -14,6 +15,7 @@ import be.asmolabs.palettier.image.ImageDecoder
 import be.asmolabs.palettier.ui.SampledColour
 import be.asmolabs.palettier.ui.candidates
 import be.asmolabs.palettier.ui.scopesOf
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +38,7 @@ class PickerViewModel(
     private val catalog: PaintCatalogRepository,
     private val palettes: PaletteRepository,
     private val sampled: SampledColour,
+    private val mixer: ColorMixService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PickerUiState())
@@ -50,6 +53,9 @@ class PickerViewModel(
      * deplace les couleurs.</p>
      */
     private var pixels: PixelMap? = null
+
+    /** La recherche de melange : elle coute, donc une nouvelle demande annule l'ancienne. */
+    private var search: Job? = null
 
     init {
         // Les palettes sont lues une fois : ce sont des portees de recherche, pas une
@@ -67,11 +73,13 @@ class PickerViewModel(
             // le temps du calcul, des tubes choisis pour une autre teinte. Bref, mais faux.
             is PickerIntent.Select -> viewModelScope.launch {
                 _state.value = _state.value.copy(selectedHex = intent.hex, closest = emptyList())
+                forgetMixes()
                 recompute()
             }
 
             is PickerIntent.UseAsGrey -> viewModelScope.launch {
                 _state.value = _state.value.copy(greyPointHex = intent.hex, closest = emptyList())
+                forgetMixes()
                 recompute()
             }
 
@@ -88,8 +96,18 @@ class PickerViewModel(
                 _state.value = _state.value.copy(sampleRadius = intent.radius.coerceIn(0, MAX_RADIUS))
             }
 
+            PickerIntent.FindMixes -> findMixes()
+
+            // Changer le nombre de tubes repose la question : on relance, mais seulement
+            // si une reponse avait deja ete demandee.
+            is PickerIntent.SetMaxPaints -> {
+                _state.value = _state.value.copy(maxPaints = intent.count.coerceIn(1, 4))
+                if (_state.value.suggestions.isNotEmpty() || _state.value.searching) findMixes()
+            }
+
             is PickerIntent.ChooseScope -> viewModelScope.launch {
                 _state.value = _state.value.copy(scope = intent.scope, closest = emptyList())
+                forgetMixes()
                 recompute()
             }
         }
@@ -129,10 +147,13 @@ class PickerViewModel(
      * afficher une photo dans une zone plus large qu'elle.</p>
      */
     private suspend fun pick(x: Int, y: Int) {
-        val current = _state.value
-        val sampled = pixels?.sampleAround(x, y, current.sampleRadius) ?: return
+        val sampled = pixels?.sampleAround(x, y, _state.value.sampleRadius) ?: return
         val hex = sampled.toHex()
 
+        // L'oubli d'abord, l'etat ensuite : lire l'etat avant de l'oublier reintroduirait
+        // les melanges par la copie qui suit. C'est un essai qui l'a dit.
+        forgetMixes()
+        val current = _state.value
         _state.value = if (current.pickingGrey) {
             // Le point neutre se desarme apres usage : on en designe un, pas une suite.
             current.copy(greyPointHex = hex, pickingGrey = false, closest = emptyList())
@@ -167,6 +188,42 @@ class PickerViewModel(
         )
     }
 
+    /**
+     * Cherche le melange qui donne la teinte retenue.
+     *
+     * <p>Sur demande, et non a chaque clic : l'exploration des dosages realisables coute
+     * plusieurs centaines de millisecondes sur six cent quatre-vingts tubes, et le peintre
+     * clique souvent plusieurs fois avant de retenir un point.</p>
+     */
+    private fun findMixes() {
+        val current = _state.value
+        val target = current.workingHex?.let { runCatching { Rgb.ofHex(it) }.getOrNull() } ?: return
+
+        search?.cancel()
+        _state.value = current.copy(suggestions = emptyList(), searching = true)
+        search = viewModelScope.launch {
+            val candidates = _state.value.scope.candidates(catalog, palettes)
+            val found = mixer.suggestMixes(
+                target,
+                candidates,
+                maxResults = MIXES,
+                maxPaints = _state.value.maxPaints,
+            )
+            _state.value = _state.value.copy(suggestions = found, searching = false)
+        }
+    }
+
+    /**
+     * Oublie les melanges proposes : ils repondaient a une autre question.
+     *
+     * <p>Les garder le temps d'un nouveau releve afficherait une recette pour la teinte
+     * precedente. Bref, et faux.</p>
+     */
+    private fun forgetMixes() {
+        search?.cancel()
+        _state.value = _state.value.copy(suggestions = emptyList(), searching = false)
+    }
+
     companion object {
         /** Teintes relevees sur la photo : assez pour couvrir une piece, pas pour noyer. */
         private const val COLOURS = 8
@@ -176,5 +233,8 @@ class PickerViewModel(
 
         /** Rayon maximal, comme du temps de JavaFX : au-dela on ne releve plus, on moyenne. */
         const val MAX_RADIUS = 30
+
+        /** Melanges proposes : au-dela, on ne choisit plus, on compare des variantes. */
+        private const val MIXES = 5
     }
 }

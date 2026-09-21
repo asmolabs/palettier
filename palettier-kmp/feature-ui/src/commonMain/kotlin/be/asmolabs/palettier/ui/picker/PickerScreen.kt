@@ -88,6 +88,8 @@ fun PickerScreen(
                     HorizontalDivider()
                     Working(state, onIntent)
                     Closest(state, onIntent)
+                    HorizontalDivider()
+                    Mixes(state, onIntent)
                 } else if (!state.loading) {
                     Text(
                         "Ouvrez une photo, puis cliquez dessus pour relever une teinte. " +
@@ -318,6 +320,60 @@ private fun Closest(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Le melange a faire pour obtenir la teinte relevee.
+ *
+ * <p>C'est la vraie reponse de la pipette. Un tube du commerce s'approche rarement d'une
+ * carnation ou d'une ombre : ce qu'on veut savoir, c'est quoi melanger et dans quelles
+ * parts. La recherche se demande plutot qu'elle ne s'impose -- elle explore les dosages
+ * realisables et coute, et on clique souvent plusieurs fois avant de retenir un point.</p>
+ */
+@Composable
+private fun Mixes(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Le melange a faire", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Au plus", style = MaterialTheme.typography.bodySmall)
+            (1..4).forEach { count ->
+                Chip(
+                    if (count == 1) "un tube" else "$count tubes",
+                    count == state.maxPaints,
+                ) { onIntent(PickerIntent.SetMaxPaints(count)) }
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TextButton(
+                { onIntent(PickerIntent.FindMixes) },
+                enabled = state.workingHex != null && !state.searching && !state.emptyScope,
+            ) { Text("Trouver le melange") }
+            if (state.searching) CircularProgressIndicator(Modifier.size(16.dp))
+        }
+
+        state.suggestions.forEach { suggestion ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Swatch(suggestion.color.toHex(), size = 24)
+                Spacer(Modifier.width(10.dp))
+                Column {
+                    Text(suggestion.describe(), style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "ecart %.1f  -  %s".format(suggestion.deltaE, verdict(suggestion.deltaE)),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+        }
+
+        if (state.suggestions.isEmpty() && !state.searching) {
+            Text(
+                "Un tube seul s'approche rarement d'une carnation : demandez le melange.",
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
     }
 }
