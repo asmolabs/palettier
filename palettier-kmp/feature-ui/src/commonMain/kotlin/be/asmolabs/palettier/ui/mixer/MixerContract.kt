@@ -3,6 +3,7 @@ package be.asmolabs.palettier.ui.mixer
 import be.asmolabs.palettier.domain.mix.MixResult
 import be.asmolabs.palettier.domain.mix.MixSuggestion
 import be.asmolabs.palettier.domain.paint.Paint
+import be.asmolabs.palettier.ui.SearchScope
 
 /** Une dose sur la palette : un tube et son nombre de parts. */
 data class Dose(val paint: Paint, val parts: Int)
@@ -17,9 +18,16 @@ data class MixerUiState(
     val targetHex: String = "",
     val suggestions: List<MixSuggestion> = emptyList(),
     val searching: Boolean = false,
-    val onlyInStock: Boolean = true,
+    /** Ou chercher, et de quoi se composer un melange a la main. */
+    val scope: SearchScope = SearchScope.Shelf,
+    val scopes: List<SearchScope> = listOf(SearchScope.Shelf, SearchScope.Catalogue),
+    /** Nombre de tubes que la recherche s'autorise par melange. */
+    val maxPaints: Int = DEFAULT_MAX_PAINTS,
     val error: String? = null,
 )
+
+/** Trois tubes : au-dela, un melange vire au gris et ne se refait pas a l'identique. */
+const val DEFAULT_MAX_PAINTS = 3
 
 sealed interface MixerIntent {
     data class Add(val paint: Paint) : MixerIntent
@@ -29,5 +37,14 @@ sealed interface MixerIntent {
 
     /** Sens inverse : quelle recette donne cette couleur. */
     data class AimAt(val hex: String) : MixerIntent
-    data class OnlyInStock(val only: Boolean) : MixerIntent
+    /**
+     * Change l'ensemble dans lequel chercher, et donc celui qu'on a sous la main.
+     *
+     * <p>La portee commande les deux sens du melangeur : les tubes proposes au clic et
+     * ceux que la recherche explore. Chercher dans la palette sortie sur la table, c'est
+     * la difference entre une recette theorique et une recette a faire ce soir.</p>
+     */
+    data class ChooseScope(val scope: SearchScope) : MixerIntent
+
+    data class SetMaxPaints(val count: Int) : MixerIntent
 }

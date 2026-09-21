@@ -137,7 +137,6 @@ fun main() = application {
 
                 Surface(Modifier.fillMaxSize()) {
                     Column {
-                        ImportBar(import)
                         TabRow(selectedTabIndex = section) {
                             // Aujourd'hui d'abord : c'est la question du matin.
                             Tab(section == 0, { section = 0 }) {
@@ -217,29 +216,6 @@ fun main() = application {
     }
 }
 
-/**
- * La barre d'import.
- *
- * <p>Tant qu'une sauvegarde n'a pas ete relue, la base est vide : c'est le seul chemin par
- * lequel les donnees de l'application Java entrent, et il merite d'etre visible.</p>
- */
-@androidx.compose.runtime.Composable
-private fun ImportBar(import: ImportState) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = import::choose, enabled = !import.busy) {
-                    Text("Importer une sauvegarde")
-                }
-                if (import.busy) CircularProgressIndicator(Modifier.size(18.dp))
-            }
-            import.message?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
-            }
-        }
-    }
-}
-
 /** Le fichier choisi par le peintre, lu tel quel : reduire deplacerait les couleurs. */
 private fun pickPhoto(): ByteArray? {
     val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Photo a relever", java.awt.FileDialog.LOAD)
@@ -254,9 +230,9 @@ private val uiModule = module {
     factory { WorkbenchViewModel(get(), get(), get(), get()) }
     factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
     factory { CatalogViewModel(get()) }
-    factory { PickerViewModel(imageDecoder(), get()) }
+    factory { PickerViewModel(imageDecoder(), get(), get()) }
     factory { PalettesViewModel(get(), get()) }
-    factory { MixerViewModel(get(), get()) }
+    factory { MixerViewModel(get(), get(), get()) }
     factory { DryingViewModel(get()) }
     factory { RecipesViewModel(get(), get()) }
     factory { AssistantViewModel(get(), get(), get(), get(), get(), get()) }

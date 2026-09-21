@@ -2,6 +2,7 @@ package be.asmolabs.palettier.ui.mixer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import be.asmolabs.palettier.ui.component.Chip
 import be.asmolabs.palettier.ui.component.Swatch
 
 /**
@@ -52,9 +53,21 @@ fun MixerScreen(state: MixerUiState, onIntent: (MixerIntent) -> Unit, modifier: 
 private fun Available(state: MixerUiState, onIntent: (MixerIntent) -> Unit, modifier: Modifier) {
     Surface(modifier, color = MaterialTheme.colorScheme.surfaceVariant) {
         Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(state.onlyInStock, { onIntent(MixerIntent.OnlyInStock(it)) })
-                Text("ce que je possede", style = MaterialTheme.typography.bodySmall)
+            // La portee commande les deux sens : ce qu'on a sous la main pour composer,
+            // et ce que la recherche explore. C'est ce qui donne aux palettes leur second
+            // role -- une reponse faisable ce soir plutot qu'une reponse theorique.
+            Text("Chercher dans", style = MaterialTheme.typography.bodySmall)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.padding(bottom = 8.dp),
+            ) {
+                state.scopes.forEach { scope ->
+                    Chip(scope.label, scope == state.scope) { onIntent(MixerIntent.ChooseScope(scope)) }
+                }
+            }
+            if (state.available.isEmpty() && !state.loading) {
+                Text("Cet ensemble ne contient aucun tube.", style = MaterialTheme.typography.bodySmall)
             }
             LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 items(state.available, key = { it.id ?: it.displayName.hashCode().toLong() }) { paint ->
@@ -135,6 +148,24 @@ private fun Reverse(state: MixerUiState, onIntent: (MixerIntent) -> Unit) {
                     modifier = Modifier.width(180.dp),
                 )
                 if (state.searching) CircularProgressIndicator(Modifier.size(18.dp))
+            }
+
+            // Un melange a trois tubes se refait ; a cinq, il ne se refait plus.
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Au plus", style = MaterialTheme.typography.bodySmall)
+                (1..4).forEach { count ->
+                    Chip(
+                        if (count == 1) "un tube" else "$count tubes",
+                        count == state.maxPaints,
+                    ) { onIntent(MixerIntent.SetMaxPaints(count)) }
+                }
+            }
+
+            if (state.suggestions.isEmpty() && !state.searching && state.targetHex.isNotBlank()) {
+                Text(
+                    "Aucun melange trouve dans cet ensemble.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
 
             state.suggestions.forEach { suggestion ->

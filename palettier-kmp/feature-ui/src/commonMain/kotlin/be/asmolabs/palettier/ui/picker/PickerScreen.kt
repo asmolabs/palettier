@@ -18,12 +18,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -289,11 +289,19 @@ private fun Working(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
 @Composable
 private fun Closest(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Ce qui s'en approche", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.width(16.dp))
-            Checkbox(state.onlyInStock, { onIntent(PickerIntent.OnlyInStock(it)) })
-            Text("seulement ce que je possede", style = MaterialTheme.typography.bodySmall)
+        Text("Ce qui s'en approche", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+        // Chercher dans une palette ne filtre pas une liste : cela change la question, et
+        // c'est ce qui separe une reponse theorique d'une recette faisable ce soir.
+        Text("Chercher dans", style = MaterialTheme.typography.bodySmall)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            state.scopes.forEach { scope ->
+                Chip(scope.label, scope == state.scope) { onIntent(PickerIntent.ChooseScope(scope)) }
+            }
+        }
+
+        if (state.emptyScope) {
+            Text("Cet ensemble ne contient aucun tube.", style = MaterialTheme.typography.bodySmall)
         }
 
         LazyColumn(Modifier.size(width = 420.dp, height = 240.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {

@@ -6,6 +6,7 @@ import be.asmolabs.palettier.domain.paint.Opacity
 import be.asmolabs.palettier.domain.paint.Paint
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
 import be.asmolabs.palettier.image.imageDecoder
+import be.asmolabs.palettier.ui.SearchScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -79,7 +80,18 @@ class PickerViewModelTest {
         return ByteArrayOutputStream().also { ImageIO.write(image, "png", it) }.toByteArray()
     }
 
-    private fun model() = PickerViewModel(imageDecoder(), FakeCatalog(catalogue))
+    /** Une palette qui ne contient que la terre d'ombre : de quoi voir la portee mordre. */
+    private fun palettes() = be.asmolabs.palettier.ui.FakePaletteRepository(
+        listOf(
+            be.asmolabs.palettier.domain.palette.Palette(
+                id = 7,
+                name = "Zorn",
+                paints = listOf(catalogue[1]),
+            )
+        )
+    )
+
+    private fun model() = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes())
 
     /**
      * Attend que l'etat remplisse une condition.
@@ -129,9 +141,47 @@ class PickerViewModelTest {
         // Par defaut on ne propose que ce qu'on possede.
         assertTrue(owned.closest.none { it.paint.name == "Cadmium Red" })
 
-        model.onIntent(PickerIntent.OnlyInStock(false))
-        val all = model.await { !it.onlyInStock && it.closest.any { match -> match.paint.name == "Cadmium Red" } }
+        model.onIntent(PickerIntent.ChooseScope(SearchScope.Catalogue))
+        val all = model.await {
+            it.scope == SearchScope.Catalogue && it.closest.any { match -> match.paint.name == "Cadmium Red" }
+        }
         assertEquals("Cadmium Red", all.closest.first().paint.name)
+    }
+
+    @Test
+    fun `chercher dans une palette ne propose plus que ses tubes`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72")))
+        val shelf = model.await { it.closest.isNotEmpty() }
+
+        // Sur l'etagere, c'est la carnation qui gagne : elle est de la meme couleur.
+        assertEquals("Flesh Tint", shelf.closest.first().paint.name)
+        val zorn = model.await { it.scopes.any { scope -> scope.label == "Zorn" } }
+            .scopes.first { it.label == "Zorn" }
+
+        model.onIntent(PickerIntent.ChooseScope(zorn))
+        val inPalette = model.await { it.scope == zorn && it.closest.isNotEmpty() }
+
+        // Dans la palette, la seule reponse possible est celle qu'on a sortie sur la table,
+        // meme si elle est loin : une recette faisable plutot qu'une recette juste.
+        assertEquals(listOf("Burnt Umber"), inPalette.closest.map { it.paint.name })
+    }
+
+    @Test
+    fun `une palette vide le dit, au lieu de ne rien proposer sans raison`() = runTest(dispatcher) {
+        val palettes = be.asmolabs.palettier.ui.FakePaletteRepository(
+            listOf(be.asmolabs.palettier.domain.palette.Palette(id = 9, name = "A composer"))
+        )
+        val model = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes)
+        model.onIntent(PickerIntent.Load(image("#C98F72")))
+        model.await { it.closest.isNotEmpty() }
+
+        val empty = model.await { it.scopes.any { scope -> scope.label == "A composer" } }
+            .scopes.first { it.label == "A composer" }
+        model.onIntent(PickerIntent.ChooseScope(empty))
+
+        val state = model.await { it.scope == empty && it.emptyScope }
+        assertTrue(state.closest.isEmpty())
     }
 
     @Test

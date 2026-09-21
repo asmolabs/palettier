@@ -9,7 +9,10 @@ import be.asmolabs.palettier.domain.image.PixelMap
 import be.asmolabs.palettier.domain.image.sampleAround
 import be.asmolabs.palettier.domain.paint.findClosest
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
+import be.asmolabs.palettier.domain.port.PaletteRepository
 import be.asmolabs.palettier.image.ImageDecoder
+import be.asmolabs.palettier.ui.candidates
+import be.asmolabs.palettier.ui.scopesOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +33,7 @@ import kotlinx.coroutines.launch
 class PickerViewModel(
     private val decoder: ImageDecoder,
     private val catalog: PaintCatalogRepository,
+    private val palettes: PaletteRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PickerUiState())
@@ -44,6 +48,14 @@ class PickerViewModel(
      * deplace les couleurs.</p>
      */
     private var pixels: PixelMap? = null
+
+    init {
+        // Les palettes sont lues une fois : ce sont des portees de recherche, pas une
+        // donnee que l'ecran affiche et qui devrait se rafraichir toute seule.
+        viewModelScope.launch {
+            _state.value = _state.value.copy(scopes = scopesOf(palettes.all()))
+        }
+    }
 
     fun onIntent(intent: PickerIntent) {
         when (intent) {
@@ -74,8 +86,8 @@ class PickerViewModel(
                 _state.value = _state.value.copy(sampleRadius = intent.radius.coerceIn(0, MAX_RADIUS))
             }
 
-            is PickerIntent.OnlyInStock -> viewModelScope.launch {
-                _state.value = _state.value.copy(onlyInStock = intent.only, closest = emptyList())
+            is PickerIntent.ChooseScope -> viewModelScope.launch {
+                _state.value = _state.value.copy(scope = intent.scope, closest = emptyList())
                 recompute()
             }
         }
@@ -85,7 +97,8 @@ class PickerViewModel(
         val kept = _state.value
         _state.value = PickerUiState(
             loading = true,
-            onlyInStock = kept.onlyInStock,
+            scope = kept.scope,
+            scopes = kept.scopes,
             sampleRadius = kept.sampleRadius,
         )
         try {
@@ -139,10 +152,11 @@ class PickerViewModel(
         val grey = current.greyPointHex?.let { runCatching { Rgb.ofHex(it) }.getOrNull() }
         val working = grey?.let { neutralise(selected, it) } ?: selected
 
-        val candidates = if (current.onlyInStock) catalog.inStock() else catalog.all()
+        val candidates = current.scope.candidates(catalog, palettes)
 
         _state.value = current.copy(
             correctedHex = grey?.let { working.toHex() },
+            emptyScope = candidates.isEmpty(),
             closest = findClosest(working, candidates, CLOSEST),
         )
     }

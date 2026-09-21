@@ -2,6 +2,7 @@ package be.asmolabs.palettier.ui.picker
 
 import be.asmolabs.palettier.domain.paint.PaintMatchByColour
 import be.asmolabs.palettier.domain.project.DominantColour
+import be.asmolabs.palettier.ui.SearchScope
 
 /**
  * La photo affichee : ses octets d'origine, et ce qu'il faut pour placer un clic.
@@ -33,9 +34,14 @@ data class PickerUiState(
     val greyPointHex: String? = null,
     /** La teinte retenue une fois la dominante de la photo annulee. */
     val correctedHex: String? = null,
-    /** Les tubes du catalogue les plus proches de la teinte retenue. */
+    /** Les tubes les plus proches de la teinte retenue, dans la portee choisie. */
     val closest: List<PaintMatchByColour> = emptyList(),
-    val onlyInStock: Boolean = true,
+    /** Ou chercher : l'etagere, le catalogue entier, ou une palette. */
+    val scope: SearchScope = SearchScope.Shelf,
+    /** Les portees proposees, les palettes du peintre comprises. */
+    val scopes: List<SearchScope> = listOf(SearchScope.Shelf, SearchScope.Catalogue),
+    /** Vrai quand la portee choisie ne contient aucun tube : une palette vide, par exemple. */
+    val emptyScope: Boolean = false,
     val error: String? = null,
 ) {
     /** La teinte sur laquelle tout le reste travaille : corrigee si elle l'a ete. */
@@ -71,5 +77,12 @@ sealed interface PickerIntent {
 
     data class SetRadius(val radius: Int) : PickerIntent
 
-    data class OnlyInStock(val only: Boolean) : PickerIntent
+    /**
+     * Change l'ensemble dans lequel chercher.
+     *
+     * <p>Une palette ne filtre pas un resultat deja calcule : elle change la question. Les
+     * propositions sont donc reprises depuis le debut, sur les seuls tubes qu'elle
+     * contient.</p>
+     */
+    data class ChooseScope(val scope: SearchScope) : PickerIntent
 }

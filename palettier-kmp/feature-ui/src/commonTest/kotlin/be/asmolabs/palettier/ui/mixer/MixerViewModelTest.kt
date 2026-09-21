@@ -37,8 +37,48 @@ class MixerViewModelTest {
     private val lake = testPaint(4, "Alizarin", "#8A1538", opacity = Opacity.TRANSPARENT,
         pigments = setOf("PR83"))
 
+    private val palettes = be.asmolabs.palettier.ui.FakePaletteRepository(
+        listOf(
+            be.asmolabs.palettier.domain.palette.Palette(
+                id = 7,
+                name = "Zorn",
+                paints = listOf(white, umber),
+            )
+        )
+    )
+
     private fun model(paints: List<be.asmolabs.palettier.domain.paint.Paint> = listOf(white, umber, cadmium, lake)) =
-        MixerViewModel(FakeCatalogRepository(paints), ColorMixService())
+        MixerViewModel(FakeCatalogRepository(paints), ColorMixService(), palettes)
+
+@Test
+    fun `chercher dans une palette ne laisse que ses tubes, dans les deux sens`() = runTest(dispatcher) {
+        val model = model()
+        advanceUntilIdle()
+
+        // Par defaut, l'etagere : les quatre tubes sont la.
+        assertEquals(4, model.state.value.available.size)
+        // Et la palette du peintre est proposee comme portee.
+        assertTrue(
+            model.state.value.scopes.any { it.label == "Zorn" },
+            model.state.value.scopes.map { it.label }.toString(),
+        )
+
+        val zorn = model.state.value.scopes.first { it.label == "Zorn" }
+        model.onIntent(MixerIntent.ChooseScope(zorn))
+        advanceUntilIdle()
+
+        // Le sens direct : on ne peut plus composer qu'avec ce qui est sur la table.
+        assertEquals(listOf("Titanium White", "Burnt Umber"), model.state.value.available.map { it.name })
+
+        // Le sens inverse : la recherche n'a plus que ces deux la a proposer.
+        model.onIntent(MixerIntent.AimAt("#F5B800"))
+        advanceUntilIdle()
+        val proposed = model.state.value.suggestions.flatMap { suggestion -> suggestion.parts.map { it.paint.name } }
+        assertTrue(
+            proposed.none { it == "Cadmium Yellow" },
+            "le jaune de cadmium n'est pas dans la palette : $proposed",
+        )
+    }
 
     @Test
     fun `melanger deux tubes donne une couleur et la vitesse du plus lent`() = runTest(dispatcher) {

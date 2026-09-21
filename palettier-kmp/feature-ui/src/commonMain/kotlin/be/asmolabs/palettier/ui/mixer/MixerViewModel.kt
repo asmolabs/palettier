@@ -7,6 +7,9 @@ import be.asmolabs.palettier.domain.mix.ColorMixService
 import be.asmolabs.palettier.domain.mix.PaintPart
 import be.asmolabs.palettier.domain.paint.Paint
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
+import be.asmolabs.palettier.domain.port.PaletteRepository
+import be.asmolabs.palettier.ui.candidates
+import be.asmolabs.palettier.ui.scopesOf
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +30,7 @@ import kotlinx.coroutines.launch
 class MixerViewModel(
     private val catalog: PaintCatalogRepository,
     private val mixer: ColorMixService,
+    private val palettes: PaletteRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MixerUiState())
@@ -35,7 +39,10 @@ class MixerViewModel(
     private var search: Job? = null
 
     init {
-        viewModelScope.launch { reloadAvailable() }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(scopes = scopesOf(palettes.all()))
+            reloadAvailable()
+        }
     }
 
     fun onIntent(intent: MixerIntent) {
@@ -66,16 +73,21 @@ class MixerViewModel(
 
             is MixerIntent.AimAt -> aimAt(intent.hex)
 
-            is MixerIntent.OnlyInStock -> viewModelScope.launch {
-                _state.value = _state.value.copy(onlyInStock = intent.only)
+            is MixerIntent.ChooseScope -> viewModelScope.launch {
+                _state.value = _state.value.copy(scope = intent.scope)
                 reloadAvailable()
+                aimAt(_state.value.targetHex)
+            }
+
+            is MixerIntent.SetMaxPaints -> {
+                _state.value = _state.value.copy(maxPaints = intent.count.coerceIn(1, 5))
                 aimAt(_state.value.targetHex)
             }
         }
     }
 
     private suspend fun reloadAvailable() {
-        val paints = if (_state.value.onlyInStock) catalog.inStock() else catalog.all()
+        val paints = _state.value.scope.candidates(catalog, palettes)
         _state.value = _state.value.copy(loading = false, available = paints)
     }
 
@@ -101,7 +113,12 @@ class MixerViewModel(
 
         search = viewModelScope.launch {
             val candidates = _state.value.available
-            val found = mixer.suggestMixes(target, candidates, maxResults = 5)
+            val found = mixer.suggestMixes(
+                target,
+                candidates,
+                maxResults = 5,
+                maxPaints = _state.value.maxPaints,
+            )
             _state.value = _state.value.copy(suggestions = found, searching = false)
         }
     }
