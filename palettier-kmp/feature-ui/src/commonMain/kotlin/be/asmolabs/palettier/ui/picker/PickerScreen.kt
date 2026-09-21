@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -90,6 +91,10 @@ fun PickerScreen(
                     Closest(state, onIntent)
                     HorizontalDivider()
                     Mixes(state, onIntent)
+                    HorizontalDivider()
+                }
+                if (state.image != null || state.groups.isNotEmpty()) {
+                    Groups(state, onIntent)
                 } else if (!state.loading) {
                     Text(
                         "Ouvrez une photo, puis cliquez dessus pour relever une teinte. " +
@@ -375,6 +380,108 @@ private fun Mixes(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
             )
         }
+    }
+}
+
+/**
+ * Composer un projet a partir de releves, plutot que d'une proposition.
+ *
+ * <p>On nomme une partie du sujet, on y ajoute autant de points qu'on veut -- le creux de
+ * l'orbite, la joue, l'arete du nez -- et l'application en deduit le degrade. Trois points
+ * suffisent a obtenir une echelle, cinq donnent un modele complet.</p>
+ */
+@Composable
+private fun Groups(state: PickerUiState, onIntent: (PickerIntent) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var projectName by remember { mutableStateOf("") }
+
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Groupes de releves", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("nom du groupe, par exemple Peau") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton({
+                onIntent(PickerIntent.CreateGroup(name))
+                name = ""
+            }) { Text("Nouveau") }
+        }
+
+        if (state.groups.isNotEmpty()) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                state.groups.forEach { group ->
+                    Chip(
+                        "${group.name} (${group.samples.size})",
+                        group.name == state.selectedGroup,
+                    ) { onIntent(PickerIntent.SelectGroup(group.name)) }
+                }
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(
+                { onIntent(PickerIntent.AddSampleToGroup) },
+                enabled = state.selectedGroup != null && state.workingHex != null,
+            ) { Text("Ajouter le releve") }
+            state.selectedGroup?.let { selected ->
+                TextButton({ onIntent(PickerIntent.DeleteGroup(selected)) }) { Text("Supprimer le groupe") }
+            }
+        }
+
+        // Du sombre au clair : c'est l'ordre dans lequel ces points deviendront des couches.
+        state.group?.let { group ->
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                group.ordered.forEach { sample ->
+                    val hex = sample.toHex()
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Swatch(hex, size = 34)
+                        TextButton({ onIntent(PickerIntent.RemoveSample(group.name, hex)) }) {
+                            Text("\u2715", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (state.hasSamples) {
+            Text("Palette du projet", style = MaterialTheme.typography.bodySmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                state.palettes.forEach { palette ->
+                    Chip(
+                        "${palette.name} (${palette.paints.size})",
+                        palette.id == state.projectPaletteId,
+                    ) { palette.id?.let { onIntent(PickerIntent.ChooseProjectPalette(it)) } }
+                }
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = projectName,
+                    onValueChange = { projectName = it },
+                    label = { Text("Nom du projet") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(
+                    { onIntent(PickerIntent.CreateProject(projectName)) },
+                    enabled = !state.savingProject,
+                ) { Text("Creer un projet") }
+                if (state.savingProject) CircularProgressIndicator(Modifier.size(16.dp))
+            }
+        }
+
+        state.groupMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+
+        Text(
+            "Relevez plusieurs points par groupe : le plus sombre deviendra l'ombre profonde, " +
+                "le median la base, le plus clair le point lumineux.",
+            style = MaterialTheme.typography.labelSmall,
+        )
     }
 }
 

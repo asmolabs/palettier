@@ -6,6 +6,10 @@ import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.color.neutralise
 import be.asmolabs.palettier.domain.image.ImagePalette
 import be.asmolabs.palettier.domain.mix.ColorMixService
+import be.asmolabs.palettier.domain.plan.SampledPlanService
+import be.asmolabs.palettier.domain.plan.asProject
+import be.asmolabs.palettier.domain.plan.uniqueName
+import be.asmolabs.palettier.domain.port.ProjectRepository
 import be.asmolabs.palettier.domain.image.PixelMap
 import be.asmolabs.palettier.domain.image.sampleAround
 import be.asmolabs.palettier.domain.paint.findClosest
@@ -39,6 +43,8 @@ class PickerViewModel(
     private val palettes: PaletteRepository,
     private val sampled: SampledColour,
     private val mixer: ColorMixService,
+    private val projects: ProjectRepository,
+    private val sampledPlans: SampledPlanService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PickerUiState())
@@ -61,7 +67,12 @@ class PickerViewModel(
         // Les palettes sont lues une fois : ce sont des portees de recherche, pas une
         // donnee que l'ecran affiche et qui devrait se rafraichir toute seule.
         viewModelScope.launch {
-            _state.value = _state.value.copy(scopes = scopesOf(palettes.all()))
+            val known = palettes.all()
+            _state.value = _state.value.copy(
+                scopes = scopesOf(known),
+                palettes = known,
+                projectPaletteId = known.firstOrNull()?.id,
+            )
         }
     }
 
@@ -105,6 +116,77 @@ class PickerViewModel(
                 if (_state.value.suggestions.isNotEmpty() || _state.value.searching) findMixes()
             }
 
+
+            // --- Les groupes de releves -----------------------------------
+
+            is PickerIntent.CreateGroup -> {
+                val name = intent.name.trim()
+                _state.value = when {
+                    name.isEmpty() ->
+                        _state.value.copy(groupMessage = "Donnez un nom au groupe.")
+                    _state.value.groups.any { it.name.equals(name, ignoreCase = true) } ->
+                        _state.value.copy(groupMessage = "Un groupe porte deja ce nom.")
+                    else -> _state.value.copy(
+                        groups = _state.value.groups + SampleGroup(name),
+                        selectedGroup = name,
+                        groupMessage = "Relevez une teinte sur la photo, puis ajoutez-la.",
+                    )
+                }
+            }
+
+            is PickerIntent.SelectGroup ->
+                _state.value = _state.value.copy(selectedGroup = intent.name, groupMessage = null)
+
+            is PickerIntent.DeleteGroup -> {
+                val left = _state.value.groups.filterNot { it.name == intent.name }
+                _state.value = _state.value.copy(
+                    groups = left,
+                    selectedGroup = _state.value.selectedGroup?.takeIf { it != intent.name }
+                        ?: left.firstOrNull()?.name,
+                    groupMessage = null,
+                )
+            }
+
+            PickerIntent.AddSampleToGroup -> {
+                val current = _state.value
+                val colour = current.workingHex?.let { runCatching { Rgb.ofHex(it) }.getOrNull() }
+                val group = current.group
+                _state.value = when {
+                    group == null -> current.copy(groupMessage = "Choisissez d'abord un groupe.")
+                    colour == null -> current.copy(groupMessage = "Relevez d'abord une teinte.")
+                    else -> {
+                        val grown = group.copy(samples = group.samples + colour)
+                        current.copy(
+                            groups = current.groups.map { if (it.name == group.name) grown else it },
+                            groupMessage = "${grown.samples.size} point" +
+                                (if (grown.samples.size > 1) "s releves." else " releve."),
+                        )
+                    }
+                }
+            }
+
+            is PickerIntent.RemoveSample -> {
+                _state.value = _state.value.copy(
+                    groups = _state.value.groups.map { group ->
+                        if (group.name != intent.group) {
+                            group
+                        } else {
+                            // Un seul exemplaire retire : deux points peuvent tomber sur la
+                            // meme teinte sans que l'un annule l'autre.
+                            val index = group.samples.indexOfFirst { it.toHex() == intent.hex }
+                            if (index < 0) group
+                            else group.copy(samples = group.samples.filterIndexed { i, _ -> i != index })
+                        }
+                    },
+                    groupMessage = null,
+                )
+            }
+
+            is PickerIntent.ChooseProjectPalette ->
+                _state.value = _state.value.copy(projectPaletteId = intent.id)
+
+            is PickerIntent.CreateProject -> viewModelScope.launch { createProject(intent.name) }
+
             is PickerIntent.ChooseScope -> viewModelScope.launch {
                 _state.value = _state.value.copy(scope = intent.scope, closest = emptyList())
                 forgetMixes()
@@ -114,12 +196,23 @@ class PickerViewModel(
     }
 
     private suspend fun load(bytes: ByteArray) {
-        val kept = _state.value
-        _state.value = PickerUiState(
+        // Ce qui appartient a la photo est remis a zero ; ce qui appartient a la session
+        // reste. Les groupes en particulier : on releve volontiers la peau sur une
+        // reference et la cape sur une autre, et les perdre en ouvrant la seconde
+        // ruinerait le travail de la premiere.
+        _state.value = _state.value.copy(
             loading = true,
-            scope = kept.scope,
-            scopes = kept.scopes,
-            sampleRadius = kept.sampleRadius,
+            error = null,
+            image = null,
+            dominant = emptyList(),
+            selectedHex = null,
+            pickedAt = null,
+            pickingGrey = false,
+            greyPointHex = null,
+            correctedHex = null,
+            closest = emptyList(),
+            suggestions = emptyList(),
+            searching = false,
         )
         try {
             val decoded = decoder.decode(bytes)
@@ -136,7 +229,12 @@ class PickerViewModel(
             // Large a dessein : un fichier douteux ne doit pas faire tomber l'ecran, et
             // les facons d'echouer a lire une image ne se laissent pas enumerer.
             pixels = null
-            _state.value = PickerUiState(error = e.message ?: "Image illisible")
+            _state.value = _state.value.copy(
+                loading = false,
+                image = null,
+                dominant = emptyList(),
+                error = e.message ?: "Image illisible",
+            )
         }
     }
 
@@ -222,6 +320,45 @@ class PickerViewModel(
     private fun forgetMixes() {
         search?.cancel()
         _state.value = _state.value.copy(suggestions = emptyList(), searching = false)
+    }
+
+/**
+     * Etablit le plan a partir des groupes, et l'enregistre comme projet.
+     *
+     * <p>Un nom deja pris est numerote plutot que refuse : deux bustes du meme regiment
+     * s'appellent volontiers pareil, et perdre le plan qu'on vient d'etablir pour si peu
+     * serait cruel.</p>
+     */
+    private suspend fun createProject(wanted: String) {
+        val current = _state.value
+        val definition = current.groups
+            .filter { it.samples.isNotEmpty() }
+            .map { SampledPlanService.ColourGroup(it.name, samples = it.samples) }
+
+        if (definition.isEmpty()) {
+            _state.value = current.copy(groupMessage = "Aucun point releve : ajoutez une teinte a un groupe.")
+            return
+        }
+
+        _state.value = current.copy(savingProject = true, groupMessage = null)
+        try {
+            val palette = current.palettes.firstOrNull { it.id == current.projectPaletteId }
+            val plan = sampledPlans.plan(wanted.trim(), palette, definition, current.maxPaints)
+            val name = uniqueName(wanted, projects.all().map { it.name })
+            val saved = projects.save(plan.asProject(name, palette))
+
+            _state.value = _state.value.copy(
+                savingProject = false,
+                groupMessage = "Projet \"${saved.name}\" cree a partir de ${plan.zones.size} " +
+                    (if (plan.zones.size > 1) "groupes." else "groupe.") +
+                    " Retrouvez-le dans Projets.",
+            )
+        } catch (e: Exception) {
+            _state.value = _state.value.copy(
+                savingProject = false,
+                groupMessage = e.message ?: "Le projet n'a pas pu etre enregistre.",
+            )
+        }
     }
 
     companion object {

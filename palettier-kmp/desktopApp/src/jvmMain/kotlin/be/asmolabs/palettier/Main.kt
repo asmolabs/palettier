@@ -1,5 +1,6 @@
 package be.asmolabs.palettier
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -83,6 +84,7 @@ import org.koin.dsl.module
  */
 fun main() = application {
     var section by remember { mutableStateOf(Section.entries.first()) }
+    var navExpanded by remember { mutableStateOf(true) }
 
     Window(
         onCloseRequest = ::exitApplication,
@@ -91,13 +93,21 @@ fun main() = application {
         // On peint d'une main, la souris tient souvent autre chose. Passer du releve au
         // melange doit pouvoir se faire sans lacher le pinceau.
         onPreviewKeyEvent = { event ->
+            val held = event.isMetaPressed || event.isCtrlPressed
             val digit = DIGITS.indexOf(event.key)
             val chosen = Section.entries.firstOrNull { it.shortcut == digit }
-            if (event.type == KeyEventType.KeyDown && (event.isMetaPressed || event.isCtrlPressed) && chosen != null) {
-                section = chosen
-                true
-            } else {
-                false
+            when {
+                event.type != KeyEventType.KeyDown || !held -> false
+                // Plier le menu rend la largeur a l'ecran : une photo au zoom la reclame.
+                event.key == Key.B -> {
+                    navExpanded = !navExpanded
+                    true
+                }
+                chosen != null -> {
+                    section = chosen
+                    true
+                }
+                else -> false
             }
         },
     ) {
@@ -159,7 +169,7 @@ fun main() = application {
                 val assistantState by assistantModel.state.collectAsStateWithLifecycle()
                 Surface(Modifier.fillMaxSize()) {
                     Row(Modifier.fillMaxSize()) {
-                        Sidebar(section) { section = it }
+                        Sidebar(section, navExpanded, { navExpanded = !navExpanded }) { section = it }
 
                         when (section) {
                             Section.Today -> WorkbenchScreen(state, Modifier.weight(1f))
@@ -247,39 +257,67 @@ private val DIGITS = listOf(
  * ne le devine.</p>
  */
 @androidx.compose.runtime.Composable
-private fun Sidebar(current: Section, onChoose: (Section) -> Unit) {
+private fun Sidebar(
+    current: Section,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onChoose: (Section) -> Unit,
+) {
+    // Repliee, la colonne garde ses pastilles : on continue de voir ou l'on est, et le
+    // clic reste au meme endroit. C'est ce qui separe un menu plie d'un menu disparu.
+    val width by animateDpAsState(if (expanded) 248.dp else 56.dp)
+
     Surface(
-        Modifier.width(248.dp).fillMaxHeight(),
+        Modifier.width(width).fillMaxHeight(),
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Column(Modifier.fillMaxHeight()) {
-            Column(Modifier.padding(start = 18.dp, top = 22.dp, end = 18.dp, bottom = 22.dp)) {
-                Text("Palettier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(
+                Modifier.padding(start = 18.dp, top = 22.dp, end = 10.dp, bottom = 22.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (expanded) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Palettier",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            "peinture a l'huile",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 Text(
-                    "peinture a l'huile",
-                    style = MaterialTheme.typography.labelSmall,
+                    if (expanded) "\u00AB" else "\u00BB",
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clickable(onClick = onToggle).padding(6.dp),
                 )
             }
 
             Section.entries.forEach { entry ->
-                NavItem(entry, entry == current) { onChoose(entry) }
+                NavItem(entry, entry == current, expanded) { onChoose(entry) }
             }
 
             Spacer(Modifier.weight(1f))
 
-            Text(
-                "Aucune donnee ne part ailleurs.\nTout reste dans ~/.palettier",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(18.dp),
-            )
+            if (expanded) {
+                Text(
+                    "Aucune donnee ne part ailleurs.\nTout reste dans ~/.palettier\n\u2318B replie le menu",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(18.dp),
+                )
+            }
         }
     }
 }
 
 @androidx.compose.runtime.Composable
-private fun NavItem(section: Section, selected: Boolean, onClick: () -> Unit) {
+private fun NavItem(section: Section, selected: Boolean, expanded: Boolean, onClick: () -> Unit) {
     val accent = MaterialTheme.colorScheme.primary
     Surface(
         color = if (selected) MaterialTheme.colorScheme.surface else androidx.compose.ui.graphics.Color.Transparent,
@@ -297,20 +335,22 @@ private fun NavItem(section: Section, selected: Boolean, onClick: () -> Unit) {
                         androidx.compose.foundation.shape.CircleShape,
                     )
             )
-            Spacer(Modifier.width(10.dp))
-            Text(
-                section.title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-                color = if (selected) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.weight(1f))
-            Text(
-                section.shortcut.toString(),
-                style = MaterialTheme.typography.labelSmall,
-                color = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            )
+            if (expanded) {
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    section.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                    color = if (selected) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    section.shortcut.toString(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                )
+            }
         }
     }
 }
@@ -332,7 +372,7 @@ private val uiModule = module {
     factory { WorkbenchViewModel(get(), get(), get(), get(), get()) }
     factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
     factory { CatalogViewModel(get(), get()) }
-    factory { PickerViewModel(imageDecoder(), get(), get(), get(), get()) }
+    factory { PickerViewModel(imageDecoder(), get(), get(), get(), get(), get(), get()) }
     factory { PalettesViewModel(get(), get()) }
     factory { MixerViewModel(get(), get(), get(), get()) }
     factory { DryingViewModel(get()) }
@@ -340,6 +380,7 @@ private val uiModule = module {
     factory { AssistantViewModel(get(), get(), get(), get(), get(), get()) }
     single { be.asmolabs.palettier.domain.recipe.RecipeTimelineService(get()) }
     single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
+    single { be.asmolabs.palettier.domain.plan.SampledPlanService(get()) }
 }
 
 /**

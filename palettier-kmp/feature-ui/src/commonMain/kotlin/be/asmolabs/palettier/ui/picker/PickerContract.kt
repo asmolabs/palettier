@@ -1,6 +1,8 @@
 package be.asmolabs.palettier.ui.picker
 
+import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.mix.MixSuggestion
+import be.asmolabs.palettier.domain.palette.Palette
 import be.asmolabs.palettier.domain.paint.PaintMatchByColour
 import be.asmolabs.palettier.domain.project.DominantColour
 import be.asmolabs.palettier.ui.SearchScope
@@ -14,6 +16,20 @@ import be.asmolabs.palettier.ui.SearchScope
  * si c'est le meme objet, ce qui est exactement ce que l'ecran a besoin de savoir.</p>
  */
 class LoadedImage(val bytes: ByteArray, val width: Int, val height: Int)
+
+/**
+ * Un groupe de releves : une partie du sujet, et les points qu'on y a pris.
+ *
+ * <p>C'est le chemin sans assistant. On nomme une partie -- la peau, la cape, le cuir des
+ * sangles -- on y releve autant de points qu'on veut, et l'application en deduit le
+ * degrade : le median tient la base, les plus sombres deviennent les ombres, les plus
+ * clairs les lumieres. Rien n'est devine, chaque couche vient d'une mesure.</p>
+ */
+data class SampleGroup(val name: String, val samples: List<Rgb> = emptyList()) {
+
+    /** Du sombre au clair : l'ordre dans lequel ces points deviendront des couches. */
+    val ordered: List<Rgb> get() = samples.sortedBy { it.relativeLuminance() }
+}
 
 /** Le point releve, dans les coordonnees de l'image d'origine. */
 data class PickPoint(val x: Int, val y: Int)
@@ -58,7 +74,24 @@ data class PickerUiState(
     /** Nombre de tubes que la recherche s'autorise : a trois un melange se refait. */
     val maxPaints: Int = DEFAULT_MAX_PAINTS,
     val error: String? = null,
+
+    /** Les groupes composes a partir des releves, dans l'ordre ou ils ont ete nommes. */
+    val groups: List<SampleGroup> = emptyList(),
+    /** Le groupe auquel le prochain releve sera ajoute. */
+    val selectedGroup: String? = null,
+    /** Les palettes disponibles pour etablir le plan du projet. */
+    val palettes: List<Palette> = emptyList(),
+    val projectPaletteId: Long? = null,
+    /** Ce que la derniere action sur les groupes a donne : cree, refuse, enregistre. */
+    val groupMessage: String? = null,
+    val savingProject: Boolean = false,
 ) {
+    /** Le groupe courant, quand il en reste un de ce nom. */
+    val group: SampleGroup? get() = groups.firstOrNull { it.name == selectedGroup }
+
+    /** Vrai des qu'un point a ete releve quelque part : sans cela, aucun plan a etablir. */
+    val hasSamples: Boolean get() = groups.any { it.samples.isNotEmpty() }
+
     /** La teinte sur laquelle tout le reste travaille : corrigee si elle l'a ete. */
     val workingHex: String? get() = correctedHex ?: selectedHex
 
@@ -108,4 +141,22 @@ sealed interface PickerIntent {
     data object FindMixes : PickerIntent
 
     data class SetMaxPaints(val count: Int) : PickerIntent
+
+    // --- Les groupes de releves -------------------------------------------
+
+    data class CreateGroup(val name: String) : PickerIntent
+
+    data class SelectGroup(val name: String) : PickerIntent
+
+    data class DeleteGroup(val name: String) : PickerIntent
+
+    /** Ajoute la teinte retenue au groupe courant. */
+    data object AddSampleToGroup : PickerIntent
+
+    data class RemoveSample(val group: String, val hex: String) : PickerIntent
+
+    data class ChooseProjectPalette(val id: Long) : PickerIntent
+
+    /** Etablit le plan a partir des groupes, et l'enregistre comme projet. */
+    data class CreateProject(val name: String) : PickerIntent
 }

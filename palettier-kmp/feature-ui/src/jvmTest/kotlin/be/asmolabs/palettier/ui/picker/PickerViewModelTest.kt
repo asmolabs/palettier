@@ -81,6 +81,34 @@ class PickerViewModelTest {
         return ByteArrayOutputStream().also { ImageIO.write(image, "png", it) }.toByteArray()
     }
 
+    /** Un depot de projets en memoire : on veut voir ce qui s'y enregistre. */
+    private class FakeProjects : be.asmolabs.palettier.domain.port.ProjectRepository {
+        val saved = MutableStateFlow<List<be.asmolabs.palettier.domain.project.Project>>(emptyList())
+        private var nextId = 1L
+
+        override fun observeAll(): Flow<List<be.asmolabs.palettier.domain.project.Project>> = saved
+        override suspend fun all() = saved.value
+        override suspend fun findWithPhotos(id: Long) = saved.value.firstOrNull { it.id == id }
+        override suspend fun save(
+            project: be.asmolabs.palettier.domain.project.Project,
+        ): be.asmolabs.palettier.domain.project.Project {
+            val stored = project.copy(id = project.id ?: nextId++)
+            saved.value = saved.value.filterNot { it.id == stored.id } + stored
+            return stored
+        }
+        override suspend fun delete(project: be.asmolabs.palettier.domain.project.Project) {
+            saved.value = saved.value.filterNot { it.id == project.id }
+        }
+        override suspend fun addPhoto(
+            project: be.asmolabs.palettier.domain.project.Project,
+            photo: be.asmolabs.palettier.domain.project.ProjectPhoto,
+        ) = project
+        override suspend fun removePhoto(
+            project: be.asmolabs.palettier.domain.project.Project,
+            photoId: Long,
+        ) = project
+    }
+
     /** Une palette qui ne contient que la terre d'ombre : de quoi voir la portee mordre. */
     private fun palettes() = be.asmolabs.palettier.ui.FakePaletteRepository(
         listOf(
@@ -94,7 +122,12 @@ class PickerViewModelTest {
 
     private val shared = be.asmolabs.palettier.ui.SampledColour()
 
-    private fun model() = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes(), shared, ColorMixService())
+    private val projects = FakeProjects()
+
+    private fun model() = PickerViewModel(
+        imageDecoder(), FakeCatalog(catalogue), palettes(), shared, ColorMixService(),
+        projects, be.asmolabs.palettier.domain.plan.SampledPlanService(ColorMixService()),
+    )
 
     /**
      * Attend que l'etat remplisse une condition.
@@ -175,7 +208,10 @@ class PickerViewModelTest {
         val palettes = be.asmolabs.palettier.ui.FakePaletteRepository(
             listOf(be.asmolabs.palettier.domain.palette.Palette(id = 9, name = "A composer"))
         )
-        val model = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes, shared, ColorMixService())
+        val model = PickerViewModel(
+            imageDecoder(), FakeCatalog(catalogue), palettes, shared, ColorMixService(),
+            FakeProjects(), be.asmolabs.palettier.domain.plan.SampledPlanService(ColorMixService()),
+        )
         model.onIntent(PickerIntent.Load(image("#C98F72")))
         model.await { it.closest.isNotEmpty() }
 
@@ -369,6 +405,105 @@ class PickerViewModelTest {
         val after = model.await { it.selectedHex == "#4A3427" }
 
         assertTrue(after.suggestions.isEmpty(), "une recette pour la teinte precedente serait fausse")
+    }
+
+    @Test
+    fun `des releves groupes deviennent un projet, ses groupes en zones`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72", "#4A3427", "#E8D2BE")))
+        model.await { it.closest.isNotEmpty() }
+        model.await { it.palettes.isNotEmpty() }
+
+        model.onIntent(PickerIntent.CreateGroup("Peau"))
+        // Trois points de la meme carnation : une ombre, une base, une lumiere.
+        listOf(30, 100, 180).forEach { x ->
+            model.onIntent(PickerIntent.PickAt(x, 50))
+            model.await { it.pickedAt?.x == x }
+            model.onIntent(PickerIntent.AddSampleToGroup)
+        }
+        val ready = model.await { it.group?.samples?.size == 3 }
+        assertTrue(ready.hasSamples)
+
+        model.onIntent(PickerIntent.CreateProject("Grognard"))
+        val done = model.await { it.groupMessage?.contains("cree") == true }
+
+        assertTrue(!done.savingProject)
+        val project = projects.saved.value.single()
+        assertEquals("Grognard", project.name)
+        assertEquals(listOf("Peau"), project.zones.map { it.name })
+        // Les roles viennent de la clarte des points, pas de l'ordre de prelevement.
+        assertEquals(
+            listOf("Ombre 1", "Base", "Lumiere 1"),
+            project.zones.first().layers.map { it.role },
+        )
+    }
+
+    @Test
+    fun `sans le moindre point, le projet est refuse et rien ne s'enregistre`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72")))
+        model.await { it.closest.isNotEmpty() }
+
+        model.onIntent(PickerIntent.CreateGroup("Peau"))
+        model.onIntent(PickerIntent.CreateProject("Grognard"))
+        val state = model.await { it.groupMessage?.contains("Aucun point") == true }
+
+        assertTrue(projects.saved.value.isEmpty())
+        assertTrue(!state.savingProject)
+    }
+
+    @Test
+    fun `un nom de projet deja pris est numerote plutot que refuse`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72")))
+        model.await { it.closest.isNotEmpty() }
+        model.await { it.palettes.isNotEmpty() }
+
+        repeat(2) {
+            model.onIntent(PickerIntent.CreateGroup("Peau $it"))
+            model.onIntent(PickerIntent.PickAt(100, 50))
+            model.await { it.pickedAt != null }
+            model.onIntent(PickerIntent.AddSampleToGroup)
+            model.await { it.group?.samples?.isNotEmpty() == true }
+            model.onIntent(PickerIntent.CreateProject("Grognard"))
+            model.await { s -> s.groupMessage?.contains("cree") == true }
+        }
+
+        assertEquals(listOf("Grognard", "Grognard 2"), projects.saved.value.map { it.name })
+    }
+
+    @Test
+    fun `un groupe sans nom est refuse, et un homonyme aussi`() = runTest(dispatcher) {
+        val model = model()
+
+        model.onIntent(PickerIntent.CreateGroup("   "))
+        assertEquals("Donnez un nom au groupe.", model.state.value.groupMessage)
+        assertTrue(model.state.value.groups.isEmpty())
+
+        model.onIntent(PickerIntent.CreateGroup("Peau"))
+        model.onIntent(PickerIntent.CreateGroup("peau"))
+        assertEquals("Un groupe porte deja ce nom.", model.state.value.groupMessage)
+        assertEquals(1, model.state.value.groups.size)
+    }
+
+    @Test
+    fun `retirer un releve n'emporte pas son jumeau de meme teinte`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#C98F72")))
+        model.await { it.closest.isNotEmpty() }
+
+        model.onIntent(PickerIntent.CreateGroup("Peau"))
+        // Deux points pris au meme endroit : la meme teinte, deux fois.
+        repeat(2) {
+            model.onIntent(PickerIntent.PickAt(100, 50))
+            model.onIntent(PickerIntent.AddSampleToGroup)
+        }
+        val two = model.await { it.group?.samples?.size == 2 }
+        val hex = two.group!!.samples.first().toHex()
+
+        model.onIntent(PickerIntent.RemoveSample("Peau", hex))
+        val one = model.await { it.group?.samples?.size == 1 }
+        assertEquals(hex, one.group!!.samples.single().toHex())
     }
 
     @Test
