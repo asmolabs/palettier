@@ -13,6 +13,7 @@ kotlin {
             implementation(project(":core-data"))
             implementation(project(":feature-ui"))
             implementation(project(":core-image"))
+            implementation(project(":ai"))
             implementation(compose.desktop.currentOs)
             // Dispatchers.Main n'existe pas sur le bureau sans cela : Compose et les
             // ViewModels s'en servent, et l'absence ne se voit qu'a l'execution.

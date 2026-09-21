@@ -28,10 +28,14 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import be.asmolabs.palettier.ai.di.aiModule
 import be.asmolabs.palettier.data.di.dataModule
 import be.asmolabs.palettier.data.di.domainModule
 import be.asmolabs.palettier.data.di.platformModule
 import be.asmolabs.palettier.image.imageDecoder
+import be.asmolabs.palettier.ui.assistant.AssistantIntent
+import be.asmolabs.palettier.ui.assistant.AssistantScreen
+import be.asmolabs.palettier.ui.assistant.AssistantViewModel
 import be.asmolabs.palettier.ui.catalog.CatalogScreen
 import be.asmolabs.palettier.ui.catalog.CatalogViewModel
 import be.asmolabs.palettier.ui.drying.DryingScreen
@@ -70,7 +74,7 @@ fun main() = application {
         state = rememberWindowState(width = 1100.dp, height = 800.dp),
     ) {
         KoinApplication(application = {
-            modules(platformModule, dataModule, domainModule, uiModule)
+            modules(platformModule, dataModule, domainModule, aiModule, uiModule)
         }) {
             MaterialTheme(colorScheme = atelier) {
                 val model: WorkbenchViewModel = koinViewModel()
@@ -94,6 +98,8 @@ fun main() = application {
                 val dryingState by dryingModel.state.collectAsStateWithLifecycle()
                 val recipesModel: RecipesViewModel = koinViewModel()
                 val recipesState by recipesModel.state.collectAsStateWithLifecycle()
+                val assistantModel: AssistantViewModel = koinViewModel()
+                val assistantState by assistantModel.state.collectAsStateWithLifecycle()
                 var section by remember { mutableStateOf(0) }
 
                 Surface(Modifier.fillMaxSize()) {
@@ -126,6 +132,9 @@ fun main() = application {
                                 Text("Recettes", Modifier.padding(vertical = 12.dp))
                             }
                             Tab(section == 8, { section = 8 }) {
+                                Text("Assistant", Modifier.padding(vertical = 12.dp))
+                            }
+                            Tab(section == 9, { section = 9 }) {
                                 Text("Parametres", Modifier.padding(vertical = 12.dp))
                             }
                         }
@@ -147,6 +156,17 @@ fun main() = application {
                             5 -> CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
                             6 -> DryingScreen(dryingState, dryingModel::onIntent, Modifier.weight(1f))
                             7 -> RecipesScreen(recipesState, recipesModel::onIntent, Modifier.weight(1f))
+                            8 -> AssistantScreen(
+                                assistantState,
+                                assistantModel::onIntent,
+                                onChooseFigurine = {
+                                    pickPhoto()?.let { assistantModel.onIntent(AssistantIntent.AttachFigurine(it)) }
+                                },
+                                onChooseReference = {
+                                    pickPhoto()?.let { assistantModel.onIntent(AssistantIntent.AttachReference(it)) }
+                                },
+                                modifier = Modifier.weight(1f),
+                            )
                             else -> SettingsScreen(
                                 SettingsUiState(busy = import.busy, message = import.message),
                                 onExport = import::exportTo,
@@ -203,6 +223,7 @@ private val uiModule = module {
     factory { MixerViewModel(get(), get()) }
     factory { DryingViewModel(get()) }
     factory { RecipesViewModel(get(), get()) }
+    factory { AssistantViewModel(get(), get(), get()) }
     single { be.asmolabs.palettier.domain.recipe.RecipeTimelineService(get()) }
     single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
 }

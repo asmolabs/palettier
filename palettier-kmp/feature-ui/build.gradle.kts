@@ -23,6 +23,7 @@ kotlin {
             // applicatif qui les met en presence.
             implementation(project(":core-domain"))
             implementation(project(":core-image"))
+            implementation(project(":ai"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -42,6 +43,7 @@ kotlin {
         jvmTest.dependencies {
             // La pipette s'essaie la ou l'on sait fabriquer une image : ImageIO.
             implementation(project(":core-image"))
+            implementation(project(":ai"))
         }
     }
 }

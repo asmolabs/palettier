@@ -81,9 +81,9 @@ fun SettingsScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Assistant", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(
-                        "Pas encore porte. Dans l'application d'origine il est desactive par defaut, " +
-                            "et rien de ce qui precede n'en depend : le catalogue, les melanges, le " +
-                            "sechage et les plans fonctionnent sans lui.",
+                        "Le moteur se choisit dans l'onglet Assistant, avec le reste de ses reglages. " +
+                            "Aucun n'est choisi au depart, et rien de ce qui precede n'en depend : le " +
+                            "catalogue, les melanges, le sechage et les plans fonctionnent sans lui.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
