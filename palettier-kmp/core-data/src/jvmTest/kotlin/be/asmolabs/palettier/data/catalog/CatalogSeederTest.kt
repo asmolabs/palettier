@@ -149,6 +149,45 @@ class CatalogSeederTest {
     }
 
     @Test
+    fun `une fiche perimee qui porte une mesure du peintre est epargnee`() = runTest {
+        seeder.seed()
+
+        // Trois fiches qui ne figurent plus dans aucun fichier de gamme. La premiere est
+        // nue, les deux autres portent quelque chose que les fichiers ne rendraient pas.
+        val nue = paints.save(
+            Paint(brand = "Gamblin", name = "Teinte retiree, jamais mesuree", hexColor = "#804020")
+        )
+        val mesuree = paints.save(
+            Paint(
+                brand = "Gamblin",
+                name = "Teinte retiree, mais calibree",
+                hexColor = "#804020",
+                tintHex = "#D9B9A4",
+            )
+        )
+        val annotee = paints.save(
+            Paint(
+                brand = "Gamblin",
+                name = "Teinte retiree, mais annotee",
+                hexColor = "#804020",
+                notes = "le tube de 2019, plus epais que le neuf",
+            )
+        )
+
+        val report = seeder.seed()
+
+        assertEquals(1, report.paintsRemoved)
+        assertNull(paints.findById(nue.id!!), "sans mesure, la fiche perimee s'en va")
+
+        // Une teinte relevee sur un ecouvillon ne figure dans aucun fichier : la perdre,
+        // c'est la perdre pour de bon.
+        assertNotNull(paints.findById(mesuree.id!!))
+        assertNotNull(paints.findById(annotee.id!!))
+        assertEquals(2, report.paintsKeptCalibrated.size)
+        assertTrue(report.paintsKeptCalibrated.any { it.contains("calibree") }, report.paintsKeptCalibrated.toString())
+    }
+
+    @Test
     fun `la teinte diluee est rattrapee sur une base qui n'en a pas`() = runTest {
         seeder.seed()
         // Une base d'avant le modele a deux constantes : la teinte diluee y est absente.

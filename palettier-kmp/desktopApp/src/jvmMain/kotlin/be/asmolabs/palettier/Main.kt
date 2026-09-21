@@ -99,6 +99,15 @@ fun main() = application {
                     report.unknownPigments.takeIf { it.isNotEmpty() }?.let {
                         println("Pigments cites par le catalogue mais absents de la table : ${it.joinToString()}")
                     }
+                    // Nommees, et pas seulement comptees : ce sont des fiches que plus
+                    // aucun fichier de gamme ne decrit, et le peintre est seul a savoir
+                    // s'il veut les garder.
+                    report.paintsKeptCalibrated.takeIf { it.isNotEmpty() }?.let {
+                        println(
+                            "Fiches perimees gardees parce qu'elles portent votre mesure : " +
+                                it.joinToString()
+                        )
+                    }
                 }
 
                 val model: WorkbenchViewModel = koinViewModel()

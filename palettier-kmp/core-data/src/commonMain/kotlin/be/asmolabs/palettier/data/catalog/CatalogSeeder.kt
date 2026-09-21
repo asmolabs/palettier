@@ -40,6 +40,8 @@ class CatalogSeeder(
         val paintsRefreshed: Int = 0,
         val paintsRemoved: Int = 0,
         val paintsKeptInUse: Int = 0,
+        /** Les fiches perimees gardees parce qu'elles portent une mesure du peintre. */
+        val paintsKeptCalibrated: List<String> = emptyList(),
         val tintsBackfilled: Int = 0,
         val palettesAdded: Int = 0,
         val recipesAdded: Int = 0,
@@ -75,6 +77,7 @@ class CatalogSeeder(
             paintsRefreshed = sync.refreshed,
             paintsRemoved = sync.removed,
             paintsKeptInUse = sync.keptInUse,
+            paintsKeptCalibrated = sync.keptCalibrated,
             tintsBackfilled = tints,
             palettesAdded = seedMissingPalettes(),
             recipesAdded = seedMissingRecipes(),
@@ -87,6 +90,7 @@ class CatalogSeeder(
         var added: Int = 0,
         var removed: Int = 0,
         var keptInUse: Int = 0,
+        val keptCalibrated: MutableList<String> = mutableListOf(),
     )
 
     /**
@@ -161,26 +165,52 @@ class CatalogSeeder(
     }
 
     /**
-     * Retire les fiches perimees, en epargnant celles qui servent encore.
+     * Retire les fiches perimees, en epargnant celles qui servent encore et celles qui
+     * portent une mesure.
      *
      * <p>Un tube employe par une palette ou fige dans un projet ne peut pas disparaitre
      * sans emporter ce qui s'y refere. On demande donc d'abord lesquels sont utilises,
      * plutot que de tenter la suppression pour voir : la contrainte cederait et
      * emporterait la palette avec elle.</p>
+     *
+     * <p>La seconde reserve est venue d'un vrai demarrage, sur une vraie base. Cinq fiches
+     * perimees sont parties, et avec elles cinq teintes diluees. Une fiche perimee qui
+     * porte une teinte diluee ou une note ne peut pas etre reconstruite : elle ne figure
+     * dans aucun fichier de gamme, par definition. La garder coute une ligne de plus dans
+     * une liste ; la supprimer detruit un releve d'ecouvillon. Les deux risques ne se
+     * valent pas, et c'est le moins cher qui est choisi.</p>
+     *
+     * <p>La possession, elle, ne protege rien : une base venue de l'application Java
+     * declare volontiers tout le catalogue comme possede, et s'en servir reviendrait a ne
+     * plus jamais rien retirer.</p>
      */
     private suspend fun removeObsolete(obsolete: List<Paint>, sync: Sync) {
         if (obsolete.isEmpty()) return
         val inUse = paints.idsInUse()
 
         for (paint in obsolete) {
-            if (paint.id in inUse) {
-                sync.keptInUse++
-            } else {
-                paints.delete(paint)
-                sync.removed++
+            when {
+                paint.id in inUse -> sync.keptInUse++
+                paint.calibrated -> sync.keptCalibrated += paint.displayName
+                else -> {
+                    paints.delete(paint)
+                    sync.removed++
+                }
             }
         }
     }
+
+    /**
+     * Ce que le peintre a mis dans la fiche, et que les fichiers de gamme ne rendraient
+     * pas.
+     *
+     * <p>La teinte diluee sert de marque : sur une fiche perimee elle vient forcement
+     * d'un ecouvillon ou d'une version anterieure du catalogue, jamais du fichier
+     * courant. Le jour ou la calibration s'ecrira depuis l'ecran Catalogue, elle laissera
+     * une trace plus nette et ce test se resserrera.</p>
+     */
+    private val Paint.calibrated: Boolean
+        get() = !tintHex.isNullOrBlank() || notes.isNotBlank()
 
     /**
      * Renseigne la teinte diluee des huiles qui n'en ont pas encore.
