@@ -113,6 +113,7 @@ class WorkbenchViewModelTest {
         mixesRepository = mixes,
         workbench = WorkbenchService(),
         mixes = PaletteMixService(),
+        sampledColour = be.asmolabs.palettier.ui.SampledColour(),
         clock = clock,
     )
 

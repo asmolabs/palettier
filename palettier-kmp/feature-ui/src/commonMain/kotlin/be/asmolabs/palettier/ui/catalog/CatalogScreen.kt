@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,6 +79,14 @@ private fun Filters(state: CatalogUiState, onIntent: (CatalogIntent) -> Unit) {
                     onValueChange = { onIntent(CatalogIntent.AimAt(it)) },
                     label = { Text("Teinte visee") },
                     placeholder = { Text("#C98F72") },
+                    trailingIcon = {
+                        // Le pont avec la pipette : elle mesure, le catalogue attribue.
+                        state.sampledHex?.let { measured ->
+                            TextButton({ onIntent(CatalogIntent.AimAt(measured)) }) {
+                                Text("relevee")
+                            }
+                        }
+                    },
                     singleLine = true,
                     modifier = Modifier.width(180.dp),
                 )

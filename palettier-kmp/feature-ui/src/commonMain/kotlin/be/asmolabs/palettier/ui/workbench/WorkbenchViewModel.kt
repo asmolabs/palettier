@@ -42,13 +42,19 @@ class WorkbenchViewModel(
     private val mixesRepository: PaletteMixRepository,
     private val workbench: WorkbenchService,
     private val mixes: PaletteMixService,
+    /** Le relais partage : la pipette y depose, cet ecran y puise. */
+    private val sampledColour: be.asmolabs.palettier.ui.SampledColour,
     private val clock: Clock = Clock.System,
     private val tick: Duration = 1.minutes,
     /** Conditions de l'atelier employees pour un melange qu'on pose. */
     private val workshop: () -> Workshop = { Workshop.standard() },
 ) : ViewModel() {
 
-    private val sampled = MutableStateFlow<Rgb?>(null)
+    /**
+     * La teinte relevee ailleurs. Le flux etait prive et personne ne l'alimentait : c'est
+     * desormais l'objet partage, celui que la pipette remplit.
+     */
+    private val sampled: StateFlow<Rgb?> get() = sampledColour.colour
 
     val state: StateFlow<WorkbenchUiState> =
         combine(
@@ -70,7 +76,7 @@ class WorkbenchViewModel(
 
     /** La teinte relevee ailleurs, que l'on nomme ici pour la poser sur la palette. */
     fun sample(colour: Rgb?) {
-        sampled.value = colour
+        sampledColour.set(colour)
     }
 
     fun onIntent(intent: WorkbenchIntent) {

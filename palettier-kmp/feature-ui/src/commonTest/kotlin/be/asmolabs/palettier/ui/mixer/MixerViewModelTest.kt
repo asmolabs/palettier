@@ -37,6 +37,8 @@ class MixerViewModelTest {
     private val lake = testPaint(4, "Alizarin", "#8A1538", opacity = Opacity.TRANSPARENT,
         pigments = setOf("PR83"))
 
+    private val shared = be.asmolabs.palettier.ui.SampledColour()
+
     private val palettes = be.asmolabs.palettier.ui.FakePaletteRepository(
         listOf(
             be.asmolabs.palettier.domain.palette.Palette(
@@ -48,7 +50,7 @@ class MixerViewModelTest {
     )
 
     private fun model(paints: List<be.asmolabs.palettier.domain.paint.Paint> = listOf(white, umber, cadmium, lake)) =
-        MixerViewModel(FakeCatalogRepository(paints), ColorMixService(), palettes)
+        MixerViewModel(FakeCatalogRepository(paints), ColorMixService(), palettes, shared)
 
 @Test
     fun `chercher dans une palette ne laisse que ses tubes, dans les deux sens`() = runTest(dispatcher) {

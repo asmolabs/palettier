@@ -20,6 +20,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -75,7 +76,8 @@ class CatalogViewModelTest {
     }
 
     private suspend fun kotlinx.coroutines.CoroutineScope.model(catalog: FakeCatalog): CatalogViewModel {
-        val model = CatalogViewModel(catalog)
+        val shared = be.asmolabs.palettier.ui.SampledColour()
+        val model = CatalogViewModel(catalog, shared)
         launch { model.state.collect { } }
         model.state.first { !it.loading }
         return model
@@ -146,5 +148,28 @@ class CatalogViewModelTest {
         model.onIntent(CatalogIntent.OnlyInStock(true))
         advanceUntilIdle()
         assertEquals(4, model.state.value.rows.size)
+    }
+
+    @Test
+    fun `la teinte relevee a la pipette est proposee, jamais imposee`() = runTest(dispatcher) {
+        val shared = be.asmolabs.palettier.ui.SampledColour()
+        val model = CatalogViewModel(FakeCatalog(catalogue), shared)
+        // Comme l'aide de ce fichier : un abonne de fond, sinon le flux partage ne
+        // produit rien et l'essai attend une valeur qui ne viendra pas.
+        backgroundScope.launch { model.state.collect { } }
+        model.state.first { !it.loading }
+
+        // Rien n'a ete releve : rien a proposer, et le classement reste alphabetique.
+        assertNull(model.state.value.sampledHex)
+
+        shared.set(be.asmolabs.palettier.domain.color.Rgb.ofHex("#C98F72"))
+        val offered = model.state.first { it.sampledHex != null }
+        assertEquals("#C98F72", offered.sampledHex)
+        assertNull(offered.targetHex, "la teinte visee n'a pas bouge toute seule")
+
+        // Une fois reprise, elle cesse d'etre proposee : elle est devenue la question.
+        model.onIntent(CatalogIntent.AimAt("#C98F72"))
+        val aimed = model.state.first { it.targetHex == "#C98F72" }
+        assertNull(aimed.sampledHex)
     }
 }

@@ -1,18 +1,21 @@
 package be.asmolabs.palettier
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +27,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -72,10 +82,24 @@ import org.koin.dsl.module
  * avec le lanceur JavaFX, qui devait aussi faire le pont entre deux cycles de vie.</p>
  */
 fun main() = application {
+    var section by remember { mutableStateOf(Section.entries.first()) }
+
     Window(
         onCloseRequest = ::exitApplication,
         title = "Palettier",
-        state = rememberWindowState(width = 1100.dp, height = 800.dp),
+        state = rememberWindowState(width = 1280.dp, height = 860.dp),
+        // On peint d'une main, la souris tient souvent autre chose. Passer du releve au
+        // melange doit pouvoir se faire sans lacher le pinceau.
+        onPreviewKeyEvent = { event ->
+            val digit = DIGITS.indexOf(event.key)
+            val chosen = Section.entries.firstOrNull { it.shortcut == digit }
+            if (event.type == KeyEventType.KeyDown && (event.isMetaPressed || event.isCtrlPressed) && chosen != null) {
+                section = chosen
+                true
+            } else {
+                false
+            }
+        },
     ) {
         KoinApplication(application = {
             modules(platformModule, dataModule, domainModule, aiModule, uiModule)
@@ -133,47 +157,17 @@ fun main() = application {
                 val recipesState by recipesModel.state.collectAsStateWithLifecycle()
                 val assistantModel: AssistantViewModel = koinViewModel()
                 val assistantState by assistantModel.state.collectAsStateWithLifecycle()
-                var section by remember { mutableStateOf(0) }
-
                 Surface(Modifier.fillMaxSize()) {
-                    Column {
-                        TabRow(selectedTabIndex = section) {
-                            // Aujourd'hui d'abord : c'est la question du matin.
-                            Tab(section == 0, { section = 0 }) {
-                                Text("Aujourd'hui", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 1, { section = 1 }) {
-                                Text("Projets", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 2, { section = 2 }) {
-                                Text("Pipette", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 3, { section = 3 }) {
-                                Text("Palettes", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 4, { section = 4 }) {
-                                Text("Melangeur", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 5, { section = 5 }) {
-                                Text("Catalogue", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 6, { section = 6 }) {
-                                Text("Sechage", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 7, { section = 7 }) {
-                                Text("Recettes", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 8, { section = 8 }) {
-                                Text("Assistant", Modifier.padding(vertical = 12.dp))
-                            }
-                            Tab(section == 9, { section = 9 }) {
-                                Text("Parametres", Modifier.padding(vertical = 12.dp))
-                            }
-                        }
+                    Row(Modifier.fillMaxSize()) {
+                        Sidebar(section) { section = it }
+
                         when (section) {
-                            0 -> WorkbenchScreen(state, Modifier.weight(1f))
-                            1 -> ProjectsScreen(projectsState, projectsModel::onIntent, Modifier.weight(1f))
-                            2 -> PickerScreen(
+                            Section.Today -> WorkbenchScreen(state, Modifier.weight(1f))
+                            Section.Projects ->
+                                ProjectsScreen(projectsState, projectsModel::onIntent, Modifier.weight(1f))
+                            Section.Palettes ->
+                                PalettesScreen(palettesState, palettesModel::onIntent, Modifier.weight(1f))
+                            Section.Picker -> PickerScreen(
                                 pickerState,
                                 pickerModel::onIntent,
                                 onChooseImage = {
@@ -183,12 +177,7 @@ fun main() = application {
                                 },
                                 Modifier.weight(1f),
                             )
-                            3 -> PalettesScreen(palettesState, palettesModel::onIntent, Modifier.weight(1f))
-                            4 -> MixerScreen(mixerState, mixerModel::onIntent, Modifier.weight(1f))
-                            5 -> CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
-                            6 -> DryingScreen(dryingState, dryingModel::onIntent, Modifier.weight(1f))
-                            7 -> RecipesScreen(recipesState, recipesModel::onIntent, Modifier.weight(1f))
-                            8 -> AssistantScreen(
+                            Section.Assistant -> AssistantScreen(
                                 assistantState,
                                 assistantModel::onIntent,
                                 onChooseFigurine = {
@@ -202,7 +191,13 @@ fun main() = application {
                                 },
                                 modifier = Modifier.weight(1f),
                             )
-                            else -> SettingsScreen(
+                            Section.Mixer -> MixerScreen(mixerState, mixerModel::onIntent, Modifier.weight(1f))
+                            Section.Catalogue ->
+                                CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
+                            Section.Drying -> DryingScreen(dryingState, dryingModel::onIntent, Modifier.weight(1f))
+                            Section.Recipes ->
+                                RecipesScreen(recipesState, recipesModel::onIntent, Modifier.weight(1f))
+                            Section.Settings -> SettingsScreen(
                                 SettingsUiState(busy = import.busy, message = import.message),
                                 onExport = import::exportTo,
                                 onImport = import::choose,
@@ -212,6 +207,110 @@ fun main() = application {
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Les sections, dans l'ordre de la barre laterale.
+ *
+ * <p>Le raccourci est declare par la section, et non deduit de son rang. C'etait deja la
+ * regle cote JavaFX, et pour une raison qui tient : inserer une section en tete
+ * deplacerait sinon tout ce qui suit sous les doigts de quelqu'un qui a pris ses
+ * habitudes.</p>
+ */
+private enum class Section(val title: String, val shortcut: Int) {
+    Today("Aujourd'hui", 0),
+    Projects("Projets", 1),
+    Palettes("Palettes", 2),
+    Picker("Pipette", 3),
+    Assistant("Assistant", 4),
+    Mixer("Melangeur", 5),
+    Catalogue("Catalogue", 6),
+    Drying("Sechage", 7),
+    Recipes("Recettes", 8),
+    Settings("Parametres", 9),
+}
+
+/** Les touches chiffrees, dans l'ordre, pour retrouver le rang qu'elles designent. */
+private val DIGITS = listOf(
+    Key.Zero, Key.One, Key.Two, Key.Three, Key.Four,
+    Key.Five, Key.Six, Key.Seven, Key.Eight, Key.Nine,
+)
+
+/**
+ * La navigation : une colonne, pas dix onglets.
+ *
+ * <p>A dix entrees, une rangee d'onglets comprime ses libelles jusqu'a les rendre
+ * illisibles et n'a nulle part ou afficher un raccourci. La colonne laisse a chaque
+ * section sa ligne, sa pastille et son chiffre -- et ce chiffre s'affiche, sinon personne
+ * ne le devine.</p>
+ */
+@androidx.compose.runtime.Composable
+private fun Sidebar(current: Section, onChoose: (Section) -> Unit) {
+    Surface(
+        Modifier.width(248.dp).fillMaxHeight(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(Modifier.fillMaxHeight()) {
+            Column(Modifier.padding(start = 18.dp, top = 22.dp, end = 18.dp, bottom = 22.dp)) {
+                Text("Palettier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "peinture a l'huile",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Section.entries.forEach { entry ->
+                NavItem(entry, entry == current) { onChoose(entry) }
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            Text(
+                "Aucune donnee ne part ailleurs.\nTout reste dans ~/.palettier",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(18.dp),
+            )
+        }
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun NavItem(section: Section, selected: Boolean, onClick: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    Surface(
+        color = if (selected) MaterialTheme.colorScheme.surface else androidx.compose.ui.graphics.Color.Transparent,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 18.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            androidx.compose.foundation.layout.Box(
+                Modifier
+                    .size(7.dp)
+                    .background(
+                        if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
+                        androidx.compose.foundation.shape.CircleShape,
+                    )
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                section.title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                color = if (selected) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                section.shortcut.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            )
         }
     }
 }
@@ -227,12 +326,15 @@ private fun pickPhoto(): ByteArray? {
 
 /** Les ViewModels : declares ici, parce que c'est l'application qui sait ce qu'elle affiche. */
 private val uiModule = module {
-    factory { WorkbenchViewModel(get(), get(), get(), get()) }
+    // Un seul relais pour toute l'application : la pipette y depose sa mesure, le
+    // catalogue, le melangeur et l'etabli la retrouvent sans se connaitre.
+    single { be.asmolabs.palettier.ui.SampledColour() }
+    factory { WorkbenchViewModel(get(), get(), get(), get(), get()) }
     factory { ProjectsViewModel(get(), get(), get(), get(), get()) }
-    factory { CatalogViewModel(get()) }
-    factory { PickerViewModel(imageDecoder(), get(), get()) }
+    factory { CatalogViewModel(get(), get()) }
+    factory { PickerViewModel(imageDecoder(), get(), get(), get()) }
     factory { PalettesViewModel(get(), get()) }
-    factory { MixerViewModel(get(), get(), get()) }
+    factory { MixerViewModel(get(), get(), get(), get()) }
     factory { DryingViewModel(get()) }
     factory { RecipesViewModel(get(), get()) }
     factory { AssistantViewModel(get(), get(), get(), get(), get(), get()) }

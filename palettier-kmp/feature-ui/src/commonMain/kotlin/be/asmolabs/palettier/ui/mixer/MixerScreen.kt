@@ -148,6 +148,10 @@ private fun Reverse(state: MixerUiState, onIntent: (MixerIntent) -> Unit) {
                     modifier = Modifier.width(180.dp),
                 )
                 if (state.searching) CircularProgressIndicator(Modifier.size(18.dp))
+                // Le pont avec la pipette : on releve la-bas, on cherche la recette ici.
+                state.sampledHex?.let { measured ->
+                    Chip("relevee $measured", false) { onIntent(MixerIntent.AimAt(measured)) }
+                }
             }
 
             // Un melange a trois tubes se refait ; a cinq, il ne se refait plus.

@@ -14,6 +14,8 @@ data class CatalogUiState(
     val onlyInStock: Boolean = false,
     /** Teinte visee, quand le peintre cherche "ce qui s'en rapproche le plus". */
     val targetHex: String? = null,
+    /** La derniere teinte relevee a la pipette, quand elle differe de la teinte visee. */
+    val sampledHex: String? = null,
     val error: String? = null,
 ) {
     /** Vrai quand le classement se fait par ecart plutot que par marque et nom. */

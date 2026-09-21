@@ -8,6 +8,7 @@ import be.asmolabs.palettier.domain.mix.PaintPart
 import be.asmolabs.palettier.domain.paint.Paint
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
 import be.asmolabs.palettier.domain.port.PaletteRepository
+import be.asmolabs.palettier.ui.SampledColour
 import be.asmolabs.palettier.ui.candidates
 import be.asmolabs.palettier.ui.scopesOf
 import kotlinx.coroutines.Job
@@ -31,6 +32,7 @@ class MixerViewModel(
     private val catalog: PaintCatalogRepository,
     private val mixer: ColorMixService,
     private val palettes: PaletteRepository,
+    private val sampled: SampledColour,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MixerUiState())
@@ -42,6 +44,15 @@ class MixerViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(scopes = scopesOf(palettes.all()))
             reloadAvailable()
+        }
+        // La teinte relevee ailleurs est proposee, jamais imposee : l'ecran l'affiche a
+        // cote du champ, et c'est un clic qui la reprend.
+        viewModelScope.launch {
+            sampled.colour.collect { measured ->
+                _state.value = _state.value.copy(
+                    sampledHex = measured?.toHex()?.takeIf { it != _state.value.targetHex },
+                )
+            }
         }
     }
 

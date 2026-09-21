@@ -11,6 +11,7 @@ import be.asmolabs.palettier.domain.paint.findClosest
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
 import be.asmolabs.palettier.domain.port.PaletteRepository
 import be.asmolabs.palettier.image.ImageDecoder
+import be.asmolabs.palettier.ui.SampledColour
 import be.asmolabs.palettier.ui.candidates
 import be.asmolabs.palettier.ui.scopesOf
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,7 @@ class PickerViewModel(
     private val decoder: ImageDecoder,
     private val catalog: PaintCatalogRepository,
     private val palettes: PaletteRepository,
+    private val sampled: SampledColour,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PickerUiState())
@@ -153,6 +155,10 @@ class PickerViewModel(
         val working = grey?.let { neutralise(selected, it) } ?: selected
 
         val candidates = current.scope.candidates(catalog, palettes)
+
+        // La pipette mesure, les autres ecrans s'en servent. Elle publie donc la teinte
+        // de travail -- corrigee si elle l'a ete, puisque c'est celle qui vaut.
+        sampled.set(working)
 
         _state.value = current.copy(
             correctedHex = grey?.let { working.toHex() },

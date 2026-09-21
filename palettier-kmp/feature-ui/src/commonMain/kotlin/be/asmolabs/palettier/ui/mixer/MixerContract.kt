@@ -16,6 +16,8 @@ data class MixerUiState(
     val result: MixResult? = null,
     /** La teinte visee, dans le sens inverse. */
     val targetHex: String = "",
+    /** La derniere teinte relevee a la pipette, quand elle differe de la teinte visee. */
+    val sampledHex: String? = null,
     val suggestions: List<MixSuggestion> = emptyList(),
     val searching: Boolean = false,
     /** Ou chercher, et de quoi se composer un melange a la main. */

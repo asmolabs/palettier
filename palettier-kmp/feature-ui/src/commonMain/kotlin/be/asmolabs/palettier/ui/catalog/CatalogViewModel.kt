@@ -6,6 +6,7 @@ import be.asmolabs.palettier.domain.color.Rgb
 import be.asmolabs.palettier.domain.color.deltaE2000
 import be.asmolabs.palettier.domain.paint.Paint
 import be.asmolabs.palettier.domain.port.PaintCatalogRepository
+import be.asmolabs.palettier.ui.SampledColour
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
  */
 class CatalogViewModel(
     private val catalog: PaintCatalogRepository,
+    sampled: SampledColour,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -31,7 +33,13 @@ class CatalogViewModel(
     private val target = MutableStateFlow<String?>(null)
 
     val state: StateFlow<CatalogUiState> =
-        combine(catalog.observeAll(), query, onlyInStock, target) { paints, text, inStock, hex ->
+        combine(
+            catalog.observeAll(),
+            query,
+            onlyInStock,
+            target,
+            sampled.colour,
+        ) { paints, text, inStock, hex, measured ->
             val kept = paints
                 .filter { !inStock || it.inStock }
                 .filter { matches(it, text) }
@@ -43,6 +51,9 @@ class CatalogViewModel(
                 query = text,
                 onlyInStock = inStock,
                 targetHex = hex,
+                // Proposee, jamais imposee : une teinte relevee il y a une heure n'a pas a
+                // ecraser celle qu'on vient de taper.
+                sampledHex = measured?.toHex()?.takeIf { it != hex },
             )
         }
             .catch { emit(CatalogUiState(loading = false, error = it.message ?: "Lecture impossible")) }

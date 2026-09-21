@@ -91,7 +91,9 @@ class PickerViewModelTest {
         )
     )
 
-    private fun model() = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes())
+    private val shared = be.asmolabs.palettier.ui.SampledColour()
+
+    private fun model() = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes(), shared)
 
     /**
      * Attend que l'etat remplisse une condition.
@@ -172,7 +174,7 @@ class PickerViewModelTest {
         val palettes = be.asmolabs.palettier.ui.FakePaletteRepository(
             listOf(be.asmolabs.palettier.domain.palette.Palette(id = 9, name = "A composer"))
         )
-        val model = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes)
+        val model = PickerViewModel(imageDecoder(), FakeCatalog(catalogue), palettes, shared)
         model.onIntent(PickerIntent.Load(image("#C98F72")))
         model.await { it.closest.isNotEmpty() }
 
@@ -297,6 +299,23 @@ class PickerViewModelTest {
         model.onIntent(PickerIntent.Load(image("#C98F72")))
 
         assertEquals(12, model.await { it.image != null }.sampleRadius)
+    }
+
+    @Test
+    fun `la teinte relevee part vers les autres ecrans, corrigee si elle l'a ete`() = runTest(dispatcher) {
+        val model = model()
+        model.onIntent(PickerIntent.Load(image("#D9A070", "#E8D2A8")))
+        model.await { it.closest.isNotEmpty() }
+
+        model.onIntent(PickerIntent.PickAt(50, 50))
+        model.await { it.selectedHex == "#D9A070" }
+        assertEquals("#D9A070", shared.colour.value?.toHex())
+
+        // Une fois la dominante annulee, c'est la teinte corrigee qui vaut : c'est elle
+        // que le catalogue et le melangeur doivent recevoir, pas celle du capteur.
+        model.onIntent(PickerIntent.UseAsGrey("#E8D2A8"))
+        val corrected = model.await { it.correctedHex != null }.correctedHex
+        assertEquals(corrected, shared.colour.value?.toHex())
     }
 
     @Test
