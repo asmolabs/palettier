@@ -6,7 +6,10 @@ import be.asmolabs.palettier.ai.AiSettings
 import be.asmolabs.palettier.ai.AiSettingsStore
 import be.asmolabs.palettier.ai.PaintingPlanService
 import be.asmolabs.palettier.ai.PhotoInput
+import be.asmolabs.palettier.ai.ModelCatalog
 import be.asmolabs.palettier.ai.PlanUnavailable
+import be.asmolabs.palettier.ai.TubeRecognitionService
+import be.asmolabs.palettier.domain.port.PaintCatalogRepository
 import be.asmolabs.palettier.domain.port.PaletteRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +32,9 @@ class AssistantViewModel(
     private val plans: PaintingPlanService,
     private val store: AiSettingsStore,
     private val palettes: PaletteRepository,
+    private val tubes: TubeRecognitionService,
+    private val catalogue: PaintCatalogRepository,
+    private val models: ModelCatalog,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AssistantUiState())
@@ -44,7 +50,23 @@ class AssistantViewModel(
                 palettes = known,
                 paletteId = _state.value.paletteId ?: known.firstOrNull()?.id,
             )
+            refreshModels()
         }
+    }
+
+    /**
+     * Ce qui est installe sur ce poste.
+     *
+     * <p>Le serveur peut etre eteint, et c'est le cas normal avant installation : la
+     * liste est alors vide, sans que rien d'autre en souffre.</p>
+     */
+    private suspend fun refreshModels() {
+        // Le resultat d'abord, l'ecriture ensuite. Ecrire directement
+        // _state.value.copy(installed = models.installed()) lirait l'etat AVANT l'appel
+        // et le reecrirait apres, effacant tout ce que le peintre a fait pendant ce
+        // temps -- l'ordre d'evaluation de Kotlin place le receveur avant l'argument.
+        val installed = runCatching { models.installed() }.getOrDefault(emptyList())
+        _state.value = _state.value.copy(installed = installed)
     }
 
     fun onIntent(intent: AssistantIntent) {
@@ -71,6 +93,17 @@ class AssistantViewModel(
             AssistantIntent.Ask -> ask()
 
             is AssistantIntent.SaveSettings -> save(intent.settings)
+
+            is AssistantIntent.ReadTubes -> readTubes(intent.bytes)
+
+            is AssistantIntent.KeepTube -> viewModelScope.launch {
+                intent.identification.match?.paint?.let { catalogue.setOwned(it, true) }
+                _state.value = _state.value.copy(
+                    tubes = _state.value.tubes.filterNot { it.label == intent.identification.label },
+                )
+            }
+
+            AssistantIntent.ForgetTubes -> _state.value = _state.value.copy(tubes = emptyList())
         }
     }
 
@@ -78,6 +111,31 @@ class AssistantViewModel(
         viewModelScope.launch {
             store.save(settings)
             _state.value = _state.value.copy(settings = store.current(), error = null)
+            refreshModels()
+        }
+    }
+
+    /**
+     * Lire les etiquettes d'une photo d'etagere.
+     *
+     * <p>Rien n'est coche ici : la lecture propose, le peintre dispose. Saisir quatre
+     * cents cases a la main est decourageant, se voir attribuer des tubes qu'on ne
+     * possede pas l'est davantage.</p>
+     */
+    private fun readTubes(bytes: ByteArray) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(reading = true, error = null, tubes = emptyList())
+            try {
+                val read = tubes.identify(bytes, catalogue.all())
+                _state.value = _state.value.copy(reading = false, tubes = read)
+            } catch (e: PlanUnavailable) {
+                _state.value = _state.value.copy(reading = false, error = e.message)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    reading = false,
+                    error = "Le moteur n'a pas repondu : ${e.message ?: "cause inconnue"}",
+                )
+            }
         }
     }
 

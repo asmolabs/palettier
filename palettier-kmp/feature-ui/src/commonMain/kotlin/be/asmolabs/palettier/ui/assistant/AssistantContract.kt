@@ -1,6 +1,8 @@
 package be.asmolabs.palettier.ui.assistant
 
 import be.asmolabs.palettier.ai.AiSettings
+import be.asmolabs.palettier.ai.Identification
+import be.asmolabs.palettier.ai.ModelInfo
 import be.asmolabs.palettier.domain.palette.Palette
 import be.asmolabs.palettier.domain.plan.PaintingPlan
 
@@ -30,6 +32,13 @@ data class AssistantUiState(
     val working: Boolean = false,
     val plan: PaintingPlan? = null,
     val error: String? = null,
+
+    /** Ce qui est installe sur ce poste, quand le moteur local le permet. */
+    val installed: List<ModelInfo> = emptyList(),
+
+    /** Les tubes lus sur une photo d'etagere, en attente de la decision du peintre. */
+    val tubes: List<Identification> = emptyList(),
+    val reading: Boolean = false,
 ) {
     val palette: Palette? get() = palettes.firstOrNull { it.id == paletteId }
 
@@ -50,4 +59,11 @@ sealed interface AssistantIntent {
 
     data object Ask : AssistantIntent
     data class SaveSettings(val settings: AiSettings) : AssistantIntent
+
+    /** Lire les etiquettes d'une photo d'etagere. */
+    data class ReadTubes(val bytes: ByteArray) : AssistantIntent
+
+    /** Le peintre confirme qu'il possede ce tube : c'est lui qui tranche, pas le modele. */
+    data class KeepTube(val identification: Identification) : AssistantIntent
+    data object ForgetTubes : AssistantIntent
 }

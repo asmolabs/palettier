@@ -39,6 +39,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.serialization.json)
+            // Le catalogue de modeles parle a un serveur : ici, un serveur qui n'est pas la.
+            implementation(libs.ktor.client.mock)
             implementation(libs.kotlinx.coroutines.test)
         }
         jvmTest.dependencies {

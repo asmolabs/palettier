@@ -165,6 +165,9 @@ fun main() = application {
                                 onChooseReference = {
                                     pickPhoto()?.let { assistantModel.onIntent(AssistantIntent.AttachReference(it)) }
                                 },
+                                onChooseShelf = {
+                                    pickPhoto()?.let { assistantModel.onIntent(AssistantIntent.ReadTubes(it)) }
+                                },
                                 modifier = Modifier.weight(1f),
                             )
                             else -> SettingsScreen(
@@ -223,7 +226,7 @@ private val uiModule = module {
     factory { MixerViewModel(get(), get()) }
     factory { DryingViewModel(get()) }
     factory { RecipesViewModel(get(), get()) }
-    factory { AssistantViewModel(get(), get(), get()) }
+    factory { AssistantViewModel(get(), get(), get(), get(), get(), get()) }
     single { be.asmolabs.palettier.domain.recipe.RecipeTimelineService(get()) }
     single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
 }

@@ -43,6 +43,7 @@ fun AssistantScreen(
     onIntent: (AssistantIntent) -> Unit,
     onChooseFigurine: () -> Unit,
     onChooseReference: () -> Unit,
+    onChooseShelf: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier.fillMaxSize()) {
@@ -54,6 +55,7 @@ fun AssistantScreen(
 
             if (state.settings.usable) {
                 item { RequestCard(state, onIntent, onChooseFigurine, onChooseReference) }
+                item { ShelfCard(state, onIntent, onChooseShelf) }
             }
 
             state.error?.let { message ->
@@ -116,6 +118,25 @@ private fun EngineCard(state: AssistantUiState, onIntent: (AssistantIntent) -> U
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (state.installed.isNotEmpty()) {
+                    Text(
+                        "Installes sur ce poste. Un modele sans la mention Vision ne verra pas " +
+                            "vos photos : il travaillera sur le seul texte du sujet.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        state.installed.forEach { installed ->
+                            val label = buildString {
+                                append(installed.name)
+                                if (installed.supportsVision) append("  Vision")
+                                if (installed.sizeLabel.isNotBlank()) append("  ${installed.sizeLabel}")
+                            }
+                            Chip(label, settings.model == installed.name) {
+                                onIntent(AssistantIntent.SaveSettings(settings.copy(model = installed.name)))
+                            }
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = settings.baseUrl,
                     onValueChange = { onIntent(AssistantIntent.SaveSettings(settings.copy(baseUrl = it))) },
@@ -200,6 +221,60 @@ private fun RequestCard(
                         "Un modele local qui lit une photo prend plusieurs minutes.",
                         style = MaterialTheme.typography.bodySmall,
                     )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * La lecture d'etiquettes.
+ *
+ * <p>Rien n'est coche d'avance : le modele lit, le peintre tranche. Se voir attribuer
+ * des tubes qu'on ne possede pas serait pire que de tout saisir a la main.</p>
+ */
+@Composable
+private fun ShelfCard(
+    state: AssistantUiState,
+    onIntent: (AssistantIntent) -> Unit,
+    onChooseShelf: () -> Unit,
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Mon etagere", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                "Photographiez vos tubes plutot que de cocher quatre cents cases. Le modele lit " +
+                    "les etiquettes ; c'est vous qui confirmez, un tube a la fois.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedButton(onChooseShelf, enabled = !state.reading) { Text("Photo de mes tubes") }
+                if (state.reading) CircularProgressIndicator(Modifier.size(18.dp))
+                if (state.tubes.isNotEmpty()) {
+                    OutlinedButton({ onIntent(AssistantIntent.ForgetTubes) }) { Text("Tout ecarter") }
+                }
+            }
+
+            state.tubes.forEach { read ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    read.match?.paint?.let { Swatch(it.hexColor, size = 22) }
+                    Column(Modifier.weight(1f)) {
+                        Text(read.label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                        Text(
+                            read.match?.let { match ->
+                                val confiance = (match.confidence * 100).roundToInt()
+                                "${match.paint.displayName} - confiance ${confiance} %" +
+                                    if (match.isReliable) "" else ", a verifier"
+                            } ?: "Aucune fiche du catalogue ne correspond : a saisir a la main.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    if (read.match != null) {
+                        Button({ onIntent(AssistantIntent.KeepTube(read)) }) { Text("Je l'ai") }
+                    }
                 }
             }
         }
