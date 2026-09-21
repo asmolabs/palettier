@@ -32,6 +32,21 @@ sqldelight {
 tasks.matching { it.name.startsWith("verify") && it.name.contains("Migration") }
     .configureEach { enabled = false }
 
+/**
+ * Les outils de reprise lisent leur archive dans une propriete systeme.
+ *
+ * Gradle garde les -D pour lui : sans ce relais, RealBackupImport ne voit rien et ne fait
+ * rien. La tache depend de la valeur, sinon un deuxieme import la trouverait "a jour".
+ */
+tasks.withType<Test>().configureEach {
+    listOf("palettier.import.from", "palettier.import.home", "palettier.seed.home").forEach { key ->
+        val value = System.getProperty(key) ?: return@forEach
+        systemProperty(key, value)
+        inputs.property(key, value)
+    }
+    testLogging { showStandardStreams = true }
+}
+
 kotlin {
     jvm()
     androidTarget {
