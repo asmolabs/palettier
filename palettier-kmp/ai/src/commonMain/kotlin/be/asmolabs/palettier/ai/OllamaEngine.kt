@@ -88,14 +88,7 @@ class OllamaEngine(
         }.getOrNull()
             ?: throw PlanUnavailable("Reponse d'Ollama inattendue : pas de contenu.")
 
-        return runCatching { json.decodeFromString<PlanDraft>(content) }
-            .getOrElse {
-                throw PlanUnavailable(
-                    "Le modele n'a pas produit de plan exploitable. Essayez un modele plus capable, " +
-                        "ou moins de zones en precisant le sujet.",
-                    it,
-                )
-            }
+        return content.toPlanDraft(json)
     }
 
     companion object {

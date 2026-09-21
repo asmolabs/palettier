@@ -1,6 +1,10 @@
 package be.asmolabs.palettier.ai
 
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -29,8 +33,8 @@ object PlanSchema {
         "Oil Paint Rendering (OPR)", "Eclaircis et points lumineux",
     )
 
-    private fun layer(required: Boolean) = buildJsonObject {
-        put("type", if (required) "object" else "object")
+    private fun layer() = buildJsonObject {
+        put("type", "object")
         putJsonObject("properties") {
             putJsonObject("hex") {
                 put("type", "string")
@@ -38,11 +42,11 @@ object PlanSchema {
             }
             putJsonObject("technique") {
                 put("type", "string")
-                putJsonArray("enum") { TECHNIQUES.forEach { add(kotlinx.serialization.json.JsonPrimitive(it)) } }
+                putJsonArray("enum") { TECHNIQUES.forEach { add(JsonPrimitive(it)) } }
             }
             putJsonObject("note") { put("type", "string") }
         }
-        putJsonArray("required") { add(kotlinx.serialization.json.JsonPrimitive("hex")) }
+        putJsonArray("required") { add(JsonPrimitive("hex")) }
     }
 
     private fun accent() = buildJsonObject {
@@ -55,7 +59,7 @@ object PlanSchema {
             }
             putJsonObject("technique") {
                 put("type", "string")
-                putJsonArray("enum") { TECHNIQUES.forEach { add(kotlinx.serialization.json.JsonPrimitive(it)) } }
+                putJsonArray("enum") { TECHNIQUES.forEach { add(JsonPrimitive(it)) } }
             }
             putJsonObject("note") { put("type", "string") }
         }
@@ -76,25 +80,96 @@ object PlanSchema {
                         putJsonObject("name") { put("type", "string") }
                         putJsonObject("material") { put("type", "string") }
                         putJsonObject("note") { put("type", "string") }
-                        put("base", layer(true))
-                        put("shadow1", layer(true))
-                        put("shadow2", layer(true))
-                        put("highlight1", layer(true))
-                        put("highlight2", layer(true))
+                        put("base", layer())
+                        put("shadow1", layer())
+                        put("shadow2", layer())
+                        put("highlight1", layer())
+                        put("highlight2", layer())
                         put("accent1", accent())
                         put("accent2", accent())
                         put("accent3", accent())
                     }
                     putJsonArray("required") {
                         listOf("name", "base", "shadow1", "shadow2", "highlight1", "highlight2")
-                            .forEach { add(kotlinx.serialization.json.JsonPrimitive(it)) }
+                            .forEach { add(JsonPrimitive(it)) }
                     }
                 }
             }
         }
         putJsonArray("required") {
-            add(kotlinx.serialization.json.JsonPrimitive("approach"))
-            add(kotlinx.serialization.json.JsonPrimitive("zones"))
+            add(JsonPrimitive("approach"))
+            add(JsonPrimitive("zones"))
         }
     }
+
+    /**
+     * Le meme schema, au format strict d'OpenAI.
+     *
+     * <p>OpenAI ne garantit la conformite qu'a deux conditions : aucun champ imprevu, et
+     * tous les champs declares obligatoires. Un champ facultatif se dit donc autrement,
+     * en admettant la valeur nulle -- ce qui revient au meme pour nous, {@link PlanDraft}
+     * lisant l'absence et le nul de la meme facon.</p>
+     */
+    val strict: JsonObject = strictly(plan) as JsonObject
+
+    /**
+     * Le meme schema, au sous-ensemble OpenAPI que comprend Gemini.
+     *
+     * <p>Gemini ignore les motifs et les champs supplementaires. Les lui envoyer ferait
+     * rejeter la demande entiere, alors on les retire : le format hexadecimal redescend
+     * au rang de consigne, et le prompt le repete deja.</p>
+     */
+    val gemini: JsonObject = withoutPatterns(plan) as JsonObject
+
+    private fun strictly(node: JsonElement): JsonElement = when {
+        node is JsonArray -> JsonArray(node.map { strictly(it) })
+        node !is JsonObject -> node
+        node["properties"] is JsonObject -> {
+            val properties = node["properties"] as JsonObject
+            val optional = properties.keys - requiredOf(node)
+            buildJsonObject {
+                node.forEach { (key, value) ->
+                    if (key != "properties" && key != "required") put(key, strictly(value))
+                }
+                putJsonObject("properties") {
+                    properties.forEach { (name, value) ->
+                        val done = strictly(value)
+                        put(name, if (name in optional) nullable(done) else done)
+                    }
+                }
+                putJsonArray("required") { properties.keys.forEach { add(JsonPrimitive(it)) } }
+                put("additionalProperties", false)
+            }
+        }
+        else -> JsonObject(node.mapValues { (_, value) -> strictly(value) })
+    }
+
+    /** Un champ facultatif, dit a la maniere d'OpenAI : present, mais admettant le nul. */
+    private fun nullable(node: JsonElement): JsonElement {
+        if (node !is JsonObject) return node
+        return buildJsonObject {
+            node.forEach { (key, value) ->
+                when (key) {
+                    "type" -> put("type", buildJsonArray { add(value); add(JsonPrimitive("null")) })
+                    "enum" -> put("enum", buildJsonArray {
+                        (value as JsonArray).forEach { add(it) }
+                        add(JsonNull)
+                    })
+                    else -> put(key, value)
+                }
+            }
+        }
+    }
+
+    private fun withoutPatterns(node: JsonElement): JsonElement = when (node) {
+        is JsonArray -> JsonArray(node.map { withoutPatterns(it) })
+        is JsonObject -> JsonObject(
+            node.filterKeys { it != "pattern" && it != "additionalProperties" }
+                .mapValues { (_, value) -> withoutPatterns(value) }
+        )
+        else -> node
+    }
+
+    private fun requiredOf(node: JsonObject): Set<String> =
+        (node["required"] as? JsonArray)?.map { (it as JsonPrimitive).content }?.toSet() ?: emptySet()
 }

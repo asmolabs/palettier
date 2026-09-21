@@ -31,3 +31,22 @@ interface ChatEngine {
 
 /** Le moteur n'a pas rendu de plan exploitable. */
 class PlanUnavailable(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/** Le type des photos soumises, celui que produit la reduction. */
+const val PHOTO_MIME = "image/jpeg"
+
+/**
+ * Le texte rendu par un moteur, relu comme un plan.
+ *
+ * <p>Meme sous contrainte de schema, un modele a mode de reflexion repond parfois a cote,
+ * en texte libre. La contrainte rend le JSON invalide improbable, pas impossible : c'est
+ * ici qu'on le constate, une fois pour les trois moteurs.</p>
+ */
+internal fun String.toPlanDraft(json: kotlinx.serialization.json.Json): PlanDraft =
+    runCatching { json.decodeFromString<PlanDraft>(this) }.getOrElse {
+        throw PlanUnavailable(
+            "Le modele n'a pas produit de plan exploitable. Essayez un modele plus capable, " +
+                "ou moins de zones en precisant le sujet.",
+            it,
+        )
+    }
