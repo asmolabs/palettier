@@ -6,6 +6,7 @@ import be.asmolabs.palettier.data.SqlDelightPaletteMixRepository
 import be.asmolabs.palettier.data.SqlDelightPaletteRepository
 import be.asmolabs.palettier.data.SqlDelightProjectRepository
 import be.asmolabs.palettier.data.SqlDelightRecipeRepository
+import be.asmolabs.palettier.data.backup.BackupExporter
 import be.asmolabs.palettier.data.backup.BackupImporter
 import be.asmolabs.palettier.db.PalettierDatabase
 import be.asmolabs.palettier.domain.drying.DryingTimeService
@@ -74,6 +75,7 @@ val dataModule = module {
     single<PaletteMixRepository> { SqlDelightPaletteMixRepository(get(), get(IO)) }
 
     single { BackupImporter(get(), get(), get(), get()) }
+    single { BackupExporter(get(), get(), get(), get()) }
 }
 
 /** Tout ce qu'il faut pour faire tourner Palettier, hors interface. */

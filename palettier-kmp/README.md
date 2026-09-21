@@ -37,11 +37,14 @@ ne la remplace qu'une fois à parité.
 | `feature-ui` — Mélangeur | **porté** | 6 tests |
 | `feature-ui` — Séchage | **porté** | 5 tests |
 | `feature-ui` — Recettes | **porté** | 4 tests, plus 6 sur `RecipeTimelineService` |
-| `feature-ui` — Paramètres | à faire | |
-| export de sauvegarde | à faire | |
+| `feature-ui` — Paramètres | **porté** | |
+| export de sauvegarde | **porté** | 4 tests d'aller-retour, plus un côté Java |
 | `ai` — Ktor | à faire | |
 
-**≈ 11 400 lignes portées sur 14 639. 159 tests sur JVM, 121 sur Android. Le domaine, la
+**≈ 12 300 lignes portées sur 14 639. 164 tests sur JVM, 121 sur Android. Les neuf écrans
+sont là.**
+
+**≈ 12 300 lignes portées sur 14 639. 164 tests sur JVM, 121 sur Android. Le domaine, la
 persistance et le câblage sont faits.** Tout ce qui n'est ni interface ni assistant est porté.
 
 ## La méthode, et pourquoi elle tient
@@ -157,7 +160,26 @@ liste de pièces — et ne se verrait pas sur un jeu d'essai de trois lignes.
 À l'enregistrement, les zones sont effacées puis réécrites. Un arbre se remplace en bloc :
 réconcilier des rangs qui ont bougé coûte plus cher que de tout reposer.
 
-## Le pont fonctionne
+## Le pont fonctionne dans les deux sens
+
+Sans export, la migration serait un aller simple : les données entreraient dans la
+nouvelle application sans pouvoir en ressortir. `BackupExporter` écrit le format Java à la
+lettre, et c'est vérifié des deux côtés :
+
+- côté Kotlin, quatre essais d'aller-retour — archive Java importée, archive Kotlin
+  écrite, relue dans une installation vierge, avec la pose de la couche et ses conditions
+  d'atelier intactes ;
+- **côté Java, un essai lit l'archive écrite par Kotlin** : 680 tubes, le projet, la photo,
+  et la pose du 14 février avec ses 24 °C. Le trajet complet Java → Kotlin → Java ne perd
+  rien.
+
+Ce second essai se saute proprement quand l'artefact n'a pas été produit — il dépend d'un
+`./gradlew :core-data:jvmTest` côté portage, ce qu'une compilation propre du dépôt Java ne
+fait pas.
+
+Tant que les deux applications parlent la même langue, revenir en arrière reste possible.
+
+## Le pont d'importation
 
 `BackupImporter` relit une archive produite par l'application Java. L'essai ne travaille
 pas sur un fichier fabriqué à la main : l'archive est **sortie du `BackupService` Java**,
@@ -270,7 +292,7 @@ rejouent pas.
 
 | Cible | Tests exécutés |
 |---|---|
-| JVM (Desktop) | **159** |
+| JVM (Desktop) | **164** |
 | Android (debug) | **121** |
 
 Les 75 d'Android sont l'intégralité de `commonTest` du domaine — y compris `MixSearch` sur

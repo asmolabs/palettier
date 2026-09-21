@@ -45,6 +45,8 @@ import be.asmolabs.palettier.ui.picker.PickerScreen
 import be.asmolabs.palettier.ui.picker.PickerViewModel
 import be.asmolabs.palettier.ui.projects.ProjectsScreen
 import be.asmolabs.palettier.ui.recipes.RecipesScreen
+import be.asmolabs.palettier.ui.settings.SettingsScreen
+import be.asmolabs.palettier.ui.settings.SettingsUiState
 import be.asmolabs.palettier.ui.recipes.RecipesViewModel
 import be.asmolabs.palettier.ui.projects.ProjectsViewModel
 import be.asmolabs.palettier.ui.workbench.WorkbenchScreen
@@ -75,7 +77,8 @@ fun main() = application {
                 val state by model.state.collectAsStateWithLifecycle()
                 val scope = rememberCoroutineScope()
                 val importer = koinInject<be.asmolabs.palettier.data.backup.BackupImporter>()
-                val import = remember { ImportState(importer, scope) }
+                val exporter = koinInject<be.asmolabs.palettier.data.backup.BackupExporter>()
+                val import = remember { ImportState(importer, exporter, scope) }
 
                 val projectsModel: ProjectsViewModel = koinViewModel()
                 val projectsState by projectsModel.state.collectAsStateWithLifecycle()
@@ -122,6 +125,9 @@ fun main() = application {
                             Tab(section == 7, { section = 7 }) {
                                 Text("Recettes", Modifier.padding(vertical = 12.dp))
                             }
+                            Tab(section == 8, { section = 8 }) {
+                                Text("Parametres", Modifier.padding(vertical = 12.dp))
+                            }
                         }
                         when (section) {
                             0 -> WorkbenchScreen(state, Modifier.weight(1f))
@@ -140,7 +146,13 @@ fun main() = application {
                             4 -> MixerScreen(mixerState, mixerModel::onIntent, Modifier.weight(1f))
                             5 -> CatalogScreen(catalogState, catalogModel::onIntent, Modifier.weight(1f))
                             6 -> DryingScreen(dryingState, dryingModel::onIntent, Modifier.weight(1f))
-                            else -> RecipesScreen(recipesState, recipesModel::onIntent, Modifier.weight(1f))
+                            7 -> RecipesScreen(recipesState, recipesModel::onIntent, Modifier.weight(1f))
+                            else -> SettingsScreen(
+                                SettingsUiState(busy = import.busy, message = import.message),
+                                onExport = import::exportTo,
+                                onImport = import::choose,
+                                Modifier.weight(1f),
+                            )
                         }
                     }
                 }
