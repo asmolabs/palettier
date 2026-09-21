@@ -18,7 +18,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +48,9 @@ import be.asmolabs.palettier.image.imageDecoder
 import be.asmolabs.palettier.ui.assistant.AssistantIntent
 import be.asmolabs.palettier.ui.assistant.AssistantScreen
 import be.asmolabs.palettier.ui.assistant.AssistantViewModel
+import be.asmolabs.palettier.ui.app.Section
+import be.asmolabs.palettier.ui.app.uiModule
+import be.asmolabs.palettier.ui.app.atelier
 import be.asmolabs.palettier.ui.catalog.CatalogScreen
 import be.asmolabs.palettier.ui.export.PdfPlanExporter
 import be.asmolabs.palettier.ui.catalog.CatalogViewModel
@@ -248,27 +250,6 @@ fun main() = application {
     }
 }
 
-/**
- * Les sections, dans l'ordre de la barre laterale.
- *
- * <p>Le raccourci est declare par la section, et non deduit de son rang. C'etait deja la
- * regle cote JavaFX, et pour une raison qui tient : inserer une section en tete
- * deplacerait sinon tout ce qui suit sous les doigts de quelqu'un qui a pris ses
- * habitudes.</p>
- */
-private enum class Section(val title: String, val shortcut: Int) {
-    Today("Aujourd'hui", 0),
-    Projects("Projets", 1),
-    Palettes("Palettes", 2),
-    Picker("Pipette", 3),
-    Assistant("Assistant", 4),
-    Mixer("Melangeur", 5),
-    Catalogue("Catalogue", 6),
-    Drying("Sechage", 7),
-    Recipes("Recettes", 8),
-    Settings("Parametres", 9),
-}
-
 /** Les touches chiffrees, dans l'ordre, pour retrouver le rang qu'elles designent. */
 private val DIGITS = listOf(
     Key.Zero, Key.One, Key.Two, Key.Three, Key.Four,
@@ -410,36 +391,8 @@ private fun pickPhoto(): ByteArray? {
     return java.nio.file.Files.readAllBytes(java.nio.file.Path.of(directory, name))
 }
 
-/** Les ViewModels : declares ici, parce que c'est l'application qui sait ce qu'elle affiche. */
-private val uiModule = module {
-    // Un seul relais pour toute l'application : la pipette y depose sa mesure, le
-    // catalogue, le melangeur et l'etabli la retrouvent sans se connaitre.
-    single { be.asmolabs.palettier.ui.SampledColour() }
-    factory { WorkbenchViewModel(get(), get(), get(), get(), get()) }
-    factory { ProjectsViewModel(get(), get(), get(), get(), get(), imageDecoder(), get()) }
-    factory { CatalogViewModel(get(), get()) }
-    factory { PickerViewModel(imageDecoder(), get(), get(), get(), get(), get(), get()) }
-    factory { PalettesViewModel(get(), get()) }
-    factory { MixerViewModel(get(), get(), get(), get()) }
-    factory { DryingViewModel(get()) }
-    factory { RecipesViewModel(get(), get()) }
-    factory { AssistantViewModel(get(), get(), get(), get(), get(), get(), get(), imageDecoder()) }
-    single { be.asmolabs.palettier.domain.recipe.RecipeTimelineService(get()) }
-    single { be.asmolabs.palettier.domain.plan.ProjectPlanner(get()) }
-    single { be.asmolabs.palettier.domain.plan.SampledPlanService(get()) }
-}
 
 /**
  * Sombre par defaut : on peint sous une lampe dirigee sur la piece, pas sur l'ecran.
  * Les teintes reprennent celles de l'application JavaFX -- ocre et terre brulee.
  */
-private val atelier = darkColorScheme(
-    primary = Color(0xFFE2A05F),
-    onPrimary = Color(0xFF1B1410),
-    surface = Color(0xFF1B1713),
-    onSurface = Color(0xFFDED6CC),
-    surfaceVariant = Color(0xFF252017),
-    onSurfaceVariant = Color(0xFFBDB4A8),
-    background = Color(0xFF14110E),
-    onBackground = Color(0xFFDED6CC),
-)

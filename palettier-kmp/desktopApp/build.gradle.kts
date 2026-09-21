@@ -9,6 +9,11 @@ kotlin {
     jvmToolchain(25)
 
     sourceSets {
+        jvmTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(project(":core-data"))
+        }
         jvmMain.dependencies {
             implementation(project(":core-data"))
             implementation(project(":feature-ui"))
