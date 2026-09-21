@@ -61,6 +61,17 @@ class CatalogViewModelTest {
         }
         override suspend fun recordTint(paint: Paint, tint: Rgb) {}
         override suspend fun countOwned() = paints.value.count { it.inStock }.toLong()
+        override suspend fun saveAll(paints: List<Paint>) {
+            this.paints.value = this.paints.value + paints
+        }
+        override suspend fun count() = paints.value.size.toLong()
+        override suspend fun refreshIdentity(paint: Paint) {
+            paints.value = paints.value.map { if (it.id == paint.id) paint else it }
+        }
+        override suspend fun idsInUse(): Set<Long> = emptySet()
+        override suspend fun delete(paint: Paint) {
+            paints.value = paints.value.filterNot { it.id == paint.id }
+        }
     }
 
     private suspend fun kotlinx.coroutines.CoroutineScope.model(catalog: FakeCatalog): CatalogViewModel {

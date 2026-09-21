@@ -80,6 +80,12 @@ class ProjectsViewModelTest {
         override suspend fun setOwned(paint: Paint, owned: Boolean) {}
         override suspend fun recordTint(paint: Paint, tint: Rgb) {}
         override suspend fun countOwned() = paints.count { it.inStock }.toLong()
+        // Catalogue fige : cet ecran ne l'ecrit pas.
+        override suspend fun saveAll(paints: List<Paint>) {}
+        override suspend fun count() = paints.size.toLong()
+        override suspend fun refreshIdentity(paint: Paint) {}
+        override suspend fun idsInUse(): Set<Long> = emptySet()
+        override suspend fun delete(paint: Paint) {}
     }
 
     private fun piece() = Project(

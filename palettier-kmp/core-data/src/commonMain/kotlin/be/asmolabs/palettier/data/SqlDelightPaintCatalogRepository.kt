@@ -80,6 +80,33 @@ class SqlDelightPaintCatalogRepository(
         }
     }
 
+    override suspend fun saveAll(paints: List<Paint>): Unit = withContext(io) {
+        database.transaction {
+            paints.forEach { paint ->
+                queries.insert(
+                    brand = paint.brand,
+                    name = paint.name,
+                    code = paint.code,
+                    legacy_code = paint.legacyCode,
+                    hex_color = paint.hexColor,
+                    tint_hex = paint.tintHex,
+                    opacity = paint.opacity.name,
+                    drying_class = paint.dryingClass.name,
+                    tinting_strength = paint.tintingStrength,
+                    colour_derived = paint.colorDerived.toLong(),
+                    pigments_verified = paint.pigmentsVerified.toLong(),
+                    user_added = paint.userAdded.toLong(),
+                    in_stock = paint.inStock.toLong(),
+                    notes = paint.notes,
+                )
+                val id = queries.lastInsertedId().executeAsOne()
+                paint.pigments.forEachIndexed { position, pigment ->
+                    queries.addPigment(id, pigment, position.toLong())
+                }
+            }
+        }
+    }
+
     override suspend fun setOwned(paint: Paint, owned: Boolean): Unit = withContext(io) {
         queries.setInStock(owned.toLong(), requireNotNull(paint.id) { "Tube sans identifiant" })
     }
@@ -90,6 +117,40 @@ class SqlDelightPaintCatalogRepository(
 
     override suspend fun countOwned(): Long = withContext(io) {
         queries.selectInStock().executeAsList().size.toLong()
+    }
+
+    override suspend fun count(): Long = withContext(io) {
+        queries.count().executeAsOne()
+    }
+
+    override suspend fun refreshIdentity(paint: Paint): Unit = withContext(io) {
+        val id = requireNotNull(paint.id) { "Tube sans identifiant" }
+        database.transaction {
+            queries.updateIdentity(
+                code = paint.code,
+                legacy_code = paint.legacyCode,
+                opacity = paint.opacity.name,
+                drying_class = paint.dryingClass.name,
+                tinting_strength = paint.tintingStrength,
+                pigments_verified = paint.pigmentsVerified.toLong(),
+                hex_color = paint.hexColor,
+                colour_derived = paint.colorDerived.toLong(),
+                id = id,
+            )
+            // Les pigments sont une table a part : on les repose, on ne les modifie pas.
+            queries.clearPigments(id)
+            paint.pigments.forEachIndexed { position, pigment ->
+                queries.addPigment(id, pigment, position.toLong())
+            }
+        }
+    }
+
+    override suspend fun idsInUse(): Set<Long> = withContext(io) {
+        queries.idsInUse().executeAsList().toSet()
+    }
+
+    override suspend fun delete(paint: Paint): Unit = withContext(io) {
+        queries.deleteById(requireNotNull(paint.id) { "Tube sans identifiant" })
     }
 
     /** Les pigments de tout le catalogue en une requete, regroupes par tube. */

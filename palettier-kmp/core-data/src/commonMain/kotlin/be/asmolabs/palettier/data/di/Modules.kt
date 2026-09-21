@@ -9,7 +9,9 @@ import be.asmolabs.palettier.data.SqlDelightRecipeRepository
 import be.asmolabs.palettier.data.SqlDelightSettingsRepository
 import be.asmolabs.palettier.data.backup.BackupExporter
 import be.asmolabs.palettier.data.backup.BackupImporter
+import be.asmolabs.palettier.data.catalog.CatalogSeeder
 import be.asmolabs.palettier.db.PalettierDatabase
+import be.asmolabs.palettier.domain.catalog.CatalogLoader
 import be.asmolabs.palettier.domain.drying.DryingTimeService
 import be.asmolabs.palettier.domain.mix.ColorMixService
 import be.asmolabs.palettier.domain.paint.PaintMatcher
@@ -79,6 +81,11 @@ val dataModule = module {
 
     single { BackupImporter(get(), get(), get(), get()) }
     single { BackupExporter(get(), get(), get(), get()) }
+
+    // Le chargeur relit 680 fiches et deduit les proprietes de leurs pigments : une seule
+    // instance, construite une fois, et le seeder n'a plus qu'a s'en servir.
+    single { CatalogLoader() }
+    single { CatalogSeeder(get(), get(), get(), get()) }
 }
 
 /** Tout ce qu'il faut pour faire tourner Palettier, hors interface. */

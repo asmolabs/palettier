@@ -38,12 +38,37 @@ interface PaintCatalogRepository {
     /** Enregistre un tube, en creation comme en modification. */
     suspend fun save(paint: Paint): Paint
 
+    /**
+     * Enregistre un lot d'un seul coup.
+     *
+     * <p>C'est l'amorcage du catalogue qui l'impose : six cent quatre-vingts appels a
+     * [save] font autant de transactions, et le premier demarrage s'en ressent.</p>
+     */
+    suspend fun saveAll(paints: List<Paint>)
+
     suspend fun setOwned(paint: Paint, owned: Boolean)
 
     /** Consigne la teinte diluee relevee sur un ecouvillon. */
     suspend fun recordTint(paint: Paint, tint: Rgb)
 
     suspend fun countOwned(): Long
+
+    suspend fun count(): Long
+
+    /**
+     * Reprend du fichier de gamme ce qui releve du fabricant, et rien d'autre.
+     *
+     * <p>Reference, pigments, opacite, sechage : ces champs viennent du fabricant, et une
+     * fiche erronee doit pouvoir etre corrigee par une mise a jour de l'application. Ce
+     * que le peintre a releve -- sa teinte d'ecouvillon, sa possession, ses notes -- n'est
+     * jamais touche ici, sinon une correction du catalogue effacerait son travail.</p>
+     */
+    suspend fun refreshIdentity(paint: Paint)
+
+    /** Les identifiants de tubes qu'une palette ou un projet cite encore. */
+    suspend fun idsInUse(): Set<Long>
+
+    suspend fun delete(paint: Paint)
 }
 
 interface ProjectRepository {

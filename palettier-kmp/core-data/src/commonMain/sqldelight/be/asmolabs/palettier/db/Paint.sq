@@ -70,3 +70,24 @@ SELECT last_insert_rowid();
 
 count:
 SELECT count(*) FROM paint;
+
+-- Rafraichit ce qui releve du fabricant, et rien d'autre : le seeder aligne les fiches
+-- sur les fichiers de gamme sans toucher a ce que le peintre a releve ou corrige.
+updateIdentity:
+UPDATE paint
+SET code = ?, legacy_code = ?, opacity = ?, drying_class = ?, tinting_strength = ?,
+    pigments_verified = ?, hex_color = ?, colour_derived = ?
+WHERE id = ?;
+
+clearPigments:
+DELETE FROM paint_pigment WHERE paint_id = ?;
+
+-- Les tubes qu'une palette ou un projet cite encore. Un retrait de fiche perimee doit
+-- les epargner : la contrainte cederait et emporterait la palette avec elle.
+idsInUse:
+SELECT paint_id FROM palette_paint
+UNION
+SELECT paint_id FROM project_paint;
+
+deleteById:
+DELETE FROM paint WHERE id = ?;

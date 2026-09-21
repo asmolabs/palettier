@@ -34,11 +34,22 @@ internal class FakeCatalogRepository(paints: List<Paint>) : PaintCatalogReposito
     override suspend fun findByNaturalKey(brand: String, name: String) =
         paints.value.firstOrNull { it.brand == brand && it.name == name }
     override suspend fun save(paint: Paint) = paint
+    override suspend fun saveAll(paints: List<Paint>) {
+        this.paints.value = this.paints.value + paints
+    }
     override suspend fun setOwned(paint: Paint, owned: Boolean) {
         paints.value = paints.value.map { if (it.id == paint.id) it.copy(inStock = owned) else it }
     }
     override suspend fun recordTint(paint: Paint, tint: Rgb) {}
     override suspend fun countOwned() = paints.value.count { it.inStock }.toLong()
+    override suspend fun count() = paints.value.size.toLong()
+    override suspend fun refreshIdentity(paint: Paint) {
+        paints.value = paints.value.map { if (it.id == paint.id) paint else it }
+    }
+    override suspend fun idsInUse(): Set<Long> = emptySet()
+    override suspend fun delete(paint: Paint) {
+        paints.value = paints.value.filterNot { it.id == paint.id }
+    }
 }
 
 internal class FakePaletteRepository(initial: List<Palette> = emptyList()) : PaletteRepository {

@@ -15,6 +15,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +30,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import be.asmolabs.palettier.ai.di.aiModule
+import be.asmolabs.palettier.data.catalog.CatalogSeeder
 import be.asmolabs.palettier.data.di.dataModule
 import be.asmolabs.palettier.data.di.domainModule
 import be.asmolabs.palettier.data.di.platformModule
@@ -55,6 +57,8 @@ import be.asmolabs.palettier.ui.recipes.RecipesViewModel
 import be.asmolabs.palettier.ui.projects.ProjectsViewModel
 import be.asmolabs.palettier.ui.workbench.WorkbenchScreen
 import be.asmolabs.palettier.ui.workbench.WorkbenchViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -77,6 +81,26 @@ fun main() = application {
             modules(platformModule, dataModule, domainModule, aiModule, uiModule)
         }) {
             MaterialTheme(colorScheme = atelier) {
+                // L'amorcage avant tout le reste : sur une installation neuve, c'est lui
+                // qui met les 680 huiles, les palettes et les recettes d'exemple en base.
+                // Idempotent, donc appele sans condition a chaque demarrage.
+                val seeder = koinInject<CatalogSeeder>()
+                LaunchedEffect(Unit) {
+                    val report = withContext(Dispatchers.Default) { seeder.seed() }
+                    if (report.touchedAnything) {
+                        println(
+                            "Amorcage : ${report.paintsCreated} tubes, " +
+                                "${report.palettesAdded} palettes, ${report.recipesAdded} recettes, " +
+                                "${report.paintsRefreshed} fiches rafraichies, " +
+                                "${report.paintsRemoved} perimees retirees, " +
+                                "${report.tintsBackfilled} teintes diluees rattrapees"
+                        )
+                    }
+                    report.unknownPigments.takeIf { it.isNotEmpty() }?.let {
+                        println("Pigments cites par le catalogue mais absents de la table : ${it.joinToString()}")
+                    }
+                }
+
                 val model: WorkbenchViewModel = koinViewModel()
                 val state by model.state.collectAsStateWithLifecycle()
                 val scope = rememberCoroutineScope()
