@@ -1,0 +1,25 @@
+[package]
+name = "palettier-ui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+palettier-domain.workspace = true
+palettier-image.workspace = true
+palettier-data.workspace = true
+palettier-ai.workspace = true
+dioxus.workspace = true
+tokio.workspace = true
+rfd.workspace = true
+dirs.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+base64.workspace = true
+secrecy.workspace = true

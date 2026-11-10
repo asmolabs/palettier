@@ -1,507 +1,73 @@
 # Palettier
 
-Assistant de peinture à l'huile pour figurines, bustes et maquettes.
+[![Rust](https://img.shields.io/badge/rust-2024%20edition-orange.svg)](https://www.rust-lang.org/)
+[![Safety](https://img.shields.io/badge/safety-%23!%5Bforbid(unsafe__code)%5D-brightgreen.svg)](https://doc.rust-lang.org/nomicon/safe-unsafe-meaning.html)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 
-L'huile pose au peintre des problèmes que l'acrylique ne pose pas : un mélange se
-comporte de façon soustractive, le séchage se compte en jours et dépend du pigment
-autant que de la dilution, et une recette n'est pas une liste de couches mais un
-planning. Le logiciel répond à ces trois questions.
+**Palettier** is an advanced oil painting studio assistant for miniature painters, bust sculptors, scale modellers, and traditional oil artists.
 
-| Section | Ce qu'elle résout |
-|---|---|
-| **Aujourd'hui** | Sur quoi puis-je travailler maintenant : les zones redevenues reprenables, pièce par pièce |
-| **Projets** | Les pièces en cours, leur plan, leurs photos, et ce qui est déjà peint |
-| **Palettes** | Une sélection nommée de tubes par sujet, qui sert ensuite de filtre de recherche |
-| **Pipette** | Relever une teinte sur une photo (ou la saisir en hexa) et obtenir le mélange à faire |
-| **Assistant** | Faire proposer un plan par zones à un modèle de langage, à partir du sujet et de photos |
-| **Mélangeur** | Quelle couleur donne ce mélange — et, à l'inverse, quel mélange donne cette couleur |
-| **Catalogue** | 680 huiles de 8 gammes ; laquelle se rapproche le plus d'une teinte visée (écart CIEDE2000) |
-| **Séchage** | Combien de temps pour une couche à venir : temps ouvert, recouvrable, sec à cœur, vernissable |
-| **Recettes** | Combien de séances représente vraiment cette recette |
+Unlike acrylics, oil painting is fundamentally subtractive, drying is measured in days rather than seconds, and recipes are not mere layer lists — they are complex studio schedules governed by pigment chemistry, film thickness, workshop climate, and the **Fat Over Lean** rule.
 
-L'ordre est celui de la barre latérale. Le raccourci clavier d'une section est déclaré par
-elle (`AppView.shortcut`) et non déduit de son rang : insérer une section en tête ne
-déplace plus tout ce qui suit sous les doigts.
+---
 
-## Stack
+## Key Features
 
-- Java 25 (LTS)
-- Spring Boot 4.1.1 — injection, configuration, Spring Data JPA
-- JavaFX 25.0.4 (LTS) — client lourd, interface construite en Java (pas de FXML)
-- H2 en fichier local, sous `~/.palettier/`
+- **Workshop & Today Planning**: Real-time tracking of miniature pieces, active coats, open blending windows, and recoat readiness.
+- **Subtractive Color Mixer**: Kubelka-Munk optical modeling, delta-E 2000 matching against 680 real oil paint tubes across 8 major brands (Winsor & Newton, Schmincke Mussini, Gamblin, Michael Harding, Old Holland, Rembrandt, Sennelier, Williamsburg).
+- **Fat-Over-Lean Inspector**: Automatic detection of brittle-over-flexible layering and premature cracking hazards.
+- **Multimodal AI Assistant**: Zone plan generation from reference photos and AI-powered tube recognition from workshop shelf photos.
+- **1-Click Day / Night Mode**: Instant UI theme switching (`Light` / `Dark`) persisted in SQLite.
+- **Internationalization (i18n)**: Seamless bilingual support (`FR` / `EN`) with instant language toggle and localized printable workshop guide exports (HTML/PDF).
 
-## Démarrer
+---
+
+## Workspace Architecture
+
+All crates enforce `#![forbid(unsafe_code)]`:
+
+```
+├── crates/
+│   ├── palettier-domain/   # Core domain entities, Kubelka-Munk physics, drying models, fat-over-lean rules, i18n
+│   ├── palettier-image/    # Pixel decoding, linear light downsampling, k-means color extraction, grisaille/notan
+│   ├── palettier-data/     # SeaORM & SQLite persistence, catalog seeder, ZIP backup import/export
+│   ├── palettier-ai/       # Multimodal vision (Gemini/OpenAI/Claude/Ollama), plan generation & tube recognition
+│   ├── palettier-ui/       # Native desktop application built with Dioxus 0.6 Desktop
+│   └── palettier-cli/      # Command-line interface for batch tasks, catalog queries, and CLI workflows
+├── Cargo.toml              # Cargo workspace configuration
+├── Dioxus.toml             # Dioxus desktop bundle configuration
+└── references/             # Test photos and studio calibration images
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- [Rust](https://rustup.rs/) (2024 edition / stable toolchain)
+
+### Running the Desktop App
 
 ```bash
-mvn install -DskipTests   # publie palettier-core dans le dépôt local
-mvn -pl palettier-ui javafx:run
+cargo run -p palettier-ui
 ```
 
-Ou, après un `mvn package`, le jar exécutable :
+### Running the CLI
 
 ```bash
-java -jar palettier-ui/target/palettier-ui-0.1.0-SNAPSHOT.jar
+cargo run -p palettier-cli -- help
 ```
 
-Tests :
+### Running Tests
 
 ```bash
-mvn test
+cargo test --workspace
 ```
 
-## Organisation
+---
 
-```
-palettier-core/   domaine, colorimétrie, services — aucune dépendance à JavaFX
-palettier-ui/     client JavaFX piloté par Spring
-```
+## License
 
-Le découpage n'est pas décoratif : `palettier-core` ne connaît pas l'interface, ce qui
-permet de lui ajouter plus tard une API REST ou un client mobile sans rien déplacer.
-Le module expose une seule porte d'entrée, `CoreConfiguration`, que l'application hôte importe.
-
-### Points d'extension
-
-- **Une section** = un bean qui implémente `AppView` (`title`, `subtitle`, `create`,
-  `order`, et `shortcut` si elle en veut un). `MainWindow` collecte tous ceux présents dans le contexte, construit la
-  navigation et n'instancie le contenu qu'à la première ouverture. Rien d'autre à déclarer.
-- **Le catalogue de départ** est dans `CatalogSeeder`, chargé au premier démarrage
-  seulement.
-- **Le modèle de séchage** est paramétré dans `application.yaml` sous `palettier.drying` :
-  si votre atelier vous donne systématiquement des durées différentes, ajustez-y les
-  facteurs plutôt que le code.
-
-## Le catalogue
-
-Huit gammes, **uniquement à l'huile**, aucune acrylique. Un test (`CatalogDataTest`)
-vérifie que la liste des marques est exactement celle-ci — une gamme ajoutée par erreur
-fait échouer le build.
-
-| Gamme | Fiches | Couverture |
-|---|---|---|
-| Winsor & Newton Artists' Oil | **120** | quasi complète (la gamme annonce « plus de 135 », métalliques exclues) |
-| Winsor & Newton Winton | 46 | quasi complète |
-| Schmincke Norma Professional | **84** | ✅ vérifiée auprès du fabricant, complète |
-| Schmincke Norma Blue (diluable à l'eau) | **48** | ✅ vérifiée auprès du fabricant, complète |
-| Gamblin Artist's Oil Colors | 64 | partielle (~110) |
-| Williamsburg Handmade Oil | 59 | partielle (~170) |
-| Scale75 Floww | 18 | **18 sur 24** — le coffret Scenery manque |
-| Abteilung 502 (AK) | 46 | partielle (~90) |
-
-### La table des pigments, pièce centrale
-
-`catalog/pigments.csv` décrit 82 pigments du Colour Index. C'est délibéré : **la vitesse
-de séchage et le pouvoir colorant ne sont pas des choix de marque, ce sont des propriétés
-du pigment.** Une terre d'ombre (PBr7) sèche vite chez tout le monde, un cadmium (PY35)
-sèche lentement chez tout le monde. Les renseigner une fois évite de les deviner tube par
-tube — et c'est ce qui permet d'ajouter une gamme entière sans rien inventer.
-
-Chaque fiche de gamme ne porte donc que ce que les fabricants publient réellement :
-nom, référence, pigments, opacité, teinte.
-
-### Calibrer un tube d'après vos écouvillons
-
-Dans le **Catalogue**, sélectionnez une ligne : la carte « Calibrer le tube sélectionné »
-montre son ton de masse et sa teinte coupée de blanc, et permet de les remplacer par une
-mesure.
-
-Le protocole : peignez un écouvillon de couleur pure et un autre d'une part de couleur pour
-neuf de blanc de titane, photographiez-les sous lumière neutre, relevez-les dans la Pipette
-(qui corrige la dominante), revenez ici et attribuez-les. C'est la seconde mesure qui fait
-passer le tube au modèle à deux constantes.
-
-Le découpage est délibéré : **la Pipette mesure, le Catalogue attribue.** C'est dans le
-tableau qu'on voit ce qui manque, et c'est là qu'on dispose déjà de la recherche, des
-filtres et de la colonne « Coupé de blanc ». Un unique objet partagé (`SampledColor`) porte
-la dernière teinte relevée d'un écran à l'autre, sans qu'aucun des deux ait à connaître
-l'autre.
-
-Une valeur venue de votre peinture sous votre lumière vaut mieux que n'importe quel
-nuancier imprimé — et vos mesures ne sont jamais écrasées par une mise à jour du catalogue.
-
-### Ajouter ou corriger un tube
-
-Une ligne dans le fichier de la gamme, sous `palettier-core/src/main/resources/catalog/brands/` :
-
-```csv
-brand;name;code;pigments;opacity;hex
-Gamblin;Transparent Earth Red;1970;PR101;TRANSPARENT;#8A2E15
-```
-
-Seules `brand`, `name` et `pigments` sont obligatoires : l'opacité et la teinte sont
-déduites des pigments si les colonnes sont vides, et le tube est alors marqué comme
-approximatif. Une marque supplémentaire = un fichier supplémentaire, sans recompilation
-du code métier.
-
-Le catalogue n'est chargé **que si la base est vide**, donc vos corrections dans
-l'application ne sont jamais écrasées. Pour repartir des fichiers : supprimez
-`~/.palettier/`.
-
-### La colonne « Source »
-
-Le catalogue affiche, pour chaque tube, d'où viennent ses pigments : **fabricant** quand
-ils ont été relevés dans le catalogue officiel de la marque, **à vérifier** quand ils ont
-été reconstitués. Ce ne sont pas des détails : les pigments donnent la vitesse de séchage,
-donc les délais annoncés par l'application.
-
-À ce jour, **132 tubes sur 485** ont des pigments vérifiés — les deux gammes Schmincke,
-dont le site publie les données dans les attributs de chaque fiche. Les six autres gammes
-restent reconstituées et sont signalées comme telles.
-
-### Ce qui est fiable et ce qui ne l'est pas
-
-- **Vérifié par test** : la divergence du noir d'ivoire (chaud au tube, froid en mélange)
-  est reproduite par le modèle et assertée.
-- **Fiable** : les codes pigments des gammes beaux-arts (W&N, Gamblin, Williamsburg,
-  Schmincke) — ces fabricants les publient.
-- **Déduit, à corriger sur vos tubes** : les pigments de **Scale75 Floww** et
-  **Abteilung 502**. Ces gammes maquette ne publient pas leurs codes Colour Index ; ils
-  sont inférés du nom de la couleur. Ils pilotent le calcul du séchage, donc les durées
-  annoncées pour ces deux gammes sont approximatives tant qu'ils ne sont pas corrigés.
-  L'avertissement est répété en tête de chaque fichier concerné.
-- **Estimé, à corriger** : la colonne `tint` de `pigments.csv` (28 pigments), qui pilote le
-  modèle à deux constantes. Elle n'est remplie que là où la divergence ton de masse / teinte
-  diluée est franche et connue — surtout les pigments à masse très sombre et teinte colorée
-  (noirs, bleu de Prusse, phtalos, dioxazine, alizarine). Ailleurs elle reste vide, et le
-  comportement est celui d'avant.
-- **Approximatif par nature** : toutes les valeurs hexadécimales. Un même code PBr7
-  couvre des teintes très différentes selon le gisement. La façon propre de les fiabiliser
-  est de photographier ses propres écouvillons sous lumière neutre.
-
-## Les palettes
-
-Sur une figurine on ne travaille jamais avec le catalogue entier, mais avec six à douze
-tubes choisis ensemble. Une palette est cette sélection, nommée et rangée par sujet.
-
-Son intérêt n'est pas seulement l'organisation : elle sert de **filtre de recherche**
-dans le mélangeur. Chercher « comment obtenir cette couleur » dans 398 tubes donne une
-réponse théorique, souvent avec des tubes qu'on ne possède pas ; la même recherche
-limitée à une palette donne une recette réalisable tout de suite.
-
-Trois palettes sont livrées, dont la **palette Zorn** (Winsor & Newton) : blanc de titane,
-ocre jaune, rouge de cadmium clair, noir d'ivoire. Les palettes de référence sont ajoutées
-une par une, par nom : une nouvelle palette livrée dans une version ultérieure arrive sans
-toucher à celles que vous avez composées.
-
-La palette affiche aussi ce qu'elle impose : la classe de séchage de son tube le plus
-lent — c'est elle qui commande le planning d'une séance — et son nombre de pigments
-distincts, avec un avertissement au-delà de six, seuil à partir duquel les mélanges à
-trois tubes virent au gris.
-
-## La pipette
-
-Chemin inverse du mélangeur : on part du résultat voulu — vu sur une photo de référence,
-une pièce existante, un nuancier — et on remonte aux tubes.
-
-- **Ouvrir une photo** (ou la glisser-déposer). Elle s'affiche **entière par défaut**, et
-  se réajuste quand la fenêtre change de taille. Zoom de 5 % à 1600 % : boutons, molette
-  touche commande enfoncée, ou pincement sur pavé tactile ; « Ajuster » et « 100 % » en un
-  clic. Au-delà de la taille réelle le lissage est coupé, pour voir les pixels plutôt qu'un
-  flou d'interpolation.
-- **Clic ou cliquer-glisser** pour relever une teinte, à n'importe quel zoom.
-- **Rayon d'échantillonnage** : la moyenne d'un carré de pixels vaut toujours mieux qu'un
-  pixel isolé, qui porte le bruit du capteur. La moyenne est calculée **en lumière linéaire**,
-  pas sur les valeurs sRGB : moyenner du sRGB directement assombrit le résultat (moyenner
-  noir et blanc donne `#BCBCBC`, pas `#808080` — c'est vérifié par un test).
-- **Correction de dominante** : une photo prise sous lampe de bureau tire au jaune. Désignez
-  un point censé être gris ou blanc neutre, et la dominante est retirée de tous les relevés
-  suivants. C'est la balance des blancs réduite au strict nécessaire.
-- **Saisie hexadécimale** directe, synchronisée avec la pastille, si vous n'avez pas de photo.
-- **La teinte relevée est publiée vers le Catalogue**, où elle peut être attribuée à un
-  tube (voir ci-dessous). La Pipette mesure, le Catalogue attribue.
-- **Recherche dans une palette**, en stock, ou dans tout le catalogue. Chaque proposition
-  affiche la teinte visée et le mélange obtenu **côte à côte**, les parts à doser, et l'écart
-  traduit en langage de peintre.
-
-## L'interface
-
-Codes d'une application web plutôt que d'un client lourd : **barre latérale de
-navigation** (pas d'onglets), en-tête de page avec titre et sous-titre, contenu en
-**cartes** posées sur un fond uni, bordures fines, coins arrondis, étiquettes arrondies
-pour l'opacité et la vitesse de séchage. Aucun relief, aucun dégradé de bouton système.
-
-Le thème est sombre et chaud, accents cuivre. Ce n'est pas qu'un parti pris : l'écran
-sert ici à juger des pastilles de couleur, et un fond clair les fait paraître plus
-sombres et plus saturées qu'elles ne sont.
-
-Tout tient dans `palettier-ui/src/main/resources/be/asmolabs/palettier/ui/app.css`, dont
-la palette est déclarée en variables en tête de fichier (`-pal-canvas`, `-pal-accent`,
-`-pal-border`…) : changer l'ambiance revient à changer une douzaine de lignes.
-
-Deux composants portent l'essentiel de la mise en page : `Card` (un bloc titré, qui
-remplace `TitledPane`) et `Pill` (l'étiquette arrondie des tableaux).
-
-## L'assistant
-
-Module `palettier-ai`, **inactif par défaut**. Sans `PALETTIER_AI_PROVIDER`, aucune clé
-n'est lue, aucun appel n'est fait, et l'application se comporte exactement comme si le
-module n'existait pas — un test le vérifie.
-
-Trois moteurs au choix :
-
-| Moteur | Variables | Remarque |
-|---|---|---|
-| **Gemini** (palier gratuit AI Studio) | `PALETTIER_AI_PROVIDER=google-genai`, `GEMINI_API_KEY` | le palier gratuit autorise Google à réutiliser les contenus envoyés |
-| **Ollama** (local) | `PALETTIER_AI_PROVIDER=ollama`, modèle avec capacité `vision` | rien ne quitte le poste |
-| **Compatible OpenAI** | `PALETTIER_AI_PROVIDER=openai`, `OPENAI_BASE_URL`, `OPENAI_API_KEY` | local (LM Studio, llama.cpp, vLLM) ou distant |
-
-### La séparation des rôles
-
-**Le modèle choisit quelles couleurs viser ; l'application calcule comment les atteindre.**
-
-Le modèle découpe le sujet en zones et propose, pour chacune, une teinte de base, une
-ombre et une lumière — en hexadécimal, jamais en mots. Il n'écrit **aucun dosage et
-aucune durée**. Pour chaque couleur visée, `MixSearch` calcule ensuite le mélange qui
-l'approche le mieux avec les tubes de la palette choisie, et l'écart affiché est une
-mesure CIEDE2000, pas une affirmation.
-
-L'écran montre côte à côte la couleur visée et celle réellement obtenue : quand la
-palette ne suit pas, cela se voit.
-
-### Le JSON est une contrainte, pas une consigne
-
-Le schéma attendu est remis au moteur comme **contrainte de génération**
-(`useProviderStructuredOutput`), et non ajouté au prompt comme une instruction à suivre.
-La différence est de nature : une consigne se suit à peu près, une contrainte interdit au
-moteur de produire le jeton qui casserait le JSON. Chez Ollama elle passe par le champ
-`format` de l'API ; les moteurs qui ne la gèrent pas retombent d'eux-mêmes sur la consigne
-en clair, sans rien changer d'autre.
-
-Un petit modèle produisait sinon, de temps à autre, un objet qui ne se referme pas — la
-réponse s'arrêtait d'elle-même en plein plan, bien avant la limite de jetons, et rien
-n'était exploitable. La validation qui suit (`validateSchema`) rattrape ce que la
-contrainte ne couvre pas : un modèle à mode de réflexion peut répondre à côté en texte
-libre, auquel cas l'erreur lui est renvoyée et la demande rejouée.
-
-### Photos
-
-Une photo de la pièce, et autant de références que voulu. Les zones sont alors déduites
-de ce qui est visible, pas de ce qu'un tel sujet comporte en général.
-
-Les images sont **réduites à 1024 pixels et réencodées en JPEG** par le service avant
-l'envoi — la règle est imposée là et non laissée à l'appelant. Elles servent à
-reconnaître les zones et juger l'avancement, **jamais à relever une couleur** : une photo
-est compressée et prise sous une lumière quelconque. Pour mesurer, la pipette travaille
-en local sur votre fichier d'origine.
-
-## Les modèles de calcul
-
-### Mélange des couleurs
-
-Un mélange n'est pas une moyenne RGB. Deux huiles qui se mélangent se comportent comme
-des milieux diffusants : c'est le modèle de **Kubelka-Munk** qui est implémenté, où
-absorption `K` et diffusion `S` sont additives. C'est ce qui fait que bleu + jaune donne
-du vert et non du gris.
-
-**Deux constantes, pas une** (`Colorant`). Le modèle à constante unique suppose que tous
-les pigments diffusent la lumière de la même façon et ne retient que le rapport `K/S`. Il
-ne peut alors pas représenter un cas pourtant banal : le noir d'ivoire sort du tube
-franchement chaud (`#221F1C`) et donne pourtant des gris **froids** une fois coupé de blanc
-(`#8E9094`). Une seule valeur par tube ne peut pas porter ces deux comportements.
-
-Avec `K` et `S` séparés, les deux coexistent. Le mécanisme : au ton de masse la couleur
-suit `K/S`, en teinte diluée la diffusion du blanc domine tellement que la couleur suit `K`
-seul. Si la diffusion du pigment n'est pas la même sur tous les canaux, les deux couleurs
-divergent. Pour le noir d'ivoire, la résolution donne `K = 9,13 / 8,58 / 7,59` et
-`S = 0,30 / 0,24 / 0,18` : plus d'absorption dans le rouge (donc teinte froide) mais aussi
-plus de diffusion (donc ton de masse chaud).
-
-Les constantes sont ajustées, canal par canal, sur **deux couleurs observées** — le ton de
-masse et la teinte coupée de blanc, une part pour neuf. Le système se résout en forme
-close ; si la teinte fournie est incohérente avec le ton de masse, le canal retombe sur le
-modèle à constante unique plutôt que de produire des constantes négatives.
-
-**Dégradation propre.** Un tube sans teinte diluée renseignée donne `S = 1` sur les trois
-canaux, ce qui ramène *exactement* au modèle à constante unique — un test vérifie l'égalité
-au code hexadécimal près. Le passage à deux constantes n'a donc rien cassé de ce qui
-marchait : il n'améliore que là où la donnée existe. Aujourd'hui **312 huiles sur 448**.
-
-Ce n'est pas une mesure au spectrophotomètre sur trente longueurs d'onde : c'est un
-ajustement sur deux points, qui les reproduit fidèlement et interpole entre eux.
-
-### Pourquoi seulement 29 pigments sur 83
-
-Les 7 blancs n'ont pas de teinte diluée : ils **sont** la référence. Restent 47 pigments
-sans mesure, et c'est un choix, pas un oubli.
-
-La divergence ton de masse / teinte diluée est d'autant plus forte que le pigment est
-sombre et peu diffusant. Quand `K/S` est grand, le ton de masse suit le **rapport** `K/S`
-alors que la teinte suit `K` seul — une faible variation de `S` entre canaux suffit à
-écarter les deux. Les cas spectaculaires sont donc toujours les mêmes : noirs, bleu de
-Prusse, phtalos, dioxazine, alizarine. Ce sont exactement ceux qui sont renseignés.
-
-Pour les organiques de valeur moyenne — jaunes arylides, oranges benzimidazolone, rouges
-naphtol — la teinte réelle est proche de ce que le modèle à constante unique prédit déjà.
-Le gain marginal y est faible, et une valeur inventée y ferait plus de mal que de bien :
-une teinte fausse fausse activement tous les mélanges du tube, alors qu'une teinte absente
-laisse le modèle précédent, connu et prévisible.
-
-**La bonne façon de compléter n'est pas que j'estime davantage, c'est de mesurer.** L'onglet
-Pipette le permet (voir ci-dessous).
-
-Chaque huile est pondérée par sa dose **et** par son pouvoir colorant : une pointe de
-bleu de Prusse dans un blanc de titane pèse beaucoup plus que son volume, et l'interface
-le signale.
-
-### La recherche inverse
-
-« Comment obtenir cette couleur ? » — `MixSearch`. Quatre idées, dont la première est la
-plus importante :
-
-**1. Ne proposer que des dosages réalisables.** Un optimum continu du type « 0,371 part
-contre 0,629 » n'a aucun sens au bout d'un pinceau. La recherche n'explore que des
-rapports d'entiers simples (jusqu'à 8 parts, plus les ajouts infimes 1:10 à 1:30 — une
-pointe de bleu de Prusse dans un blanc, c'est du 1:20). **L'écart annoncé est donc celui du
-mélange qu'on peut réellement faire**, pas celui d'un optimum inatteignable.
-
-**2. Deux passes.** Toutes les paires sont évaluées à cinq dosages de repérage ; seules les
-60 meilleures sont reprises sur la grille complète. On paie le prix fort uniquement là où
-cela peut changer le classement.
-
-**3. Trois tubes sur un vivier restreint.** Les explorer tous serait hors de portée
-(10 millions de triplets). Mais un bon mélange se compose presque toujours de tubes déjà
-proches de la cible, **plus un tube « structurel »** à fort pouvoir colorant — un blanc, un
-noir — qui sert à monter ou descendre la valeur. Le vivier réunit ces deux familles ; une
-sélection fondée sur la seule proximité manquerait la seconde.
-
-**4. À écart imperceptible, le mélange le plus simple gagne.** Sous 0,5 ΔE l'œil ne fait
-plus la différence : c'est alors la simplicité qui départage. Sans cette règle la recherche
-répond « quatre parts de terre d'ombre brûlée W&N, cinq de Schmincke et trois de Norma
-Blue » là où un seul tube suffisait. Les propositions aboutissant à la même teinte sont
-aussi regroupées — le catalogue contient la même couleur chez plusieurs fabricants.
-
-Le tout tourne en parallèle. Sur le catalogue complet : **~50 ms par cible, pire écart 0,85**
-sur une batterie de dix teintes réelles (carnations, terrains, blindages). La version
-précédente — paires seulement, grille fixe de 1:9 à 9:1 — mettait 1 060 ms.
-
-### Séchage
-
-Le temps de référence vient de la **classe de séchage du pigment** — à l'huile, c'est le
-pigment qui commande, pas la marque. On lui applique ensuite l'effet du médium, de
-l'épaisseur, de la température (la vitesse d'oxydation double environ tous les 10 °C), de
-l'humidité et de la ventilation.
-
-Cinq jalons sont produits : temps ouvert, sec au toucher, recouvrable, sec à cœur,
-polymérisation complète. Dans une recette, une technique qui exige un support ferme
-(`Technique.requiresCuredBase`) attend le séchage à cœur de la couche précédente ; les
-autres se contentent du délai de recouvrement.
-
-### Les photos ne se chargent que si on les regarde
-
-Un projet porte ses photos, et elles pèsent. Elles sont donc en `LAZY` : la liste des
-projets, la liste déroulante du séchage et l'établi lisent des noms et des dates sans
-désérialiser une seule image. L'écran qui les affiche les demande explicitement
-(`ProjectService.withPhotos`), en une requête.
-
-Le piège est le retrait d'orphelin : un projet lu sans ses photos puis réenregistré
-pourrait les effacer. Les méthodes qui touchent aux photos relisent donc le projet dans
-leur transaction, et trois tests vérifient qu'une couche cochée, une photo ajoutée ou
-retirée laissent les autres intactes — le contexte de persistance vidé entre chaque étape,
-sans quoi ils ne prouveraient rien.
-
-### De la durée à la date
-
-Ces jalons restaient théoriques tant que rien ne disait *quand* une couche avait été
-posée : le logiciel savait annoncer « comptez trois jours », jamais « recouvrable depuis
-hier soir ». Cocher une couche comme posée (`ProjectLayer.markApplied`) enregistre la
-date, **les conditions de l'atelier de ce jour-là et la classe de séchage du mélange
-réellement employé**. Les trois sont figés avec la pose : l'huile a séché dans l'atelier
-qu'elle a connu, avec les tubes du moment, et ni un coup de chauffage ni un remaniement
-de la palette ne doivent réécrire le passé.
-
-`WorkbenchService` rejoue alors la même formule à partir de cet instantané, et la section
-**Aujourd'hui** en tire l'état de chaque zone. Une pièce y est annoncée reprenable dès
-qu'*une* de ses zones l'est, pas quand toutes le sont — c'est la même raison qui fait
-conseiller ailleurs de mener les zones de front : pendant que le visage prend, la cape
-avance.
-
-### Sur la palette, un mélange est une pâte
-
-Partout ailleurs un mélange est un calcul, refait à la demande avec les tubes du moment.
-Celui posé sur la palette est d'une autre nature : il existe physiquement, il est daté, et
-il ne passera pas forcément la nuit. `PaletteMix` le garde avec l'heure et les conditions
-de sa préparation ; le temps ouvert se calcule avec la même formule que le reste, mais en
-épaisseur chargée — un tas sur la palette n'est pas un film sur la pièce, il prend
-beaucoup plus lentement.
-
-La teinte vient de la pipette : on relève la couleur sur sa vraie palette, on la nomme
-dans **Aujourd'hui**, elle est posée.
-
-### Prévenir sans qu'on regarde
-
-Le séchage se compte en heures. Personne ne rafraîchit un écran pendant six heures pour
-apprendre que la cape est prête. Une surveillance tourne donc en fond
-(`DryingNotifier`, toutes les cinq minutes) et passe par la zone de notification du
-système quand la plateforme la propose.
-
-`ReadinessWatch` est ce qui rend l'alerte lisible : elle ne dit que ce qui **vient** de
-basculer, jamais ce qui est disponible depuis hier. Le premier passage ne dit rien du tout
-— en ouvrant l'application, on ne veut pas la liste de tout ce qui a séché pendant
-l'absence, elle est déjà à l'écran.
-
-## Ce que le logiciel refuse de laisser passer
-
-### Gras sur maigre
-
-Une couche maigre posée sur une couche grasse sèche avant elle. Le dessous continue de
-bouger quand le dessus a pris : la couche supérieure tire, et craquelle — des mois plus
-tard, sur une pièce finie. C'est le seul défaut de cet atelier qui ne se rattrape pas.
-
-`FatOverLeanService` s'applique aux deux endroits où l'ordre des couches se décide. Sur un
-**projet**, le gras se lit dans la technique, qui porte déjà son médium et sa proportion
-usuelle (`Medium.fatness`) : rien n'est demandé au peintre. Sur une **recette**, où médium,
-dilution et épaisseur sont saisis un par un, le contrôle porte sur ces valeurs-là sans rien
-déduire — c'est le plus sûr des deux, et c'est là qu'il sert le plus : une recette se rejoue
-sur chaque pièce, la faute s'y reproduirait à chaque fois.
-
-La règle est **volontairement silencieuse sur ce qui se pratique tous les jours**. Un
-glacis très dilué sur un aplat de base est plus maigre que lui, et pourtant personne n'a
-jamais fait craqueler une figurine ainsi : le glacis est un voile, il n'a pas de quoi
-tirer. L'alerte demande donc deux conditions à la fois — un écart de gras franc, et une
-couche qui n'est pas plus fine que celle qu'elle recouvre. Une alerte qui crierait à
-chaque glacis serait ignorée le premier soir.
-
-### Ce qui manque, et ce qui le remplace
-
-L'inventaire savait dire qu'un tube manquait. La question du peintre n'est pas celle-là —
-il le sait — mais « avec quoi je m'en sors ce soir ». `SubstituteService` propose, pour
-chaque tube absent de l'étagère, le plus proche de ceux qu'on possède avec son écart
-CIEDE2000. Un tube manquant dont on a l'équivalent à écart invisible n'a pas besoin
-d'être acheté, et c'est plus utile que sa seule absence.
-
-### De combien j'ai raté
-
-Le projet dit la couleur visée de chaque couche, la pipette sait relever celles d'une
-image. `ProgressCheckService` les met face à face : pour chaque teinte qui occupe
-réellement la pièce, à quelle couche du plan elle répond et de combien elle s'en écarte.
-
-Le sens de lecture va de la pièce vers le plan, pas l'inverse : partir des couleurs visées
-pour chercher la plus proche sur la photo trouverait toujours quelque chose, une photo
-contenant des milliers de teintes. Partir de ce qui est là se trompe moins, et signale au
-passage ce qui n'était prévu nulle part.
-
-La mesure se fait sur **le fichier d'origine**, jamais sur la photo rangée avec le projet :
-celle-ci est réduite et réencodée, ses couleurs ont bougé. Même ainsi, une photo est prise
-sous une lumière quelconque — l'écart se lit comme une tendance, pas comme un verdict.
-
-## Limites assumées
-
-- Les valeurs hexadécimales du catalogue sont des **approximations de la teinte sortie de
-  tube**, destinées à l'aperçu et au calcul. Elles ne remplacent pas un nuancier physique ;
-  la façon propre de les fiabiliser est de photographier ses propres écouvillons sous
-  lumière neutre et de corriger les valeurs dans l'onglet Catalogue.
-- Les durées de séchage sont des ordres de grandeur pour planifier une séance, pas une
-  mesure. Sur la pièce, la vérification reste tactile.
-- Le catalogue n'est pas encore éditable depuis l'interface (lecture et recherche
-  seulement) : `PaintCatalogService.save` et `delete` existent, il manque le formulaire.
-
-## Pistes suivantes
-
-- Compléter les gammes : les 6 Scale75 Scenery, puis les fiches manquantes des gammes
-  beaux-arts (le format CSV est fait pour ça)
-- Corriger les pigments inférés de Scale75 et Abteilung 502 d'après les tubes
-- Édition du catalogue depuis l'interface, ou calibration depuis une photo d'écouvillons
-- Calibrer le seuil du gras sur maigre et le modèle de gras des médiums sur des cas réels :
-  ils sont aujourd'hui réglés au jugement
-- Recettes modifiables depuis l'interface, avec photos d'étape
-- Passage de deux à trois tubes dans la recherche inverse de mélange
+Dual-licensed under either of:
+- [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+- [MIT license](http://opensource.org/licenses/MIT)

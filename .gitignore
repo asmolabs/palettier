@@ -1,10 +1,14 @@
-palettier-kmp/local.properties
-palettier-kmp/build/
-palettier-kmp/*/build/
-palettier-kmp/.gradle/
-palettier-kmp/.kotlin/
-target/
+/target/
+**/*.rs.bk
 *.iml
 .idea/
 .vscode/
 .DS_Store
+
+# Local application databases and exports
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+.palettier/

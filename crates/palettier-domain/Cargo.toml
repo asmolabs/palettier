@@ -1,0 +1,17 @@
+[package]
+name = "palettier-domain"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rayon.workspace = true
+indexmap.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+chrono.workspace = true
+async-trait.workspace = true

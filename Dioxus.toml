@@ -1,0 +1,21 @@
+[application]
+name = "palettier"
+default_platform = "desktop"
+
+[web.app]
+title = "Palettier — Assistant de peinture à l'huile"
+
+[bundle]
+identifier = "be.asmolabs.palettier"
+publisher = "Asmolabs"
+icon = ["../packaging/palettier.icns"]
+copyright = "Copyright © 2026 Asmolabs"
+category = "Graphics and Design"
+short_description = "Assistant de peinture à l'huile pour figurines, bustes et maquettes"
+long_description = """
+Modélisation Kubelka-Munk à deux constantes, recherche inverse de mélanges réalisables,
+suivi du séchage par zone et contrôle du gras sur maigre.
+"""
+
+[bundle.macos]
+minimum_system_version = "13.0"

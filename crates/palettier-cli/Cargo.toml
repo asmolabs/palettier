@@ -1,0 +1,21 @@
+[package]
+name = "palettier-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+palettier-domain.workspace = true
+palettier-data.workspace = true
+palettier-image.workspace = true
+clap.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+dirs.workspace = true
+chrono.workspace = true

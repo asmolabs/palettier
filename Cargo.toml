@@ -1,0 +1,93 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/palettier-domain",
+    "crates/palettier-image",
+    "crates/palettier-data",
+    "crates/palettier-ai",
+    "crates/palettier-ui",
+    "crates/palettier-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Asmolabs"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Asmolabs/palettier"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+dbg_macro = "warn"
+todo = "warn"
+
+[workspace.dependencies]
+palettier-domain = { path = "crates/palettier-domain" }
+palettier-image = { path = "crates/palettier-image" }
+palettier-data = { path = "crates/palettier-data" }
+palettier-ai = { path = "crates/palettier-ai" }
+
+# Core & Domain
+rayon = "1.12"
+indexmap = { version = "2.14", features = ["serde"] }
+thiserror = "2.0"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock", "serde"] }
+async-trait = "0.1"
+
+# Image processing
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+
+# Persistence (SeaORM + SQLite) & Backup
+sea-orm = { version = "2.0.4", default-features = false, features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+    "macros",
+    "with-chrono",
+] }
+sea-orm-migration = { version = "2.0.4", default-features = false, features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+] }
+zip = { version = "9.5", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+
+# Security & Secrets
+secrecy = { version = "0.10", features = ["serde"] }
+zeroize = { version = "1.9", features = ["derive"] }
+keyring = "4.2"
+url = "2.5"
+
+# AI & Networking
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+schemars = "1.2"
+jsonschema = "0.59"
+base64 = "0.22"
+
+# Async Runtime & Logging
+tokio = { version = "1.54", features = ["rt-multi-thread", "macros", "time", "sync", "fs"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# UI & CLI
+dioxus = { version = "0.6.3", features = ["desktop"] }
+rfd = "0.15"
+clap = { version = "4.6", features = ["derive"] }
+dirs = "6.0"
+
+[profile.dev.package.palettier-domain]
+opt-level = 2
+
+[profile.test.package.palettier-domain]
+opt-level = 2
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"

@@ -1,0 +1,30 @@
+[package]
+name = "palettier-data"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+palettier-domain.workspace = true
+sea-orm.workspace = true
+sea-orm-migration.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+zip.workspace = true
+secrecy.workspace = true
+zeroize.workspace = true
+keyring.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+indexmap.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
