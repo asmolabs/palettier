@@ -1,0 +1,19 @@
+# Vallejo Model Color (acryliques pour figurines)
+#
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
+# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
+# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
+#
+# Selection partielle des teintes courantes, pas la gamme complete.
+brand;name;code;pigments;opacity;hex;system
+Vallejo Model Color;Black;70.950;;;#121212;ACRYLIC
+Vallejo Model Color;White;70.951;;;#FDFDFD;ACRYLIC
+Vallejo Model Color;Carmine Red;70.908;;;#9E1E2C;ACRYLIC
+Vallejo Model Color;Red;70.926;;;#C72527;ACRYLIC
+Vallejo Model Color;Medium Blue;70.963;;;#194A80;ACRYLIC
+Vallejo Model Color;Prussian Blue;70.965;;;#1C2E46;ACRYLIC
+Vallejo Model Color;Refractive Green;70.890;;;#4C563D;ACRYLIC
+Vallejo Model Color;German Camo Black Brown;70.822;;;#322A26;ACRYLIC
+Vallejo Model Color;English Uniform;70.921;;;#7E6746;ACRYLIC
+Vallejo Model Color;Sunny Skin Tone;70.845;;;#E9B78D;ACRYLIC
+Vallejo Model Color;Ice Yellow;70.858;;;#F2E8A0;ACRYLIC

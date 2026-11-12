@@ -12,16 +12,15 @@ use chrono::Utc;
 use dioxus::prelude::*;
 use palettier_domain::color::Rgb;
 use palettier_domain::miniature::{
-    ArmyRecipeSheet, BatchMotherMixCalculator, BatchSquad, BrushTracker,
-    DryPigmentEffect, FreezerStorageSimulator, HeatBoxCalculator,
-    LivePaletteFreshnessTracker, MINIATURE_ACRYLICS, MiniatureBrand, MiniatureLadder,
-    MiniatureMaterial, MiniatureScale, NmmMetal, OilConsistencyTechnique,
-    OilGlazeZenithalSimulator, OilHarmoniesCalculator, OilMedium, OslPreset,
-    PaletteLayoutType, PinWashConfig, SolventType, SpecialEffectGore, StrippingAgent,
-    StrippingGuide, StrippingVerdictSeverity, VarnishFinish, VehicleEffectKind,
-    WeatheringEffect, WetOnWetBlendingAdvisor, search_miniature_acrylics,
+    ArmyRecipeSheet, BatchMotherMixCalculator, BatchSquad, BrushTracker, DryPigmentEffect,
+    FreezerStorageSimulator, HeatBoxCalculator, LivePaletteFreshnessTracker, MINIATURE_ACRYLICS,
+    MiniatureBrand, MiniatureLadder, MiniatureMaterial, MiniatureScale, NmmMetal,
+    OilConsistencyTechnique, OilGlazeZenithalSimulator, OilHarmoniesCalculator, OilMedium,
+    OslPreset, PaletteLayoutType, PinWashConfig, SolventType, SpecialEffectGore, StrippingAgent,
+    StrippingGuide, StrippingVerdictSeverity, VarnishFinish, VehicleEffectKind, WeatheringEffect,
+    WetOnWetBlendingAdvisor, search_miniature_acrylics,
 };
-use palettier_domain::paint::Paint;
+use palettier_domain::paint::{Paint, PaintSystem};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MiniatureTab {
@@ -49,6 +48,21 @@ pub enum MiniatureTab {
 }
 
 impl MiniatureTab {
+    /// Tools that only make sense in oil: curing, open time, wet-on-wet, oil consistency,
+    /// and the acrylic-to-oil converter (an acrylic base finished in oil).
+    pub fn is_oil_only(self) -> bool {
+        matches!(
+            self,
+            Self::Converter
+                | Self::HeatBox
+                | Self::OilHarmonies
+                | Self::OilConsistency
+                | Self::GlazePreview
+                | Self::WetOnWetBlending
+                | Self::PaletteFreshness
+        )
+    }
+
     pub fn from_idx(idx: usize) -> Self {
         match idx {
             1 => Self::NmmStudio,
@@ -107,7 +121,15 @@ pub fn MiniatureView() -> Element {
     let mut state = use_context::<AppState>();
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
-    let palettes = state.palettes.read().clone();
+    let system = *state.paint_system.read();
+    // Mixes are only computed from palettes of the working system.
+    let palettes: Vec<palettier_domain::palette::Palette> = state
+        .palettes
+        .read()
+        .iter()
+        .filter(|p| p.paints.is_empty() || p.system() == system)
+        .cloned()
+        .collect();
 
     let mut brand_filter = use_signal(|| None::<MiniatureBrand>);
     let mut acrylic_search = use_signal(String::new);
@@ -138,9 +160,8 @@ pub fn MiniatureView() -> Element {
     let mut selected_varnish = use_signal(|| VarnishFinish::UltraMatte);
 
     // Batch squad state
-    let mut squad = use_signal(|| {
-        BatchSquad::standard_space_marine_squad("Escouade Intercessors", 5)
-    });
+    let mut squad =
+        use_signal(|| BatchSquad::standard_space_marine_squad("Escouade Intercessors", 5));
     let mut squad_size = use_signal(|| 5usize);
     let mut squad_name = use_signal(|| "Escouade Intercessors".to_string());
 
@@ -199,13 +220,19 @@ pub fn MiniatureView() -> Element {
     let active_candidates: Vec<Paint> = if *selected_palette_idx.read() < palettes.len() {
         palettes[*selected_palette_idx.read()].paints.clone()
     } else {
-        state.paints.read().iter().filter(|p| p.in_stock).cloned().collect()
+        state
+            .paints_of_system()
+            .into_iter()
+            .filter(|p| p.in_stock)
+            .collect()
     };
 
     let palette_name_display = if *selected_palette_idx.read() < palettes.len() {
         palettes[*selected_palette_idx.read()].name.clone()
     } else {
-        locale.tr("Stock complet en tiroir", "Full in-stock drawer").to_string()
+        locale
+            .tr("Stock complet en tiroir", "Full in-stock drawer")
+            .to_string()
     };
 
     rsx! {
@@ -213,8 +240,8 @@ pub fn MiniatureView() -> Element {
             SectionHeader {
                 title: locale.tr("Atelier Figurine & Modélisme", "Miniature & Weathering Studio").to_string(),
                 subtitle: locale.tr(
-                    "Outils complets pour le figuriniste : équivalences acryliques Citadel/Vallejo/AK, échelles NMM, séchage forcé en boîte chauffante, pin wash & travail réductif, weathering grimdark, OSL, sang/gore et soin des pinceaux de martre.",
-                    "Complete tools for miniature painters: Citadel/Vallejo/AK conversions, NMM scales, heat box curing, pin wash & reductive technique, grimdark weathering, OSL energy, special gore effects, and Kolinsky brush care."
+                    "Outils du figuriniste. Les onglets marqués 🛢 sont propres à l'huile (dont l'équivalence acrylique → huile, pour finir à l'huile une base acrylique) ; les autres suivent le système choisi en haut.",
+                    "Miniature painter's tools. Tabs marked 🛢 are oil-only (including the acrylic → oil converter, to finish an acrylic base in oil); the others follow the system chosen at the top."
                 ).to_string(),
                 actions: None
             }
@@ -258,6 +285,7 @@ pub fn MiniatureView() -> Element {
                         button {
                             class: if active_tab_val == MiniatureTab::Converter { "btn-primary" } else { "btn" },
                             onclick: move |_| state.miniature_tab.set(MiniatureTab::Converter.to_idx()),
+                            "🛢 "
                             "🎨 ", {locale.tr("Convertisseur & 5 Étapes", "Converter & 5-Stage")}
                         }
                         button {
@@ -293,6 +321,7 @@ pub fn MiniatureView() -> Element {
                         button {
                             class: if active_tab_val == MiniatureTab::HeatBox { "btn-primary" } else { "btn" },
                             onclick: move |_| state.miniature_tab.set(MiniatureTab::HeatBox.to_idx()),
+                            "🛢 "
                             "♨️ ", {locale.tr("Boîte Chauffante", "Heat Box Curing")}
                         }
                         button {
@@ -323,16 +352,19 @@ pub fn MiniatureView() -> Element {
                         button {
                             class: if active_tab_val == MiniatureTab::OilHarmonies { "btn-primary" } else { "btn" },
                             onclick: move |_| state.miniature_tab.set(MiniatureTab::OilHarmonies.to_idx()),
+                            "🛢 "
                             "🎡 ", {locale.tr("Harmonies & Roue Huile", "Oil Harmonies & Wheel")}
                         }
                         button {
                             class: if active_tab_val == MiniatureTab::OilConsistency { "btn-primary" } else { "btn" },
                             onclick: move |_| state.miniature_tab.set(MiniatureTab::OilConsistency.to_idx()),
+                            "🛢 "
                             "💧 ", {locale.tr("Consistance & Gouttes", "Consistency & Drops")}
                         }
                         button {
                             class: if active_tab_val == MiniatureTab::GlazePreview { "btn-primary" } else { "btn" },
                             onclick: move |_| state.miniature_tab.set(MiniatureTab::GlazePreview.to_idx()),
+                            "🛢 "
                             "🖼️ ", {locale.tr("Glacis sur Zénithal", "Glaze on Zenithal")}
                         }
                         button {
@@ -348,6 +380,7 @@ pub fn MiniatureView() -> Element {
                         button {
                             class: if active_tab_val == MiniatureTab::WetOnWetBlending { "btn-primary" } else { "btn" },
                             onclick: move |_| state.miniature_tab.set(MiniatureTab::WetOnWetBlending.to_idx()),
+                            "🛢 "
                             "🧪 ", {locale.tr("Fondus dans le Frais", "Wet-on-Wet Blending")}
                         }
                         button {
@@ -358,9 +391,20 @@ pub fn MiniatureView() -> Element {
                         button {
                             class: if active_tab_val == MiniatureTab::PaletteFreshness { "btn-primary" } else { "btn" },
                             onclick: move |_| state.miniature_tab.set(MiniatureTab::PaletteFreshness.to_idx()),
+                            "🛢 "
                             "⏳ ", {locale.tr("Fraîcheur Palette", "Live Palette Freshness")}
                         }
                     }
+                }
+            }
+
+            if system == PaintSystem::Acrylic && MiniatureTab::from_idx(*state.miniature_tab.read()).is_oil_only() {
+                div { class: "card-subtle", style: "margin-bottom: 12px; border-color: var(--warning, #c98a2b);",
+                    strong { {locale.tr("Outil propre à l'huile. ", "Oil-only tool. ")} }
+                    {locale.tr(
+                        "Vous travaillez en acrylique : cet outil ne s'applique que si vous terminez la pièce à l'huile sur une base acrylique sèche. Passez en Huile dans la barre du haut pour l'utiliser avec vos tubes.",
+                        "You are working in acrylic: this tool only applies if you finish the piece in oil over a dry acrylic base. Switch to Oil in the top bar to use it with your tubes."
+                    )}
                 }
             }
 

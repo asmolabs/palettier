@@ -1,0 +1,16 @@
+# The Army Painter Warpaints (acryliques pour figurines)
+#
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
+# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
+# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
+#
+# Selection partielle des teintes courantes, pas la gamme complete.
+brand;name;code;pigments;opacity;hex;system
+The Army Painter Warpaints;Matt Black;;;;#181818;ACRYLIC
+The Army Painter Warpaints;Matt White;;;;#F7F7F7;ACRYLIC
+The Army Painter Warpaints;Pure Red;;;;#B81D1E;ACRYLIC
+The Army Painter Warpaints;Ultramarine Blue;;;;#1C3B7A;ACRYLIC
+The Army Painter Warpaints;Angel Green;;;;#1B3B2B;ACRYLIC
+The Army Painter Warpaints;Barbarian Flesh;;;;#C78C73;ACRYLIC
+The Army Painter Warpaints;Leather Brown;;;;#543823;ACRYLIC
+The Army Painter Warpaints;Skeleton Bone;;;;#C8B991;ACRYLIC

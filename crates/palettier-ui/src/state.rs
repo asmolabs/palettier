@@ -15,7 +15,7 @@ use palettier_domain::error::DomainResult;
 use palettier_domain::guide::MixingGuideBuilder;
 use palettier_domain::i18n::Locale;
 use palettier_domain::mix::ColorMixService;
-use palettier_domain::paint::Paint;
+use palettier_domain::paint::{Paint, PaintSystem};
 use palettier_domain::palette::{Palette, PaletteMix, PaletteMixService};
 use palettier_domain::plan::{ProjectPlanner, SampledPlanService};
 use palettier_domain::port::{
@@ -291,11 +291,41 @@ pub struct AppState {
     pub last_sampled_hex: Signal<Option<String>>,
     pub command_palette_open: Signal<bool>,
     pub miniature_tab: Signal<usize>,
+    /// Oil or acrylic for the screens not tied to a project (catalog, mixer, drying,
+    /// recipes, miniature tools). Opening a project switches it to the project's system.
+    pub paint_system: Signal<PaintSystem>,
 }
 
 impl AppState {
     pub const KEY_LOCALE: &'static str = "ui.locale";
     pub const KEY_THEME: &'static str = "ui.theme";
+    pub const KEY_PAINT_SYSTEM: &'static str = "ui.paint_system";
+
+    /// Switches the working system and remembers it for the next start.
+    pub fn set_paint_system(&mut self, services: &AppServices, system: PaintSystem) {
+        if *self.paint_system.peek() == system {
+            return;
+        }
+        self.paint_system.set(system);
+        let svc = services.clone();
+        spawn(async move {
+            let _ = svc
+                .settings
+                .put(Self::KEY_PAINT_SYSTEM, system.as_db_str())
+                .await;
+        });
+    }
+
+    /// The catalog paints of the working system.
+    pub fn paints_of_system(&self) -> Vec<Paint> {
+        let system = *self.paint_system.read();
+        self.paints
+            .read()
+            .iter()
+            .filter(|p| p.system == system)
+            .cloned()
+            .collect()
+    }
 
     pub async fn reload_all(&mut self, services: &AppServices) {
         if let Ok(Some(loc_str)) = services.settings.get(Self::KEY_LOCALE).await
@@ -307,6 +337,11 @@ impl AppState {
             && let Ok(th) = ThemeMode::from_str(&th_str)
         {
             self.theme.set(th);
+        }
+        if let Ok(Some(sys)) = services.settings.get(Self::KEY_PAINT_SYSTEM).await
+            && let Ok(sys) = PaintSystem::from_str(&sys)
+        {
+            self.paint_system.set(sys);
         }
         if let Ok(p) = services.catalog.all().await {
             self.paints.set(p);

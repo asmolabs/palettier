@@ -1,6 +1,6 @@
-use crate::drying::{DryingContext, DryingEstimate, DryingTimeService};
+use crate::drying::{DryingContext, DryingEstimate, DryingTimeService, waits_for_through_dry};
 use crate::i18n::Locale;
-use crate::paint::{DryingClass, Technique};
+use crate::paint::{DryingClass, PaintSystem};
 use crate::project::{Project, ProjectLayer, ProjectZone};
 use chrono::{DateTime, Utc};
 use indexmap::IndexSet;
@@ -49,15 +49,11 @@ impl Stage {
     pub fn meaning(&self) -> &'static str {
         match self {
             Stage::Open => "Fondus et reprises dans le frais sont encore possibles.",
-            Stage::Setting => {
-                "Elle ne se travaille plus sans l'arracher : ne la touchez pas."
-            }
+            Stage::Setting => "Elle ne se travaille plus sans l'arracher : ne la touchez pas.",
             Stage::TouchDry => {
                 "Elle ne marque plus, mais une couche posee dessus la releverait encore."
             }
-            Stage::Recoatable => {
-                "La couche suivante peut etre posee sans relever celle-ci."
-            }
+            Stage::Recoatable => "La couche suivante peut etre posee sans relever celle-ci.",
             Stage::ThroughDry => "Manipulation, masquage et montage possibles.",
             Stage::Cured => "Vernis final possible.",
         }
@@ -68,15 +64,11 @@ impl Stage {
             Locale::Fr => self.meaning(),
             Locale::En => match self {
                 Stage::Open => "Wet-in-wet blending and rework are still possible.",
-                Stage::Setting => {
-                    "Working it now will tear the film: leave it alone."
-                }
+                Stage::Setting => "Working it now will tear the film: leave it alone.",
                 Stage::TouchDry => {
                     "Dry to the touch, but applying a new coat on top would still lift it."
                 }
-                Stage::Recoatable => {
-                    "The next coat can be applied without lifting this one."
-                }
+                Stage::Recoatable => "The next coat can be applied without lifting this one.",
                 Stage::ThroughDry => "Safe to handle, mask, and assemble.",
                 Stage::Cured => "Ready for final varnish.",
             },
@@ -130,11 +122,7 @@ impl ZoneState {
     }
 
     pub fn ready_now(&self) -> bool {
-        !self.done()
-            && self
-                .last
-                .as_ref()
-                .is_none_or(|c| c.ready_for_next())
+        !self.done() && self.last.as_ref().is_none_or(|c| c.ready_for_next())
     }
 
     pub fn remaining(&self) -> Duration {
@@ -234,8 +222,10 @@ impl WorkbenchService {
     }
 
     pub fn bench(&self, projects: &[Project], now: DateTime<Utc>) -> Bench {
-        let mut pieces: Vec<PieceState> =
-            projects.iter().map(|p| self.state_project(p, now)).collect();
+        let mut pieces: Vec<PieceState> = projects
+            .iter()
+            .map(|p| self.state_project(p, now))
+            .collect();
         pieces.sort_by(Self::cmp_urgency);
         Bench { pieces }
     }
@@ -244,7 +234,7 @@ impl WorkbenchService {
         let zones = project
             .zones
             .iter()
-            .map(|z| self.state_zone(z, now))
+            .map(|z| self.state_zone(z, project.system, now))
             .collect();
         PieceState {
             project: project.clone(),
@@ -252,7 +242,7 @@ impl WorkbenchService {
         }
     }
 
-    fn state_zone(&self, zone: &ProjectZone, now: DateTime<Utc>) -> ZoneState {
+    fn state_zone(&self, zone: &ProjectZone, system: PaintSystem, now: DateTime<Utc>) -> ZoneState {
         let applied_count = zone.layers.iter().filter(|l| l.is_applied()).count();
         let last_idx = zone
             .layers
@@ -263,7 +253,7 @@ impl WorkbenchService {
             .map(|(idx, _)| idx);
 
         let next = Self::next_after(&zone.layers, last_idx);
-        let last_coat = last_idx.map(|idx| self.coat(zone, &zone.layers[idx], next, now));
+        let last_coat = last_idx.map(|idx| self.coat(zone, &zone.layers[idx], next, system, now));
 
         ZoneState {
             name: zone.name.clone(),
@@ -289,23 +279,29 @@ impl WorkbenchService {
         zone: &ProjectZone,
         layer: &ProjectLayer,
         next: Option<&ProjectLayer>,
+        system: PaintSystem,
         now: DateTime<Utc>,
     ) -> CoatState {
         let applied = layer.applied.as_ref().expect("couche posée");
-        let technique = Technique::by_label(Some(&layer.technique), Technique::Glaze);
-        let estimate = self.drying_time_service.estimate(&DryingContext {
-            drying_class: applied.drying_class,
-            medium: technique.default_medium(),
-            medium_ratio: technique.default_ratio(),
-            thickness: technique.typical_thickness(),
-            workshop: applied.workshop,
-        });
+        let technique = layer.technique_within(system);
+        let estimate = self
+            .drying_time_service
+            .estimate(&DryingContext::for_technique_in(
+                technique,
+                system,
+                applied.drying_class,
+                applied.workshop,
+            ));
 
         let elapsed = (now - applied.at).to_std().unwrap_or(Duration::ZERO);
         let gate = match next {
             None => Duration::ZERO,
             Some(n) => {
-                if Technique::by_label(Some(&n.technique), Technique::Glaze).requires_cured_base() {
+                if waits_for_through_dry(
+                    layer.system_within(system),
+                    n.system_within(system),
+                    n.technique_within(system),
+                ) {
                     estimate.through_dry
                 } else {
                     estimate.recoat
@@ -529,14 +525,7 @@ mod tests {
             Workshop::standard(),
             DryingClass::Fast,
         );
-        project = apply_layer(
-            project,
-            1,
-            0,
-            now,
-            Workshop::standard(),
-            DryingClass::Fast,
-        );
+        project = apply_layer(project, 1, 0, now, Workshop::standard(), DryingClass::Fast);
 
         let wet = &service
             .bench(std::slice::from_ref(&project), now + TimeDelta::hours(2))
@@ -544,9 +533,7 @@ mod tests {
         assert!(!wet.ready_now());
         assert!(wet.next_availability().is_some());
 
-        let dry = &service
-            .bench(&[project], now + TimeDelta::days(30))
-            .pieces[0];
+        let dry = &service.bench(&[project], now + TimeDelta::days(30)).pieces[0];
         assert!(dry.zones.iter().all(|z| z.ready_now()));
         assert_eq!(Stage::Cured, dry.zones[0].last.as_ref().unwrap().stage);
         assert!(dry.next_availability().is_none());

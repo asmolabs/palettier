@@ -6,7 +6,7 @@ use palettier_domain::color::{Rgb, delta_e_2000};
 use palettier_domain::drying::{CustomMedium, DryingContext, Workshop};
 use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{
-    DryingClass, LayerThickness, Medium, Opacity, Paint, Technique, Ventilation,
+    DryingClass, LayerThickness, Medium, Opacity, Paint, PaintSystem, Technique, Ventilation,
 };
 use palettier_domain::port::{PaintCatalogRepository, RecipeRepository};
 use palettier_domain::recipe::{Recipe, RecipeStep};
@@ -53,7 +53,12 @@ fn format_duration(d: Duration, locale: Locale) -> String {
 }
 
 fn pigment_codes_str(paint: &Paint) -> String {
-    paint.pigments.iter().cloned().collect::<Vec<_>>().join(", ")
+    paint
+        .pigments
+        .iter()
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 #[component]
@@ -82,7 +87,7 @@ pub fn CatalogView() -> Element {
     let mut custom_opacity = use_signal(|| Opacity::SemiOpaque);
     let mut custom_drying = use_signal(|| DryingClass::Medium);
 
-    let all_paints = state.paints.read().clone();
+    let all_paints = state.paints_of_system();
     let owned_count = all_paints.iter().filter(|p| p.in_stock).count();
     let pipette_hex = state.last_sampled_hex.read().clone();
 
@@ -108,14 +113,8 @@ pub fn CatalogView() -> Element {
                 return false;
             }
             if !q.is_empty() {
-                let hay = format!(
-                    "{} {} {} {}",
-                    p.brand,
-                    p.name,
-                    p.code,
-                    pigment_codes_str(p)
-                )
-                .to_lowercase();
+                let hay = format!("{} {} {} {}", p.brand, p.name, p.code, pigment_codes_str(p))
+                    .to_lowercase();
                 if !hay.contains(&q) {
                     return false;
                 }
@@ -159,7 +158,11 @@ pub fn CatalogView() -> Element {
     rsx! {
         div {
             SectionHeader {
-                title: locale.tr("Catalogue des peintures à l'huile", "Oil Paint Catalog").to_string(),
+                title: match *state.paint_system.read() {
+                    PaintSystem::Oil => locale.tr("Catalogue des peintures à l'huile", "Oil Paint Catalog"),
+                    PaintSystem::Acrylic => locale.tr("Catalogue des acryliques", "Acrylic Paint Catalog"),
+                }
+                .to_string(),
                 subtitle: subtitle_str,
                 actions: Some(rsx! {
                     button {
@@ -338,6 +341,7 @@ pub fn CatalogView() -> Element {
                                     paint.drying_class = *custom_drying.read();
                                     paint.user_added = true;
                                     paint.in_stock = true;
+                                    paint.system = *state.paint_system.read();
                                     let services = services.clone();
                                     spawn(async move {
                                         match services.catalog.save(&paint).await {
@@ -758,25 +762,45 @@ pub fn DryingView() -> Element {
     );
 
     let ws = *state.workshop.read();
+    let system = *state.paint_system.read();
+    let is_oil = system == PaintSystem::Oil;
+    // A medium of the other system (left over from a switch) falls back to pure paint.
+    let current_medium = if medium.read().fits(system) {
+        *medium.read()
+    } else {
+        Medium::None
+    };
     let ratio = (*medium_ratio_pct.read() / 100.0).clamp(0.0, 1.0);
     let context = DryingContext {
+        system,
         drying_class: *drying_class.read(),
-        medium: *medium.read(),
+        medium: current_medium,
         medium_ratio: ratio,
         thickness: *thickness.read(),
         workshop: ws,
     };
     let estimate = services.drying_service.estimate(&context);
-    let fatness = medium.read().fatness(ratio);
+    let fatness = current_medium.fatness(ratio);
 
     rsx! {
         div {
             SectionHeader {
-                title: locale.tr("Calculateur de séchage à l'huile", "Oil Drying Calculator").to_string(),
-                subtitle: locale.tr(
-                    "Estimez le temps ouvert, le sec au toucher, le recouvrable et le séchage à cœur selon vos pigments, votre médium et le climat de l'atelier.",
-                    "Estimate open time, touch dry, recoat window, and full cure based on your pigments, medium, and studio climate."
-                ).to_string(),
+                title: if is_oil {
+                    locale.tr("Calculateur de séchage à l'huile", "Oil Drying Calculator").to_string()
+                } else {
+                    locale.tr("Calculateur de séchage acrylique", "Acrylic Drying Calculator").to_string()
+                },
+                subtitle: if is_oil {
+                    locale.tr(
+                        "Estimez le temps ouvert, le sec au toucher, le recouvrable et le séchage à cœur selon vos pigments, votre médium et le climat de l'atelier.",
+                        "Estimate open time, touch dry, recoat window, and full cure based on your pigments, medium, and studio climate."
+                    ).to_string()
+                } else {
+                    locale.tr(
+                        "L'acrylique sèche par évaporation : l'épaisseur, l'humidité et l'aération comptent, le pigment presque pas. Les temps se lisent en minutes.",
+                        "Acrylic dries by evaporation: thickness, humidity and air flow matter, the pigment barely does. Times read in minutes."
+                    ).to_string()
+                },
                 actions: None,
             }
 
@@ -784,6 +808,7 @@ pub fn DryingView() -> Element {
                 div { class: "card",
                     h3 { class: "card-title", {locale.tr("Paramètres de la couche", "Coat Parameters")} }
 
+                    if is_oil {
                     div { style: "margin-bottom: 12px;",
                         label { class: "field-label", {locale.tr("Classe siccative du pigment", "Pigment Drying Class")} }
                         select {
@@ -806,29 +831,23 @@ pub fn DryingView() -> Element {
                             }
                         }
                     }
+                    }
 
                     div { style: "margin-bottom: 12px;",
                         label { class: "field-label", {locale.tr("Médium ou diluant ajouté", "Added Medium or Thinner")} }
                         select {
                             style: "width: 100%;",
                             onchange: move |e| {
-                                let m = match e.value().as_str() {
-                                    "OdorlessThinner" => Medium::OdorlessThinner,
-                                    "WhiteSpirit" => Medium::WhiteSpirit,
-                                    "Turpentine" => Medium::Turpentine,
-                                    "AlkydMedium" => Medium::AlkydMedium,
-                                    "LinseedOil" => Medium::LinseedOil,
-                                    "WalnutOil" => Medium::WalnutOil,
-                                    "StandOil" => Medium::StandOil,
-                                    "CobaltDrier" => Medium::CobaltDrier,
-                                    _ => Medium::None,
-                                };
+                                let m = Medium::ALL
+                                    .into_iter()
+                                    .find(|m| format!("{m:?}") == e.value())
+                                    .unwrap_or(Medium::None);
                                 medium.set(m);
                             },
-                            for m in Medium::ALL {
+                            for m in Medium::for_system(system) {
                                 option {
                                     value: "{m:?}",
-                                    selected: *medium.read() == m,
+                                    selected: current_medium == m,
                                     "{m.label_i18n(locale)}"
                                 }
                             }
@@ -929,6 +948,7 @@ pub fn DryingView() -> Element {
                     }
 
                     // Custom Medium Formulation Card
+                    if is_oil {
                     div { class: "card-subtle", style: "margin-top: 18px; border-color: var(--accent);",
                         h4 { style: "margin-bottom: 8px;",
                             "🧪 "
@@ -1035,6 +1055,7 @@ pub fn DryingView() -> Element {
                                 }
                             }
                         }
+                    }
                     }
                 }
 
@@ -1294,7 +1315,11 @@ pub fn RecipesView() -> Element {
                                                         let t = Technique::by_label(Some(&e.value()), Technique::Glaze);
                                                         step_technique.set(t);
                                                     },
-                                                    for t in Technique::ALL {
+                                                    for t in Technique::ALL.into_iter().filter(|t| {
+                                                        // Own techniques, plus oil ones on top of an acrylic recipe.
+                                                        let sys = *state.paint_system.read();
+                                                        t.fits(sys) || (sys == PaintSystem::Acrylic && t.native_system() == Some(PaintSystem::Oil))
+                                                    }) {
                                                         option {
                                                             value: "{t.label()}",
                                                             selected: *step_technique.read() == t,
@@ -1337,7 +1362,7 @@ pub fn RecipesView() -> Element {
                                                     let tech = *step_technique.read();
                                                     let notes = step_notes.read().trim().to_string();
                                                     let mut next_recipe = recipe_clone.clone();
-                                                    let mut step = RecipeStep::of(tech, mix);
+                                                    let mut step = RecipeStep::of_in(tech, *state.paint_system.read(), mix);
                                                     step.notes = notes;
                                                     next_recipe.steps.push(step);
                                                     let services = services.clone();

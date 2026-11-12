@@ -1,5 +1,5 @@
 use crate::color::{Colorant, Rgb, linear_to_srgb, mix, srgb_to_linear};
-use crate::paint::{DryingClass, Opacity, Paint, Pigment};
+use crate::paint::{DryingClass, Opacity, Paint, PaintSystem, Pigment};
 use indexmap::{IndexMap, IndexSet};
 use std::str::FromStr;
 
@@ -143,18 +143,16 @@ impl PigmentIndex {
     fn resolve(&self, codes: &IndexSet<String>) -> Vec<Pigment> {
         codes
             .iter()
-            .map(|c| {
-                self.find(c)
-                    .cloned()
-                    .unwrap_or_else(|| Pigment::unknown(c))
-            })
+            .map(|c| self.find(c).cloned().unwrap_or_else(|| Pigment::unknown(c)))
             .collect()
     }
 
     pub fn drying_class_for(&self, codes: &IndexSet<String>) -> DryingClass {
         self.resolve(codes)
             .into_iter()
-            .fold(DryingClass::Fast, |slowest, p| slowest.slowest(p.drying_class))
+            .fold(DryingClass::Fast, |slowest, p| {
+                slowest.slowest(p.drying_class)
+            })
     }
 
     pub fn tinting_strength_for(&self, codes: &IndexSet<String>) -> f64 {
@@ -304,6 +302,11 @@ impl CatalogLoader {
     }
 
     fn to_paint(&self, row: &CsvRow) -> Paint {
+        let system = PaintSystem::from_str(row.get_or_default("system", ""))
+            .expect("systeme valide dans fichier de gamme");
+        if system == PaintSystem::Acrylic {
+            return self.to_acrylic(row);
+        }
         let pigment_codes = Self::parse_pigments(row.get("pigments"));
         assert!(
             !pigment_codes.is_empty(),
@@ -356,6 +359,65 @@ impl CatalogLoader {
             user_added: false,
             in_stock: true,
             notes: String::new(),
+            system: PaintSystem::Oil,
+        }
+    }
+
+    /// An acrylic pot. Miniature acrylic ranges rarely publish their pigments, so the
+    /// row must carry its colour; pigments, when given, feed opacity and tint as for oil.
+    /// The drying class is left neutral: the acrylic drying model does not read it.
+    fn to_acrylic(&self, row: &CsvRow) -> Paint {
+        let pigment_codes = Self::parse_pigments(row.get_or_default("pigments", ""));
+        let hex = row.get_or_default("hex", "").to_string();
+        assert!(
+            Rgb::of_hex(&hex).is_ok(),
+            "Une acrylique doit declarer sa teinte (colonne hex) en {}",
+            row.location()
+        );
+        let opacity_raw = row.get_or_default("opacity", "");
+        let opacity = if !opacity_raw.is_empty() {
+            Opacity::from_str(opacity_raw).expect("opacité valide dans fichier de gamme")
+        } else if !pigment_codes.is_empty() {
+            self.pigments.opacity_for(&pigment_codes)
+        } else {
+            Opacity::SemiOpaque
+        };
+        let tint_raw = row.get_or_default("tint", "");
+        let tint = if !tint_raw.is_empty() {
+            Some(tint_raw.to_string())
+        } else if !pigment_codes.is_empty() {
+            let masstone = Rgb::of_hex(&hex).expect("hex valide");
+            self.pigments
+                .tint_for(&pigment_codes, masstone)
+                .map(|c| c.to_hex())
+        } else {
+            None
+        };
+        let tinting_strength = if pigment_codes.is_empty() {
+            1.0
+        } else {
+            self.pigments.tinting_strength_for(&pigment_codes)
+        };
+        Paint {
+            id: None,
+            brand: row.get("brand").to_string(),
+            name: row.get("name").to_string(),
+            code: row.get_or_default("code", "").to_string(),
+            legacy_code: row.get_or_default("legacy", "").to_string(),
+            pigments: pigment_codes,
+            hex_color: hex,
+            tint_hex: tint,
+            opacity,
+            drying_class: DryingClass::Fast,
+            tinting_strength,
+            color_derived: false,
+            pigments_verified: row
+                .get_or_default("verified", "false")
+                .eq_ignore_ascii_case("true"),
+            user_added: false,
+            in_stock: true,
+            notes: String::new(),
+            system: PaintSystem::Acrylic,
         }
     }
 
@@ -374,7 +436,8 @@ mod tests {
 
     #[test]
     fn eight_brands_yield_same_680_tubes_as_java() {
-        let loaded = CatalogLoader::default().load_detailed();
+        let mut loaded = CatalogLoader::default().load_detailed();
+        loaded.paints.retain(|p| p.system == PaintSystem::Oil);
         assert_eq!(680, loaded.paints.len());
 
         let mut seen = IndexSet::new();
@@ -401,10 +464,7 @@ mod tests {
             .iter()
             .find(|p| p.brand == "Winsor & Newton" && p.name == "Burnt Umber")
             .unwrap();
-        assert_eq!(
-            IndexSet::from(["PBr7".to_string()]),
-            umber.pigments
-        );
+        assert_eq!(IndexSet::from(["PBr7".to_string()]), umber.pigments);
         assert_eq!(DryingClass::Fast, umber.drying_class);
         assert!(umber.pigments_verified);
         assert!(!umber.color_derived);
@@ -423,8 +483,16 @@ mod tests {
     #[test]
     fn tint_is_populated_where_pigments_know_it() {
         let loaded = CatalogLoader::default().load_detailed();
-        let with_tint = loaded.paints.iter().filter(|p| p.tint_hex.is_some()).count();
-        assert!(with_tint > 400, "seulement {} tubes à deux constantes", with_tint);
+        let with_tint = loaded
+            .paints
+            .iter()
+            .filter(|p| p.tint_hex.is_some())
+            .count();
+        assert!(
+            with_tint > 400,
+            "seulement {} tubes à deux constantes",
+            with_tint
+        );
     }
 
     #[test]
@@ -436,10 +504,7 @@ mod tests {
         );
         assert_eq!(
             DryingClass::VerySlow,
-            index.drying_class_for(&IndexSet::from([
-                "PBr7".to_string(),
-                "PY35".to_string()
-            ]))
+            index.drying_class_for(&IndexSet::from(["PBr7".to_string(), "PY35".to_string()]))
         );
     }
 
@@ -460,10 +525,7 @@ mod tests {
         assert_eq!(Opacity::Opaque, white.opacity);
         assert_eq!(
             Opacity::Opaque,
-            index.opacity_for(&IndexSet::from([
-                "PW6".to_string(),
-                "PB27".to_string()
-            ]))
+            index.opacity_for(&IndexSet::from(["PW6".to_string(), "PB27".to_string()]))
         );
     }
 }

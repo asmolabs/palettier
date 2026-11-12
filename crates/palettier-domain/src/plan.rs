@@ -1,9 +1,11 @@
 use crate::color::{Rgb, delta_e_2000};
-use crate::drying::{DryingContext, DryingEstimate, DryingTimeService, Workshop};
+use crate::drying::{
+    DryingContext, DryingEstimate, DryingTimeService, Workshop, waits_for_through_dry,
+};
 use crate::error::{DomainError, DomainResult};
 use crate::i18n::Locale;
 use crate::mix::{ColorMixService, MixSuggestion};
-use crate::paint::{DryingClass, Paint, Technique};
+use crate::paint::{DryingClass, Paint, PaintSystem, Technique};
 use crate::palette::Palette;
 use crate::project::{LayerKind, Project, ProjectLayer, ProjectZone};
 use chrono::Utc;
@@ -17,6 +19,9 @@ pub struct PaintingPlan {
     pub subject: String,
     pub palette_name: String,
     pub approach: String,
+    /// Oil or acrylic: the system the plan is painted in.
+    #[serde(default)]
+    pub system: PaintSystem,
     pub zones: Vec<PlanZone>,
 }
 
@@ -132,6 +137,7 @@ impl PaintingPlan {
             subject: self.subject.clone(),
             approach: self.approach.clone(),
             notes: String::new(),
+            system: self.system,
             palette: palette.cloned(),
             paints: palette.map(|p| p.paints.clone()).unwrap_or_default(),
             zones,
@@ -189,9 +195,9 @@ pub struct ZoneSchedule {
 
 impl ZoneSchedule {
     pub fn slowest(&self) -> DryingClass {
-        self.layers
-            .iter()
-            .fold(DryingClass::Fast, |slowest, l| slowest.slowest(l.drying_class))
+        self.layers.iter().fold(DryingClass::Fast, |slowest, l| {
+            slowest.slowest(l.drying_class)
+        })
     }
 }
 
@@ -222,7 +228,7 @@ impl PlanDryingService {
         let zones: Vec<ZoneSchedule> = plan
             .zones
             .iter()
-            .map(|z| self.schedule_zone(z, workshop))
+            .map(|z| self.schedule_zone(z, plan.system, workshop))
             .collect();
         let sequential = zones.iter().fold(Duration::ZERO, |acc, z| acc + z.span);
         let parallel = zones.iter().map(|z| z.span).max().unwrap_or(Duration::ZERO);
@@ -235,7 +241,12 @@ impl PlanDryingService {
         }
     }
 
-    fn schedule_zone(&self, zone: &PlanZone, workshop: Workshop) -> ZoneSchedule {
+    fn schedule_zone(
+        &self,
+        zone: &PlanZone,
+        system: PaintSystem,
+        workshop: Workshop,
+    ) -> ZoneSchedule {
         let mut layers = zone.layers();
         layers.extend(zone.accents.iter().cloned());
 
@@ -243,22 +254,25 @@ impl PlanDryingService {
         let mut offset = Duration::ZERO;
 
         for (i, layer) in layers.iter().enumerate() {
-            let technique = Technique::by_label(Some(&layer.technique), Technique::Glaze);
+            let technique = Technique::by_label_in(Some(&layer.technique), system);
             let drying = Self::drying_class_of(layer);
 
-            let estimate = self.drying_time_service.estimate(&DryingContext {
-                drying_class: drying,
-                medium: technique.default_medium(),
-                medium_ratio: technique.default_ratio(),
-                thickness: technique.typical_thickness(),
-                workshop,
-            });
+            let estimate = self
+                .drying_time_service
+                .estimate(&DryingContext::for_technique_in(
+                    technique, system, drying, workshop,
+                ));
 
             let wait = if i + 1 == layers.len() {
                 Duration::ZERO
-            } else if Technique::by_label(Some(&layers[i + 1].technique), Technique::Glaze)
-                .requires_cured_base()
-            {
+            } else if {
+                let next = Technique::by_label_in(Some(&layers[i + 1].technique), system);
+                waits_for_through_dry(
+                    technique.system_within(system),
+                    next.system_within(system),
+                    next,
+                )
+            } {
                 estimate.through_dry
             } else {
                 estimate.recoat
@@ -348,6 +362,7 @@ impl ProjectPlanner {
             subject: project.subject.clone(),
             palette_name,
             approach: project.approach.clone(),
+            system: project.system,
             zones,
         }
     }
@@ -464,10 +479,7 @@ impl SampledPlanService {
         groups: &[ColourGroup],
         max_paints: usize,
     ) -> DomainResult<PaintingPlan> {
-        let usable: Vec<&ColourGroup> = groups
-            .iter()
-            .filter(|g| !g.samples.is_empty())
-            .collect();
+        let usable: Vec<&ColourGroup> = groups.iter().filter(|g| !g.samples.is_empty()).collect();
         if usable.is_empty() {
             return Err(DomainError::InvalidArgument(
                 "Aucun point releve : ajoutez au moins une couleur a un groupe.".to_string(),
@@ -488,6 +500,7 @@ impl SampledPlanService {
             approach: format!(
                 "Plan etabli a partir de {total_samples} points releves sur la reference."
             ),
+            system: palette.map(|p| p.system()).unwrap_or_default(),
             zones,
         })
     }
@@ -502,6 +515,11 @@ impl SampledPlanService {
         ordered.sort_by(|a, b| a.relative_luminance().total_cmp(&b.relative_luminance()));
 
         let base_index = ordered.len() / 2;
+        let system = palette.map(|p| p.system()).unwrap_or_default();
+        let (shadow_technique, light_technique) = match system {
+            PaintSystem::Oil => (Technique::Glaze, Technique::Highlight),
+            PaintSystem::Acrylic => (Technique::ShadeWash, Technique::Layering),
+        };
         let shadows: Vec<PlanLayer> = (0..base_index)
             .rev()
             .enumerate()
@@ -509,7 +527,7 @@ impl SampledPlanService {
                 self.make_layer(
                     format!("Ombre {}", rank + 1),
                     ordered[idx],
-                    Technique::Glaze,
+                    shadow_technique,
                     palette,
                     max_paints,
                 )
@@ -522,7 +540,7 @@ impl SampledPlanService {
                 self.make_layer(
                     format!("Lumiere {}", rank + 1),
                     ordered[idx],
-                    Technique::Highlight,
+                    light_technique,
                     palette,
                     max_paints,
                 )

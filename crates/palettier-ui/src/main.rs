@@ -17,6 +17,7 @@ use dioxus::desktop::{Config, WindowBuilder};
 use dioxus::prelude::*;
 use palettier_domain::drying::Workshop;
 use palettier_domain::i18n::Locale;
+use palettier_domain::paint::PaintSystem;
 use palettier_domain::port::SettingsRepository;
 use palettier_domain::workbench::ReadinessWatch;
 use std::path::PathBuf;
@@ -122,6 +123,7 @@ fn StudioShell(services: AppServices) -> Element {
     let last_sampled_hex = use_signal(|| None::<String>);
     let command_palette_open = use_signal(|| false);
     let miniature_tab = use_signal(|| 0usize);
+    let paint_system = use_signal(PaintSystem::default);
     let mut is_hud = use_signal(|| false);
 
     let mut app_state = use_context_provider(|| AppState {
@@ -141,6 +143,7 @@ fn StudioShell(services: AppServices) -> Element {
         last_sampled_hex,
         command_palette_open,
         miniature_tab,
+        paint_system,
     });
 
     // Initial data load + periodic background check for newly ready-to-recoat layers
@@ -181,7 +184,12 @@ fn StudioShell(services: AppServices) -> Element {
     let current_section = *app_state.section.read();
     let current_locale = *app_state.locale.read();
     let current_theme = *app_state.theme.read();
-    let owned_count = app_state.paints.read().iter().filter(|p| p.in_stock).count();
+    let owned_count = app_state
+        .paints
+        .read()
+        .iter()
+        .filter(|p| p.in_stock)
+        .count();
     let total_paints = app_state.paints.read().len();
     let ready_pieces_count = {
         let projs = app_state.projects.read().clone();
@@ -256,6 +264,20 @@ fn StudioShell(services: AppServices) -> Element {
                             app_state.command_palette_open.set(!cur);
                         },
                         "🔍 ⌘K"
+                    }
+                    div {
+                        class: "system-switch",
+                        title: "{current_locale.tr(\"Système de peinture des écrans hors projet (catalogue, mélangeur, séchage, recettes). Chaque projet garde le sien.\", \"Paint system for screens outside a project (catalog, mixer, drying, recipes). Each project keeps its own.\")}",
+                        for sys in PaintSystem::ALL {
+                            button {
+                                class: if *app_state.paint_system.read() == sys { "toggle-chip active" } else { "toggle-chip" },
+                                onclick: {
+                                    let svc = services.clone();
+                                    move |_| app_state.set_paint_system(&svc, sys)
+                                },
+                                "{sys.label_i18n(current_locale)}"
+                            }
+                        }
                     }
                     button {
                         class: "toggle-chip",
@@ -416,42 +438,221 @@ fn CommandPaletteModal() -> Element {
 
     // Section and tab matches
     let tools = [
-        ("⚔️", locale.tr("Figurine : Convertisseur & Échelle 5 Étapes", "Miniature: Converter & 5-Stage Ladder"), Section::Miniature, 0),
-        ("⚔️", locale.tr("Figurine : NMM Métal Non-Métallique (Or, Acier, Cuivre)", "Miniature: NMM Non-Metallic Metal Studio"), Section::Miniature, 1),
-        ("🌧️", locale.tr("Figurine : Weathering & Grimdark (Streaking Grime, Rouille)", "Miniature: Weathering & Grimdark"), Section::Miniature, 2),
-        ("🛡️", locale.tr("Figurine : Pin Wash & Travail Réductif au Solvant", "Miniature: Pin Wash & Reductive Technique"), Section::Miniature, 3),
-        ("🧪", locale.tr("Figurine : Solvants, Médiums, Décapage & Palette Congélateur", "Miniature: Solvents, Mediums, Stripping & Freezer"), Section::Miniature, 4),
-        ("🏜️", locale.tr("Figurine : Pigments Secs de Weathering & Fixateurs", "Miniature: Weathering Dry Pigments & Fixers"), Section::Miniature, 5),
-        ("📄", locale.tr("Figurine : Fiche de Recette d'Armée & Modélisme", "Miniature: Army Recipe Sheet Generator"), Section::Miniature, 6),
-        ("♨️", locale.tr("Figurine : Séchage Forcé (Boîte Chauffante / Déshydrateur)", "Miniature: Heat Box Curing Simulator"), Section::Miniature, 7),
-        ("🩸", locale.tr("Figurine : Sang & FX Spéciaux (Gore, Glace, Gemmes)", "Miniature: Blood & Special FX"), Section::Miniature, 8),
-        ("🖌️", locale.tr("Figurine : Soin Pinceaux de Martre Kolinsky", "Miniature: Kolinsky Brush Care Tracker"), Section::Miniature, 9),
-        ("🪞", locale.tr("Figurine : Harmonisation par Vernis (Ultra-Mat, Satin, Gloss)", "Miniature: Varnish Harmonizer"), Section::Miniature, 10),
-        ("👥", locale.tr("Figurine : Peinture d'Armée en Série (Batch Squad)", "Miniature: Batch Squad Painting"), Section::Miniature, 11),
-        ("💡", locale.tr("Figurine : Simulateur OSL (Lueur & Énergie Plasma)", "Miniature: OSL Light Engine"), Section::Miniature, 12),
-        ("🧪", locale.tr("Mélangeur Kubelka-Munk (Calcul de ratios)", "Kubelka-Munk Color Mixer"), Section::Mixer, 0),
-        ("⏱️", locale.tr("Aujourd'hui : Tableau de bord & Séchage", "Today: Workbench & Drying"), Section::Today, 0),
-        ("📋", locale.tr("Projets & Figurines en cours", "Projects & Miniature Pieces"), Section::Projects, 0),
-        ("🎨", locale.tr("Mes Palettes d'Atelier", "Saved Palettes"), Section::Palettes, 0),
-        ("💧", locale.tr("Pipette & Analyse Photo", "Eyedropper & Photo Analyzer"), Section::Eyedropper, 0),
-        ("🤖", locale.tr("Assistant IA (Conseils & Formulations)", "AI Assistant"), Section::Assistant, 0),
-        ("📚", locale.tr("Catalogue Tubes d'Huile (680 références)", "Oil Paint Catalog (680 tubes)"), Section::Catalog, 0),
-        ("⏳", locale.tr("Temps de Séchage & Siccatifs", "Drying Times & Mediums"), Section::Drying, 0),
-        ("📖", locale.tr("Recettes Mères & Guides", "Mother Mixes & Guides"), Section::Recipes, 0),
-        ("⚙️", locale.tr("Paramètres de l'Atelier", "Workshop Settings"), Section::Settings, 0),
+        (
+            "⚔️",
+            locale.tr(
+                "Figurine : Convertisseur & Échelle 5 Étapes",
+                "Miniature: Converter & 5-Stage Ladder",
+            ),
+            Section::Miniature,
+            0,
+        ),
+        (
+            "⚔️",
+            locale.tr(
+                "Figurine : NMM Métal Non-Métallique (Or, Acier, Cuivre)",
+                "Miniature: NMM Non-Metallic Metal Studio",
+            ),
+            Section::Miniature,
+            1,
+        ),
+        (
+            "🌧️",
+            locale.tr(
+                "Figurine : Weathering & Grimdark (Streaking Grime, Rouille)",
+                "Miniature: Weathering & Grimdark",
+            ),
+            Section::Miniature,
+            2,
+        ),
+        (
+            "🛡️",
+            locale.tr(
+                "Figurine : Pin Wash & Travail Réductif au Solvant",
+                "Miniature: Pin Wash & Reductive Technique",
+            ),
+            Section::Miniature,
+            3,
+        ),
+        (
+            "🧪",
+            locale.tr(
+                "Figurine : Solvants, Médiums, Décapage & Palette Congélateur",
+                "Miniature: Solvents, Mediums, Stripping & Freezer",
+            ),
+            Section::Miniature,
+            4,
+        ),
+        (
+            "🏜️",
+            locale.tr(
+                "Figurine : Pigments Secs de Weathering & Fixateurs",
+                "Miniature: Weathering Dry Pigments & Fixers",
+            ),
+            Section::Miniature,
+            5,
+        ),
+        (
+            "📄",
+            locale.tr(
+                "Figurine : Fiche de Recette d'Armée & Modélisme",
+                "Miniature: Army Recipe Sheet Generator",
+            ),
+            Section::Miniature,
+            6,
+        ),
+        (
+            "♨️",
+            locale.tr(
+                "Figurine : Séchage Forcé (Boîte Chauffante / Déshydrateur)",
+                "Miniature: Heat Box Curing Simulator",
+            ),
+            Section::Miniature,
+            7,
+        ),
+        (
+            "🩸",
+            locale.tr(
+                "Figurine : Sang & FX Spéciaux (Gore, Glace, Gemmes)",
+                "Miniature: Blood & Special FX",
+            ),
+            Section::Miniature,
+            8,
+        ),
+        (
+            "🖌️",
+            locale.tr(
+                "Figurine : Soin Pinceaux de Martre Kolinsky",
+                "Miniature: Kolinsky Brush Care Tracker",
+            ),
+            Section::Miniature,
+            9,
+        ),
+        (
+            "🪞",
+            locale.tr(
+                "Figurine : Harmonisation par Vernis (Ultra-Mat, Satin, Gloss)",
+                "Miniature: Varnish Harmonizer",
+            ),
+            Section::Miniature,
+            10,
+        ),
+        (
+            "👥",
+            locale.tr(
+                "Figurine : Peinture d'Armée en Série (Batch Squad)",
+                "Miniature: Batch Squad Painting",
+            ),
+            Section::Miniature,
+            11,
+        ),
+        (
+            "💡",
+            locale.tr(
+                "Figurine : Simulateur OSL (Lueur & Énergie Plasma)",
+                "Miniature: OSL Light Engine",
+            ),
+            Section::Miniature,
+            12,
+        ),
+        (
+            "🧪",
+            locale.tr(
+                "Mélangeur Kubelka-Munk (Calcul de ratios)",
+                "Kubelka-Munk Color Mixer",
+            ),
+            Section::Mixer,
+            0,
+        ),
+        (
+            "⏱️",
+            locale.tr(
+                "Aujourd'hui : Tableau de bord & Séchage",
+                "Today: Workbench & Drying",
+            ),
+            Section::Today,
+            0,
+        ),
+        (
+            "📋",
+            locale.tr(
+                "Projets & Figurines en cours",
+                "Projects & Miniature Pieces",
+            ),
+            Section::Projects,
+            0,
+        ),
+        (
+            "🎨",
+            locale.tr("Mes Palettes d'Atelier", "Saved Palettes"),
+            Section::Palettes,
+            0,
+        ),
+        (
+            "💧",
+            locale.tr("Pipette & Analyse Photo", "Eyedropper & Photo Analyzer"),
+            Section::Eyedropper,
+            0,
+        ),
+        (
+            "🤖",
+            locale.tr("Assistant IA (Conseils & Formulations)", "AI Assistant"),
+            Section::Assistant,
+            0,
+        ),
+        (
+            "📚",
+            locale.tr(
+                "Catalogue Tubes d'Huile (680 références)",
+                "Oil Paint Catalog (680 tubes)",
+            ),
+            Section::Catalog,
+            0,
+        ),
+        (
+            "⏳",
+            locale.tr("Temps de Séchage & Siccatifs", "Drying Times & Mediums"),
+            Section::Drying,
+            0,
+        ),
+        (
+            "📖",
+            locale.tr("Recettes Mères & Guides", "Mother Mixes & Guides"),
+            Section::Recipes,
+            0,
+        ),
+        (
+            "⚙️",
+            locale.tr("Paramètres de l'Atelier", "Workshop Settings"),
+            Section::Settings,
+            0,
+        ),
     ];
 
-    let matching_tools: Vec<_> = tools.into_iter().filter(|(_, title, _, _)| {
-        term.is_empty() || title.to_lowercase().contains(&term)
-    }).take(6).collect();
+    let matching_tools: Vec<_> = tools
+        .into_iter()
+        .filter(|(_, title, _, _)| term.is_empty() || title.to_lowercase().contains(&term))
+        .take(6)
+        .collect();
 
-    let matching_acrylics: Vec<_> = palettier_domain::miniature::MINIATURE_ACRYLICS.iter().filter(|a| {
-        !term.is_empty() && (a.name.to_lowercase().contains(&term) || a.category.to_lowercase().contains(&term))
-    }).take(6).collect();
+    let matching_acrylics: Vec<_> = palettier_domain::miniature::MINIATURE_ACRYLICS
+        .iter()
+        .filter(|a| {
+            !term.is_empty()
+                && (a.name.to_lowercase().contains(&term)
+                    || a.category.to_lowercase().contains(&term))
+        })
+        .take(6)
+        .collect();
 
-    let matching_oils: Vec<_> = all_paints.iter().filter(|p| {
-        !term.is_empty() && (p.name.to_lowercase().contains(&term) || p.brand.to_lowercase().contains(&term))
-    }).take(6).collect();
+    let matching_oils: Vec<_> = all_paints
+        .iter()
+        .filter(|p| {
+            !term.is_empty()
+                && (p.name.to_lowercase().contains(&term) || p.brand.to_lowercase().contains(&term))
+        })
+        .take(6)
+        .collect();
 
     rsx! {
         div {

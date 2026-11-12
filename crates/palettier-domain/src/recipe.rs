@@ -1,5 +1,7 @@
-use crate::drying::{DryingContext, DryingEstimate, DryingTimeService, Workshop};
-use crate::paint::{DryingClass, LayerThickness, Medium, Technique};
+use crate::drying::{
+    DryingContext, DryingEstimate, DryingTimeService, Workshop, waits_for_through_dry,
+};
+use crate::paint::{DryingClass, LayerThickness, Medium, PaintSystem, Technique};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -16,6 +18,15 @@ pub struct RecipeStep {
 }
 
 impl RecipeStep {
+    /// The system of this step: imposed by its technique when it belongs to one system
+    /// only, otherwise read from its medium, oil by default.
+    pub fn system(&self) -> PaintSystem {
+        self.technique
+            .native_system()
+            .or_else(|| self.medium.system())
+            .unwrap_or_default()
+    }
+
     pub fn of(technique: Technique, paint_mix: impl Into<String>) -> Self {
         Self {
             id: None,
@@ -27,9 +38,18 @@ impl RecipeStep {
             notes: String::new(),
         }
     }
+
+    /// A step with the default settings of `technique` when done in `system`.
+    pub fn of_in(technique: Technique, system: PaintSystem, paint_mix: impl Into<String>) -> Self {
+        Self {
+            medium: technique.default_medium_in(system),
+            medium_ratio: technique.default_ratio_in(system),
+            ..Self::of(technique, paint_mix)
+        }
+    }
 }
 
-/// Ordered sequence of oil painting steps for a given subject.
+/// Ordered sequence of painting steps (oil, acrylic, or acrylic then oil) for a subject.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Recipe {
     pub id: Option<i64>,
@@ -93,6 +113,7 @@ impl RecipeTimelineService {
 
         for (i, step) in recipe.steps.iter().enumerate() {
             let context = DryingContext {
+                system: step.system(),
                 drying_class,
                 medium: step.medium,
                 medium_ratio: step.medium_ratio,
@@ -103,7 +124,11 @@ impl RecipeTimelineService {
 
             let wait = if i + 1 == recipe.steps.len() {
                 Duration::ZERO
-            } else if recipe.steps[i + 1].technique.requires_cured_base() {
+            } else if waits_for_through_dry(
+                step.system(),
+                recipe.steps[i + 1].system(),
+                recipe.steps[i + 1].technique,
+            ) {
                 estimate.through_dry
             } else {
                 estimate.recoat
@@ -120,9 +145,7 @@ impl RecipeTimelineService {
             last = Some(estimate);
         }
 
-        let until_varnish = last
-            .map(|l| offset + l.full_cure)
-            .unwrap_or(Duration::ZERO);
+        let until_varnish = last.map(|l| offset + l.full_cure).unwrap_or(Duration::ZERO);
         Timeline {
             recipe: recipe.clone(),
             entries,

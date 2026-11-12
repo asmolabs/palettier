@@ -534,6 +534,24 @@ input[type="color"]::-webkit-color-swatch {
     border-color: var(--accent-border);
 }
 
+/* Oil / acrylic: warm amber for oil, cool teal for acrylic, readable in both themes. */
+.pill-oil {
+    background-color: rgba(201, 138, 43, 0.15);
+    color: #c98a2b;
+    border-color: rgba(201, 138, 43, 0.45);
+}
+
+.pill-acrylic {
+    background-color: rgba(42, 157, 143, 0.15);
+    color: #2a9d8f;
+    border-color: rgba(42, 157, 143, 0.45);
+}
+
+.system-switch {
+    display: inline-flex;
+    gap: 4px;
+}
+
 .pill-ok {
     background-color: var(--pill-ok-bg);
     color: var(--pill-ok-text);
@@ -815,7 +833,8 @@ pub fn PaintSwatch(
             }
         }
     } else {
-        let style = format!("width: {width}px; height: {height}px; background-color: {masstone_hex};");
+        let style =
+            format!("width: {width}px; height: {height}px; background-color: {masstone_hex};");
         rsx! {
             span {
                 class: "swatch",
@@ -898,22 +917,38 @@ pub fn DeltaEBadge(delta_e: f64) -> Element {
     let (cls, label) = if delta_e < 1.0 {
         (
             "pill pill-ok",
-            format!("ΔE {:.1} · {}", delta_e, locale.tr("imperceptible", "imperceptible")),
+            format!(
+                "ΔE {:.1} · {}",
+                delta_e,
+                locale.tr("imperceptible", "imperceptible")
+            ),
         )
     } else if delta_e < 2.0 {
         (
             "pill pill-ok",
-            format!("ΔE {:.1} · {}", delta_e, locale.tr("identique à l'œil", "indistinguishable")),
+            format!(
+                "ΔE {:.1} · {}",
+                delta_e,
+                locale.tr("identique à l'œil", "indistinguishable")
+            ),
         )
     } else if delta_e < 4.5 {
         (
             "pill pill-accent",
-            format!("ΔE {:.1} · {}", delta_e, locale.tr("très proche", "very close")),
+            format!(
+                "ΔE {:.1} · {}",
+                delta_e,
+                locale.tr("très proche", "very close")
+            ),
         )
     } else if delta_e < 8.0 {
         (
             "pill pill-warn",
-            format!("ΔE {:.1} · {}", delta_e, locale.tr("écart visible", "visible gap")),
+            format!(
+                "ΔE {:.1} · {}",
+                delta_e,
+                locale.tr("écart visible", "visible gap")
+            ),
         )
     } else {
         (
@@ -1204,7 +1239,13 @@ pub fn export_and_open_guide_html(
     let safe_name: String = guide
         .subtitle
         .chars()
-        .map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
+        .map(|c| {
+            if c.is_alphanumeric() {
+                c.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
         .collect::<String>()
         .split('-')
         .filter(|s| !s.is_empty())
@@ -1243,10 +1284,7 @@ pub fn MixingGuideCard(
         "Fiche d'établi · Format Guide de mélanges",
         "Workbench Sheet · Mixing Guide Format",
     );
-    let print_btn_label = locale.tr(
-        "Imprimer / Exporter en PDF A4",
-        "Print / Export A4 PDF",
-    );
+    let print_btn_label = locale.tr("Imprimer / Exporter en PDF A4", "Print / Export A4 PDF");
     let palette_heading = locale.tr("Ta palette", "Your Palette");
     let mother_heading = locale.tr(
         "Mélanges intermédiaires à préparer en début de séance",

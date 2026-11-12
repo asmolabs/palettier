@@ -1,0 +1,93 @@
+# Plan de refactoring
+
+État des lieux après la séparation huile / acrylique (branche `claude/acrylique-ou-huile`).
+Le domaine et la persistance sont sains ; la dette est concentrée dans l'onglet Miniature
+et dans les vues. Chaque lot ci-dessous se livre seul, avec la suite de tests au vert
+(100 tests aujourd'hui), et ne change pas ce que voit le peintre sauf mention contraire.
+
+## Ce qui tient et qu'on ne touche pas
+
+- Le découpage en crates (domaine sans interface, `#![forbid(unsafe_code)]` partout).
+- Kubelka-Munk, le catalogue chargé depuis les CSV et la table des pigments.
+- Les migrations SQLite et la compatibilité avec les sauvegardes de la version Java,
+  vérifiée par `real_java_backup_imports_and_roundtrips_intact`.
+
+## Lot 1 : vider `miniature.rs` de ses doublons (priorité haute)
+
+`palettier-domain/src/miniature.rs` (2 500 lignes) refait en parallèle ce que le domaine
+sait déjà faire, et c'est là que l'huile et l'acrylique s'étaient mélangées.
+
+| Doublon | Remplacer par |
+|---|---|
+| `OilMedium` (Liquin, lin, stand, cobalt) | `paint::Medium` |
+| `OilConsistencyTechnique` | `paint::Technique`, avec un ratio de médium |
+| `MINIATURE_ACRYLICS` et `MiniatureBrand`, codés en dur | les fichiers `catalog/brands/10-…14-*.csv`, déjà générés à partir de cette liste, lus via `state.paints_of_system()` |
+| `HeatBoxCalculator` (une « loi d'Arrhenius » sans source) | `DryingTimeService` avec une température d'atelier ; sinon le retirer |
+
+Ensuite, découper ce qui reste par sujet (`nmm.rs`, `weathering.rs`, `osl.rs`,
+`batch.rs`) dans un module `miniature/`. Critère de fin : plus aucun type de
+`miniature.rs` ne double un type de `paint.rs`.
+
+## Lot 2 : sortir la logique métier des vues (priorité haute)
+
+`workshop.rs` (1 800 lignes, jusqu'à 108 espaces d'indentation), `color.rs` (1 500) et
+`views/miniature.rs` (2 760) construisent des `Project`, des `PaletteMix` et des
+`RecipeStep` directement dans des `onclick`, avec 47 `spawn(async …)` dispersés.
+
+- Une couche d'actions dans `palettier-ui/src/actions/` (`create_project`,
+  `place_mix`, `add_recipe_step`, …) : de simples fonctions async qui prennent
+  `AppServices` et rendent un `DomainResult`. Les vues ne font plus qu'appeler.
+- Un composant par carte : `ProjectList`, `LayerTable`, `LayerEditor`,
+  `PaletteMixCard`, et un sous-module par onglet Miniature.
+- Objectif : aucun fichier de vue au-delà de 600 lignes, pas plus de 10 niveaux
+  d'imbrication.
+
+## Lot 3 : typer la technique d'une couche (priorité moyenne)
+
+`ProjectLayer.technique` est une `String`. Un libellé inconnu (sortie d'IA, faute de
+frappe) retombe en silence sur Glacis ou sur Couches superposées.
+
+- `ProjectLayer.technique: Technique` plus un `technique_note: String` libre pour ce
+  que l'IA propose en dehors de la liste.
+- Migration SQL : convertir les libellés FR/EN existants en `as_db_str()`, et garder
+  les libellés inconnus dans la note.
+- Signaler à l'enregistrement d'un plan IA les techniques non reconnues, au lieu de
+  les remplacer en silence.
+
+## Lot 4 : une seule source pour les libellés (priorité moyenne)
+
+21 paires `label()` / `label_i18n()` répètent les mêmes `match`. Le domaine écrit sans
+accents (« sechage », « Pate »), l'interface avec.
+
+- Un seul `label(locale)` par type, `Display` délégué à `label(Locale::Fr)`.
+- Rétablir les accents dans le domaine. Les tests qui cherchent un texte
+  (`contains("limite utile")`, `contains("15 degres")`) devront tester une variante
+  d'enum ou une clé, pas une phrase.
+- Plus tard, si l'anglais grandit : passer aux fichiers de traduction (`fluent`).
+
+## Lot 5 : styles (priorité basse)
+
+786 attributs `style: "…"` inline. Les rassembler en classes dans `theme.rs` (dont
+`card-subtle`, `row-between`, et les couleurs huile / acrylique déjà ajoutées) rend
+le thème clair / sombre cohérent et allège les vues avant le lot 2.
+
+## Lot 6 : tests de l'interface et de bout en bout (priorité basse)
+
+Aujourd'hui, rien ne teste les vues. Une fois le lot 2 fait, les actions se testent
+comme le domaine, sur une base en mémoire (`Database::in_memory()`). À couvrir en
+premier : créer un projet acrylique, poser une couche, voir l'alerte acrylique sur
+huile, et le filtre du mélangeur par système.
+
+## Corrections ponctuelles à glisser dans le premier lot venu
+
+- Le prompt IA huile annonce « 14 règles » mais n'en liste que 10.
+- `SampledPlanService` nomme ses couches en français en dur (« Ombre 1 »,
+  « Lumiere 1 ») quelle que soit la langue.
+- `default_db_dir()` préfère un `.palettier` dans le dossier courant : lancer l'appli
+  depuis un autre dossier peut ouvrir une autre base sans prévenir.
+
+## Ordre conseillé
+
+1 → 3 → 2 → 4 → 5 → 6. Le lot 1 supprime le plus de code et reste au cœur du sujet
+huile / acrylique ; le lot 3 change le schéma, il vaut mieux le faire avant d'éclater
+les vues qui lisent `technique`.

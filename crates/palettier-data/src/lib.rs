@@ -26,14 +26,12 @@ mod tests {
     use indexmap::IndexSet;
     use palettier_domain::color::Rgb;
     use palettier_domain::drying::Workshop;
-    use palettier_domain::paint::{DryingClass, Opacity, Paint, Ventilation};
+    use palettier_domain::paint::{DryingClass, Opacity, Paint, PaintSystem, Ventilation};
     use palettier_domain::palette::{Palette, PaletteMix, PaletteMixService};
     use palettier_domain::port::{
         PaintCatalogRepository, PaletteMixRepository, PaletteRepository, ProjectRepository,
     };
-    use palettier_domain::project::{
-        PhotoRole, Project, ProjectLayer, ProjectPhoto, ProjectZone,
-    };
+    use palettier_domain::project::{PhotoRole, Project, ProjectLayer, ProjectPhoto, ProjectZone};
     use palettier_domain::workbench::WorkbenchService;
     use std::path::PathBuf;
     use std::sync::Arc;
@@ -111,12 +109,12 @@ mod tests {
             user_added: false,
             in_stock,
             notes: String::new(),
+            system: PaintSystem::Oil,
         }
     }
 
     fn real_backup_path() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/fixtures/sauvegarde-reelle.zip")
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sauvegarde-reelle.zip")
     }
 
     #[tokio::test]
@@ -125,7 +123,12 @@ mod tests {
         let saved = inst.catalog.save(&umber(true)).await.unwrap();
         let id = saved.id.expect("id assigné");
 
-        let read = inst.catalog.find_by_id(id).await.unwrap().expect("tube relu");
+        let read = inst
+            .catalog
+            .find_by_id(id)
+            .await
+            .unwrap()
+            .expect("tube relu");
         assert_eq!("Burnt Umber", read.name);
         assert_eq!(IndexSet::from(["PBr7".to_string()]), read.pigments);
         assert_eq!(Some("#C9B9AC".to_string()), read.tint_hex);
@@ -226,6 +229,7 @@ mod tests {
             subject: "Buste".to_string(),
             approach: "Par glacis.".to_string(),
             notes: String::new(),
+            system: PaintSystem::Acrylic,
             palette: Some(palette),
             paints: vec![paint],
             zones: vec![zone],
@@ -254,7 +258,14 @@ mod tests {
         assert_eq!(1, with_photo.photos.len());
 
         // `all()` does not load photos, but re-saving this project must NOT delete the photo!
-        let mut from_list = inst.projects.all().await.unwrap().into_iter().next().unwrap();
+        let mut from_list = inst
+            .projects
+            .all()
+            .await
+            .unwrap()
+            .into_iter()
+            .next()
+            .unwrap();
         assert!(from_list.photos.is_empty());
         from_list.notes = "une note de plus".to_string();
         inst.projects.save(&from_list).await.unwrap();
@@ -268,6 +279,11 @@ mod tests {
         assert_eq!(1, reread.photos.len(), "les photos ont survécu à save()");
         assert_eq!("piece.png", reread.photos[0].caption);
         assert_eq!("une note de plus", reread.notes);
+        assert_eq!(
+            PaintSystem::Acrylic,
+            reread.system,
+            "le systeme du projet survit"
+        );
 
         let applied = reread.zones[0].layers[0].applied.as_ref().unwrap();
         assert_eq!(posed, applied.at);
@@ -292,6 +308,7 @@ mod tests {
             hex_color: "#6B6259".to_string(),
             recipe: "2 parts de terre d'ombre + 1 part de blanc".to_string(),
             drying_class: DryingClass::Medium,
+            system: PaintSystem::Oil,
             mixed_at,
             workshop: Workshop::new(24.0, 40.0, Ventilation::Good).unwrap(),
         };
@@ -338,17 +355,27 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn catalog_seeder_populates_680_paints_and_is_idempotent() {
+    async fn catalog_seeder_populates_680_oils_71_acrylics_and_is_idempotent() {
         let inst = Installation::in_memory().await;
         let report = inst.seeder.seed().await.unwrap();
 
-        assert_eq!(680, report.paints_created);
-        assert_eq!(3, report.palettes_added);
-        assert_eq!(2, report.recipes_added);
+        assert_eq!(680 + 71, report.paints_created);
+        assert_eq!(4, report.palettes_added);
+        assert_eq!(3, report.recipes_added);
+
+        let all = inst.catalog.all().await.unwrap();
+        let acrylics = all
+            .iter()
+            .filter(|p| p.system == PaintSystem::Acrylic)
+            .count();
+        assert_eq!(71, acrylics, "les acryliques relues gardent leur systeme");
         assert!(report.unknown_pigments.is_empty());
 
         let second = inst.seeder.seed().await.unwrap();
-        assert!(!second.touched_anything(), "seeder non idempotent: {second:?}");
+        assert!(
+            !second.touched_anything(),
+            "seeder non idempotent: {second:?}"
+        );
 
         let palettes = inst.palettes.all().await.unwrap();
         let zorn = palettes
@@ -357,6 +384,14 @@ mod tests {
             .unwrap();
         assert_eq!(4, zorn.paints.len());
         assert_eq!(DryingClass::VerySlow, zorn.slowest_drying_class());
+        assert_eq!(PaintSystem::Oil, zorn.system());
+
+        let blue = palettes
+            .iter()
+            .find(|p| p.name == "Armure bleue (acrylique)")
+            .unwrap();
+        assert_eq!(7, blue.paints.len());
+        assert_eq!(PaintSystem::Acrylic, blue.system());
     }
 
     #[tokio::test]
@@ -418,7 +453,14 @@ mod tests {
         inst2.importer.import(&mut exported_archive).await.unwrap();
 
         assert_eq!(680, inst2.catalog.all().await.unwrap().len());
-        let proj2 = inst2.projects.all().await.unwrap().into_iter().next().unwrap();
+        let proj2 = inst2
+            .projects
+            .all()
+            .await
+            .unwrap()
+            .into_iter()
+            .next()
+            .unwrap();
         assert_eq!("Grognard de reference", proj2.name);
         assert_eq!(6, proj2.zones[0].layers.len());
         let full_proj2 = inst2

@@ -1,7 +1,7 @@
 use crate::color::{Colorant, Lab, Rgb, delta_e_2000, delta_e_2000_lab};
 use crate::error::{DomainError, DomainResult};
 use crate::i18n::Locale;
-use crate::paint::{DryingClass, Opacity, Paint};
+use crate::paint::{DryingClass, Opacity, Paint, PaintSystem};
 use indexmap::{IndexMap, IndexSet};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -67,11 +67,9 @@ pub struct MixSuggestion {
 
 impl MixSuggestion {
     pub fn drying_class(&self) -> DryingClass {
-        self.parts
-            .iter()
-            .fold(DryingClass::Fast, |slowest, part| {
-                slowest.slowest(part.paint.drying_class)
-            })
+        self.parts.iter().fold(DryingClass::Fast, |slowest, part| {
+            slowest.slowest(part.paint.drying_class)
+        })
     }
 
     pub fn describe(&self) -> String {
@@ -180,7 +178,16 @@ impl ColorMixService {
     pub fn mix(&self, parts: &[PaintPart]) -> DomainResult<MixResult> {
         if parts.is_empty() {
             return Err(DomainError::InvalidArgument(
-                "Un mélange demande au moins une huile".to_string(),
+                "Un mélange demande au moins une peinture".to_string(),
+            ));
+        }
+        if parts
+            .iter()
+            .any(|p| p.paint.system != parts[0].paint.system)
+        {
+            return Err(DomainError::InvalidArgument(
+                "On ne mélange pas huile et acrylique : l'une se dilue au solvant, l'autre à l'eau."
+                    .to_string(),
             ));
         }
 
@@ -207,11 +214,9 @@ impl ColorMixService {
             })
             .collect();
 
-        let drying = parts
-            .iter()
-            .fold(DryingClass::Fast, |slowest, p| {
-                slowest.slowest(p.paint.drying_class)
-            });
+        let drying = parts.iter().fold(DryingClass::Fast, |slowest, p| {
+            slowest.slowest(p.paint.drying_class)
+        });
 
         let mut pigments = IndexSet::new();
         for p in parts {
@@ -295,6 +300,25 @@ impl ColorMixService {
     ) -> Vec<MixSuggestion> {
         if candidates.is_empty() || max_results == 0 {
             return Vec::new();
+        }
+        // A mix never crosses systems: oil and acrylic do not blend in the pot. When the
+        // candidates hold both, each system is searched on its own and the best kept.
+        let first = candidates[0].system;
+        if candidates.iter().any(|p| p.system != first) {
+            let mut merged: Vec<MixSuggestion> = PaintSystem::ALL
+                .into_iter()
+                .flat_map(|system| {
+                    let subset: Vec<Paint> = candidates
+                        .iter()
+                        .filter(|p| p.system == system)
+                        .cloned()
+                        .collect();
+                    self.suggest_mixes(target, &subset, max_results, max_paints)
+                })
+                .collect();
+            merged.sort_by(|a, b| a.delta_e.total_cmp(&b.delta_e));
+            merged.truncate(max_results);
+            return merged;
         }
         let limit_paints = max_paints
             .unwrap_or_else(|| Self::recommended_max_paints(candidates.len()))
@@ -744,7 +768,11 @@ mod tests {
     ];
 
     fn load_catalogue() -> Vec<Paint> {
-        CatalogLoader::default().load()
+        CatalogLoader::default()
+            .load()
+            .into_iter()
+            .filter(|p| p.system == PaintSystem::Oil)
+            .collect()
     }
 
     fn find_wn(catalog: &[Paint], name: &str) -> Paint {
@@ -806,10 +834,7 @@ mod tests {
             let target = Rgb::of_hex(hex).unwrap();
             for max in 1..=5 {
                 for suggestion in service.suggest_mixes(target, &catalog, 8, Some(max)) {
-                    assert!(
-                        suggestion.parts.len() <= max,
-                        "{hex} avec {max} tubes"
-                    );
+                    assert!(suggestion.parts.len() <= max, "{hex} avec {max} tubes");
                 }
             }
         }
@@ -844,8 +869,7 @@ mod tests {
     fn list_proposes_distinct_tube_combinations() {
         let service = ColorMixService::new();
         let catalog = load_catalogue();
-        let suggestions =
-            service.suggest_mixes(Rgb::of_hex("#C98F72").unwrap(), &catalog, 8, None);
+        let suggestions = service.suggest_mixes(Rgb::of_hex("#C98F72").unwrap(), &catalog, 8, None);
 
         let combinations: Vec<Vec<String>> = suggestions
             .iter()
@@ -879,9 +903,11 @@ mod tests {
     fn suggestions_are_ranked_by_perceptual_tier() {
         let service = ColorMixService::new();
         let catalog = load_catalogue();
-        let suggestions =
-            service.suggest_mixes(Rgb::of_hex("#6B5A42").unwrap(), &catalog, 8, None);
-        let tiers: Vec<i32> = suggestions.iter().map(|s| (s.delta_e / 0.5) as i32).collect();
+        let suggestions = service.suggest_mixes(Rgb::of_hex("#6B5A42").unwrap(), &catalog, 8, None);
+        let tiers: Vec<i32> = suggestions
+            .iter()
+            .map(|s| (s.delta_e / 0.5) as i32)
+            .collect();
         let mut sorted = tiers.clone();
         sorted.sort();
         assert_eq!(sorted, tiers);
@@ -895,6 +921,43 @@ mod tests {
         let best = &service.suggest_mixes(reference.color(), &catalog, 5, None)[0];
         assert_eq!(1, best.parts.len(), "{}", best.describe());
         assert!(best.delta_e < 0.5);
+    }
+
+    #[test]
+    fn oil_and_acrylic_never_end_up_in_the_same_mix() {
+        let service = ColorMixService::new();
+        let all = CatalogLoader::default().load();
+        assert!(all.iter().any(|p| p.system == PaintSystem::Acrylic));
+        let oil = all
+            .iter()
+            .find(|p| p.system == PaintSystem::Oil)
+            .unwrap()
+            .clone();
+        let acr = all
+            .iter()
+            .find(|p| p.system == PaintSystem::Acrylic)
+            .unwrap()
+            .clone();
+        assert!(
+            service
+                .mix(&[PaintPart::of(oil, 1.0), PaintPart::of(acr, 1.0)])
+                .is_err()
+        );
+
+        let candidates: Vec<Paint> = all
+            .iter()
+            .take(40)
+            .chain(all.iter().rev().take(40))
+            .cloned()
+            .collect();
+        for s in service.suggest_mixes(Rgb::of_hex("#6A7F4C").unwrap(), &candidates, 6, Some(3)) {
+            let first = s.parts[0].paint.system;
+            assert!(
+                s.parts.iter().all(|p| p.paint.system == first),
+                "{}",
+                s.describe()
+            );
+        }
     }
 
     #[test]
