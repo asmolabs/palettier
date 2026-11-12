@@ -203,6 +203,24 @@ impl PartialEq for AppServices {
 impl AppServices {
     pub async fn init(db_dir: PathBuf) -> DomainResult<Self> {
         let database = Database::open(&db_dir).await?;
+        let settings = Arc::new(SeaOrmSettingsRepository::with_keyring(&database));
+        Self::assemble(db_dir, database, settings).await
+    }
+
+    /// Services on a fresh in-memory base, seeded with the catalog, for the action tests.
+    /// The settings never touch the system keyring.
+    #[cfg(test)]
+    pub async fn in_memory() -> DomainResult<Self> {
+        let database = Database::in_memory().await?;
+        let settings = Arc::new(SeaOrmSettingsRepository::new(&database));
+        Self::assemble(PathBuf::from(":memory:"), database, settings).await
+    }
+
+    async fn assemble(
+        db_dir: PathBuf,
+        database: Database,
+        settings: Arc<SeaOrmSettingsRepository>,
+    ) -> DomainResult<Self> {
         let catalog = Arc::new(SeaOrmPaintCatalogRepository::new(&database));
         let palettes = Arc::new(SeaOrmPaletteRepository::new(&database, catalog.clone()));
         let projects = Arc::new(SeaOrmProjectRepository::new(
@@ -212,7 +230,6 @@ impl AppServices {
         ));
         let recipes = Arc::new(SeaOrmRecipeRepository::new(&database));
         let mixes = Arc::new(SeaOrmPaletteMixRepository::new(&database));
-        let settings = Arc::new(SeaOrmSettingsRepository::with_keyring(&database));
 
         let seeder = CatalogSeeder::new(catalog.clone(), palettes.clone(), recipes.clone());
         let _ = seeder.seed().await?;
