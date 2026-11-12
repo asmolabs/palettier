@@ -56,25 +56,6 @@ impl WeatheringEffect {
         }
     }
 
-    pub fn oil_recipe_i18n(&self, locale: Locale) -> &'static str {
-        match (self, locale) {
-            (Self::StreakingGrime, Locale::Fr) => "3 parts Terre d'Ombre Naturelle (PBr7) + 1 part Noir de Vigne/Ivoire (PBk9) + diluant minéral sans odeur",
-            (Self::StreakingGrime, Locale::En) => "3 parts Raw Umber (PBr7) + 1 part Vine/Ivory Black (PBk9) + odorless mineral spirits",
-            (Self::FreshRust, Locale::Fr) => "3 parts Terre de Sienne Brûlée (PBr7/PR101) + 1 part Orange de Cadmium (PO20/PY35)",
-            (Self::FreshRust, Locale::En) => "3 parts Burnt Sienna (PBr7/PR101) + 1 part Cadmium Orange (PO20/PY35)",
-            (Self::CrustyOldRust, Locale::Fr) => "4 parts Oxyde Rouge de Fer (PR101) + 1 part Terre d'Ombre Brûlée (PBr7)",
-            (Self::CrustyOldRust, Locale::En) => "4 parts Red Iron Oxide (PR101) + 1 part Burnt Umber (PBr7)",
-            (Self::VerdigrisPatina, Locale::Fr) => "3 parts Oxyde de Chrome Vert (PG17) + 1 part Bleu Phtalo (PB15) + 4 parts Blanc de Titane (PW6)",
-            (Self::VerdigrisPatina, Locale::En) => "3 parts Chromium Oxide Green (PG17) + 1 part Phthalo Blue (PB15) + 4 parts Titanium White (PW6)",
-            (Self::DustDeposit, Locale::Fr) => "3 parts Ocre Jaune (PY43) + 1 part Blanc de Titane (PW6) + 1 part Terre d'Ombre Naturelle",
-            (Self::DustDeposit, Locale::En) => "3 parts Yellow Ochre (PY43) + 1 part Titanium White (PW6) + 1 part Raw Umber",
-            (Self::DryMud, Locale::Fr) => "4 parts Terre d'Ombre Naturelle + 2 parts Ocre Jaune + 1 part Noir d'Ivoire",
-            (Self::DryMud, Locale::En) => "4 parts Raw Umber + 2 parts Yellow Ochre + 1 part Ivory Black",
-            (Self::FreshFuelOil, Locale::Fr) => "4 parts Noir d'Ivoire (PBk9) + 1 part Terre de Sienne Brûlée + vernis brillant pur",
-            (Self::FreshFuelOil, Locale::En) => "4 parts Ivory Black (PBk9) + 1 part Burnt Sienna + pure gloss varnish",
-        }
-    }
-
     pub fn application_technique_i18n(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::StreakingGrime, Locale::Fr) => "Poser en micro-points sur les rivets, puis tirer verticalement au pinceau biseauté humecté d'essence sans odeur.",
@@ -187,21 +168,6 @@ impl SpecialEffectGore {
             Self::FrostIce => "#D0F0FD",
             Self::XenoSlime => "#86D400",
             Self::GemLens => "#00BCD4",
-        }
-    }
-
-    pub fn recipe_i18n(&self, locale: Locale) -> &'static str {
-        match (self, locale) {
-            (Self::FreshGore, Locale::Fr) => "Rouge Alizarine/Phtalo (PR177) + pointe Terre d'Ombre Brûlée (PBr7) + vernis brillant pur",
-            (Self::FreshGore, Locale::En) => "Alizarin/Phthalo Red (PR177) + hint of Burnt Umber (PBr7) + pure gloss varnish",
-            (Self::CoagulatedBlood, Locale::Fr) => "Oxyde de Fer Rouge (PR101) + Noir d'Ivoire (PBk9) + fini satiné",
-            (Self::CoagulatedBlood, Locale::En) => "Red Iron Oxide (PR101) + Ivory Black (PBk9) + satin finish",
-            (Self::FrostIce, Locale::Fr) => "Blanc de Titane (PW6) + voile transparent Bleu Phtalo (PB15) + vernis satin mat",
-            (Self::FrostIce, Locale::En) => "Titanium White (PW6) + transparent glaze Phthalo Blue (PB15) + satin-matte finish",
-            (Self::XenoSlime, Locale::Fr) => "Jaune de Cadmium (PY35) + Bleu Phtalo (PB15) + vernis brillant pur étiré",
-            (Self::XenoSlime, Locale::En) => "Cadmium Yellow (PY35) + Phthalo Blue (PB15) + pure high-gloss varnish",
-            (Self::GemLens, Locale::Fr) => "Dégradé inverse : Noir en haut à 11h vers Cyan lumineux en bas à 5h + point spéculaire blanc pur à 11h",
-            (Self::GemLens, Locale::En) => "Inverted gradient: Black at 11 o'clock to Bright Cyan at 5 o'clock + pure white dot at 11 o'clock",
         }
     }
 
@@ -358,33 +324,31 @@ impl VehicleEffectKind {
         }
     }
 
-    pub fn artist_oil_formula_i18n(&self, locale: Locale) -> &'static str {
-        match (self, locale) {
-            (Self::StarshipFilth, Locale::Fr) => "45% Terre d'Ombre Brûlée + 45% Noir d'Ivoire + 10% Blanc de Titane",
-            (Self::StarshipFilth, Locale::En) => "45% Burnt Umber + 45% Ivory Black + 10% Titanium White",
-            (Self::EngineGrime, Locale::Fr) => "60% Terre d'Ombre Brûlée + 30% Vert Olive (ou Viridian + pointe d'Ocre) + 10% Noir",
-            (Self::EngineGrime, Locale::En) => "60% Burnt Umber + 30% Olive Green (or Viridian + touch of Ochre) + 10% Black",
-            (Self::DarkRust, Locale::Fr) => "70% Terre de Sienne Brûlée + 20% Rouge de Cadmium + 10% Terre d'Ombre Brûlée",
-            (Self::DarkRust, Locale::En) => "70% Burnt Sienna + 20% Cadmium Red + 10% Burnt Umber",
-            (Self::IndustrialEarth, Locale::Fr) => "60% Ocre Jaune + 30% Terre d'Ombre Brûlée + 10% Blanc de Titane",
-            (Self::IndustrialEarth, Locale::En) => "60% Yellow Ochre + 30% Burnt Umber + 10% Titanium White",
-            (Self::TrackWash, Locale::Fr) => "75% Terre d'Ombre Brûlée + 20% Noir d'Ivoire + 5% Bleu Outremer",
-            (Self::TrackWash, Locale::En) => "75% Burnt Umber + 20% Ivory Black + 5% Ultramarine Blue",
-            (Self::Rainmarks, Locale::Fr) => "70% Blanc de Titane + 25% Ocre Jaune + 5% Terre d'Ombre Naturelle",
-            (Self::Rainmarks, Locale::En) => "70% Titanium White + 25% Yellow Ochre + 5% Raw Umber",
-            (Self::FreshEngineOil, Locale::Fr) => "80% Noir d'Ivoire + 15% Terre d'Ombre Brûlée + 5% Laque de Garance (brillant)",
-            (Self::FreshEngineOil, Locale::En) => "80% Ivory Black + 15% Burnt Umber + 5% Madder Lake (gloss finish)",
+    /// The technique the effect is laid with: its thinner and dilution come from it.
+    pub fn technique(&self) -> Technique {
+        match self {
+            Self::StarshipFilth | Self::Rainmarks => Technique::StreakingGrime,
+            Self::EngineGrime | Self::DarkRust | Self::TrackWash => Technique::OilWash,
+            Self::IndustrialEarth => Technique::Filter,
+            Self::FreshEngineOil => Technique::Highlight,
         }
     }
 
-    pub fn solvent_and_dilution_i18n(&self, locale: Locale) -> &'static str {
-        match (self, locale) {
-            (Self::FreshEngineOil, Locale::Fr) => "1 part de pâte pure + 2 gouttes de Vernis Brillant / Liquin. Ne PAS diluer au solvant inodore pour conserver l'effet liquide sirupeux.",
-            (Self::FreshEngineOil, Locale::En) => "1 part pure paste + 2 drops Gloss Varnish / Liquin. Do NOT thin with solvent to maintain wet syrupy gloss.",
-            (Self::Rainmarks, Locale::Fr) => "1 part de pâte pour 12 gouttes d'essence inodore (Sansodor/Gamsol). Déposer en micro-points puis étirer verticalement au pinceau plat propre imbibé de solvant.",
-            (Self::Rainmarks, Locale::En) => "1 part paste to 12 drops odorless mineral spirit. Dot sparingly then streak vertically with a clean flat brush damp with solvent.",
-            (_, Locale::Fr) => "1 part de pâte pour 8 à 10 gouttes de Sansodor / Gamsol (solvant inodore doux pour protéger le vernis acrylique préalable).",
-            (_, Locale::En) => "1 part paste to 8-10 drops Sansodor / Gamsol (gentle odorless spirit to preserve underlying acrylic clear coat).",
+    /// How to lay the effect, without quantities: those follow from [`Self::technique`].
+    pub fn application_note_i18n(&self, locale: Locale) -> &'static str {
+        match self {
+            Self::FreshEngineOil => locale.tr(
+                "Pâte pure avec un peu de vernis brillant, sans solvant : l'effet doit rester liquide et luisant.",
+                "Neat paste with a little gloss varnish, no solvent: the effect must stay wet and shiny.",
+            ),
+            Self::Rainmarks => locale.tr(
+                "Déposer en micro-points puis étirer verticalement au pinceau plat propre humide de diluant.",
+                "Dot sparingly then streak vertically with a clean flat brush damp with thinner.",
+            ),
+            _ => locale.tr(
+                "Diluant inodore doux, pour ne pas attaquer le vernis acrylique en dessous.",
+                "Gentle odourless thinner, so as not to attack the acrylic varnish underneath.",
+            ),
         }
     }
 

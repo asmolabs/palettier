@@ -215,19 +215,6 @@ impl NmmMetal {
         }
     }
 
-    pub fn oil_formula_i18n(&self, locale: Locale) -> &'static str {
-        match (self, locale) {
-            (Self::Gold, Locale::Fr) => "Ombre : Terre d'Ombre Brûlée (PBr7) · Demi-teinte : Ocre Jaune (PY43) · Lumière : Jaune de Cadmium clair (PY35) · Rehaut : Blanc de Titane (PW6)",
-            (Self::Gold, Locale::En) => "Shadow: Burnt Umber (PBr7) · Midtone: Yellow Ochre (PY43) · Light: Cadmium Yellow Light (PY35) · Catchlight: Titanium White (PW6)",
-            (Self::AncientGold, Locale::Fr) => "Ombre : Terre d'Ombre Naturelle · Base : Terre de Sienne Naturelle · Rehauts : Ocre Jaune + Blanc de Titane en fine arête",
-            (Self::AncientGold, Locale::En) => "Shadow: Raw Umber · Base: Raw Sienna · Catchlights: Yellow Ochre + Titanium White fine edge",
-            (Self::SteelChrome, Locale::Fr) => "Ombre : Noir d'Ivoire (PBk9) + pointe Bleu de Prusse (PB27) · Demi-teinte : Gris neutre froid · Arête : Blanc de Titane pur",
-            (Self::SteelChrome, Locale::En) => "Shadow: Ivory Black (PBk9) + hint of Prussian Blue (PB27) · Midtone: Neutral Cold Grey · Edge: Pure Titanium White",
-            (Self::CopperBronze, Locale::Fr) => "Ombre : Terre de Sienne Brûlée + Noir · Base : Rouge d'Oxyde de Fer + Orange Cadmium · Rehauts : Rose chair clair",
-            (Self::CopperBronze, Locale::En) => "Shadow: Burnt Sienna + Black · Base: Red Iron Oxide + Cadmium Orange · Catchlight: Light flesh tint",
-        }
-    }
-
     pub fn ground_bounce_advice_i18n(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::Gold, Locale::Fr) => "Placer un léger voile de vert olive ou de terre cuite sur la face inférieure de la lame pour simuler le reflet du sol.",

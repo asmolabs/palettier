@@ -46,7 +46,7 @@ mod tests {
     fn weathering_effects_all_have_labels_and_recipes() {
         for effect in WeatheringEffect::ALL {
             assert!(!effect.label_i18n(Locale::Fr).is_empty());
-            assert!(!effect.oil_recipe_i18n(Locale::Fr).is_empty());
+            assert!(Rgb::of_hex(effect.hex_color()).is_ok(), "la teinte se melange depuis la palette");
             assert!(Rgb::of_hex(effect.hex_color()).is_ok());
         }
     }
@@ -69,7 +69,7 @@ mod tests {
     fn nmm_metal_has_5_ordered_reflectance_steps() {
         for nmm in NmmMetal::ALL {
             assert_eq!(nmm.steps_hex().len(), 5);
-            assert!(!nmm.oil_formula_i18n(Locale::Fr).is_empty());
+            assert!(nmm.steps_hex().iter().all(|h| Rgb::of_hex(h).is_ok()));
             assert!(!nmm.ground_bounce_advice_i18n(Locale::Fr).is_empty());
         }
     }
@@ -95,7 +95,7 @@ mod tests {
     fn special_effects_and_brush_care() {
         for fx in SpecialEffectGore::ALL {
             assert!(Rgb::of_hex(fx.hex_color()).is_ok());
-            assert!(!fx.recipe_i18n(Locale::Fr).is_empty());
+            assert!(Rgb::of_hex(fx.hex_color()).is_ok());
         }
 
         let mut brush = BrushTracker::new("Test Brush", "Raphael", "#1", "Kolinsky");
@@ -146,14 +146,23 @@ mod tests {
             assert!(!p.application_tip_i18n(Locale::Fr).is_empty());
         }
 
-        let sheet = ArmyRecipeSheet::new_standard_marine();
+        // A blank sheet carries no recipe of its own.
+        assert!(ArmyRecipeSheet::default().oil_mix_formula.is_empty());
+
+        let sheet = ArmyRecipeSheet {
+            army_name: "Compagnie rouge".to_string(),
+            unit_name: "Escouade A".to_string(),
+            base_acrylic: "Mephiston Red (Citadel)".to_string(),
+            oil_mix_formula: "2 parts A + 1 part B".to_string(),
+            ..ArmyRecipeSheet::default()
+        };
         let md = sheet.to_markdown();
-        assert!(md.contains("Blood Angels"));
-        assert!(md.contains("Mephiston Red"));
+        assert!(md.contains("Compagnie rouge"));
+        assert!(md.contains("2 parts A + 1 part B"));
 
         let html = sheet.to_printable_html();
         assert!(html.contains("<!DOCTYPE html>"));
-        assert!(html.contains("Tactical Squad Alpha"));
+        assert!(html.contains("Escouade A"));
     }
 
     #[test]
@@ -200,8 +209,9 @@ mod tests {
         for fx in VehicleEffectKind::ALL {
             assert!(!fx.commercial_name().is_empty());
             assert!(Rgb::of_hex(fx.target_hex()).is_ok());
-            assert!(!fx.artist_oil_formula_i18n(Locale::Fr).is_empty());
-            assert!(!fx.solvent_and_dilution_i18n(Locale::Fr).is_empty());
+            assert!(Rgb::of_hex(fx.target_hex()).is_ok());
+            assert!(!fx.application_note_i18n(Locale::Fr).is_empty());
+            assert!(fx.technique().fits(PaintSystem::Oil));
         }
 
         let eval_opr = WetOnWetBlendingAdvisor::evaluate(

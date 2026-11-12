@@ -80,7 +80,10 @@ impl BatchSquad {
 }
 
 /// Printable / exportable army or squad painting recipe card.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// Starts blank: the painter fills it in, the base colour comes from a catalog paint and
+/// the oil mix is computed on the palette, never typed in by the application.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ArmyRecipeSheet {
     pub army_name: String,
     pub unit_name: String,
@@ -97,23 +100,6 @@ pub struct ArmyRecipeSheet {
 }
 
 impl ArmyRecipeSheet {
-    pub fn new_standard_marine() -> Self {
-        Self {
-            army_name: "Blood Angels 2nd Company".to_string(),
-            unit_name: "Tactical Squad Alpha".to_string(),
-            faction: "Space Marines (Warhammer 40,000)".to_string(),
-            primer: "Sous-couche Zénithale (Noir mat + Blanc pur à 45°)".to_string(),
-            base_acrylic: "Mephiston Red (Citadel)".to_string(),
-            base_hex: "#9A1115".to_string(),
-            oil_mix_formula: "2 parts Rouge Cadmium Moyen + 1 part Laque d'Alizarine".to_string(),
-            mixed_hex: "#A21418".to_string(),
-            wash_technique: "Pin wash capillaire Terre d'Ombre Brûlée (1:8 dans Sansodor)".to_string(),
-            weathering: "Streaking Grime sur les jambières + Éraflures au pinceau 00".to_string(),
-            varnish: "AK Ultra Matte (2 voiles fins)".to_string(),
-            notes: "Bien attendre 48h de séchage avant le vernis ultra-mat. Garder la palette fermée au congélateur entre deux sessions.".to_string(),
-        }
-    }
-
     pub fn to_markdown(&self) -> String {
         format!(
             "# Fiche de Recette Figurine : {} - {}\n\n\

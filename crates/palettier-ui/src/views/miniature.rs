@@ -345,7 +345,7 @@ pub fn MiniatureView() -> Element {
     let mut selected_pigment = use_signal(|| DryPigmentEffect::BurntUmberDust);
 
     // Army Recipe Sheet state
-    let mut recipe_sheet = use_signal(ArmyRecipeSheet::new_standard_marine);
+    let mut recipe_sheet = use_signal(ArmyRecipeSheet::default);
 
     // Oil Harmonies state
     let mut harmony_key = use_signal(|| None::<String>);
@@ -814,15 +814,6 @@ pub fn MiniatureView() -> Element {
                                                 }
                                             }
 
-                                            div { class: "card-subtle", style: "margin-bottom: 12px;",
-                                                div { style: "font-weight: 700; font-size: 12px; margin-bottom: 4px; color: var(--accent);",
-                                                    {locale.tr("🧪 Recette classique d'atelier pour ce NMM :", "🧪 Classical Studio Formulation for this NMM:")}
-                                                }
-                                                div { style: "font-size: 12.5px; line-height: 1.45;",
-                                                    "{nmm.oil_formula_i18n(locale)}"
-                                                }
-                                            }
-
                                             div { class: "card-subtle",
                                                 div { style: "font-weight: 700; font-size: 12px; margin-bottom: 4px; color: var(--accent);",
                                                     {locale.tr("🌍 Règle du reflet de sol (Ground Bounce) :", "🌍 Ground Bounce Reflection Physics:")}
@@ -919,15 +910,6 @@ pub fn MiniatureView() -> Element {
                                                     div { class: "muted", style: "font-size: 12px;",
                                                         {locale.tr("Aucun tube disponible dans la palette sélectionnée pour reproduire cet effet.", "No matching tubes available in selected palette for this effect.")}
                                                     }
-                                                }
-                                            }
-
-                                            div { class: "card-subtle", style: "margin-bottom: 14px;",
-                                                div { style: "font-weight: 700; font-size: 12px; margin-bottom: 4px;",
-                                                    {locale.tr("📚 Recette classique d'atelier :", "📚 Classical Studio Recipe:")}
-                                                }
-                                                div { style: "font-size: 12.5px; line-height: 1.45;",
-                                                    "{eff.oil_recipe_i18n(locale)}"
                                                 }
                                             }
 
@@ -1450,6 +1432,7 @@ pub fn MiniatureView() -> Element {
                                             input {
                                                 class: "input",
                                                 value: "{recipe_sheet.read().army_name}",
+                                                placeholder: locale.tr("ex. Compagnie rouge", "e.g. Red company"),
                                                 oninput: move |ev| recipe_sheet.write().army_name = ev.value(),
                                             }
                                         }
@@ -1459,6 +1442,7 @@ pub fn MiniatureView() -> Element {
                                             input {
                                                 class: "input",
                                                 value: "{recipe_sheet.read().unit_name}",
+                                                placeholder: locale.tr("ex. Escouade tactique", "e.g. Tactical squad"),
                                                 oninput: move |ev| recipe_sheet.write().unit_name = ev.value(),
                                             }
                                         }
@@ -1468,25 +1452,52 @@ pub fn MiniatureView() -> Element {
                                             input {
                                                 class: "input",
                                                 value: "{recipe_sheet.read().primer}",
+                                                placeholder: locale.tr("ex. Sous-couche zénithale noir puis blanc", "e.g. Zenithal black then white"),
                                                 oninput: move |ev| recipe_sheet.write().primer = ev.value(),
                                             }
                                         }
 
                                         div {
                                             label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Acrylique de base :", "Base Acrylic Paint:")} }
-                                            input {
+                                            // Picked from the catalog; the oil mix below follows from it.
+                                            select {
                                                 class: "input",
-                                                value: "{recipe_sheet.read().base_acrylic}",
-                                                oninput: move |ev| recipe_sheet.write().base_acrylic = ev.value(),
+                                                onchange: {
+                                                    let acrylics = acrylic_paints.clone();
+                                                    let oils = oil_candidates.clone();
+                                                    let mixer = services.mix_service.clone();
+                                                    move |ev: FormEvent| {
+                                                        let Some(p) = acrylics.iter().find(|p| paint_key(p) == ev.value()) else { return };
+                                                        let mix = mixer.suggest_mixes(p.color(), &oils, 1, Some(3)).into_iter().next();
+                                                        let mut sheet = recipe_sheet.write();
+                                                        sheet.base_acrylic = format!("{} ({})", p.name, p.brand);
+                                                        sheet.base_hex = p.hex_color.clone();
+                                                        sheet.oil_mix_formula = mix.as_ref().map(|m| m.describe_i18n(locale)).unwrap_or_default();
+                                                        sheet.mixed_hex = mix.map(|m| m.color.to_hex()).unwrap_or_default();
+                                                    }
+                                                },
+                                                option { value: "", {locale.tr("— Choisir une acrylique du catalogue —", "— Pick an acrylic from the catalog —")} }
+                                                for p in acrylic_paints.iter() {
+                                                    option {
+                                                        value: "{paint_key(p)}",
+                                                        selected: recipe_sheet.read().base_hex == p.hex_color && recipe_sheet.read().base_acrylic.starts_with(&p.name),
+                                                        "{p.name} ({p.brand})"
+                                                    }
+                                                }
                                             }
                                         }
 
                                         div {
-                                            label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Formule de mélange d'huiles :", "Calculated Oil Mix:")} }
-                                            input {
-                                                class: "input",
-                                                value: "{recipe_sheet.read().oil_mix_formula}",
-                                                oninput: move |ev| recipe_sheet.write().oil_mix_formula = ev.value(),
+                                            label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Mélange d'huiles calculé sur la palette :", "Oil mix computed from the palette:")} }
+                                            div { class: "card-subtle", style: "padding: 8px 10px; font-size: 12.5px;",
+                                                if recipe_sheet.read().oil_mix_formula.is_empty() {
+                                                    span { class: "muted", {locale.tr("Choisissez une acrylique de base.", "Pick a base acrylic.")} }
+                                                } else {
+                                                    div { class: "row", style: "gap: 8px;",
+                                                        ColorSwatch { hex: recipe_sheet.read().mixed_hex.clone(), size: 18 }
+                                                        strong { "{recipe_sheet.read().oil_mix_formula}" }
+                                                    }
+                                                }
                                             }
                                         }
 
@@ -1495,6 +1506,7 @@ pub fn MiniatureView() -> Element {
                                             input {
                                                 class: "input",
                                                 value: "{recipe_sheet.read().wash_technique}",
+                                                placeholder: locale.tr("ex. Jus capillaire terre d'ombre", "e.g. Burnt umber pin wash"),
                                                 oninput: move |ev| recipe_sheet.write().wash_technique = ev.value(),
                                             }
                                         }
@@ -1504,6 +1516,7 @@ pub fn MiniatureView() -> Element {
                                             input {
                                                 class: "input",
                                                 value: "{recipe_sheet.read().weathering}",
+                                                placeholder: locale.tr("ex. Coulures sur les jambières", "e.g. Streaks on the greaves"),
                                                 oninput: move |ev| recipe_sheet.write().weathering = ev.value(),
                                             }
                                         }
@@ -1513,6 +1526,7 @@ pub fn MiniatureView() -> Element {
                                             input {
                                                 class: "input",
                                                 value: "{recipe_sheet.read().varnish}",
+                                                placeholder: locale.tr("ex. Vernis mat, deux voiles", "e.g. Matt varnish, two thin coats"),
                                                 oninput: move |ev| recipe_sheet.write().varnish = ev.value(),
                                             }
                                         }
@@ -1523,6 +1537,7 @@ pub fn MiniatureView() -> Element {
                                                 class: "input",
                                                 rows: "3",
                                                 value: "{recipe_sheet.read().notes}",
+                                                placeholder: locale.tr("ex. Attendre 48 h avant le vernis", "e.g. Wait 48 h before varnishing"),
                                                 oninput: move |ev| recipe_sheet.write().notes = ev.value(),
                                             }
                                         }
@@ -1579,11 +1594,15 @@ pub fn MiniatureView() -> Element {
                                                 "2. Couleur de Base & Formule Huile"
                                             }
                                             div { class: "row", style: "gap: 8px; align-items: center; margin-bottom: 4px;",
-                                                ColorSwatch { hex: recipe_sheet.read().base_hex.clone(), size: 20 }
+                                                if !recipe_sheet.read().base_hex.is_empty() {
+                                                    ColorSwatch { hex: recipe_sheet.read().base_hex.clone(), size: 20 }
+                                                }
                                                 span { style: "font-size: 12.5px;", "{recipe_sheet.read().base_acrylic}" }
                                             }
                                             div { class: "row", style: "gap: 8px; align-items: center;",
-                                                ColorSwatch { hex: recipe_sheet.read().mixed_hex.clone(), size: 20 }
+                                                if !recipe_sheet.read().mixed_hex.is_empty() {
+                                                    ColorSwatch { hex: recipe_sheet.read().mixed_hex.clone(), size: 20 }
+                                                }
                                                 span { style: "font-size: 12.5px; font-weight: 600;", "{recipe_sheet.read().oil_mix_formula}" }
                                             }
                                         }
@@ -1756,15 +1775,6 @@ pub fn MiniatureView() -> Element {
                                                     div { class: "muted", style: "font-size: 12px;",
                                                         {locale.tr("Aucun tube disponible dans la palette sélectionnée pour reproduire cet effet.", "No matching tubes available in selected palette for this effect.")}
                                                     }
-                                                }
-                                            }
-
-                                            div { class: "card-subtle", style: "margin-bottom: 12px;",
-                                                div { style: "font-weight: 700; font-size: 12px; margin-bottom: 4px;",
-                                                    {locale.tr("📚 Recette classique d'atelier :", "📚 Classical Studio Recipe:")}
-                                                }
-                                                div { style: "font-size: 12.5px; line-height: 1.45;",
-                                                    "{gore.recipe_i18n(locale)}"
                                                 }
                                             }
 
@@ -2565,21 +2575,28 @@ pub fn MiniatureView() -> Element {
                                                     span { class: "pill", "{current_fx.finish_i18n(locale)}" }
                                                 }
 
-                                                div { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px;",
-                                                    div { class: "card", style: "background: var(--bg);",
-                                                        strong { style: "font-size: 12.5px; color: var(--accent);",
-                                                            {locale.tr("🧪 Recette aux Tubes d'Huile :", "🧪 Artist Tube Formula:")}
-                                                        }
-                                                        div { style: "font-size: 12.5px; margin-top: 6px; font-weight: 600;",
-                                                            "{current_fx.artist_oil_formula_i18n(locale)}"
-                                                        }
-                                                    }
+                                                div { style: "display: grid; gap: 14px; margin-bottom: 12px;",
                                                     div { class: "card", style: "background: var(--bg);",
                                                         strong { style: "font-size: 12.5px; color: var(--accent);",
                                                             {locale.tr("💧 Dilution & Solvant Recommandé :", "💧 Dilution & Recommended Solvent:")}
                                                         }
                                                         div { style: "font-size: 12px; margin-top: 6px;",
-                                                            "{current_fx.solvent_and_dilution_i18n(locale)}"
+                                                            {
+                                                                let tech = current_fx.technique();
+                                                                let drops = thinner_drops_per_part(tech, PaintSystem::Oil);
+                                                                let thinner = tech.default_medium_in(PaintSystem::Oil).label_i18n(locale).to_lowercase();
+                                                                rsx! {
+                                                                    div { style: "font-weight: 600; margin-bottom: 4px;",
+                                                                        "{tech.label_i18n(locale)} · "
+                                                                        if drops == 0 {
+                                                                            {locale.tr("pâte pure", "neat paste")}
+                                                                        } else {
+                                                                            {locale.tr("1 part de pâte pour ", "1 part paste to ")}, "{drops} ", {locale.tr("gouttes de ", "drops of ")}, "{thinner}"
+                                                                        }
+                                                                    }
+                                                                    div { class: "muted", "{current_fx.application_note_i18n(locale)}" }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
