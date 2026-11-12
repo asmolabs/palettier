@@ -12,21 +12,26 @@ et dans les vues. Chaque lot ci-dessous se livre seul, avec la suite de tests au
 - Les migrations SQLite et la compatibilité avec les sauvegardes de la version Java,
   vérifiée par `real_java_backup_imports_and_roundtrips_intact`.
 
-## Lot 1 : vider `miniature.rs` de ses doublons (priorité haute)
+## Lot 1 : vider `miniature.rs` de ses doublons — fait
 
-`palettier-domain/src/miniature.rs` (2 500 lignes) refait en parallèle ce que le domaine
-sait déjà faire, et c'est là que l'huile et l'acrylique s'étaient mélangées.
+Branche `claude/refactoring-lot-1`. `miniature.rs` (2 500 lignes) est devenu un module
+`miniature/` en six fichiers par thème (`colour`, `effects`, `application`, `curing`,
+`batch`, `studio`), réexportés tels quels : les imports existants n'ont pas changé.
 
-| Doublon | Remplacer par |
+| Doublon | Devenu |
 |---|---|
-| `OilMedium` (Liquin, lin, stand, cobalt) | `paint::Medium` |
-| `OilConsistencyTechnique` | `paint::Technique`, avec un ratio de médium |
-| `MINIATURE_ACRYLICS` et `MiniatureBrand`, codés en dur | les fichiers `catalog/brands/10-…14-*.csv`, déjà générés à partir de cette liste, lus via `state.paints_of_system()` |
-| `HeatBoxCalculator` (une « loi d'Arrhenius » sans source) | `DryingTimeService` avec une température d'atelier ; sinon le retirer |
+| `MINIATURE_ACRYLICS`, `MiniatureBrand`, `search_miniature_acrylics`, `find_closest_acrylic` | supprimés ; le convertisseur et la recherche ⌘K lisent les acryliques du catalogue (fichiers `10-…14-*.csv`) |
+| `OilMedium` | supprimé ; la carte des médiums lit `Medium::for_system(Oil)`, avec le facteur de séchage et la limite utile du modèle |
+| `OilConsistencyTechnique` | remplacé par `Consistency::of(Technique)` (classement dérivé, pas une seconde liste) et `thinner_drops_per_part` calculé depuis la proportion de médium de la technique |
+| `HeatBoxCalculator` (« Arrhenius » sans source) | garde les seuils de sécurité des plastiques ; l'accélération vient de `DryingTimeService` (×4 à 40 °C) |
+| `LivePaletteFreshnessTracker`, `FreezerStorageSimulator` (seuils inventés) | lus sur le séchage d'une noisette d'huile sur la palette ; le congélateur donne ~29 jours, l'ancienne valeur codée en dur était 28 |
 
-Ensuite, découper ce qui reste par sujet (`nmm.rs`, `weathering.rs`, `osl.rs`,
-`batch.rs`) dans un module `miniature/`. Critère de fin : plus aucun type de
-`miniature.rs` ne double un type de `paint.rs`.
+Corrigé au passage : les harmonies et l'aperçu de glacis choisissaient leur « teinte
+d'huile » dans la liste des acryliques ; ils puisent maintenant dans la palette active.
+
+Reste hors lot : les autres outils (NMM, OSL, weathering, recettes d'armée) gardent des
+teintes et recettes codées en dur. Ce ne sont pas des doublons du domaine, mais leurs
+recettes citent des tubes en texte libre plutôt que des fiches du catalogue.
 
 ## Lot 2 : sortir la logique métier des vues (priorité haute)
 
@@ -88,6 +93,5 @@ huile, et le filtre du mélangeur par système.
 
 ## Ordre conseillé
 
-1 → 3 → 2 → 4 → 5 → 6. Le lot 1 supprime le plus de code et reste au cœur du sujet
-huile / acrylique ; le lot 3 change le schéma, il vaut mieux le faire avant d'éclater
+Lot 1 fait. Ensuite 3 → 2 → 4 → 5 → 6 : le lot 3 change le schéma, il vaut mieux le faire avant d'éclater
 les vues qui lisent `technique`.

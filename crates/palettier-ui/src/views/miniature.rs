@@ -13,15 +13,15 @@ use dioxus::prelude::*;
 use palettier_domain::color::Rgb;
 use palettier_domain::miniature::{
     ArmyRecipeSheet, BatchMotherMixCalculator, BatchSquad, BrushTracker, DryPigmentEffect,
-    FreezerStorageSimulator, HeatBoxCalculator, LivePaletteFreshnessTracker, MINIATURE_ACRYLICS,
-    MiniatureBrand, MiniatureLadder, MiniatureMaterial, MiniatureScale, NmmMetal,
-    OilConsistencyTechnique, OilGlazeZenithalSimulator, OilHarmoniesCalculator, OilMedium,
+    FreezerStorageSimulator, HeatBoxCalculator, LivePaletteFreshnessTracker,
+    MiniatureLadder, MiniatureMaterial, MiniatureScale, NmmMetal,
+    Consistency, OilGlazeZenithalSimulator, OilHarmoniesCalculator,
     OslPreset, PaletteLayoutType, PinWashConfig, SolventType, SpecialEffectGore, StrippingAgent,
     StrippingGuide, StrippingVerdictSeverity, VarnishFinish, VehicleEffectKind, WeatheringEffect,
-    WetOnWetBlendingAdvisor, search_miniature_acrylics,
+    WetOnWetBlendingAdvisor, thinner_drops_per_part,
 };
 use palettier_domain::i18n::Locale;
-use palettier_domain::paint::{Paint, PaintSystem};
+use palettier_domain::paint::{Medium, Paint, PaintSystem, Technique};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MiniatureTab {
@@ -293,9 +293,10 @@ pub fn MiniatureView() -> Element {
     let active_tab = MiniatureTab::from_idx(*state.miniature_tab.read());
     let mut tool_filter = use_signal(String::new);
 
-    let mut brand_filter = use_signal(|| None::<MiniatureBrand>);
+    // Converter: the acrylic pots of the catalog, filtered by brand and search.
+    let mut brand_filter = use_signal(|| None::<String>);
     let mut acrylic_search = use_signal(String::new);
-    let mut selected_acrylic = use_signal(|| &MINIATURE_ACRYLICS[1]); // Default Mephiston Red
+    let mut selected_acrylic = use_signal(|| None::<String>);
 
     // Global Palette Selector for ALL Miniature Tools
     let mut selected_palette_idx = use_signal(|| 0usize);
@@ -347,29 +348,63 @@ pub fn MiniatureView() -> Element {
     let mut recipe_sheet = use_signal(ArmyRecipeSheet::new_standard_marine);
 
     // Oil Harmonies state
-    let mut harmony_acrylic = use_signal(|| &MINIATURE_ACRYLICS[8]); // Macragge Blue
+    let mut harmony_key = use_signal(|| None::<String>);
 
     // Oil Consistency & Drops state
-    let mut consistency_technique = use_signal(|| OilConsistencyTechnique::TranslucentGlaze);
+    let mut consistency_technique = use_signal(|| Technique::Glaze);
     let mut consistency_parts = use_signal(|| 2u32);
 
     // Zenithal Glaze Preview state
-    let mut glaze_acrylic = use_signal(|| &MINIATURE_ACRYLICS[1]); // Mephiston Red
+    let mut glaze_key = use_signal(|| None::<String>);
     let mut glaze_strength = use_signal(|| 0.70f64);
 
     // 5 New Advanced Oil Miniature Features state
     let mut selected_palette_layout = use_signal(|| PaletteLayoutType::NormaBlueStudio);
     let mut selected_vehicle_fx = use_signal(|| VehicleEffectKind::StarshipFilth);
-    let mut blending_base_tech = use_signal(|| OilConsistencyTechnique::CreamOpr);
-    let mut blending_accent_tech = use_signal(|| OilConsistencyTechnique::PurePaste);
+    let mut blending_base_tech = use_signal(|| Technique::OilRendering);
+    let mut blending_accent_tech = use_signal(|| Technique::Highlight);
     let mut mother_mix_scale = use_signal(|| MiniatureScale::Scale32mm);
     let mut mother_mix_count = use_signal(|| 10u32);
     let mut mother_mix_full_coverage = use_signal(|| true);
     let mut freshness_minutes = use_signal(|| 90u32);
     let mut freshness_temp = use_signal(|| 21.0f64);
 
-    let filtered_acrylics = search_miniature_acrylics(&acrylic_search.read(), *brand_filter.read());
-    let current_ladder = MiniatureLadder::of_basecoat(selected_acrylic.read().rgb());
+    let acrylic_paints: Vec<Paint> = {
+        let mut all: Vec<Paint> = state
+            .paints
+            .read()
+            .iter()
+            .filter(|p| p.system == PaintSystem::Acrylic)
+            .cloned()
+            .collect();
+        all.sort_by(|a, b| a.brand.cmp(&b.brand).then(a.name.cmp(&b.name)));
+        all
+    };
+    let acrylic_brands: Vec<String> = acrylic_paints
+        .iter()
+        .map(|p| p.brand.clone())
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let filtered_acrylics: Vec<Paint> = {
+        let term = acrylic_search.read().trim().to_lowercase();
+        let brand = brand_filter.read().clone();
+        acrylic_paints
+            .iter()
+            .filter(|p| brand.as_ref().is_none_or(|b| &p.brand == b))
+            .filter(|p| {
+                term.is_empty()
+                    || p.name.to_lowercase().contains(&term)
+                    || p.brand.to_lowercase().contains(&term)
+                    || p.code.to_lowercase().contains(&term)
+            })
+            .cloned()
+            .collect()
+    };
+    let current_acrylic: Option<Paint> = pick(&acrylic_paints, selected_acrylic.read().as_deref());
+    let current_ladder = current_acrylic
+        .as_ref()
+        .map(|p| MiniatureLadder::of_basecoat(p.color()));
     let wash_config = PinWashConfig {
         ratio_oil: 1,
         ratio_solvent: *wash_solvent_ratio.read(),
@@ -388,6 +423,21 @@ pub fn MiniatureView() -> Element {
             .filter(|p| p.in_stock)
             .collect()
     };
+
+    // The converter always lands in oil: in acrylic mode it searches the in-stock oil tubes.
+    let oil_candidates: Vec<Paint> = if system == PaintSystem::Oil {
+        active_candidates.clone()
+    } else {
+        state
+            .paints
+            .read()
+            .iter()
+            .filter(|p| p.system == PaintSystem::Oil && p.in_stock)
+            .cloned()
+            .collect()
+    };
+    let harmony_paint = pick(&active_candidates, harmony_key.read().as_deref());
+    let glaze_paint = pick(&active_candidates, glaze_key.read().as_deref());
 
     let palette_name_display = if *selected_palette_idx.read() < palettes.len() {
         palettes[*selected_palette_idx.read()].name.clone()
@@ -491,7 +541,7 @@ pub fn MiniatureView() -> Element {
                                         h3 { class: "card-title", style: "margin: 0;",
                                             {locale.tr("Acryliques Figurines de Référence", "Miniature Acrylic Reference Paints")}
                                         }
-                                        span { class: "pill", "{filtered_acrylics.len()} teintes" }
+                                        span { class: "pill", "{filtered_acrylics.len()} ", {locale.tr("teintes", "colours")} }
                                     }
 
                                     // Brand Filter chips
@@ -501,21 +551,15 @@ pub fn MiniatureView() -> Element {
                                             onclick: move |_| brand_filter.set(None),
                                             {locale.tr("Toutes marques", "All brands")}
                                         }
-                                        for b in MiniatureBrand::ALL {
+                                        for b in acrylic_brands.iter().cloned() {
                                             {
-                                                let is_sel = *brand_filter.read() == Some(b);
-                                                let b_name = match b {
-                                                    MiniatureBrand::Citadel => "Citadel",
-                                                    MiniatureBrand::VallejoModelColor => "Vallejo Model",
-                                                    MiniatureBrand::VallejoGameColor => "Vallejo Game",
-                                                    MiniatureBrand::ArmyPainter => "Army Painter",
-                                                    MiniatureBrand::AkInteractive => "AK Interactive",
-                                                };
+                                                let is_sel = brand_filter.read().as_deref() == Some(b.as_str());
+                                                let label = b.clone();
                                                 rsx! {
                                                     button {
                                                         class: if is_sel { "pill pill-accent" } else { "pill" },
-                                                        onclick: move |_| brand_filter.set(Some(b)),
-                                                        "{b_name}"
+                                                        onclick: move |_| brand_filter.set(Some(b.clone())),
+                                                        "{label}"
                                                     }
                                                 }
                                             }
@@ -535,22 +579,24 @@ pub fn MiniatureView() -> Element {
                                     div { style: "max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;",
                                         for acr in filtered_acrylics {
                                             {
-                                                let is_active = selected_acrylic.read().name == acr.name;
-                                                let hex_str = acr.hex.to_string();
+                                                let k = paint_key(&acr);
+                                                let is_active = current_acrylic.as_ref().is_some_and(|c| paint_key(c) == k);
                                                 rsx! {
                                                     div {
                                                         class: if is_active { "card-subtle active" } else { "card-subtle" },
                                                         style: if is_active { "border-color: var(--accent); cursor: pointer; padding: 6px 10px;" } else { "cursor: pointer; padding: 6px 10px;" },
-                                                        onclick: move |_| selected_acrylic.set(acr),
+                                                        onclick: move |_| selected_acrylic.set(Some(k.clone())),
                                                         div { class: "row-between", style: "align-items: center;",
                                                             div { class: "row", style: "gap: 10px; align-items: center;",
-                                                                ColorSwatch { hex: hex_str, size: 24 }
+                                                                ColorSwatch { hex: acr.hex_color.clone(), size: 24 }
                                                                 div {
                                                                     div { style: "font-weight: 650; font-size: 13px;", "{acr.name}" }
-                                                                    div { class: "muted", style: "font-size: 11px;", "{acr.brand.display_name()}" }
+                                                                    div { class: "muted", style: "font-size: 11px;", "{acr.brand}" }
                                                                 }
                                                             }
-                                                            span { class: "pill", style: "font-size: 10.5px;", "{acr.category}" }
+                                                            if !acr.code.is_empty() {
+                                                                span { class: "pill mono", style: "font-size: 10.5px;", "{acr.code}" }
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -568,8 +614,8 @@ pub fn MiniatureView() -> Element {
                                             }
                                             div { class: "muted", style: "font-size: 12px; margin-top: 2px;",
                                                 {locale.tr("Calculé pour ", "Calculated for ")}
-                                                strong { "{selected_acrylic.read().name}" }
-                                                " ({selected_acrylic.read().hex}) "
+                                                strong { "{current_acrylic.as_ref().map(|p| p.name.clone()).unwrap_or_default()}" }
+                                                " ({current_acrylic.as_ref().map(|p| p.hex_color.clone()).unwrap_or_default()}) "
                                                 {locale.tr("avec ", "with ")}
                                                 span { class: "pill pill-accent", style: "padding: 1px 6px; font-size: 11px;", "{palette_name_display}" }
                                             }
@@ -578,7 +624,7 @@ pub fn MiniatureView() -> Element {
                                         button {
                                             class: "btn",
                                             onclick: {
-                                                let h = selected_acrylic.read().hex.to_string();
+                                                let h = current_acrylic.as_ref().map(|p| p.hex_color.clone()).unwrap_or_default();
                                                 move |_| {
                                                     state.mixer_target_hex.set(h.clone());
                                                     state.section.set(crate::state::Section::Mixer);
@@ -591,7 +637,7 @@ pub fn MiniatureView() -> Element {
 
                                     // 5-Stage Computed Rows
                                     div { style: "display: flex; flex-direction: column; gap: 8px;",
-                                        for (idx, step_hex) in current_ladder.steps_hex().iter().enumerate() {
+                                        for (idx, step_hex) in current_ladder.as_ref().map(|l| l.steps_hex().to_vec()).unwrap_or_default().iter().enumerate() {
                                             {
                                                 let short_label = match idx {
                                                     0 => locale.tr("1. Ombre profonde (Occlusion / Pin wash)", "1. Deep Occlusion (Pin wash)"),
@@ -602,7 +648,7 @@ pub fn MiniatureView() -> Element {
                                                     _ => "",
                                                 };
                                                 let tgt_rgb = Rgb::of_hex(step_hex).unwrap_or_else(|_| Rgb::new(0.5, 0.5, 0.5));
-                                                let sugg = services.mix_service.suggest_mixes(tgt_rgb, &active_candidates, 1, Some(3)).into_iter().next();
+                                                let sugg = services.mix_service.suggest_mixes(tgt_rgb, &oil_candidates, 1, Some(3)).into_iter().next();
 
                                                 rsx! {
                                                     div { class: "card-subtle", style: "padding: 10px 12px;",
@@ -1148,17 +1194,32 @@ pub fn MiniatureView() -> Element {
                                     div { class: "card",
                                         h3 { class: "card-title", {locale.tr("🍯 Médiums Spécialisés Figurines", "🍯 Specialized Miniature Oil Mediums")} }
                                         div { style: "display: flex; flex-direction: column; gap: 10px;",
-                                            for med in OilMedium::ALL {
-                                                div { class: "card-subtle", style: "padding: 10px;",
-                                                    div { class: "row-between", style: "margin-bottom: 4px;",
-                                                        strong { style: "font-size: 13px;", "{med.name()}" }
-                                                        span { class: "pill pill-accent", "{med.finish_i18n(locale)}" }
-                                                    }
-                                                    div { class: "muted", style: "font-size: 11.5px; margin-bottom: 4px;",
-                                                        "⏳ {med.drying_effect_i18n(locale)}"
-                                                    }
-                                                    div { style: "font-size: 11px; color: var(--accent); font-weight: 600;",
-                                                        "📏 {med.dosage_rule_i18n(locale)}"
+                                            // The same mediums, factors and limits as the drying model.
+                                            for med in Medium::for_system(PaintSystem::Oil).into_iter().filter(|m| *m != Medium::None) {
+                                                {
+                                                    let max = med.max_useful_ratio();
+                                                    let factor = med.drying_factor(max);
+                                                    rsx! {
+                                                        div { class: "card-subtle", style: "padding: 10px;",
+                                                            div { class: "row-between", style: "margin-bottom: 4px;",
+                                                                strong { style: "font-size: 13px;", "{med.label_i18n(locale)}" }
+                                                                span {
+                                                                    class: if factor < 1.0 { "pill pill-ok" } else { "pill pill-warn" },
+                                                                    if factor < 1.0 {
+                                                                        {locale.tr("accélère", "speeds up")}
+                                                                    } else {
+                                                                        {locale.tr("ralentit", "slows down")}
+                                                                    }
+                                                                    " ×{factor:.2}"
+                                                                }
+                                                            }
+                                                            div { class: "muted", style: "font-size: 11.5px; margin-bottom: 4px;",
+                                                                "{med.advice_i18n(locale)}"
+                                                            }
+                                                            div { style: "font-size: 11px; color: var(--accent); font-weight: 600;",
+                                                                "📏 ", {locale.tr("Au plus ", "At most ")}, "{(max * 100.0).round()} %"
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -2085,17 +2146,13 @@ pub fn MiniatureView() -> Element {
                                     div { class: "row", style: "gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;",
                                         strong { style: "font-size: 13px;", {locale.tr("Teinte maîtresse de départ :", "Base Color:")} }
                                         div { class: "row", style: "gap: 8px; align-items: center;",
-                                            ColorSwatch { hex: harmony_acrylic.read().hex.to_string(), size: 28 }
+                                            ColorSwatch { hex: harmony_paint.as_ref().map(|p| p.hex_color.clone()).unwrap_or_default(), size: 28 }
                                             select {
                                                 class: "input",
-                                                value: "{harmony_acrylic.read().name}",
-                                                onchange: move |ev| {
-                                                    if let Some(found) = MINIATURE_ACRYLICS.iter().find(|a| a.name == ev.value()) {
-                                                        harmony_acrylic.set(found);
-                                                    }
-                                                },
-                                                for acr in MINIATURE_ACRYLICS.iter().take(25) {
-                                                    option { value: "{acr.name}", "{acr.name} ({acr.brand.display_name()})" }
+                                                value: "{harmony_paint.as_ref().map(paint_key).unwrap_or_default()}",
+                                                onchange: move |ev| harmony_key.set(Some(ev.value())),
+                                                for p in active_candidates.iter() {
+                                                    option { value: "{paint_key(p)}", "{p.name} ({p.brand})" }
                                                 }
                                             }
                                         }
@@ -2104,7 +2161,7 @@ pub fn MiniatureView() -> Element {
 
                                 // Grid of 8 calculated harmonies
                                 {
-                                    let base_rgb = harmony_acrylic.read().rgb();
+                                    let base_rgb = harmony_paint.as_ref().map(|p| p.color()).unwrap_or_else(|| Rgb::new(0.5, 0.5, 0.5));
                                     let items = OilHarmoniesCalculator::calculate(base_rgb);
 
                                     rsx! {
@@ -2185,9 +2242,11 @@ pub fn MiniatureView() -> Element {
 
                                     // Technique selection
                                     div { style: "display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;",
-                                        for tech in OilConsistencyTechnique::ALL {
+                                        for tech in Technique::for_system(PaintSystem::Oil) {
                                             {
                                                 let is_sel = *consistency_technique.read() == tech;
+                                                let drops = thinner_drops_per_part(tech, PaintSystem::Oil);
+                                                let consistency = Consistency::of(tech);
                                                 rsx! {
                                                     div {
                                                         class: if is_sel { "card-subtle active" } else { "card-subtle" },
@@ -2195,9 +2254,18 @@ pub fn MiniatureView() -> Element {
                                                         onclick: move |_| consistency_technique.set(tech),
                                                         div { class: "row-between", style: "align-items: center; margin-bottom: 4px;",
                                                             strong { style: "font-size: 13px;", "{tech.label_i18n(locale)}" }
-                                                            span { class: "pill pill-accent", "{tech.solvent_drops_per_part()} gtt solvant / part" }
+                                                            span { class: "pill pill-accent",
+                                                                if drops == 0 {
+                                                                    {locale.tr("pure", "neat")}
+                                                                } else {
+                                                                    "{drops} ", {locale.tr("gtt / part", "drops / part")}
+                                                                }
+                                                            }
                                                         }
-                                                        div { class: "muted", style: "font-size: 11.5px;", "{tech.description_i18n(locale)}" }
+                                                        div { class: "muted", style: "font-size: 11.5px;",
+                                                            strong { "{consistency.label_i18n(locale)}. " }
+                                                            "{consistency.description_i18n(locale)}"
+                                                        }
                                                     }
                                                 }
                                             }
@@ -2230,8 +2298,8 @@ pub fn MiniatureView() -> Element {
                                     {
                                         let tech = *consistency_technique.read();
                                         let parts = *consistency_parts.read();
-                                        let tot_solvent_drops = tech.solvent_drops_per_part() * parts;
-                                        let tot_medium_drops = tech.medium_drops_per_part() * parts;
+                                        let tot_solvent_drops = thinner_drops_per_part(tech, PaintSystem::Oil) * parts;
+                                        let thinner = tech.default_medium_in(PaintSystem::Oil);
 
                                         rsx! {
                                             h3 { class: "card-title", {locale.tr("📋 Formule de Dosage Précise", "📋 Exact Dropper Formulation")} }
@@ -2244,22 +2312,8 @@ pub fn MiniatureView() -> Element {
                                                 }
                                                 div { class: "card-subtle", style: "text-align: center; padding: 12px;",
                                                     div { style: "font-size: 26px; font-weight: 800; color: var(--accent-ok);", "{tot_solvent_drops}" }
-                                                    strong { style: "font-size: 12px;", {locale.tr("Gouttes de Sansodor / Gamsol", "Spirits Drops")} }
+                                                    strong { style: "font-size: 12px;", {locale.tr("Gouttes de ", "Drops of ")}, "{thinner.label_i18n(locale).to_lowercase()}" }
                                                     div { class: "muted", style: "font-size: 10.5px; margin-top: 2px;", "Compte-gouttes / Pipette" }
-                                                }
-                                            }
-
-                                            if tot_medium_drops > 0 {
-                                                div { class: "card-subtle", style: "margin-bottom: 14px; border: 1px solid var(--accent-border);",
-                                                    div { class: "row-between", style: "align-items: center;",
-                                                        div {
-                                                            strong { style: "font-size: 13px;", {locale.tr("Médium Alkyd (Liquin Fine Detail) :", "Alkyd Medium (Liquin):")} }
-                                                            div { class: "muted", style: "font-size: 11.5px;",
-                                                                {locale.tr("Apporte un liant autonivelant et accélère le séchage sans épaissir.", "Self-leveling binder that speeds curing without impasto build-up.")}
-                                                            }
-                                                        }
-                                                        span { class: "pill pill-warn", style: "font-size: 14px; font-weight: 800;", "+ {tot_medium_drops} gouttes" }
-                                                    }
                                                 }
                                             }
 
@@ -2267,18 +2321,8 @@ pub fn MiniatureView() -> Element {
                                                 div { style: "font-weight: 700; margin-bottom: 4px; color: var(--accent);",
                                                     {locale.tr("💡 Conseil d'Atelier :", "💡 Studio Advice:")}
                                                 }
-                                                if tech == OilConsistencyTechnique::CapillaryPinWash {
-                                                    div {
-                                                        {locale.tr("Pour un pin wash parfait, touchez la gravure de la figurine avec la pointe du pinceau : l'essence sans odeur s'infiltre seule sur plusieurs centimètres sans déborder.", "For a crisp pin wash, lightly touch the panel line with your brush tip: the low surface tension lets it capillary-flow on its own.")}
-                                                    }
-                                                } else if tech == OilConsistencyTechnique::TranslucentGlaze {
-                                                    div {
-                                                        {locale.tr("Appliquez en voile très fin. Si la teinte est trop dense, passez un pinceau propre humidifié de solvant pour retirer la matière des zones de lumière.", "Apply as a sheer veil. If too dark, feather back with a clean damp brush to pull pigment off highlights.")}
-                                                    }
-                                                } else {
-                                                    div {
-                                                        {locale.tr("Mélangez la pâte intimement sur votre palette avec une spatule métallique ou un vieux pinceau synthétique plat avant application.", "Muddle paint thoroughly on your palette using a palette knife or flat synthetic brush before application.")}
-                                                    }
+                                                for tip in tech.tips_in(PaintSystem::Oil, locale) {
+                                                    div { "• {tip}" }
                                                 }
                                             }
                                         }
@@ -2307,18 +2351,14 @@ pub fn MiniatureView() -> Element {
                                                 {locale.tr("Teinte d'huile à vitrifier :", "Glaze Oil Pigment Tone:")}
                                             }
                                             div { class: "row", style: "gap: 8px; align-items: center;",
-                                                ColorSwatch { hex: glaze_acrylic.read().hex.to_string(), size: 28 }
+                                                ColorSwatch { hex: glaze_paint.as_ref().map(|p| p.hex_color.clone()).unwrap_or_default(), size: 28 }
                                                 select {
                                                     class: "input",
                                                     style: "flex: 1;",
-                                                    value: "{glaze_acrylic.read().name}",
-                                                    onchange: move |ev| {
-                                                        if let Some(found) = MINIATURE_ACRYLICS.iter().find(|a| a.name == ev.value()) {
-                                                            glaze_acrylic.set(found);
-                                                        }
-                                                    },
-                                                    for acr in MINIATURE_ACRYLICS.iter().take(30) {
-                                                        option { value: "{acr.name}", "{acr.name} ({acr.hex})" }
+                                                    value: "{glaze_paint.as_ref().map(paint_key).unwrap_or_default()}",
+                                                    onchange: move |ev| glaze_key.set(Some(ev.value())),
+                                                    for p in active_candidates.iter() {
+                                                        option { value: "{paint_key(p)}", "{p.name} ({p.brand})" }
                                                     }
                                                 }
                                             }
@@ -2357,7 +2397,7 @@ pub fn MiniatureView() -> Element {
                                                     let g = (lum * 255.0).round() as u8;
                                                     format!("#{g:02X}{g:02X}{g:02X}")
                                                 };
-                                                let glazed_rgb = OilGlazeZenithalSimulator::simulate_glaze(glaze_acrylic.read().rgb(), lum, *glaze_strength.read());
+                                                let glazed_rgb = OilGlazeZenithalSimulator::simulate_glaze(glaze_paint.as_ref().map(|p| p.color()).unwrap_or_else(|| Rgb::new(0.5, 0.5, 0.5)), lum, *glaze_strength.read());
                                                 let glazed_hex = glazed_rgb.to_hex();
                                                 let sugg = services.mix_service.suggest_mixes(glazed_rgb, &active_candidates, 1, Some(3)).into_iter().next();
 
@@ -2590,7 +2630,7 @@ pub fn MiniatureView() -> Element {
                                                 {locale.tr("1. Consistance de la Couche de Base :", "1. Base Coat Consistency:")}
                                             }
                                             div { style: "display: flex; flex-direction: column; gap: 6px;",
-                                                for tech in OilConsistencyTechnique::ALL {
+                                                for tech in Technique::for_system(PaintSystem::Oil) {
                                                     button {
                                                         class: if *blending_base_tech.read() == tech { "btn-primary" } else { "btn" },
                                                         style: "justify-content: flex-start; text-align: left; font-size: 12px;",
@@ -2606,7 +2646,7 @@ pub fn MiniatureView() -> Element {
                                                 {locale.tr("2. Consistance du Rehaut ou de l'Ombre :", "2. Highlight or Shadow Consistency:")}
                                             }
                                             div { style: "display: flex; flex-direction: column; gap: 6px;",
-                                                for tech in OilConsistencyTechnique::ALL {
+                                                for tech in Technique::for_system(PaintSystem::Oil) {
                                                     button {
                                                         class: if *blending_accent_tech.read() == tech { "btn-primary" } else { "btn" },
                                                         style: "justify-content: flex-start; text-align: left; font-size: 12px;",
@@ -2866,6 +2906,18 @@ pub fn MiniatureView() -> Element {
             }
         }
     }
+}
+
+/// Stable key of a catalog paint in a select: brand and name are unique together.
+fn paint_key(p: &Paint) -> String {
+    format!("{}|{}", p.brand, p.name)
+}
+
+/// The paint whose key is `key`, or the first one when nothing (valid) is selected.
+fn pick(paints: &[Paint], key: Option<&str>) -> Option<Paint> {
+    key.and_then(|k| paints.iter().find(|p| paint_key(p) == k))
+        .or_else(|| paints.first())
+        .cloned()
 }
 
 fn copy_to_clipboard(text: &str) {
