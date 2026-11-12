@@ -8,7 +8,9 @@ use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{DryingClass, Paint, PaintSystem, Technique};
 use palettier_domain::palette::Palette;
 use palettier_domain::port::ProjectRepository;
-use palettier_domain::project::{LayerKind, PhotoRole, Project, ProjectLayer, ProjectPhoto, ProjectZone};
+use palettier_domain::project::{
+    LayerKind, ObservedColour, PhotoRole, Project, ProjectLayer, ProjectPhoto, ProjectZone,
+};
 
 /// The value ladder a new piece starts with on its first zone (the face).
 pub const FACE_LADDER: [&str; 5] = ["#4A2E24", "#7D5140", "#B87E63", "#D9A68B", "#F2CFB8"];
@@ -262,6 +264,16 @@ pub async fn remove_photo(
     photo_id: i64,
 ) -> DomainResult<Project> {
     services.projects.remove_photo(project_id, photo_id).await
+}
+
+/// Compares the six dominant colours of a photo of the piece with its planned coats.
+pub fn compare_to_plan(
+    services: &AppServices,
+    project: &Project,
+    photo: &[u8],
+) -> DomainResult<Vec<ObservedColour>> {
+    let dominant = services.decoder.dominant_colours(photo, 6)?;
+    Ok(services.progress_service.compare(project, &dominant))
 }
 
 /// The photo that best shows the piece: the piece itself, else the reference, else the first.
