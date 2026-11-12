@@ -148,11 +148,100 @@ body, html {
 }
 
 .quick-toggles {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-    padding: 4px 6px 10px 6px;
+    padding: 4px 6px 12px 6px;
     border-bottom: 1px solid var(--border-main);
     margin-bottom: 6px;
+}
+
+.icon-btn {
+    height: 30px;
+    border: 1px solid var(--border-main);
+    border-radius: 7px;
+    background: var(--bg-input);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    border-color: var(--accent-border);
+}
+
+.icon-btn.active {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+}
+
+/* Project header actions: guide & print | photos | (spacer) delete. */
+.project-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.toolbar-sep {
+    width: 1px;
+    align-self: stretch;
+    margin: 2px 4px;
+    background: var(--border-main);
+}
+
+.toolbar-spacer {
+    flex: 1 1 12px;
+}
+
+/* "Painting in": oil / acrylic segmented control at the top of the sidebar. */
+.system-segment-block {
+    padding: 2px 6px 10px 6px;
+}
+
+.system-segment-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.system-segment {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 3px;
+    gap: 3px;
+    border-radius: 9px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-main);
+}
+
+.system-segment .segment {
+    padding: 6px 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.system-segment .segment:hover {
+    color: var(--text-main);
+}
+
+.system-segment .segment.active.oil {
+    background: #c98a2b;
+    color: #1a1208;
+}
+
+.system-segment .segment.active.acrylic {
+    background: #2a9d8f;
+    color: #ffffff;
 }
 
 /* Miniature studio: themed tool list on the left, the open tool on the right. */

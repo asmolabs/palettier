@@ -507,14 +507,14 @@ impl Medium {
     pub fn label(&self) -> &'static str {
         match self {
             Medium::Water => "Eau",
-            Medium::AcrylicGlazeMedium => "Medium a glacis acrylique",
+            Medium::AcrylicGlazeMedium => "Médium à glacis acrylique",
             Medium::FlowImprover => "Fluidifiant (flow improver)",
             Medium::Retarder => "Retardateur",
             Medium::None => "Pur (sortie de tube)",
             Medium::OdorlessThinner => "Diluant inodore",
             Medium::WhiteSpirit => "White spirit",
-            Medium::Turpentine => "Essence de terebenthine",
-            Medium::AlkydMedium => "Medium alkyde (type Liquin)",
+            Medium::Turpentine => "Essence de térébenthine",
+            Medium::AlkydMedium => "Médium alkyde (type Liquin)",
             Medium::LinseedOil => "Huile de lin",
             Medium::WalnutOil => "Huile de noix",
             Medium::StandOil => "Huile stand",
@@ -597,7 +597,7 @@ impl Medium {
     pub fn advice(&self) -> &'static str {
         match self {
             Medium::Water => {
-                "Le diluant de l'acrylique : au-dela de moitie d'eau, le liant ne tient plus et la couche poudre."
+                "Le diluant de l'acrylique : au-delà de moitié d'eau, le liant ne tient plus et la couche poudre."
             }
             Medium::AcrylicGlazeMedium => {
                 "Dilue sans casser le liant : glacis et lavis acryliques transparents qui tiennent."
@@ -606,16 +606,16 @@ impl Medium {
                 "Quelques gouttes : la peinture file mieux et marque moins le pinceau."
             }
             Medium::Retarder => {
-                "Allonge le temps ouvert pour les fondus humides ; au-dela de 20 %, la couche reste poisseuse."
+                "Allonge le temps ouvert pour les fondus humides ; au-delà de 20 %, la couche reste poisseuse."
             }
-            Medium::None => "Pate epaisse : reserve aux empatements et aux textures.",
+            Medium::None => "Pâte épaisse : réservée aux empâtements et aux textures.",
             Medium::OdorlessThinner => "Le standard pour les jus et les fondus sur figurine.",
-            Medium::WhiteSpirit => "Plus agressif : verifier la tenue du vernis en dessous.",
-            Medium::Turpentine => "Evapore vite, odeur forte, bonne accroche.",
-            Medium::AlkydMedium => "Accelere fortement et lisse le fondu.",
-            Medium::LinseedOil => "Rallonge le temps ouvert, jaunit legerement en couche epaisse.",
-            Medium::WalnutOil => "Temps ouvert tres long, ne jaunit presque pas.",
-            Medium::StandOil => "Tres lent, tres lissant : pour les fondus longs.",
+            Medium::WhiteSpirit => "Plus agressif : vérifier la tenue du vernis en dessous.",
+            Medium::Turpentine => "Évapore vite, odeur forte, bonne accroche.",
+            Medium::AlkydMedium => "Accélère fortement et lisse le fondu.",
+            Medium::LinseedOil => "Rallonge le temps ouvert, jaunit légèrement en couche épaisse.",
+            Medium::WalnutOil => "Temps ouvert très long, ne jaunit presque pas.",
+            Medium::StandOil => "Très lent, très lissant : pour les fondus longs.",
             Medium::CobaltDrier => "Quelques gouttes suffisent ; au-dela, la couche craquelle.",
         }
     }

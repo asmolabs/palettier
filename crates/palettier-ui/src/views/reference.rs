@@ -1096,9 +1096,10 @@ pub fn DryingView() -> Element {
 
                     h4 { style: "font-size: 13px; margin-bottom: 8px;", {locale.tr("Conseils d'atelier & précautions", "Studio Tips & Precautions")} }
                     div { class: "card-subtle", style: "margin-bottom: 8px; font-size: 12.5px;",
-                        "• {medium.read().advice_i18n(locale)}"
+                        "• {current_medium.advice_i18n(locale)}"
                     }
-                    for tip in &estimate.advice {
+                    // The estimate repeats the medium's advice (untranslated): shown above already.
+                    for tip in estimate.advice.iter().filter(|t| t.as_str() != current_medium.advice()) {
                         div { class: "card-subtle", style: "margin-bottom: 8px; font-size: 12.5px;",
                             "• {tip}"
                         }

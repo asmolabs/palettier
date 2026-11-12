@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod snapshot;
 mod state;
 mod theme;
 mod views;
@@ -146,6 +147,13 @@ fn StudioShell(services: AppServices) -> Element {
         paint_system,
     });
 
+    // Design review: walk every screen and save its HTML, then quit (dev only).
+    use_hook(|| {
+        if let Some(dir) = snapshot::target_dir() {
+            snapshot::run(app_state, dir);
+        }
+    });
+
     // Initial data load + periodic background check for newly ready-to-recoat layers
     use_effect({
         let services = services.clone();
@@ -184,13 +192,20 @@ fn StudioShell(services: AppServices) -> Element {
     let current_section = *app_state.section.read();
     let current_locale = *app_state.locale.read();
     let current_theme = *app_state.theme.read();
+    let current_system = *app_state.paint_system.read();
+    let system_label = current_system.label_i18n(current_locale).to_lowercase();
     let owned_count = app_state
         .paints
         .read()
         .iter()
-        .filter(|p| p.in_stock)
+        .filter(|p| p.system == current_system && p.in_stock)
         .count();
-    let total_paints = app_state.paints.read().len();
+    let total_paints = app_state
+        .paints
+        .read()
+        .iter()
+        .filter(|p| p.system == current_system)
+        .count();
     let ready_pieces_count = {
         let projs = app_state.projects.read().clone();
         services.workbench.bench(&projs, Utc::now()).ready().len()
@@ -249,28 +264,24 @@ fn StudioShell(services: AppServices) -> Element {
                         div { class: "brand-title", "Palettier" }
                         div {
                             class: "brand-subtitle",
-                            "{current_locale.tr(\"Atelier figurine & huile · KM\", \"Miniature & Oil Studio · KM\")}"
+                            "{current_locale.tr(\"Atelier figurine · huile & acrylique\", \"Miniature studio · oil & acrylic\")}"
                         }
                     }
                 }
 
-                // Instant Day / Night, Language & Command Palette toggles
-                div { class: "quick-toggles",
-                    button {
-                        class: "toggle-chip",
-                        title: "{current_locale.tr(\"Recherche Globale & Commandes (⌘K)\", \"Quick Search & Commands (⌘K)\")}",
-                        onclick: move |_| {
-                            let cur = *app_state.command_palette_open.read();
-                            app_state.command_palette_open.set(!cur);
-                        },
-                        "🔍 ⌘K"
-                    }
+                // What am I painting with: drives the catalog, mixer, drying and recipes.
+                div { class: "system-segment-block",
+                    div { class: "system-segment-label", {current_locale.tr("Je peins à", "Painting in")} }
                     div {
-                        class: "system-switch",
-                        title: "{current_locale.tr(\"Système de peinture des écrans hors projet (catalogue, mélangeur, séchage, recettes). Chaque projet garde le sien.\", \"Paint system for screens outside a project (catalog, mixer, drying, recipes). Each project keeps its own.\")}",
+                        class: "system-segment",
+                        title: "{current_locale.tr(\"Système des écrans hors projet (catalogue, mélangeur, séchage, recettes). Ouvrir un projet le règle sur celui du projet.\", \"System for screens outside a project (catalog, mixer, drying, recipes). Opening a project sets it to the project's system.\")}",
                         for sys in PaintSystem::ALL {
                             button {
-                                class: if *app_state.paint_system.read() == sys { "toggle-chip active" } else { "toggle-chip" },
+                                class: match (sys, *app_state.paint_system.read() == sys) {
+                                    (PaintSystem::Oil, true) => "segment active oil",
+                                    (PaintSystem::Acrylic, true) => "segment active acrylic",
+                                    _ => "segment",
+                                },
                                 onclick: {
                                     let svc = services.clone();
                                     move |_| app_state.set_paint_system(&svc, sys)
@@ -279,9 +290,22 @@ fn StudioShell(services: AppServices) -> Element {
                             }
                         }
                     }
+                }
+
+                // Search, theme, language and HUD as compact icon buttons.
+                div { class: "quick-toggles",
                     button {
-                        class: "toggle-chip",
-                        title: "{current_locale.tr(\"Basculer entre le Mode Jour et le Mode Nuit\", \"Switch between Day Mode and Night Mode\")}",
+                        class: "icon-btn",
+                        title: "{current_locale.tr(\"Recherche globale & commandes (⌘K)\", \"Quick search & commands (⌘K)\")}",
+                        onclick: move |_| {
+                            let cur = *app_state.command_palette_open.read();
+                            app_state.command_palette_open.set(!cur);
+                        },
+                        "🔍"
+                    }
+                    button {
+                        class: "icon-btn",
+                        title: "{current_theme.button_label(current_locale)}",
                         onclick: {
                             let svc = services.clone();
                             move |_| {
@@ -293,11 +317,11 @@ fn StudioShell(services: AppServices) -> Element {
                                 });
                             }
                         },
-                        "{current_theme.button_label(current_locale)}"
+                        if current_theme == ThemeMode::Dark { "☀️" } else { "🌙" }
                     }
                     button {
-                        class: "toggle-chip",
-                        title: "{current_locale.tr(\"Passer l'interface en anglais (EN)\", \"Switch interface to French (FR)\")}",
+                        class: "icon-btn",
+                        title: "{current_locale.tr(\"Passer l'interface en anglais\", \"Switch interface to French\")}",
                         onclick: {
                             let svc = services.clone();
                             move |_| {
@@ -309,25 +333,20 @@ fn StudioShell(services: AppServices) -> Element {
                                 });
                             }
                         },
-                        "🌐 {current_locale.badge()} → {current_locale.toggle().badge()}"
+                        "{current_locale.toggle().badge()}"
                     }
                     button {
-                        class: if *is_hud.read() { "toggle-chip active" } else { "toggle-chip" },
-                        title: "{current_locale.tr(\"Basculer en mode HUD Établi compact (⌘H)\", \"Toggle compact Painter HUD mode (⌘H)\")}",
+                        class: if *is_hud.read() { "icon-btn active" } else { "icon-btn" },
+                        title: "{current_locale.tr(\"Mode HUD compact pour l'établi (⌘H)\", \"Compact painter HUD (⌘H)\")}",
                         onclick: move |_| {
                             let cur = *is_hud.read();
                             is_hud.set(!cur);
                         },
-                        "🎯 HUD"
+                        "🎯"
                     }
                 }
 
-                div { class: "nav-group-label", "{current_locale.tr(\"Figurine & Modélisme\", \"Miniatures & Weathering\")}" }
-                for sec in Section::FIGURINE {
-                    NavButton { section: sec, current: current_section, badge: None }
-                }
-
-                div { class: "nav-group-label", "{current_locale.tr(\"Établi & Projets\", \"Workbench & Projects\")}" }
+                div { class: "nav-group-label", "{current_locale.tr(\"Établi\", \"Workbench\")}" }
                 for sec in Section::WORKSHOP {
                     NavButton {
                         section: sec,
@@ -340,12 +359,17 @@ fn StudioShell(services: AppServices) -> Element {
                     }
                 }
 
-                div { class: "nav-group-label", "{current_locale.tr(\"Laboratoire Couleur (KM)\", \"Color Lab (KM)\")}" }
+                div { class: "nav-group-label", "{current_locale.tr(\"Couleur\", \"Colour\")}" }
                 for sec in Section::COLOR {
                     NavButton { section: sec, current: current_section, badge: None }
                 }
 
-                div { class: "nav-group-label", "{current_locale.tr(\"Matériel & Chimie\", \"Materials & Chemistry\")}" }
+                div { class: "nav-group-label", "{current_locale.tr(\"Figurine & weathering\", \"Miniatures & weathering\")}" }
+                for sec in Section::FIGURINE {
+                    NavButton { section: sec, current: current_section, badge: None }
+                }
+
+                div { class: "nav-group-label", "{current_locale.tr(\"Référence\", \"Reference\")}" }
                 for sec in Section::REFERENCE {
                     NavButton { section: sec, current: current_section, badge: None }
                 }
@@ -355,9 +379,9 @@ fn StudioShell(services: AppServices) -> Element {
                     div { style: "padding: 8px 10px 0 10px; line-height: 1.4;",
                         div {
                             if current_locale.is_fr() {
-                                "Tiroir : {owned_count} / {total_paints} tubes"
+                                "Tiroir {system_label} : {owned_count} / {total_paints}"
                             } else {
-                                "Drawer: {owned_count} / {total_paints} tubes"
+                                "{system_label} drawer: {owned_count} / {total_paints}"
                             }
                         }
                         div { style: "opacity: 0.75; margin-top: 2px;",

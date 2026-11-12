@@ -161,7 +161,13 @@ pub fn TodayView() -> Element {
                             for piece in &bench.pieces {
                                 div { class: "card-subtle", style: "margin-bottom:10px;",
                                     div { class: "row-between",
-                                        strong { "{piece.project.name}" }
+                                        div { class: "row", style: "gap: 6px;",
+                                            strong { "{piece.project.name}" }
+                                            span {
+                                                class: if piece.project.system == PaintSystem::Acrylic { "pill pill-acrylic" } else { "pill pill-oil" },
+                                                "{piece.project.system.label_i18n(locale)}"
+                                            }
+                                        }
                                         span { class: "pill",
                                             "{piece.applied_coats()}/{piece.total_coats()} ", {locale.tr("couches", "coats")}
                                         }
@@ -606,7 +612,7 @@ pub fn ProjectsView() -> Element {
                                         {locale.tr("tubes figés", "locked tubes")}
                                     }
                                 }
-                                div { class: "row",
+                                div { class: "row project-toolbar",
                                     button {
                                         class: if *show_project_guide.read() { "btn-primary" } else { "btn" },
                                         onclick: move |_| {
@@ -650,6 +656,7 @@ pub fn ProjectsView() -> Element {
                                         },
                                         {locale.tr("Imprimer / Exporter Guide A4", "Print / Export A4 Guide")}
                                     }
+                                    span { class: "toolbar-sep" }
                                     select {
                                         value: "{photo_role_to_add().as_db_str()}",
                                         onchange: move |e| {
@@ -737,6 +744,7 @@ pub fn ProjectsView() -> Element {
                                         "📷 "
                                         {locale.tr("Carte PNG", "PNG Card")}
                                     }
+                                    span { class: "toolbar-spacer" }
                                     button {
                                         class: "btn-danger",
                                         onclick: {
