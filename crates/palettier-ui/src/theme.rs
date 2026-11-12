@@ -155,6 +155,100 @@ body, html {
     margin-bottom: 6px;
 }
 
+/* Miniature studio: themed tool list on the left, the open tool on the right. */
+.mini-layout {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.mini-nav {
+    position: sticky;
+    top: 0;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    padding: 10px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-main);
+    border-radius: 10px;
+}
+
+.mini-nav-search {
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.mini-nav-group {
+    margin-bottom: 10px;
+}
+
+.mini-nav-group-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 4px 8px;
+}
+
+.mini-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mini-nav-item:hover {
+    background: var(--bg-input);
+}
+
+.mini-nav-item.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-weight: 650;
+}
+
+.mini-nav-icon {
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.mini-content-header {
+    margin-bottom: 14px;
+}
+
+.mini-content-header h2 {
+    display: inline;
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.mini-content-header p {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+}
+
+@media (max-width: 900px) {
+    .mini-layout {
+        grid-template-columns: 1fr;
+    }
+    .mini-nav {
+        position: static;
+        max-height: none;
+    }
+}
+
 .toggle-chip {
     flex: 1;
     display: inline-flex;
