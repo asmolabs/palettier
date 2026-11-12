@@ -9,5 +9,9 @@
 //!
 //! That keeps the rules testable on `Database::in_memory()` (see `AppServices::in_memory`),
 //! like the domain.
+pub mod assistant;
+pub mod eyedropper;
+pub mod mixer;
 pub mod mixes;
 pub mod projects;
+pub mod settings;
