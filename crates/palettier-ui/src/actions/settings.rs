@@ -113,7 +113,7 @@ mod tests {
         let fresh = AppServices::in_memory().await.unwrap();
         let imported = import_backup(&fresh, &zip).await.unwrap();
         assert!(imported.projects_added >= 1);
-        assert!(all_projects(&fresh).await.unwrap().iter().any(|p| p.name == "Sauvegardé"));
+        assert!(fresh.projects.all().await.unwrap().iter().any(|p| p.name == "Sauvegardé"));
 
         let junk = dir.join("pas-une-archive.zip");
         std::fs::write(&junk, b"pas un zip").unwrap();
