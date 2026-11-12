@@ -68,7 +68,8 @@ pub async fn import_backup(services: &AppServices, path: &Path) -> Result<Import
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::actions::projects::{NewProject, all_projects, create_project};
+    use crate::actions::projects::{NewProject, create_project};
+    use palettier_domain::port::ProjectRepository;
     use palettier_domain::paint::PaintSystem;
 
     #[tokio::test]

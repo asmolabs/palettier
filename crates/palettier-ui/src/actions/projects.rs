@@ -43,11 +43,6 @@ pub struct LayerEdit {
     pub note: String,
 }
 
-/// Every piece.
-pub async fn all_projects(services: &AppServices) -> DomainResult<Vec<Project>> {
-    services.projects.all().await
-}
-
 /// A piece with its photos.
 pub async fn load_project(services: &AppServices, id: i64) -> DomainResult<Option<Project>> {
     services.projects.find_with_photos(id).await
@@ -372,12 +367,12 @@ mod tests {
     #[tokio::test]
     async fn a_blank_name_saves_nothing() {
         let svc = AppServices::in_memory().await.unwrap();
-        let before = all_projects(&svc).await.unwrap().len();
+        let before = svc.projects.all().await.unwrap().len();
         let change = create_project(&svc, draft("   ", PaintSystem::Oil, None), Locale::Fr)
             .await
             .unwrap();
         assert!(change.is_none());
-        assert_eq!(all_projects(&svc).await.unwrap().len(), before);
+        assert_eq!(svc.projects.all().await.unwrap().len(), before);
     }
 
     #[tokio::test]
