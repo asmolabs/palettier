@@ -47,7 +47,7 @@ fn main() {
         .init();
 
     let window = WindowBuilder::new()
-        .with_title("Palettier — Oil Painting Studio")
+        .with_title("Palettier — Atelier de figurines")
         .with_inner_size(dioxus::desktop::LogicalSize::new(1460.0, 930.0))
         .with_min_inner_size(dioxus::desktop::LogicalSize::new(1160.0, 740.0));
 
