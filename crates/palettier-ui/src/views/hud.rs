@@ -310,7 +310,7 @@ pub fn PainterHudView(on_close: EventHandler<()>) -> Element {
                                                     let is_applied = layer.is_applied();
                                                     let tgt_hex = layer.target_hex.clone();
                                                     let role_text = layer.role.clone();
-                                                    let tech_text = layer.technique.clone();
+                                                    let tech_text = layer.technique.label_i18n(locale).to_string();
                                                     let svc = services.clone();
                                                     let p_clone = proj.clone();
 

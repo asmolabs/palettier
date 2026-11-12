@@ -954,7 +954,7 @@ pub fn AssistantView() -> Element {
                                                                 }
                                                                 td { DeltaEBadge { delta_e: l.delta_e } }
                                                                 td {
-                                                                    div { "{l.technique}" }
+                                                                    div { "{l.technique.label_i18n(locale)}" }
                                                                     if !l.note.is_empty() {
                                                                         div { class: "muted", style: "font-size: 11px;", "{l.note}" }
                                                                     }

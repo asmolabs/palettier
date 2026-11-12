@@ -74,7 +74,9 @@ pub struct ProjectLayer {
     pub id: Option<i64>,
     pub role: String,
     pub target_hex: String,
-    pub technique: String,
+    /// A known technique. A label the application did not recognise (from the assistant
+    /// or an older version) is kept in `note` instead of being silently replaced.
+    pub technique: Technique,
     pub note: String,
     pub kind: LayerKind,
     pub applied: Option<AppliedCoat>,
@@ -86,7 +88,7 @@ impl ProjectLayer {
             id: None,
             role: role.into(),
             target_hex: target_hex.into(),
-            technique: String::new(),
+            technique: Technique::Glaze,
             note: String::new(),
             kind: LayerKind::Ladder,
             applied: None,
@@ -101,14 +103,36 @@ impl ProjectLayer {
         self.applied.is_some()
     }
 
-    /// The technique of this coat, read in the system of the piece.
-    pub fn technique_within(&self, project: PaintSystem) -> Technique {
-        Technique::by_label_in(Some(&self.technique), project)
-    }
-
     /// The system this coat is painted in, within a piece painted in `project`.
     pub fn system_within(&self, project: PaintSystem) -> PaintSystem {
-        self.technique_within(project).system_within(project)
+        self.technique.system_within(project)
+    }
+
+    /// The same coat with another technique.
+    pub fn with_technique(mut self, technique: Technique) -> Self {
+        self.technique = technique;
+        self
+    }
+
+    /// Reads a technique label that may not be one the application knows: a known one
+    /// becomes the technique, an unknown one falls back to the default of `system` and is
+    /// kept, word for word, at the head of the note.
+    pub fn set_technique_label(&mut self, label: &str, system: PaintSystem) {
+        let label = label.trim();
+        match Technique::parse(label) {
+            Some(t) => self.technique = t,
+            None => {
+                self.technique = Technique::default_for(system);
+                if !label.is_empty() {
+                    let kept = format!("Technique proposée : {label}.");
+                    self.note = if self.note.trim().is_empty() {
+                        kept
+                    } else {
+                        format!("{kept} {}", self.note)
+                    };
+                }
+            }
+        }
     }
 
     pub fn mark_applied(
@@ -353,13 +377,12 @@ impl FatOverLeanService {
         Self::inspect(&recipe.name, &coats, locale)
     }
 
-    pub fn fatness_of(&self, technique: Option<&str>) -> f64 {
-        Self::fatness(Technique::by_label(technique, Technique::Glaze))
+    pub fn fatness_of(&self, technique: Technique) -> f64 {
+        Self::fatness(technique)
     }
 
-    pub fn is_veil(&self, technique: Option<&str>) -> bool {
-        Technique::by_label(technique, Technique::Glaze).typical_thickness()
-            == LayerThickness::Glaze
+    pub fn is_veil(&self, technique: Technique) -> bool {
+        technique.typical_thickness() == LayerThickness::Glaze
     }
 
     fn inspect(where_name: &str, coats: &[Coat], locale: Locale) -> Vec<FatOverLeanRisk> {
@@ -412,7 +435,7 @@ impl FatOverLeanService {
     }
 
     fn coat_of(layer: &ProjectLayer, project: PaintSystem, locale: Locale) -> Coat {
-        let technique = layer.technique_within(project);
+        let technique = layer.technique;
         Coat {
             label: technique.label_i18n(locale).to_string(),
             role: layer.role.clone(),
@@ -678,11 +701,25 @@ mod tests {
         let mut z = ProjectZone::new("Visage");
         for (i, t) in techniques.iter().enumerate() {
             let mut l = ProjectLayer::new(format!("Couche {}", i + 1), "#C98F72");
-            l.technique = (*t).to_string();
+            l.technique = Technique::parse(t).expect("technique connue");
             z.layers.push(l);
         }
         p.zones.push(z);
         p
+    }
+
+    #[test]
+    fn unknown_technique_label_is_kept_in_the_note() {
+        let mut known = ProjectLayer::new("Base", "#808080");
+        known.set_technique_label("Glacis", PaintSystem::Acrylic);
+        assert_eq!(Technique::Glaze, known.technique);
+        assert!(known.note.is_empty());
+
+        let mut unknown = ProjectLayer::new("Lumière", "#F0E0D0");
+        unknown.note = "sur les pommettes".to_string();
+        unknown.set_technique_label("Pointillé", PaintSystem::Acrylic);
+        assert_eq!(Technique::Layering, unknown.technique);
+        assert_eq!("Technique proposée : Pointillé. sur les pommettes", unknown.note);
     }
 
     #[test]
@@ -728,10 +765,10 @@ mod tests {
     fn glaze_over_base_layer_triggers_no_risk() {
         let service = FatOverLeanService::new();
         assert!(
-            service.fatness_of(Some(Technique::Glaze.label()))
-                < service.fatness_of(Some(Technique::BaseLayer.label()))
+            service.fatness_of(Technique::Glaze)
+                < service.fatness_of(Technique::BaseLayer)
         );
-        assert!(service.is_veil(Some(Technique::Glaze.label())));
+        assert!(service.is_veil(Technique::Glaze));
         let p = piece_with(&[Technique::BaseLayer.label(), Technique::Glaze.label()]);
         assert!(service.inspect_project(&p).is_empty());
     }

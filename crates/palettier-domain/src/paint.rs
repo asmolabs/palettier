@@ -800,20 +800,20 @@ impl Technique {
 
     pub fn label(&self) -> &'static str {
         match self {
-            Technique::OilWash => "Jus a l'huile",
+            Technique::OilWash => "Jus à l'huile",
             Technique::PinWash => "Jus capillaire (pin wash)",
             Technique::Filter => "Filtre",
             Technique::Glaze => "Glacis",
-            Technique::Blending => "Fondu / degrade",
+            Technique::Blending => "Fondu / dégradé",
             Technique::DotFading => "Dot fading",
             Technique::StreakingGrime => "Coulures et salissures",
             Technique::OilRendering => "Oil Paint Rendering (OPR)",
             Technique::BaseLayer => "Aplat de base",
-            Technique::Highlight => "Eclaircis et points lumineux",
-            Technique::Layering => "Couches superposees (layering)",
+            Technique::Highlight => "Éclaircis et points lumineux",
+            Technique::Layering => "Couches superposées (layering)",
             Technique::WetBlending => "Fondu humide (wet blending)",
-            Technique::Drybrush => "Brossage a sec (drybrush)",
-            Technique::EdgeHighlight => "Liseres d'aretes (edge highlight)",
+            Technique::Drybrush => "Brossage à sec (drybrush)",
+            Technique::EdgeHighlight => "Liserés d'arêtes (edge highlight)",
             Technique::ShadeWash => "Lavis d'ombrage",
             Technique::ContrastPaint => "Peinture contraste (speedpaint)",
         }
@@ -1148,28 +1148,41 @@ impl Technique {
         }
     }
 
-    pub fn by_label(label: Option<&str>, fallback: Technique) -> Technique {
-        let Some(raw) = label else { return fallback };
-        let trimmed = raw.trim();
-        if trimmed.is_empty() {
-            return fallback;
+    /// The technique named by `raw`: its code, or its French or English label, ignoring
+    /// case and accents (so labels saved before accents were restored still match).
+    pub fn parse(raw: &str) -> Option<Technique> {
+        let wanted = fold(raw);
+        if wanted.is_empty() {
+            return None;
         }
-        Self::ALL
-            .into_iter()
-            .find(|t| {
-                t.label().eq_ignore_ascii_case(trimmed)
-                    || t.label_i18n(Locale::En).eq_ignore_ascii_case(trimmed)
-            })
-            .unwrap_or(fallback)
+        Self::ALL.into_iter().find(|t| {
+            fold(t.as_db_str()) == wanted
+                || fold(t.label()) == wanted
+                || fold(t.label_i18n(Locale::En)) == wanted
+        })
+    }
+
+    pub fn by_label(label: Option<&str>, fallback: Technique) -> Technique {
+        label.and_then(Self::parse).unwrap_or(fallback)
+    }
+
+    /// The technique a new coat starts with in a piece painted in `system`.
+    pub fn default_for(system: PaintSystem) -> Technique {
+        match system {
+            PaintSystem::Oil => Technique::Glaze,
+            PaintSystem::Acrylic => Technique::Layering,
+        }
     }
 
     /// Like [`Technique::by_label`], with a fallback that matches the system of the piece.
     pub fn by_label_in(label: Option<&str>, system: PaintSystem) -> Technique {
-        let fallback = match system {
-            PaintSystem::Oil => Technique::Glaze,
-            PaintSystem::Acrylic => Technique::Layering,
-        };
-        Self::by_label(label, fallback)
+        Self::by_label(label, Self::default_for(system))
+    }
+
+    /// The French label without accents, as the Java version of the application wrote it.
+    /// Used in backups so that the older application still recognises the technique.
+    pub fn legacy_label(&self) -> String {
+        strip_accents(self.label())
     }
 
     pub fn as_db_str(&self) -> &'static str {
@@ -1198,17 +1211,8 @@ impl FromStr for Technique {
     type Err = DomainError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let key = s.trim().to_uppercase();
-        if let Some(found) = Self::ALL.into_iter().find(|t| t.as_db_str() == key) {
-            return Ok(found);
-        }
-        Self::ALL
-            .into_iter()
-            .find(|t| {
-                t.label().eq_ignore_ascii_case(s.trim())
-                    || t.label_i18n(Locale::En).eq_ignore_ascii_case(s.trim())
-            })
-            .ok_or_else(|| DomainError::InvalidArgument(format!("Technique inconnue : {key}")))
+        Self::parse(s)
+            .ok_or_else(|| DomainError::InvalidArgument(format!("Technique inconnue : {}", s.trim())))
     }
 }
 
@@ -1793,6 +1797,19 @@ mod system_tests {
     }
 
     #[test]
+    fn technique_labels_match_with_or_without_accents() {
+        // Saved by the Java version, without accents.
+        assert_eq!(Some(Technique::OilWash), Technique::parse("Jus a l'huile"));
+        assert_eq!(Some(Technique::Highlight), Technique::parse("eclaircis et points lumineux"));
+        // Current label, English label, code.
+        assert_eq!(Some(Technique::EdgeHighlight), Technique::parse("Liserés d'arêtes (edge highlight)"));
+        assert_eq!(Some(Technique::Drybrush), Technique::parse("Drybrush"));
+        assert_eq!(Some(Technique::ShadeWash), Technique::parse("SHADE_WASH"));
+        assert_eq!(None, Technique::parse("Pointillé"));
+        assert_eq!("Jus a l'huile", Technique::OilWash.legacy_label());
+    }
+
+    #[test]
     fn every_technique_survives_its_db_name() {
         for t in Technique::ALL {
             assert_eq!(t, Technique::from_str(t.as_db_str()).unwrap());
@@ -1801,4 +1818,35 @@ mod system_tests {
             assert_eq!(m, Medium::from_str(m.as_db_str()).unwrap());
         }
     }
+}
+
+/// Lowercased, trimmed, accents removed: the form two labels are compared in.
+fn fold(s: &str) -> String {
+    strip_accents(s.trim()).to_lowercase()
+}
+
+/// The text with French accents replaced by their base letter.
+fn strip_accents(s: &str) -> String {
+    s.chars()
+        .flat_map(|c| {
+            let base: &str = match c {
+                'à' | 'â' | 'ä' => "a",
+                'À' | 'Â' | 'Ä' => "A",
+                'é' | 'è' | 'ê' | 'ë' => "e",
+                'É' | 'È' | 'Ê' | 'Ë' => "E",
+                'î' | 'ï' => "i",
+                'Î' | 'Ï' => "I",
+                'ô' | 'ö' => "o",
+                'Ô' | 'Ö' => "O",
+                'ù' | 'û' | 'ü' => "u",
+                'Ù' | 'Û' | 'Ü' => "U",
+                'ç' => "c",
+                'Ç' => "C",
+                'œ' => "oe",
+                'Œ' => "OE",
+                _ => return vec![c],
+            };
+            base.chars().collect()
+        })
+        .collect()
 }

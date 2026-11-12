@@ -377,7 +377,7 @@ pub fn ProjectsView() -> Element {
     let mut editing_layer = use_signal(|| None::<(usize, usize)>);
     let mut edit_role = use_signal(String::new);
     let mut edit_hex = use_signal(String::new);
-    let mut edit_tech = use_signal(String::new);
+    let mut edit_tech = use_signal(|| Technique::Glaze);
     let mut edit_note = use_signal(String::new);
     let mut show_project_guide = use_signal(|| false);
 
@@ -510,13 +510,11 @@ pub fn ProjectsView() -> Element {
                                                 name: loc.tr("Visage", "Face").to_string(),
                                                 material: loc.tr("Peau", "Skin").to_string(),
                                                 note: String::new(),
-                                                layers: vec![
-                                                    ProjectLayer::new(loc.tr("Ombre 2", "Shadow 2"), "#4A2E24"),
-                                                    ProjectLayer::new(loc.tr("Ombre 1", "Shadow 1"), "#7D5140"),
-                                                    ProjectLayer::new("Base", "#B87E63"),
-                                                    ProjectLayer::new(loc.tr("Lumiere 1", "Highlight 1"), "#D9A68B"),
-                                                    ProjectLayer::new(loc.tr("Lumiere 2", "Highlight 2"), "#F2CFB8"),
-                                                ],
+                                                layers: starter_ladder(
+                                                    loc,
+                                                    ["#4A2E24", "#7D5140", "#B87E63", "#D9A68B", "#F2CFB8"],
+                                                    new_proj_system(),
+                                                ),
                                             }],
                                             photos: Vec::new(),
                                             created_at: Utc::now(),
@@ -965,11 +963,11 @@ pub fn ProjectsView() -> Element {
                                                             let svc = services.clone();
                                                             let mut p_clone = proj.clone();
                                                             move |_| {
-                                                                let loc = *state.locale.read();
+                                                                let system = p_clone.system;
                                                                 if let Some(z) = p_clone.zones.get_mut(z_idx) {
                                                                     let mut nl = ProjectLayer::new("Accent", "#C89B6E");
                                                                     nl.kind = LayerKind::Accent;
-                                                                    nl.technique = Technique::Glaze.label_i18n(loc).to_string();
+                                                                    nl.technique = Technique::default_for(system);
                                                                     z.layers.push(nl);
                                                                 }
                                                                 let svc = svc.clone();
@@ -1043,18 +1041,21 @@ pub fn ProjectsView() -> Element {
                                                                         if is_editing {
                                                                             div { class: "row",
                                                                                 select {
-                                                                                    value: "{edit_tech}",
-                                                                                    onchange: move |e| edit_tech.set(e.value()),
+                                                                                    onchange: move |e| {
+                                                                                        if let Some(t) = Technique::parse(&e.value()) {
+                                                                                            edit_tech.set(t);
+                                                                                        }
+                                                                                    },
                                                                                     // The piece's own techniques first; on an acrylic piece the oil
                                                                                     // techniques stay available (oil over dry acrylic is sound),
                                                                                     // never the reverse.
                                                                                     for t in Technique::for_system(proj.system) {
-                                                                                        option { value: "{t.label_i18n(locale)}", "{t.label_i18n(locale)}" }
+                                                                                        option { value: "{t.as_db_str()}", selected: edit_tech() == t, "{t.label_i18n(locale)}" }
                                                                                     }
                                                                                     if proj.system == PaintSystem::Acrylic {
                                                                                         optgroup { label: "{locale.tr(\"À l'huile, par-dessus\", \"In oil, on top\")}",
                                                                                             for t in Technique::ALL.into_iter().filter(|t| t.native_system() == Some(PaintSystem::Oil)) {
-                                                                                                option { value: "{t.label_i18n(locale)}", "{t.label_i18n(locale)}" }
+                                                                                                option { value: "{t.as_db_str()}", selected: edit_tech() == t, "{t.label_i18n(locale)}" }
                                                                                             }
                                                                                         }
                                                                                     }
@@ -1075,7 +1076,7 @@ pub fn ProjectsView() -> Element {
                                                                                 }
                                                                             }
                                                                             div { class: "muted", style: "font-size:11.5px; margin-top: 2px;",
-                                                                                "{layer.technique}"
+                                                                                "{layer.technique.label_i18n(locale)}"
                                                                                 if !layer.note.is_empty() {
                                                                                     " · {layer.note}"
                                                                                 }
@@ -1105,7 +1106,7 @@ pub fn ProjectsView() -> Element {
                                                                                                 && let Some(l) = z.layers.get_mut(l_idx) {
                                                                                                     l.role = edit_role().trim().to_string();
                                                                                                     l.target_hex = edit_hex().trim().to_string();
-                                                                                                    l.technique = edit_tech().trim().to_string();
+                                                                                                    l.technique = edit_tech();
                                                                                                     l.note = edit_note().trim().to_string();
                                                                                                 }
                                                                                             editing_layer.set(None);
@@ -1178,16 +1179,12 @@ pub fn ProjectsView() -> Element {
                                                                                     onclick: {
                                                                                         let r = layer.role.clone();
                                                                                         let h = layer.target_hex.clone();
-                                                                                        let t = if layer.technique.is_empty() {
-                                                                                            Technique::Glaze.label_i18n(locale).to_string()
-                                                                                        } else {
-                                                                                            layer.technique.clone()
-                                                                                        };
+                                                                                        let t = layer.technique;
                                                                                         let n = layer.note.clone();
                                                                                         move |_| {
                                                                                             edit_role.set(r.clone());
                                                                                             edit_hex.set(h.clone());
-                                                                                            edit_tech.set(t.clone());
+                                                                                            edit_tech.set(t);
                                                                                             edit_note.set(n.clone());
                                                                                             editing_layer.set(Some((z_idx, l_idx)));
                                                                                         }
@@ -1250,13 +1247,11 @@ pub fn ProjectsView() -> Element {
                                                 name: zname,
                                                 material: zmat,
                                                 note: String::new(),
-                                                layers: vec![
-                                                    ProjectLayer::new(loc.tr("Ombre 2", "Shadow 2"), "#2B303A"),
-                                                    ProjectLayer::new(loc.tr("Ombre 1", "Shadow 1"), "#434A59"),
-                                                    ProjectLayer::new("Base", "#5E687D"),
-                                                    ProjectLayer::new(loc.tr("Lumiere 1", "Highlight 1"), "#8591A8"),
-                                                    ProjectLayer::new(loc.tr("Lumiere 2", "Highlight 2"), "#B2BDD1"),
-                                                ],
+                                                layers: starter_ladder(
+                                                    loc,
+                                                    ["#2B303A", "#434A59", "#5E687D", "#8591A8", "#B2BDD1"],
+                                                    p_clone.system,
+                                                ),
                                             });
                                             let svc = svc.clone();
                                             let p_to_save = p_clone.clone();
@@ -1881,4 +1876,38 @@ pub fn PalettesView() -> Element {
             }
         }
     }
+}
+
+/// The five coats a new zone starts with, from the deepest shadow to the brightest light,
+/// each with the technique that suits its place in the ladder and the piece's system.
+fn starter_ladder(locale: Locale, hexes: [&str; 5], system: PaintSystem) -> Vec<ProjectLayer> {
+    let roles = [
+        locale.tr("Ombre 2", "Shadow 2"),
+        locale.tr("Ombre 1", "Shadow 1"),
+        "Base",
+        locale.tr("Lumière 1", "Highlight 1"),
+        locale.tr("Lumière 2", "Highlight 2"),
+    ];
+    let techniques = match system {
+        PaintSystem::Oil => [
+            Technique::Glaze,
+            Technique::Glaze,
+            Technique::BaseLayer,
+            Technique::Highlight,
+            Technique::Highlight,
+        ],
+        PaintSystem::Acrylic => [
+            Technique::ShadeWash,
+            Technique::Layering,
+            Technique::BaseLayer,
+            Technique::Layering,
+            Technique::EdgeHighlight,
+        ],
+    };
+    roles
+        .into_iter()
+        .zip(hexes)
+        .zip(techniques)
+        .map(|((role, hex), technique)| ProjectLayer::new(role, hex).with_technique(technique))
+        .collect()
 }

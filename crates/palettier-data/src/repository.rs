@@ -718,15 +718,18 @@ fn layer_row_to_domain(row: project_layer::Model) -> ProjectLayer {
         }
     });
 
-    ProjectLayer {
+    let mut layer = ProjectLayer {
         id: Some(row.id),
         role: row.role,
         target_hex: row.target_hex,
-        technique: row.technique,
+        technique: Technique::Glaze,
         note: row.note,
         kind: LayerKind::from_str(&row.kind).unwrap_or(LayerKind::Ladder),
         applied,
-    }
+    };
+    // Stored as a code since migration m0003; anything else is read like a label.
+    layer.set_technique_label(&row.technique, PaintSystem::Oil);
+    layer
 }
 
 #[async_trait]
@@ -851,7 +854,7 @@ impl ProjectRepository for SeaOrmProjectRepository {
                     zone_id: Set(zone_id),
                     role: Set(layer.role.clone()),
                     target_hex: Set(layer.target_hex.clone()),
-                    technique: Set(layer.technique.clone()),
+                    technique: Set(layer.technique.as_db_str().to_string()),
                     note: Set(layer.note.clone()),
                     kind: Set(layer.kind.as_db_str().to_string()),
                     position: Set(layer_pos as i64),

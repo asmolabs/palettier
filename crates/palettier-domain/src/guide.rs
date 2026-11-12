@@ -1426,7 +1426,7 @@ mod tests {
                 base: Some(PlanLayer {
                     role: "Base".to_string(),
                     target: Rgb::of_hex("#DFB190").unwrap(),
-                    technique: "Fondu".to_string(),
+                    technique: crate::paint::Technique::Blending,
                     note: "visage et cou".to_string(),
                     recipe: None,
                     achieved: Rgb::of_hex("#DFB190").unwrap(),

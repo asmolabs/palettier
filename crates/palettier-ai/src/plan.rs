@@ -255,14 +255,24 @@ impl PlanEnricher {
         let default_technique = match Self::system_of(palette) {
             PaintSystem::Oil => Technique::Blending,
             PaintSystem::Acrylic => Technique::Layering,
-        }
-        .label_i18n(locale);
-        let technique = draft
-            .map(|d| d.technique.trim())
-            .filter(|s| !s.is_empty())
-            .unwrap_or(default_technique)
-            .to_string();
-        let note = draft.map(|d| d.note.clone()).unwrap_or_default();
+        };
+        let proposed = draft.map(|d| d.technique.trim()).unwrap_or_default();
+        let mut note = draft.map(|d| d.note.clone()).unwrap_or_default();
+        // The model may name a technique the application does not know: keep its words
+        // in the note rather than replacing them silently.
+        let technique = match Technique::parse(proposed) {
+            Some(t) => t,
+            None => {
+                if !proposed.is_empty() {
+                    let kept = match locale {
+                        Locale::Fr => format!("Technique proposée : {proposed}."),
+                        Locale::En => format!("Suggested technique: {proposed}."),
+                    };
+                    note = if note.trim().is_empty() { kept } else { format!("{kept} {note}") };
+                }
+                default_technique
+            }
+        };
 
         PlanLayer {
             role,

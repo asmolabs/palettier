@@ -47,17 +47,28 @@ recettes citent des tubes en texte libre plutôt que des fiches du catalogue.
 - Objectif : aucun fichier de vue au-delà de 600 lignes, pas plus de 10 niveaux
   d'imbrication.
 
-## Lot 3 : typer la technique d'une couche (priorité moyenne)
+## Lot 3 : typer la technique d'une couche — fait
 
-`ProjectLayer.technique` est une `String`. Un libellé inconnu (sortie d'IA, faute de
-frappe) retombe en silence sur Glacis ou sur Couches superposées.
+Branche `claude/refactoring-lot-3`.
 
-- `ProjectLayer.technique: Technique` plus un `technique_note: String` libre pour ce
-  que l'IA propose en dehors de la liste.
-- Migration SQL : convertir les libellés FR/EN existants en `as_db_str()`, et garder
-  les libellés inconnus dans la note.
-- Signaler à l'enregistrement d'un plan IA les techniques non reconnues, au lieu de
-  les remplacer en silence.
+- `ProjectLayer.technique` et `PlanLayer.technique` sont des `Technique`, plus des
+  chaînes. Un libellé inconnu (sortie d'IA, ancienne saisie) n'est plus remplacé en
+  silence : la couche prend la technique par défaut du système de la pièce et le
+  libellé est conservé en tête de la note (« Technique proposée : … »).
+- `Technique::parse` reconnaît le code, le libellé français ou anglais, en ignorant la
+  casse et les accents. Les libellés ont donc retrouvé leurs accents (« Jus à l'huile »,
+  « Liserés d'arêtes »…) sans casser la lecture des anciennes données.
+- Migration `m0003_layer_technique_code` : `project_layer.technique` passe des
+  libellés aux codes. Elle convertit aussi les couches orphelines (zone supprimée alors
+  que les clés étrangères étaient coupées). Puis `m0004_orphan_layer_cleanup` supprime
+  ces couches orphelines, que rien n'affiche. Essayées sur une copie d'une vraie base :
+  32 couches converties, les 24 orphelines supprimées, les 8 couches des 3 projets
+  intactes.
+- La sauvegarde écrit le libellé français sans accents (`legacy_label`), la forme que
+  la version Java relit ; à l'import, elle lit tout libellé connu et garde les autres
+  dans la note.
+- Un nouveau projet ou une nouvelle zone démarre avec des techniques adaptées au
+  système de la pièce (en acrylique : lavis d'ombrage, couches, aplat, liserés).
 
 ## Lot 4 : une seule source pour les libellés (priorité moyenne)
 
@@ -93,5 +104,4 @@ huile, et le filtre du mélangeur par système.
 
 ## Ordre conseillé
 
-Lot 1 fait. Ensuite 3 → 2 → 4 → 5 → 6 : le lot 3 change le schéma, il vaut mieux le faire avant d'éclater
-les vues qui lisent `technique`.
+Lots 1 et 3 faits. Ensuite 2 → 4 → 5 → 6.
