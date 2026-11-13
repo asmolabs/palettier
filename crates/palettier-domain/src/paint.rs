@@ -216,7 +216,7 @@ impl LayerThickness {
                 LayerThickness::Thin => "Couche fine",
                 LayerThickness::Normal => "Couche normale",
                 LayerThickness::Thick => "Couche chargée",
-                LayerThickness::Impasto => "Empatement",
+                LayerThickness::Impasto => "Empâtement",
             },
             Locale::En => match self {
                 LayerThickness::Glaze => "Glaze / veil",
@@ -373,7 +373,7 @@ impl PaintSystem {
                 "Thinner or oil, drying in days, fat over lean applies.",
             ),
             PaintSystem::Acrylic => locale.tr(
-                "Eau et mediums acryliques, sec au toucher en minutes, couches fines et superposees.",
+                "Eau et médiums acryliques, sec au toucher en minutes, couches fines et superposées.",
                 "Water and acrylic mediums, touch dry in minutes, thin stacked layers.",
             ),
         }

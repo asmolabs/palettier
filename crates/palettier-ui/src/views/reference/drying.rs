@@ -167,10 +167,12 @@ fn CoatParameters(
         div { class: "u-mb-12",
             label {
                 class: "field-label",
-                if locale.is_fr() {
-                    "Proportion de médium : {medium_ratio_pct.read():.0} % (indice gras : {fatness:.2})"
-                } else {
-                    "Medium ratio: {medium_ratio_pct.read():.0}% (fatness index: {fatness:.2})"
+                // The fat index only means something for oil (fat over lean).
+                match (locale.is_fr(), is_oil) {
+                    (true, true) => rsx! { "Proportion de médium : {medium_ratio_pct.read():.0} % (indice gras : {fatness:.2})" },
+                    (true, false) => rsx! { "Proportion de médium : {medium_ratio_pct.read():.0} %" },
+                    (false, true) => rsx! { "Medium ratio: {medium_ratio_pct.read():.0}% (fatness index: {fatness:.2})" },
+                    (false, false) => rsx! { "Medium ratio: {medium_ratio_pct.read():.0}%" },
                 }
             }
             input {

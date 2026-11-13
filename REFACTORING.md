@@ -3,7 +3,7 @@
 État des lieux après la séparation huile / acrylique (branche `claude/acrylique-ou-huile`).
 Le domaine et la persistance sont sains ; la dette est concentrée dans l'onglet Miniature
 et dans les vues. Chaque lot ci-dessous se livre seul, avec la suite de tests au vert
-(100 tests aujourd'hui), et ne change pas ce que voit le peintre sauf mention contraire.
+(100 tests au départ, 181 après le lot 6), et ne change pas ce que voit le peintre sauf mention contraire.
 
 ## Ce qui tient et qu'on ne touche pas
 
@@ -151,11 +151,39 @@ Suite possible : regrouper les combinaisons qui reviennent souvent (par exemple
 `u-d-flex u-ai-center u-gap-8`) en classes nommées par leur rôle, au fil des
 retouches, plutôt que d'un coup.
 
-## Lot 6 : tests de l'interface et de bout en bout (priorité basse)
+## Lot 6 : tests de l'interface et de bout en bout — fait
 
-Les actions sont testées depuis le lot 2 (dont les quatre cas prioritaires). Reste à
-tester les vues elles-mêmes : le mode capture compare déjà le rendu au repos, pas les
-clics.
+Branche `claude/refactoring-lot-6`.
+
+- `palettier-ui/src/ui_tests/` fait tourner le vrai `StudioShell` dans une `VirtualDom`
+  sans fenêtre, sur une base en mémoire amorcée comme au premier lancement. Le harnais
+  lit l'arbre monté (avec l'identifiant réel de chaque élément qui écoute un événement)
+  et envoie clics, saisies et raccourcis ⌘ comme le ferait le webview. Un test vise un
+  bouton par son texte ou son `title`, un champ par son `placeholder`, et lit le texte
+  affiché. Aucune dépendance ajoutée.
+- Les vérifications attendent que l'écran les satisfasse (5 s au plus) : la suite reste
+  stable quand tous les tests tournent en parallèle.
+- 21 scénarios, ~6 s : chaque écran depuis la barre latérale, les raccourcis et la
+  palette de commandes, le choix huile / acrylique (tiroir, catalogue, séchage,
+  recettes, mélangeur, réglage enregistré), la langue et le thème, créer un projet
+  acrylique (techniques et tubes acryliques seulement), poser une couche et la voir à
+  l'établi, ajouter une zone, supprimer un projet, créer une palette, chercher au
+  catalogue, l'épaisseur au séchage, créer une recette puis lui ajouter une étape, et
+  ouvrir les 21 outils Miniature dans les deux systèmes.
+- Hors de portée : le CSS et le JavaScript (`document::eval`, boîtes de dialogue de
+  fichiers, photo de la pipette). Le mode capture couvre l'apparence.
+
+Corrigé au passage, trouvé par ces tests :
+- une recette créée n'était pas ouverte : « Ajouter l'étape » écrivait dans la recette
+  affichée avant (la première de la liste). La nouvelle recette est maintenant ouverte ;
+- le calculateur de séchage affichait l'« indice gras » en acrylique ;
+- accents : « Empâtement », « médiums acryliques … superposées ».
+
+Relevé sans le changer :
+- « Échap pour fermer » reste en français dans la palette de commandes, qui annonce
+  aussi « Siccatifs » en acrylique ;
+- « 1 zones » au singulier, et « Sujet : · » quand le sujet est vide ;
+- en acrylique, le séchage parle de « polymérisation complète » avant vernis.
 
 ## Corrections ponctuelles à glisser dans le premier lot venu
 
@@ -167,4 +195,4 @@ clics.
 
 ## Ordre conseillé
 
-Lots 1 à 5 faits. Reste le lot 6.
+Les six lots sont faits. Restent les corrections ponctuelles ci-dessus et les points relevés.
