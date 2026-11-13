@@ -33,11 +33,7 @@ impl StudyMode {
         StudyMode::Squint,
     ];
 
-    pub fn label(&self) -> &'static str {
-        self.label_i18n(Locale::Fr)
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (StudyMode::Color, Locale::Fr) => "Couleur réelle",
             (StudyMode::Grisaille9, Locale::Fr) => "Grisaille 9 valeurs",

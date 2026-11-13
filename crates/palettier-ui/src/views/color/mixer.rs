@@ -194,7 +194,7 @@ fn MixerBenchCard(
                 table { class: "data-table",
                     thead {
                         tr {
-                            th { {locale.tr("Huile", "Oil Paint")} }
+                            th { {locale.tr("Peinture", "Paint")} }
                             th { "Parts" }
                             th { "Volume" }
                             th { {locale.tr("Poids dans la couleur", "Pigment Weight")} }
@@ -340,7 +340,7 @@ fn MixerResultCard(
                         div { class: "mono", style: "font-size: 20px; font-weight: 700;", "{res_hex}" }
                         div { class: "row", style: "margin-top: 4px;",
                             DeltaEBadge { delta_e: gap_to_target }
-                            span { class: "pill", {locale.tr("Séchage : ", "Drying: ")}, "{res.drying_class.label_i18n(locale)}" }
+                            span { class: "pill", {locale.tr("Séchage : ", "Drying: ")}, "{res.drying_class.label(locale)}" }
                         }
                         div { class: "muted mono", style: "margin-top: 5px; font-size: 11.5px;",
                             "Pigments: {pigs}"

@@ -254,7 +254,7 @@ fn ReferencePhotoCard(
                                         class: if is_active { "btn-primary" } else { "btn" },
                                         style: "padding: 4px 10px; font-size: 11.5px;",
                                         onclick: move |_| show_study(&svc, mode, study_mode, image_data_url, study_data_url, decoded_image),
-                                        "{mode.label_i18n(locale)}"
+                                        "{mode.label(locale)}"
                                     }
                                 }
                             }

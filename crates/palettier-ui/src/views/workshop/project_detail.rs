@@ -178,7 +178,7 @@ fn ProjectToolbar(proj: Project) -> Element {
                     span {
                         class: if proj.system == PaintSystem::Acrylic { "pill pill-acrylic" } else { "pill pill-oil" },
                         title: "{proj.system.summary_i18n(locale)}",
-                        "{proj.system.label_i18n(locale)}"
+                        "{proj.system.label(locale)}"
                     }
                 }
                 span { class: "muted",
@@ -210,7 +210,7 @@ fn ProjectToolbar(proj: Project) -> Element {
                         }
                     },
                     for r in PhotoRole::ALL {
-                        option { value: "{r.as_db_str()}", "Photo: {r.label_i18n(locale)}" }
+                        option { value: "{r.as_db_str()}", "Photo: {r.label(locale)}" }
                     }
                 }
                 button {
@@ -385,7 +385,7 @@ fn ProjectSubstituteRow(proj: Project, m: MissingPaint) -> Element {
                     ColorSwatch { hex: near.hex_color.clone(), size: 20 }
                     DeltaEBadge { delta_e: m.delta_e }
                 }
-                span { class: "muted", style: "font-size:12px;", "{m.verdict_i18n(locale)}" }
+                span { class: "muted", style: "font-size:12px;", "{m.verdict(locale)}" }
             }
             if let Some(replacement) = m.nearest.clone() {
                 button {
@@ -473,7 +473,7 @@ fn ProgressCard() -> Element {
                             span { class: "muted", "vs" }
                             ColorSwatch { hex: target.to_hex(), size: 22 }
                         }
-                        span { style: "font-size: 12.5px;", "{obs.verdict_i18n(locale)}" }
+                        span { style: "font-size: 12.5px;", "{obs.verdict(locale)}" }
                     }
                     if obs.matches_plan() {
                         DeltaEBadge { delta_e: obs.delta_e }
@@ -522,7 +522,7 @@ fn PhotoCard(proj: Project, ph: ProjectPhoto) -> Element {
             }
             div { class: "row-between",
                 strong { style: "font-size: 12px; overflow: hidden; text-overflow: ellipsis;", "{ph.caption}" }
-                span { class: "pill", "{ph.role.label_i18n(locale)}" }
+                span { class: "pill", "{ph.role.label(locale)}" }
             }
             div { class: "row", style: "margin-top: 6px;",
                 button {

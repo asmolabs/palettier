@@ -371,7 +371,7 @@ impl CatalogLoader {
         let hex = row.get_or_default("hex", "").to_string();
         assert!(
             Rgb::of_hex(&hex).is_ok(),
-            "Une acrylique doit declarer sa teinte (colonne hex) en {}",
+            "Une acrylique doit déclarer sa teinte (colonne hex) en {}",
             row.location()
         );
         let opacity_raw = row.get_or_default("opacity", "");

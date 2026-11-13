@@ -109,7 +109,7 @@ fn ClimateCard() -> Element {
                                     }
                             },
                             for v in Ventilation::ALL {
-                                option { value: "{v.as_db_str()}", "{v.label_i18n(locale)}" }
+                                option { value: "{v.as_db_str()}", "{v.label(locale)}" }
                             }
                         }
                     }
@@ -163,7 +163,7 @@ fn BenchPiece(piece: PieceState) -> Element {
                     strong { "{piece.project.name}" }
                     span {
                         class: if piece.project.system == PaintSystem::Acrylic { "pill pill-acrylic" } else { "pill pill-oil" },
-                        "{piece.project.system.label_i18n(locale)}"
+                        "{piece.project.system.label(locale)}"
                     }
                 }
                 span { class: "pill",
@@ -186,7 +186,7 @@ fn BenchPiece(piece: PieceState) -> Element {
                     } else if let Some(ref last) = z.last {
                         span {
                             class: "pill pill-warn",
-                            "{last.stage.label_i18n(locale)} · ", {locale.tr("suite dans", "next in")}, " {format_duration(z.remaining(), locale)}"
+                            "{last.stage.label(locale)} · ", {locale.tr("suite dans", "next in")}, " {format_duration(z.remaining(), locale)}"
                         }
                     }
                 }
@@ -298,7 +298,7 @@ fn NewMixForm() -> Element {
                             }
                         },
                         for dc in DryingClass::ALL {
-                            option { value: "{dc.as_db_str()}", "{dc.label_i18n(locale)}" }
+                            option { value: "{dc.as_db_str()}", "{dc.label(locale)}" }
                         }
                     }
                 }

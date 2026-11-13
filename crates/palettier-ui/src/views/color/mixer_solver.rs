@@ -134,7 +134,7 @@ fn SuggestionRow(sug: MixSuggestion, target_hex: String, manual_parts: Signal<Ve
                 div { style: "font-weight: 600;", "{sug.describe_i18n(locale)}" }
                 div { class: "muted", style: "font-size: 11px;",
                     {locale.tr("Séchage", "Drying")},
-                    " : {sug.drying_class().label_i18n(locale)}"
+                    " : {sug.drying_class().label(locale)}"
                 }
             }
             td {

@@ -139,13 +139,13 @@ impl MixingGuideBuilder {
             .map(|e| (Self::paint_key(&e.paint), e.short_code.clone()))
             .collect();
 
-        let mother_mixes = self.build_mother_mixes(paints, &code_map);
+        let mother_mixes = self.build_mother_mixes(paints, &code_map, locale);
         let washes = self.build_washes(&plan.zones, paints, &code_map, &mother_mixes);
 
         let zones: Vec<GuideZone> = plan
             .zones
             .iter()
-            .map(|z| self.build_zone(z, paints, &code_map, &mother_mixes))
+            .map(|z| self.build_zone(z, paints, &code_map, &mother_mixes, locale))
             .collect();
 
         let subtitle = if plan.palette_name.trim().is_empty() {
@@ -393,7 +393,7 @@ impl MixingGuideBuilder {
                 DryingClass::Medium => locale.tr("séchage moyen", "medium drying"),
                 DryingClass::Fast => locale.tr("séchage rapide", "fast drying"),
             };
-            return format!("{}, {}", paint.opacity.label_i18n(locale), drying_str);
+            return format!("{}, {}", paint.opacity.label(locale), drying_str);
         }
 
         let lab = paint.color().to_lab();
@@ -404,7 +404,7 @@ impl MixingGuideBuilder {
         } else {
             locale.tr("neutre", "neutral")
         };
-        format!("{}, {}", paint.opacity.label_i18n(locale), temp)
+        format!("{}, {}", paint.opacity.label(locale), temp)
     }
 
     /// Synthétise les 3 mélanges intermédiaires (`Si` — Sienne, `BF` — Brun foncé, `NC` — Noir coloré)
@@ -413,7 +413,11 @@ impl MixingGuideBuilder {
         &self,
         paints: &[Paint],
         code_map: &IndexMap<String, String>,
+        locale: Locale,
     ) -> Vec<MotherMix> {
+        let sienna = locale.tr("Sienne", "Sienna");
+        let dark_brown = locale.tr("Brun foncé", "Dark brown");
+        let coloured_black = locale.tr("Noir coloré", "Coloured black");
         if paints.len() < 3 {
             return Vec::new();
         }
@@ -453,26 +457,31 @@ impl MixingGuideBuilder {
                 && Self::paint_key(ga) != Self::paint_key(rc)
             {
                 let ga_c = Self::code_of(ga, code_map);
-                format!(
-                    "3 {} + 1 {} + une pointe de {}. Plus de {} : sienne plus rouge ; plus d'{} : plus dorée.",
-                    Self::code_of(oc, code_map),
-                    Self::code_of(rc, code_map),
-                    ga_c,
-                    Self::code_of(rc, code_map),
-                    Self::code_of(oc, code_map),
-                )
+                let oc_c = Self::code_of(oc, code_map);
+                let rc_c = Self::code_of(rc, code_map);
+                match locale {
+                    Locale::Fr => format!(
+                        "3 {oc_c} + 1 {rc_c} + une pointe de {ga_c}. Plus de {rc_c} : sienne plus rouge ; plus d'{oc_c} : plus dorée."
+                    ),
+                    Locale::En => format!(
+                        "3 {oc_c} + 1 {rc_c} + a touch of {ga_c}. More {rc_c}: redder sienna; more {oc_c}: more golden."
+                    ),
+                }
             } else {
-                format!(
-                    "3 {} + 1 {}. Plus de {} : sienne plus rouge ; plus d'{} : plus dorée.",
-                    Self::code_of(oc, code_map),
-                    Self::code_of(rc, code_map),
-                    Self::code_of(rc, code_map),
-                    Self::code_of(oc, code_map),
-                )
+                let oc_c = Self::code_of(oc, code_map);
+                let rc_c = Self::code_of(rc, code_map);
+                match locale {
+                    Locale::Fr => format!(
+                        "3 {oc_c} + 1 {rc_c}. Plus de {rc_c} : sienne plus rouge ; plus d'{oc_c} : plus dorée."
+                    ),
+                    Locale::En => format!(
+                        "3 {oc_c} + 1 {rc_c}. More {rc_c}: redder sienna; more {oc_c}: more golden."
+                    ),
+                }
             };
             out.push(MotherMix {
                 code: "Si".to_string(),
-                name: "Sienne".to_string(),
+                name: sienna.to_string(),
                 hex_color: hex,
                 recipe_text,
                 adjustment_note: String::new(),
@@ -485,11 +494,15 @@ impl MixingGuideBuilder {
         {
             out.push(MotherMix {
                 code: "Si".to_string(),
-                name: "Sienne".to_string(),
+                name: sienna.to_string(),
                 hex_color: sugg.color.to_hex(),
                 recipe_text: format!(
-                    "{}. Base terreuse chaude pour les ombres de peau et les cuirs.",
-                    Self::format_suggestion_short(&sugg, code_map)
+                    "{}. {}",
+                    Self::format_suggestion_short(&sugg, code_map, locale),
+                    locale.tr(
+                        "Base terreuse chaude pour les ombres de peau et les cuirs.",
+                        "Warm earthy base for skin shadows and leather."
+                    )
                 ),
                 adjustment_note: String::new(),
             });
@@ -516,14 +529,20 @@ impl MixingGuideBuilder {
             let pr_code = Self::code_of(pr, code_map);
             out.push(MotherMix {
                 code: "BF".to_string(),
-                name: "Brun foncé".to_string(),
+                name: dark_brown.to_string(),
                 hex_color: hex,
-                recipe_text: format!(
-                    "2 {} + 1 {}, puis {} trace par trace au cure-dent. Le mélange fonce vite : arrête-toi avant qu'il ne verdisse.",
-                    Self::code_of(oc, code_map),
-                    Self::code_of(rc, code_map),
-                    pr_code,
-                ),
+                recipe_text: {
+                    let oc_c = Self::code_of(oc, code_map);
+                    let rc_c = Self::code_of(rc, code_map);
+                    match locale {
+                        Locale::Fr => format!(
+                            "2 {oc_c} + 1 {rc_c}, puis {pr_code} trace par trace au cure-dent. Le mélange fonce vite : arrête-toi avant qu'il ne verdisse."
+                        ),
+                        Locale::En => format!(
+                            "2 {oc_c} + 1 {rc_c}, then {pr_code} a trace at a time with a toothpick. The mix darkens fast: stop before it turns green."
+                        ),
+                    }
+                },
                 adjustment_note: String::new(),
             });
         } else if let Some(sugg) = self
@@ -534,11 +553,15 @@ impl MixingGuideBuilder {
         {
             out.push(MotherMix {
                 code: "BF".to_string(),
-                name: "Brun foncé".to_string(),
+                name: dark_brown.to_string(),
                 hex_color: sugg.color.to_hex(),
                 recipe_text: format!(
-                    "{}. Pour les creux soutenus, cheveux et bois sombres.",
-                    Self::format_suggestion_short(&sugg, code_map)
+                    "{}. {}",
+                    Self::format_suggestion_short(&sugg, code_map, locale),
+                    locale.tr(
+                        "Pour les creux soutenus, cheveux et bois sombres.",
+                        "For deep recesses, hair and dark wood."
+                    )
                 ),
                 adjustment_note: String::new(),
             });
@@ -563,11 +586,16 @@ impl MixingGuideBuilder {
             let pr_c = Self::code_of(pr, code_map);
             out.push(MotherMix {
                 code: "NC".to_string(),
-                name: "Noir coloré".to_string(),
+                name: coloured_black.to_string(),
                 hex_color: hex,
-                recipe_text: format!(
-                    "2 {ga_c} + 1 {pr_c}. Commence par {ga_c}, ajoute {pr_c} peu à peu. Plus de {ga_c} : noir violacé chaud ; plus de {pr_c} : noir bleuté froid."
-                ),
+                recipe_text: match locale {
+                    Locale::Fr => format!(
+                        "2 {ga_c} + 1 {pr_c}. Commence par {ga_c}, ajoute {pr_c} peu à peu. Plus de {ga_c} : noir violacé chaud ; plus de {pr_c} : noir bleuté froid."
+                    ),
+                    Locale::En => format!(
+                        "2 {ga_c} + 1 {pr_c}. Start with {ga_c}, add {pr_c} little by little. More {ga_c}: warm violet black; more {pr_c}: cool bluish black."
+                    ),
+                },
                 adjustment_note: String::new(),
             });
         } else if let Some(sugg) = self
@@ -578,11 +606,15 @@ impl MixingGuideBuilder {
         {
             out.push(MotherMix {
                 code: "NC".to_string(),
-                name: "Noir coloré".to_string(),
+                name: coloured_black.to_string(),
                 hex_color: sugg.color.to_hex(),
                 recipe_text: format!(
-                    "{}. Plus vivant qu'un noir pur pour les ombres profondes.",
-                    Self::format_suggestion_short(&sugg, code_map)
+                    "{}. {}",
+                    Self::format_suggestion_short(&sugg, code_map, locale),
+                    locale.tr(
+                        "Plus vivant qu'un noir pur pour les ombres profondes.",
+                        "Livelier than pure black for deep shadows."
+                    )
                 ),
                 adjustment_note: String::new(),
             });
@@ -686,6 +718,7 @@ impl MixingGuideBuilder {
         paints: &[Paint],
         code_map: &IndexMap<String, String>,
         mother_mixes: &[MotherMix],
+        locale: Locale,
     ) -> GuideZone {
         let mut ordered_layers: Vec<PlanLayer> = Vec::new();
         // Dans les guides de référence, l'ordre de lecture d'une zone est :
@@ -707,7 +740,7 @@ impl MixingGuideBuilder {
         let base_layer = zone.base.as_ref();
         let rows = ordered_layers
             .iter()
-            .map(|layer| self.build_layer_row(layer, base_layer, paints, code_map, mother_mixes))
+            .map(|layer| self.build_layer_row(layer, base_layer, paints, code_map, mother_mixes, locale))
             .collect();
 
         GuideZone {
@@ -725,6 +758,7 @@ impl MixingGuideBuilder {
         paints: &[Paint],
         code_map: &IndexMap<String, String>,
         mother_mixes: &[MotherMix],
+        locale: Locale,
     ) -> GuideLayerRow {
         let swatch_hex = layer.achieved.to_hex();
         let target_hex = layer.target.to_hex();
@@ -738,8 +772,11 @@ impl MixingGuideBuilder {
                 paints,
                 code_map,
                 mother_mixes,
+                locale,
             ),
-            None => "Tube pur ou mélange à ajuster à l'œil".to_string(),
+            None => locale
+                .tr("Tube pur ou mélange à ajuster à l'œil", "Neat tube or mix to adjust by eye")
+                .to_string(),
         };
 
         let placement_note = layer.note.trim().to_string();
@@ -776,6 +813,7 @@ impl MixingGuideBuilder {
         paints: &[Paint],
         code_map: &IndexMap<String, String>,
         mother_mixes: &[MotherMix],
+            locale: Locale,
     ) -> String {
         let role_low = role.to_lowercase();
         let white_code = Self::find_by_code(paints, code_map, "B")
@@ -855,15 +893,15 @@ impl MixingGuideBuilder {
                         .iter()
                         .any(|c| Self::code_of(&c.paint, code_map) == "Pr");
                     if has_ga && has_pr {
-                        return "Si + Ga + une trace de Pr".to_string();
+                        return format!("Si + Ga + {} Pr", locale.tr("une trace de", "a trace of"));
                     } else if mother_mixes.iter().any(|m| m.code == "BF") {
-                        return "Si + une trace de BF".to_string();
+                        return format!("Si + {} BF", locale.tr("une trace de", "a trace of"));
                     }
                 }
             }
         }
 
-        Self::format_suggestion_short(sugg, code_map)
+        Self::format_suggestion_short(sugg, code_map, locale)
     }
 
     /// Convertit les composants d'un `MixSuggestion` en notation courte d'atelier :
@@ -871,13 +909,17 @@ impl MixingGuideBuilder {
     pub fn format_suggestion_short(
         sugg: &MixSuggestion,
         code_map: &IndexMap<String, String>,
+            locale: Locale,
     ) -> String {
         if sugg.parts.is_empty() {
             return String::new();
         }
         if sugg.parts.len() == 1 {
             let c = &sugg.parts[0];
-            return format!("{} pur", Self::code_of(&c.paint, code_map));
+            return match locale {
+                Locale::Fr => format!("{} pur", Self::code_of(&c.paint, code_map)),
+                Locale::En => format!("{} neat", Self::code_of(&c.paint, code_map)),
+            };
         }
 
         let total_parts: f64 = sugg.parts.iter().map(|p| p.parts).sum::<f64>().max(1e-6);
@@ -926,9 +968,9 @@ impl MixingGuideBuilder {
             let share = comp.parts / total_parts;
             let code = Self::code_of(&comp.paint, code_map);
             if share < 0.06 || comp.paint.tinting_strength >= 0.88 {
-                parts_str.push(format!("une trace de {code}"));
+                parts_str.push(format!("{} {code}", locale.tr("une trace de", "a trace of")));
             } else {
-                parts_str.push(format!("une pointe de {code}"));
+                parts_str.push(format!("{} {code}", locale.tr("une pointe de", "a touch of")));
             }
         }
 

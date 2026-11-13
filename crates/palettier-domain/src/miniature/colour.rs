@@ -193,7 +193,7 @@ impl NmmMetal {
         NmmMetal::CopperBronze,
     ];
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::Gold, Locale::Fr) => "NMM Or Royal & Héraldique",
             (Self::Gold, Locale::En) => "NMM Royal Gold",

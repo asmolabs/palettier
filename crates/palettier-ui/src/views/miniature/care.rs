@@ -98,7 +98,7 @@ fn brush_row(mut brushes: Signal<Vec<BrushTracker>>, locale: Locale, idx: usize,
                     button {
                         class: "btn",
                         onclick: move |_| add_use(&mut brushes.write(), idx),
-                        "+ 1 use"
+                        {locale.tr("+ 1 utilisation", "+ 1 use")}
                     }
                     button {
                         class: "btn",
@@ -134,7 +134,7 @@ pub(super) fn VarnishStudio() -> Element {
                                     class: if is_sel { "card-subtle active" } else { "card-subtle" },
                                     style: if is_sel { "border-color: var(--accent); cursor: pointer; padding: 10px;" } else { "cursor: pointer; padding: 10px;" },
                                     onclick: move |_| selected_varnish.set(v),
-                                    div { style: "font-weight: 700; font-size: 13px;", "{v.label_i18n(locale)}" }
+                                    div { style: "font-weight: 700; font-size: 13px;", "{v.label(locale)}" }
                                 }
                             }
                         }
@@ -146,7 +146,7 @@ pub(super) fn VarnishStudio() -> Element {
                 {
                     let v = *selected_varnish.read();
                     rsx! {
-                        h3 { class: "card-title", "{v.label_i18n(locale)}" }
+                        h3 { class: "card-title", "{v.label(locale)}" }
                         div { class: "card-subtle", style: "font-size: 13.5px; line-height: 1.5; margin-bottom: 16px;",
                             "{v.description_i18n(locale)}"
                         }

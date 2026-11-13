@@ -25,7 +25,7 @@ impl WeatheringEffect {
         WeatheringEffect::FreshFuelOil,
     ];
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::StreakingGrime, Locale::Fr) => "Streaking Grime (Coulures de crasse & pluie)",
             (Self::StreakingGrime, Locale::En) => "Streaking Grime (Rain & Grim streaks)",
@@ -146,7 +146,7 @@ impl SpecialEffectGore {
         SpecialEffectGore::GemLens,
     ];
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::FreshGore, Locale::Fr) => "Sang Frais & Éclaboussures Récentes",
             (Self::FreshGore, Locale::En) => "Fresh Arterial Gore & Splatter",
@@ -206,7 +206,7 @@ impl DryPigmentEffect {
         Self::IndustrialAsh,
     ];
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::BurntUmberDust, Locale::Fr) => "Poudre Terre d'Ombre Brûlée",
             (Self::BurntUmberDust, Locale::En) => "Burnt Umber Soil Dust",

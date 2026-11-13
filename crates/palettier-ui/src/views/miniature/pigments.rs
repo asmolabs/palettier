@@ -50,7 +50,7 @@ pub(super) fn Pigments(candidates: Vec<Paint>) -> Element {
                     div { class: "row", style: "gap: 12px; align-items: center;",
                         ColorSwatch { hex: pig.dry_hex().to_string(), size: 36 }
                         div {
-                            h3 { class: "card-title", style: "margin: 0;", "{pig.label_i18n(locale)}" }
+                            h3 { class: "card-title", style: "margin: 0;", "{pig.label(locale)}" }
                             span { class: "pill pill-accent", "Weathering Pigment Simulation" }
                         }
                     }
@@ -67,7 +67,7 @@ pub(super) fn Pigments(candidates: Vec<Paint>) -> Element {
                             div { style: "font-weight: 700; font-size: 12px; margin-top: 6px;",
                                 {locale.tr("Poudre Sèche Pure", "Pure Dry Powder")}
                             }
-                            span { class: "pill", style: "font-size: 10.5px; margin-top: 4px;", "Ultra-mat / Velouté" }
+                            span { class: "pill", style: "font-size: 10.5px; margin-top: 4px;", {locale.tr("Ultra-mat / velouté", "Ultra-matt / velvety")} }
                         }
                         div { class: "card", style: "padding: 10px; text-align: center;",
                             ColorSwatch { hex: pig.fixed_hex().to_string(), size: 48 }
@@ -90,7 +90,7 @@ pub(super) fn Pigments(candidates: Vec<Paint>) -> Element {
                                 ColorSwatch { hex: s.color.to_hex(), size: 30 }
                                 div {
                                     div { style: "font-weight: 700; font-size: 13px;", "{s.describe_i18n(locale)}" }
-                                    div { class: "muted", style: "font-size: 11px;", "{s.verdict_i18n(locale)}" }
+                                    div { class: "muted", style: "font-size: 11px;", "{s.verdict(locale)}" }
                                 }
                             }
                             DeltaEBadge { delta_e: s.delta_e }
@@ -124,7 +124,7 @@ fn pigment_option(mut selected_pigment: Signal<DryPigmentEffect>, locale: Locale
             div { class: "row-between", style: "align-items: center;",
                 div { class: "row", style: "gap: 10px; align-items: center;",
                     ColorSwatch { hex: pig.dry_hex().to_string(), size: 28 }
-                    strong { style: "font-size: 13px;", "{pig.label_i18n(locale)}" }
+                    strong { style: "font-size: 13px;", "{pig.label(locale)}" }
                 }
                 span { class: "mono", style: "font-size: 11px;", "{pig.dry_hex()}" }
             }

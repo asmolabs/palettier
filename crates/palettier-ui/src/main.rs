@@ -194,7 +194,7 @@ fn StudioShell(services: AppServices) -> Element {
     let current_locale = *app_state.locale.read();
     let current_theme = *app_state.theme.read();
     let current_system = *app_state.paint_system.read();
-    let system_label = current_system.label_i18n(current_locale).to_lowercase();
+    let system_label = current_system.label(current_locale).to_lowercase();
     let owned_count = app_state
         .paints
         .read()
@@ -287,7 +287,7 @@ fn StudioShell(services: AppServices) -> Element {
                                     let svc = services.clone();
                                     move |_| app_state.set_paint_system(&svc, sys)
                                 },
-                                "{sys.label_i18n(current_locale)}"
+                                "{sys.label(current_locale)}"
                             }
                         }
                     }
@@ -382,7 +382,7 @@ fn StudioShell(services: AppServices) -> Element {
                             if current_locale.is_fr() {
                                 "Tiroir {system_label} : {owned_count} / {total_paints}"
                             } else {
-                                "{system_label} drawer: {owned_count} / {total_paints}"
+                                "{current_system.label(current_locale)} drawer: {owned_count} / {total_paints}"
                             }
                         }
                         div { style: "opacity: 0.75; margin-top: 2px;",
@@ -442,7 +442,7 @@ fn NavButton(section: Section, current: Section, badge: Option<String>) -> Eleme
             onclick: move |_| state.section.set(section),
             div { class: "nav-btn-left",
                 span { style: "font-size: 14px; margin-right: 4px; display: inline-block;", "{section.icon()}" }
-                span { "{section.label_i18n(locale)}" }
+                span { "{section.label(locale)}" }
                 if let Some(b) = badge {
                     span { class: "pill pill-ok", style: "padding: 0 6px; font-size: 10px;", "{b}" }
                 }

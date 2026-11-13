@@ -159,7 +159,7 @@ pub(super) fn CustomTubeForm(
                             option {
                                 value: "{op:?}",
                                 selected: *opacity.read() == op,
-                                "{op.label_i18n(locale)}"
+                                "{op.label(locale)}"
                             }
                         }
                     }
@@ -173,7 +173,7 @@ pub(super) fn CustomTubeForm(
                             option {
                                 value: "{dc:?}",
                                 selected: *drying.read() == dc,
-                                "{dc.label_i18n(locale)}"
+                                "{dc.label(locale)}"
                             }
                         }
                     }

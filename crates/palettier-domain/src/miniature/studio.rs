@@ -61,7 +61,7 @@ impl VarnishFinish {
         VarnishFinish::Gloss,
     ];
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::RawStudio, Locale::Fr) => "Fini Brut d'Atelier (Hétérogène)",
             (Self::RawStudio, Locale::En) => "Raw Studio Finish (Uneven)",
@@ -169,7 +169,7 @@ impl MiniatureMaterial {
         Self::WhiteMetal,
     ];
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::PolystyrenePlastic, Locale::Fr) => "Plastique Polystyrène (Games Workshop, Gunpla)",
             (Self::PolystyrenePlastic, Locale::En) => "Polystyrene Plastic (Games Workshop, Gunpla)",
@@ -198,7 +198,7 @@ impl StrippingAgent {
         Self::PureAcetone,
     ];
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::Ipa99, Locale::Fr) => "Alcool Isopropylique 99.9% (IPA)",
             (Self::Ipa99, Locale::En) => "99.9% Isopropyl Alcohol (IPA)",

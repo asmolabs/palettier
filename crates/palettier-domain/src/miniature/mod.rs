@@ -45,8 +45,8 @@ mod tests {
     #[test]
     fn weathering_effects_all_have_labels_and_recipes() {
         for effect in WeatheringEffect::ALL {
-            assert!(!effect.label_i18n(Locale::Fr).is_empty());
-            assert!(Rgb::of_hex(effect.hex_color()).is_ok(), "la teinte se melange depuis la palette");
+            assert!(!effect.label(Locale::Fr).is_empty());
+            assert!(Rgb::of_hex(effect.hex_color()).is_ok(), "la teinte se mélange depuis la palette");
             assert!(Rgb::of_hex(effect.hex_color()).is_ok());
         }
     }
@@ -156,11 +156,13 @@ mod tests {
             oil_mix_formula: "2 parts A + 1 part B".to_string(),
             ..ArmyRecipeSheet::default()
         };
-        let md = sheet.to_markdown();
+        let md = sheet.to_markdown(Locale::Fr);
+        assert!(sheet.to_markdown(Locale::En).contains("Recipe sheet"));
         assert!(md.contains("Compagnie rouge"));
         assert!(md.contains("2 parts A + 1 part B"));
 
-        let html = sheet.to_printable_html();
+        let html = sheet.to_printable_html(Locale::Fr);
+        assert!(sheet.to_printable_html(Locale::En).contains("lang=\"en\""));
         assert!(html.contains("<!DOCTYPE html>"));
         assert!(html.contains("Escouade A"));
     }

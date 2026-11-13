@@ -260,11 +260,11 @@ impl CatalogSeeder {
         Ok(Palette {
             id: None,
             name: "Armure bleue (acrylique)".to_string(),
-            purpose: "Figurine 28-32 mm, peinte entierement a l'acrylique".to_string(),
+            purpose: "Figurine 28-32 mm, peinte entièrement à l'acrylique".to_string(),
             notes: concat!(
                 "Une echelle de bleus du plus sombre au plus clair, un lavis noir-bleu pour les creux ",
-                "et un gris tres clair pour les liseres. A l'acrylique, on ne fond pas : on superpose ",
-                "des couches fines, chacune un peu plus claire et un peu plus petite que la precedente."
+                "et un gris très clair pour les liserés. À l'acrylique, on ne fond pas : on superpose ",
+                "des couches fines, chacune un peu plus claire et un peu plus petite que la précédente."
             )
             .to_string(),
             paints: self
@@ -288,8 +288,8 @@ impl CatalogSeeder {
             purpose: "Carnations et portraits".to_string(),
             notes: concat!(
                 "Quatre tubes : blanc de titane, ocre jaune, cadmium ecarlate, noir d'ivoire.\n\n",
-                "Le noir ne sert pas a noircir, il tient le role du bleu. Sorti du tube il est chaud ; coupe de blanc il donne des gris franchement bleutes, et mele a l'ocre des verts sourds. Les ombres d'une carnation se font donc au noir, sans jamais ajouter de bleu.\n\n",
-                "Cette divergence entre le tube et le melange est reelle, et c'est ce que le modele a deux constantes de l'application sait reproduire.\n\n",
+                "Le noir ne sert pas a noircir, il tient le role du bleu. Sorti du tube il est chaud ; coupe de blanc il donne des gris franchement bleutes, et mele à l'ocre des verts sourds. Les ombres d'une carnation se font donc au noir, sans jamais ajouter de bleu.\n\n",
+                "Cette divergence entre le tube et le mélange est réelle, et c'est ce que le modèle a deux constantes de l'application sait reproduire.\n\n",
                 "Zorn peignait au vermillon ; le cadmium ecarlate le remplace. C'est le pigment le plus lent de la palette, il commande le planning de la seance."
             )
             .to_string(),
@@ -336,7 +336,7 @@ impl CatalogSeeder {
             id: None,
             name: "Blindage vert olive".to_string(),
             purpose: "Vehicule 1/35".to_string(),
-            notes: "Filtres, jus et salissures. Le blanc ne sert qu'a casser le vert, jamais a eclaircir.".to_string(),
+            notes: "Filtres, jus et salissures. Le blanc ne sert qu'à casser le vert, jamais a éclaircir.".to_string(),
             paints: self
                 .resolve(&[
                     ("Winsor & Newton", "Olive Green"),
@@ -368,9 +368,9 @@ impl CatalogSeeder {
                 name: "Carnation 1/10 a l'huile".to_string(),
                 subject: "Visage de buste".to_string(),
                 notes: concat!(
-                    "Base acrylique poncee et vernie brillante, seche depuis 24 h.\n",
-                    "Tout le modele repose sur des couches tres fines : on construit la profondeur\n",
-                    "par accumulation, jamais en une seule passe chargee."
+                    "Base acrylique poncée et vernie brillante, sèche depuis 24 h.\n",
+                    "Tout le modèle repose sur des couches très fines : on construit la profondeur\n",
+                    "par accumulation, jamais en une seule passe chargée."
                 )
                 .to_string(),
                 steps: vec![
@@ -380,7 +380,7 @@ impl CatalogSeeder {
                         Medium::OdorlessThinner,
                         0.25,
                         LayerThickness::Thin,
-                        "Aplat tres fin, on doit encore deviner la base acrylique.",
+                        "Aplat très fin, on doit encore deviner la base acrylique.",
                     ),
                     Self::step(
                         Technique::DotFading,
@@ -396,7 +396,7 @@ impl CatalogSeeder {
                         Medium::None,
                         0.0,
                         LayerThickness::Thin,
-                        "Tirer les transitions tant que la couche est ouverte, essuyer le pinceau a chaque passage.",
+                        "Tirer les transitions tant que la couche est ouverte, essuyer le pinceau à chaque passage.",
                     ),
                     Self::step(
                         Technique::PinWash,
@@ -424,7 +424,7 @@ impl CatalogSeeder {
                 steps: vec![
                     Self::step(
                         Technique::Filter,
-                        "Olive Green tres dilue",
+                        "Olive Green très dilué",
                         Medium::OdorlessThinner,
                         0.94,
                         LayerThickness::Glaze,
@@ -444,7 +444,7 @@ impl CatalogSeeder {
                         Medium::OdorlessThinner,
                         0.75,
                         LayerThickness::Thin,
-                        "Traits verticaux depuis les asperites, tires vers le bas apres deux minutes.",
+                        "Traits verticaux depuis les aspérités, tirés vers le bas après deux minutes.",
                     ),
                     Self::step(
                         Technique::Glaze,
@@ -461,9 +461,9 @@ impl CatalogSeeder {
                 name: "Armure bleue en couches acryliques".to_string(),
                 subject: "Figurine 28-32 mm".to_string(),
                 notes: concat!(
-                    "Entierement a l'acrylique, sur sous-couche noire ou grise.
+                    "Entièrement à l'acrylique, sur sous-couche noire ou grise.
 ",
-                    "Chaque etape se reprend apres quelques minutes : la piece se termine en une seance."
+                    "Chaque étape se reprend après quelques minutes : la pièce se termine en une séance."
                 )
                 .to_string(),
                 steps: vec![
@@ -473,7 +473,7 @@ impl CatalogSeeder {
                         Medium::Water,
                         0.30,
                         LayerThickness::Normal,
-                        "Deux couches fines plutot qu'une epaisse.",
+                        "Deux couches fines plutôt qu'une épaisse.",
                     ),
                     Self::step(
                         Technique::ShadeWash,
@@ -497,7 +497,7 @@ impl CatalogSeeder {
                         Medium::Water,
                         0.30,
                         LayerThickness::Thin,
-                        "Sur toutes les aretes, au plat du pinceau.",
+                        "Sur toutes les arêtes, au plat du pinceau.",
                     ),
                     Self::step(
                         Technique::Highlight,
@@ -505,7 +505,7 @@ impl CatalogSeeder {
                         Medium::None,
                         0.0,
                         LayerThickness::Thin,
-                        "Points de lumiere aux angles les plus exposes seulement.",
+                        "Points de lumière aux angles les plus exposés seulement.",
                     ),
                 ],
             },

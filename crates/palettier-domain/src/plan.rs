@@ -67,23 +67,19 @@ pub struct PlanLayer {
 }
 
 impl PlanLayer {
-    pub fn reachability(&self) -> &'static str {
-        self.reachability_i18n(Locale::Fr)
-    }
-
-    pub fn reachability_i18n(&self, locale: Locale) -> &'static str {
+    pub fn reachability(&self, locale: Locale) -> &'static str {
         if self.recipe.is_none() {
             locale.tr("palette vide", "empty palette")
         } else if self.delta_e < 2.0 {
             locale.tr("atteignable tel quel", "reachable as-is")
         } else if self.delta_e < 5.0 {
             locale.tr(
-                "tres proche, ecart invisible sur la piece",
+                "très proche, écart invisible sur la pièce",
                 "very close, gap invisible on the piece",
             )
         } else if self.delta_e < 12.0 {
             locale.tr(
-                "approche, a rattraper au glacis",
+                "approche, à rattraper au glacis",
                 "approximate, refine with a glaze",
             )
         } else {
@@ -309,7 +305,7 @@ impl PlanDryingService {
         let mut out = Vec::new();
         if sequential > parallel {
             out.push(
-                "Menez les zones de front plutot que l'une apres l'autre : pendant qu'une couche seche, les autres zones avancent. Il n'y a rien a gagner a attendre."
+                "Menez les zones de front plutôt que l'une après l'autre : pendant qu'une couche sèche, les autres zones avancent. Il n'y a rien à gagner a attendre."
                     .to_string(),
             );
         }
@@ -323,9 +319,9 @@ impl PlanDryingService {
         }
         for z in zones.iter().filter(|z| z.slowest() >= DryingClass::Slow) {
             out.push(format!(
-                "{} contient un pigment a sechage {} : c'est lui qui impose les delais de cette zone.",
+                "{} contient un pigment à séchage {} : c'est lui qui impose les délais de cette zone.",
                 z.zone,
-                z.slowest().label().to_lowercase()
+                z.slowest().label(Locale::Fr).to_lowercase()
             ));
         }
         out
@@ -482,7 +478,7 @@ impl SampledPlanService {
         let usable: Vec<&ColourGroup> = groups.iter().filter(|g| !g.samples.is_empty()).collect();
         if usable.is_empty() {
             return Err(DomainError::InvalidArgument(
-                "Aucun point releve : ajoutez au moins une couleur a un groupe.".to_string(),
+                "Aucun point relevé : ajoutez au moins une couleur à un groupe.".to_string(),
             ));
         }
 
@@ -498,7 +494,7 @@ impl SampledPlanService {
                 .map(|p| p.name.clone())
                 .unwrap_or_else(|| "sans palette".to_string()),
             approach: format!(
-                "Plan etabli a partir de {total_samples} points releves sur la reference."
+                "Plan établi à partir de {total_samples} points relevés sur la référence."
             ),
             system: palette.map(|p| p.system()).unwrap_or_default(),
             zones,
@@ -538,7 +534,7 @@ impl SampledPlanService {
             .enumerate()
             .map(|(rank, idx)| {
                 self.make_layer(
-                    format!("Lumiere {}", rank + 1),
+                    format!("Lumière {}", rank + 1),
                     ordered[idx],
                     light_technique,
                     palette,
@@ -566,8 +562,8 @@ impl SampledPlanService {
 
     fn note_for(sample_count: usize) -> String {
         match sample_count {
-            1 => "Un seul point releve : la valeur locale, sans modele. Relevez une ombre et une lumiere pour obtenir un degrade.".to_string(),
-            2 => "Deux points : une base et un ecart. Un troisieme de l'autre cote donnerait un vrai degrade.".to_string(),
+            1 => "Un seul point relevé : la valeur locale, sans modèle. Relevez une ombre et une lumière pour obtenir un dégradé.".to_string(),
+            2 => "Deux points : une base et un écart. Un troisième de l'autre côté donnerait un vrai dégradé.".to_string(),
             n => format!("{n} points releves sur la reference."),
         }
     }

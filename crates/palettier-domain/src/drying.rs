@@ -237,7 +237,104 @@ pub struct DryingEstimate {
     pub recoat: Duration,
     pub through_dry: Duration,
     pub full_cure: Duration,
-    pub advice: Vec<String>,
+    pub advice: Vec<DryingAdvice>,
+}
+
+/// A precaution attached to a drying estimate. A value rather than a sentence, so that
+/// it can be written in the reader's language and checked without parsing text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DryingAdvice {
+    /// A medium of the other system was mixed in.
+    WrongSystem(Medium, PaintSystem),
+    /// More of this medium than the binder can hold.
+    BeyondUsefulRatio(Medium),
+    AcrylicTooCold,
+    AcrylicDriesOnPalette,
+    AcrylicHumid,
+    AcrylicThick,
+    OilTooCold,
+    OilTooHot,
+    OilHumid,
+    OilThick,
+    CobaltOverdose,
+    VerySlowPigments,
+    /// The usual advice of the medium in use.
+    Medium(Medium),
+}
+
+impl DryingAdvice {
+    pub fn text(&self, locale: Locale) -> String {
+        match self {
+            DryingAdvice::WrongSystem(medium, PaintSystem::Acrylic) => match locale {
+                Locale::Fr => format!("{} ne se mélange pas à l'acrylique : diluez à l'eau ou avec un médium acrylique.", medium.label(locale)),
+                Locale::En => format!("{} does not mix with acrylic: thin with water or an acrylic medium.", medium.label(locale)),
+            },
+            DryingAdvice::WrongSystem(medium, PaintSystem::Oil) => match locale {
+                Locale::Fr => format!("{} ne se mélange pas à l'huile : diluez au diluant inodore ou avec un médium à l'huile.", medium.label(locale)),
+                Locale::En => format!("{} does not mix with oil: thin with odourless thinner or an oil medium.", medium.label(locale)),
+            },
+            DryingAdvice::BeyondUsefulRatio(medium) => {
+                let max_pct = (medium.max_useful_ratio() * 100.0).round() as i64;
+                match locale {
+                    Locale::Fr => format!(
+                        "Proportion de {} au-delà de la limite utile ({max_pct} %) : le liant ne tient plus le pigment.",
+                        medium.label(locale).to_lowercase()
+                    ),
+                    Locale::En => format!(
+                        "More {} than the useful limit ({max_pct}%): the binder no longer holds the pigment.",
+                        medium.label(locale).to_lowercase()
+                    ),
+                }
+            }
+            DryingAdvice::AcrylicTooCold => locale.tr(
+                "Sous 10 degrés, l'acrylique filme mal : la couche peut rester laiteuse ou craqueler.",
+                "Below 10 degrees, acrylic films poorly: the coat may stay milky or crack.",
+            ).to_string(),
+            DryingAdvice::AcrylicDriesOnPalette => locale.tr(
+                "Air chaud ou sec : la peinture sèche sur la palette et au bout du pinceau. Palette humide conseillée.",
+                "Warm or dry air: paint dries on the palette and at the brush tip. A wet palette helps.",
+            ).to_string(),
+            DryingAdvice::AcrylicHumid => locale.tr(
+                "Humidité élevée : la couche reste molle plus longtemps, attendez avant le lavis suivant.",
+                "High humidity: the coat stays soft longer, wait before the next wash.",
+            ).to_string(),
+            DryingAdvice::AcrylicThick => locale.tr(
+                "Couche épaisse : l'acrylique se rétracte en séchant et perd les détails. Préférez deux couches fines.",
+                "Thick coat: acrylic shrinks as it dries and loses detail. Prefer two thin coats.",
+            ).to_string(),
+            DryingAdvice::OilTooCold => locale.tr(
+                "Sous 15 degrés, l'huile prend très lentement et peut rester collante plusieurs jours.",
+                "Below 15 degrees, oil sets very slowly and may stay tacky for days.",
+            ).to_string(),
+            DryingAdvice::OilTooHot => locale.tr(
+                "Au-delà de 28 degrés, le temps ouvert se réduit fortement : travaillez par petites zones.",
+                "Above 28 degrees, open time drops sharply: work in small areas.",
+            ).to_string(),
+            DryingAdvice::OilHumid => locale.tr(
+                "Humidité élevée : le séchage tire en longueur, évitez de vernir juste après.",
+                "High humidity: drying drags on, avoid varnishing right after.",
+            ).to_string(),
+            DryingAdvice::OilThick => locale.tr(
+                "Couche épaisse : la peau se forme avant le cœur. Attendez le séchage à cœur avant toute manipulation.",
+                "Thick coat: a skin forms before the core dries. Wait until it is dry through before handling.",
+            ).to_string(),
+            DryingAdvice::CobaltOverdose => locale.tr(
+                "Le siccatif au cobalt s'emploie à la goutte : au-delà, la couche craquelle en vieillissant.",
+                "Cobalt drier is used by the drop: beyond that, the coat cracks as it ages.",
+            ).to_string(),
+            DryingAdvice::VerySlowPigments => match locale {
+                Locale::Fr => format!(
+                    "{} Ces pigments restent ouverts longtemps : parfait pour les fondus, pénible pour les couches suivantes.",
+                    DryingClass::VerySlow.typical_pigments(locale)
+                ),
+                Locale::En => format!(
+                    "{} These pigments stay open a long time: great for blending, a nuisance for the next coats.",
+                    DryingClass::VerySlow.typical_pigments(locale)
+                ),
+            },
+            DryingAdvice::Medium(medium) => medium.advice(locale).to_string(),
+        }
+    }
 }
 
 /// Parameters of the acrylic drying model.
@@ -348,50 +445,30 @@ impl DryingTimeService {
         }
     }
 
-    fn acrylic_advice(context: &DryingContext) -> Vec<String> {
+    fn acrylic_advice(context: &DryingContext) -> Vec<DryingAdvice> {
         let mut out = Vec::new();
         let workshop = &context.workshop;
         if !context.medium.fits(PaintSystem::Acrylic) {
-            out.push(format!(
-                "{} ne se melange pas a l'acrylique : diluez a l'eau ou avec un medium acrylique.",
-                context.medium.label()
-            ));
+            out.push(DryingAdvice::WrongSystem(context.medium, PaintSystem::Acrylic));
         } else if context.medium != Medium::None
             && context.medium_ratio > context.medium.max_useful_ratio()
         {
-            let max_pct = (context.medium.max_useful_ratio() * 100.0).round() as i64;
-            out.push(format!(
-                "Proportion de {} au-dela de la limite utile ({} %) : le liant acrylique ne tient plus le pigment.",
-                context.medium.label().to_lowercase(),
-                max_pct
-            ));
+            out.push(DryingAdvice::BeyondUsefulRatio(context.medium));
         }
         if workshop.temperature_celsius < 10.0 {
-            out.push(
-                "Sous 10 degres, l'acrylique filme mal : la couche peut rester laiteuse ou craqueler."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::AcrylicTooCold);
         }
         if workshop.temperature_celsius > 28.0 || workshop.relative_humidity < 35.0 {
-            out.push(
-                "Air chaud ou sec : la peinture seche sur la palette et au bout du pinceau. Palette humide conseillee."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::AcrylicDriesOnPalette);
         }
         if workshop.relative_humidity > 70.0 {
-            out.push(
-                "Humidite elevee : la couche reste molle plus longtemps, attendez avant le lavis suivant."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::AcrylicHumid);
         }
         if context.thickness >= LayerThickness::Thick {
-            out.push(
-                "Couche epaisse : l'acrylique se retracte en sechant et perd les details. Preferez deux couches fines."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::AcrylicThick);
         }
         if context.medium.fits(PaintSystem::Acrylic) {
-            out.push(context.medium.advice().to_string());
+            out.push(DryingAdvice::Medium(context.medium));
         }
         out
     }
@@ -430,64 +507,38 @@ impl DryingTimeService {
         (1.0 + delta / 100.0 * self.properties.humidity_sensitivity).max(0.5)
     }
 
-    fn advice(context: &DryingContext) -> Vec<String> {
+    fn advice(context: &DryingContext) -> Vec<DryingAdvice> {
         let mut out = Vec::new();
         let workshop = &context.workshop;
 
         if !context.medium.fits(PaintSystem::Oil) {
-            out.push(format!(
-                "{} ne se melange pas a l'huile : diluez au diluant inodore ou avec un medium a l'huile.",
-                context.medium.label()
-            ));
+            out.push(DryingAdvice::WrongSystem(context.medium, PaintSystem::Oil));
             return out;
         }
         if context.medium_ratio > context.medium.max_useful_ratio()
             && context.medium != Medium::None
         {
-            let max_pct = (context.medium.max_useful_ratio() * 100.0).round() as i64;
-            out.push(format!(
-                "Proportion de {} au-dela de la limite utile ({} %) : le liant ne tient plus le pigment.",
-                context.medium.label().to_lowercase(),
-                max_pct
-            ));
+            out.push(DryingAdvice::BeyondUsefulRatio(context.medium));
         }
         if workshop.temperature_celsius < 15.0 {
-            out.push(
-                "Sous 15 degres, l'huile prend tres lentement et peut rester collante plusieurs jours."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::OilTooCold);
         }
         if workshop.temperature_celsius > 28.0 {
-            out.push(
-                "Au-dela de 28 degres, le temps ouvert se reduit fortement : travaillez par petites zones."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::OilTooHot);
         }
         if workshop.relative_humidity > 70.0 {
-            out.push(
-                "Humidite elevee : le sechage tire en longueur, evitez de vernir juste apres."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::OilHumid);
         }
         if context.thickness >= LayerThickness::Thick {
-            out.push(
-                "Couche epaisse : la peau se forme avant le coeur. Attendez le sechage a coeur avant toute manipulation."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::OilThick);
         }
         if context.medium == Medium::CobaltDrier && context.medium_ratio > 0.03 {
-            out.push(
-                "Le siccatif au cobalt s'emploie a la goutte : au-dela, la couche craquelle en vieillissant."
-                    .to_string(),
-            );
+            out.push(DryingAdvice::CobaltOverdose);
         }
         if context.drying_class == DryingClass::VerySlow {
-            out.push(format!(
-                "{} Ces pigments restent ouverts longtemps : parfait pour les fondus, penible pour les couches suivantes.",
-                context.drying_class.typical_pigments()
-            ));
+            out.push(DryingAdvice::VerySlowPigments);
         }
-        out.push(context.medium.advice().to_string());
+        out.push(DryingAdvice::Medium(context.medium));
         out
     }
 
@@ -622,7 +673,7 @@ mod tests {
             LayerThickness::Glaze,
             Workshop::standard(),
         ));
-        assert!(estimate.advice.iter().any(|a| a.contains("limite utile")));
+        assert!(estimate.advice.contains(&DryingAdvice::BeyondUsefulRatio(Medium::OdorlessThinner)));
     }
 
     #[test]
@@ -638,7 +689,7 @@ mod tests {
                 ventilation: Ventilation::Normal,
             },
         ));
-        assert!(estimate.advice.iter().any(|a| a.contains("15 degres")));
+        assert!(estimate.advice.contains(&DryingAdvice::OilTooCold));
     }
 
     #[test]
@@ -732,7 +783,7 @@ mod acrylic_tests {
             ..ctx
         };
         let est = DryingTimeService::default().estimate(&wrong);
-        assert!(est.advice.iter().any(|a| a.contains("ne se melange pas")));
+        assert!(est.advice.contains(&DryingAdvice::WrongSystem(Medium::LinseedOil, PaintSystem::Acrylic)));
     }
 
     #[test]

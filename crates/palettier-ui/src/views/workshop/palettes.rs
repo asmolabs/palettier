@@ -246,7 +246,7 @@ fn PaletteDetail(pal: Palette, selected_idx: Signal<usize>) -> Element {
                 div { class: "row",
                     span {
                         class: "pill pill-accent",
-                        {locale.tr("Rythme imposé", "Pacing set by")}, " : {pal.slowest_drying_class().label_i18n(locale)}"
+                        {locale.tr("Rythme imposé", "Pacing set by")}, " : {pal.slowest_drying_class().label(locale)}"
                     }
                     button {
                         class: if show_matrix() { "btn-primary" } else { "btn" },
@@ -373,7 +373,7 @@ fn PaletteTubeRow(pal: Palette, pt: Paint, short_code: String, behavior: String)
             }
             td { class: "muted", style: "font-size:12px;", "{behavior}" }
             td { class: "mono", "{pt.pigments.iter().cloned().collect::<Vec<_>>().join(\", \")}" }
-            td { "{pt.drying_class.label_i18n(locale)}" }
+            td { "{pt.drying_class.label(locale)}" }
             td {
                 button {
                     class: "btn-danger",
@@ -494,7 +494,7 @@ fn PaletteSubstituteRow(pal: Palette, m: MissingPaint) -> Element {
                     ColorSwatch { hex: near.hex_color.clone(), size: 20 }
                     DeltaEBadge { delta_e: m.delta_e }
                 }
-                span { class: "muted", style: "font-size: 12px;", "{m.verdict_i18n(locale)}" }
+                span { class: "muted", style: "font-size: 12px;", "{m.verdict(locale)}" }
             }
             if let Some(repl) = m.nearest.clone() {
                 button {

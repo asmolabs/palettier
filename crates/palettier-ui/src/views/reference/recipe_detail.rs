@@ -97,7 +97,7 @@ fn TimelineTable(timeline: Timeline) -> Element {
                     tr {
                         td { class: "mono", "{entry.position}" }
                         td {
-                            span { class: "pill pill-accent", "{entry.step.technique.label_i18n(locale)}" }
+                            span { class: "pill pill-accent", "{entry.step.technique.label(locale)}" }
                         }
                         td {
                             div { style: "font-weight: 600;", "{entry.step.paint_mix}" }
@@ -106,7 +106,7 @@ fn TimelineTable(timeline: Timeline) -> Element {
                             }
                         }
                         td {
-                            "{entry.step.medium.label_i18n(locale)} ({entry.step.medium_ratio * 100.0:.0} %) · {entry.step.thickness.label_i18n(locale)}"
+                            "{entry.step.medium.label(locale)} ({entry.step.medium_ratio * 100.0:.0} %) · {entry.step.thickness.label(locale)}"
                         }
                         td { class: "mono", "T + {format_duration(entry.start_offset, locale)}" }
                         td { class: "mono", "{format_duration(entry.wait_after, locale)}" }
@@ -161,9 +161,9 @@ fn AddStepForm(recipe: Recipe, draft: StepDraft) -> Element {
                         },
                         for t in step_techniques(*state.paint_system.read()) {
                             option {
-                                value: "{t.label()}",
+                                value: "{t.as_db_str()}",
                                 selected: *technique.read() == t,
-                                "{t.label_i18n(locale)}"
+                                "{t.label(locale)}"
                             }
                         }
                     }

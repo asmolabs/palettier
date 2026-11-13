@@ -61,12 +61,12 @@ pub(super) fn PaintSheet(
 
             div { class: "row", style: "margin-bottom: 14px; flex-wrap: wrap; gap: 6px;",
                 span { class: "pill pill-accent", "Pigments: {pig_str}" }
-                span { class: "pill", {locale.tr("Opacité : ", "Opacity: ")}, "{paint.opacity.label_i18n(locale)}" }
-                span { class: "pill", {locale.tr("Séchage : ", "Drying: ")}, "{paint.drying_class.label_i18n(locale)}" }
-                span { class: "pill", "{paint.lightfastness().label_i18n(locale)}" }
+                span { class: "pill", {locale.tr("Opacité : ", "Opacity: ")}, "{paint.opacity.label(locale)}" }
+                span { class: "pill", {locale.tr("Séchage : ", "Drying: ")}, "{paint.drying_class.label(locale)}" }
+                span { class: "pill", "{paint.lightfastness().label(locale)}" }
                 span {
                     class: "pill {safety.level.css_class()}",
-                    title: "{safety.advice_i18n(locale)}",
+                    title: "{safety.advice(locale)}",
                     "🛡️ {safety.level.badge_label(locale)}"
                 }
             }
@@ -78,7 +78,7 @@ pub(super) fn PaintSheet(
                         "{safety.hazards.join(\", \")}"
                     }
                     div { class: "muted", style: "font-size: 11.5px; margin-top: 3px;",
-                        "{safety.advice_i18n(locale)}"
+                        "{safety.advice(locale)}"
                     }
                 }
             }

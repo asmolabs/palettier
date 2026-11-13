@@ -337,9 +337,9 @@ fn PaintRow(
             }
             td { class: "mono muted", "{pig_str}" }
             td {
-                span { class: "pill", "{paint.opacity.label_i18n(locale)}" }
+                span { class: "pill", "{paint.opacity.label(locale)}" }
                 " "
-                span { class: "pill", "{paint.drying_class.label_i18n(locale)}" }
+                span { class: "pill", "{paint.drying_class.label(locale)}" }
             }
             td {
                 if let Some(id) = pid {

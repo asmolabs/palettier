@@ -44,7 +44,7 @@ pub(super) fn Weathering(candidates: Vec<Paint>, palette_name: String) -> Elemen
 
                 div { style: "display: flex; flex-direction: column; gap: 8px;",
                     for eff in WeatheringEffect::ALL {
-                        {swatch_option(selected_weathering, eff, eff.hex_color(), eff.label_i18n(locale))}
+                        {swatch_option(selected_weathering, eff, eff.hex_color(), eff.label(locale))}
                     }
                 }
             }
@@ -54,7 +54,7 @@ pub(super) fn Weathering(candidates: Vec<Paint>, palette_name: String) -> Elemen
                     div { class: "row", style: "gap: 12px; align-items: center;",
                         ColorSwatch { hex: eff.hex_color().to_string(), size: 40 }
                         div {
-                            h3 { class: "card-title", style: "margin: 0;", "{eff.label_i18n(locale)}" }
+                            h3 { class: "card-title", style: "margin: 0;", "{eff.label(locale)}" }
                             span { class: "pill pill-accent", style: "margin-top: 2px;", "Grimdark Oil Weathering" }
                         }
                     }
@@ -101,7 +101,7 @@ pub(super) fn SpecialEffects(candidates: Vec<Paint>, palette_name: String) -> El
                 h3 { class: "card-title", {locale.tr("Effets Spéciaux & Textures aux Huiles", "Special Effects & Oil Textures")} }
                 div { style: "display: flex; flex-direction: column; gap: 8px;",
                     for gore in SpecialEffectGore::ALL {
-                        {swatch_option(selected_gore, gore, gore.hex_color(), gore.label_i18n(locale))}
+                        {swatch_option(selected_gore, gore, gore.hex_color(), gore.label(locale))}
                     }
                 }
             }
@@ -111,7 +111,7 @@ pub(super) fn SpecialEffects(candidates: Vec<Paint>, palette_name: String) -> El
                     div { class: "row", style: "gap: 12px; align-items: center;",
                         ColorSwatch { hex: gore.hex_color().to_string(), size: 40 }
                         div {
-                            h3 { class: "card-title", style: "margin: 0;", "{gore.label_i18n(locale)}" }
+                            h3 { class: "card-title", style: "margin: 0;", "{gore.label(locale)}" }
                             span { class: "pill pill-accent", "Special FX Miniature Protocol" }
                         }
                     }
@@ -147,7 +147,7 @@ fn palette_mix(locale: Locale, palette_name: &str, sugg: Option<&MixSuggestion>)
                         ColorSwatch { hex: s.color.to_hex(), size: 32 }
                         div {
                             div { style: "font-weight: 750; font-size: 13.5px;", "{s.describe_i18n(locale)}" }
-                            div { class: "muted", style: "font-size: 11px;", "{s.verdict_i18n(locale)}" }
+                            div { class: "muted", style: "font-size: 11px;", "{s.verdict(locale)}" }
                         }
                     }
                     DeltaEBadge { delta_e: s.delta_e }
