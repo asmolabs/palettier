@@ -33,19 +33,53 @@ Reste hors lot : les autres outils (NMM, OSL, weathering, recettes d'armée) gar
 teintes et recettes codées en dur. Ce ne sont pas des doublons du domaine, mais leurs
 recettes citent des tubes en texte libre plutôt que des fiches du catalogue.
 
-## Lot 2 : sortir la logique métier des vues (priorité haute)
+## Lot 2 : sortir la logique métier des vues — fait
 
-`workshop.rs` (1 800 lignes, jusqu'à 108 espaces d'indentation), `color.rs` (1 500) et
-`views/miniature.rs` (2 760) construisent des `Project`, des `PaletteMix` et des
-`RecipeStep` directement dans des `onclick`, avec 47 `spawn(async …)` dispersés.
+Branche `claude/refactoring-lot-2`. Les vues `workshop.rs` (1 900 lignes), `color.rs`
+(1 500), `reference.rs` (1 400) et `miniature.rs` (3 000) sont devenues des modules
+`views/workshop/`, `views/color/`, `views/reference/` et `views/miniature/` : un
+composant par carte (`ProjectList`, `LayerTable`, `LayerEditor`, `PaletteMatrix`,
+`MixerSolverCard`…) et un fichier par outil Miniature. `hud.rs` et `settings.rs` sont
+découpés en cartes sur place. 41 fichiers de vue, le plus long fait 562 lignes, aucune
+ligne n'est indentée de plus de 40 espaces (10 niveaux).
 
-- Une couche d'actions dans `palettier-ui/src/actions/` (`create_project`,
-  `place_mix`, `add_recipe_step`, …) : de simples fonctions async qui prennent
-  `AppServices` et rendent un `DomainResult`. Les vues ne font plus qu'appeler.
-- Un composant par carte : `ProjectList`, `LayerTable`, `LayerEditor`,
-  `PaletteMixCard`, et un sous-module par onglet Miniature.
-- Objectif : aucun fichier de vue au-delà de 600 lignes, pas plus de 10 niveaux
-  d'imbrication.
+- La couche `palettier-ui/src/actions/` (dix modules, de `projects` à `settings`) construit
+  les `Project`, `PaletteMix`, `Recipe`, `RecipeStep` et `Paint` et les enregistre. Ce
+  sont de simples fonctions async qui prennent `&AppServices` et rendent un
+  `DomainResult`, sans signal Dioxus, sans boîte de dialogue, sans `spawn`. Chaque
+  `spawn(async …)` restant dans une vue se borne à appeler une action puis à poser le
+  résultat dans les signaux.
+- `AppServices::in_memory()` (tests seulement) monte les services sur
+  `Database::in_memory()`, catalogue amorcé. 41 tests d'actions, dont les cas que visait
+  le lot 6 : créer un projet acrylique, poser une couche (et l'annuler), l'alerte
+  acrylique sur huile (projet et recette), le filtre du mélangeur par système. Plus 13
+  tests sur les fonctions extraites des outils Miniature.
+- L'état des formulaires reste là où il était (signaux de la vue parente, ou contexte pour
+  les outils Miniature et l'écran Projets) : changer d'outil, de projet ou de recette ne
+  vide pas ce qui a été saisi.
+- Rendu vérifié par le mode capture : les 42 pages HTML (11 écrans en sombre et en clair,
+  21 outils) sont identiques avant et après, aux identifiants internes `data-dioxus-id`
+  près.
+
+Corrigé au passage : `SeaOrmRecipeRepository::save` insérait toujours, même pour une
+recette déjà enregistrée ; « Ajouter l'étape » échouait en silence sur l'unicité du nom.
+Elle met maintenant à jour la recette et réécrit ses étapes.
+
+Seule différence visible, et seulement si la base renvoie une erreur : une suppression
+qui échoue ne recharge plus la liste et n'annonce plus « supprimé ».
+
+Relevé sans le changer (à trier dans un lot suivant) :
+- textes restés en français dans les deux langues (dilutions du lavis, durées du
+  congélateur et du mélange-mère, titres de la fiche recette, « Projet « … » supprimé. »),
+  ou en anglais dans les deux (« High-Contrast NMM Specular », « + 1 use ») ; le
+  sous-titre de Recettes parle d'huile même en acrylique, l'en-tête du banc du mélangeur
+  dit « Huile » en acrylique ;
+- l'Assistant, avec « Tous mes tubes en stock », génère le plan sur les tubes en stock mais
+  enregistre le projet avec tous les tubes du système ;
+- la liste des palettes des groupes relevés (Pipette) n'est pas filtrée par système ;
+- le HUD retient le projet par sa position dans la liste, et un clic sur sa photo relève
+  toujours le centre de l'image ;
+- le minuteur du lavis ne se rafraîchit que si autre chose redessine l'écran.
 
 ## Lot 3 : typer la technique d'une couche — fait
 
@@ -89,10 +123,9 @@ le thème clair / sombre cohérent et allège les vues avant le lot 2.
 
 ## Lot 6 : tests de l'interface et de bout en bout (priorité basse)
 
-Aujourd'hui, rien ne teste les vues. Une fois le lot 2 fait, les actions se testent
-comme le domaine, sur une base en mémoire (`Database::in_memory()`). À couvrir en
-premier : créer un projet acrylique, poser une couche, voir l'alerte acrylique sur
-huile, et le filtre du mélangeur par système.
+Les actions sont testées depuis le lot 2 (dont les quatre cas prioritaires). Reste à
+tester les vues elles-mêmes : le mode capture compare déjà le rendu au repos, pas les
+clics.
 
 ## Corrections ponctuelles à glisser dans le premier lot venu
 
@@ -104,4 +137,4 @@ huile, et le filtre du mélangeur par système.
 
 ## Ordre conseillé
 
-Lots 1 et 3 faits. Ensuite 2 → 4 → 5 → 6.
+Lots 1, 2 et 3 faits. Ensuite 4 → 5 → 6.

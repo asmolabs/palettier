@@ -1084,14 +1084,25 @@ impl RecipeRepository for SeaOrmRecipeRepository {
 
     async fn save(&self, rec: &Recipe) -> DomainResult<Recipe> {
         let txn = self.db.begin().await.map_err(map_db_err)?;
-        let active = recipe::ActiveModel {
+        let mut active = recipe::ActiveModel {
             name: Set(rec.name.clone()),
             subject: Set(rec.subject.clone()),
             notes: Set(rec.notes.clone()),
             ..Default::default()
         };
-        let inserted = active.insert(&txn).await.map_err(map_db_err)?;
-        let id = inserted.id;
+        // A recipe already saved is updated in place and its steps rewritten.
+        let id = if let Some(id) = rec.id {
+            active.id = Set(id);
+            active.update(&txn).await.map_err(map_db_err)?;
+            recipe_step::Entity::delete_many()
+                .filter(recipe_step::Column::RecipeId.eq(id))
+                .exec(&txn)
+                .await
+                .map_err(map_db_err)?;
+            id
+        } else {
+            active.insert(&txn).await.map_err(map_db_err)?.id
+        };
 
         for (pos, step) in rec.steps.iter().enumerate() {
             let s_active = recipe_step::ActiveModel {
