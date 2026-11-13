@@ -4,6 +4,8 @@ mod actions;
 mod snapshot;
 mod state;
 mod theme;
+#[cfg(test)]
+mod ui_tests;
 mod views;
 
 use crate::state::{AppServices, AppState, Section, ThemeMode};
@@ -806,6 +808,10 @@ fn CommandPaletteModal() -> Element {
 }
 
 fn send_macos_notification(title: &str, body: &str) {
+    // The view tests run the real shell: they must not pop up system notifications.
+    if cfg!(test) {
+        return;
+    }
     let safe_title = title.replace('"', "\\\"");
     let safe_body = body.replace('"', "\\\"");
     let script = format!("display notification \"{safe_body}\" with title \"{safe_title}\"");

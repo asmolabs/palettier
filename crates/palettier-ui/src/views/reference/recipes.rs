@@ -53,7 +53,7 @@ pub fn RecipesView() -> Element {
                         }
                     }
 
-                    NewRecipeCard { new_name, new_subject }
+                    NewRecipeCard { new_name, new_subject, selected_idx }
 
                 }
 
@@ -114,7 +114,11 @@ fn RecipeItem(idx: usize, recipe: Recipe, selected_idx: Signal<usize>) -> Elemen
 }
 
 #[component]
-fn NewRecipeCard(new_name: Signal<String>, new_subject: Signal<String>) -> Element {
+fn NewRecipeCard(
+    new_name: Signal<String>,
+    new_subject: Signal<String>,
+    selected_idx: Signal<usize>,
+) -> Element {
     let services = use_context::<AppServices>();
     let mut state = use_context::<AppState>();
     let locale = *state.locale.read();
@@ -125,10 +129,15 @@ fn NewRecipeCard(new_name: Signal<String>, new_subject: Signal<String>) -> Eleme
         let services = services.clone();
         spawn(async move {
             let loc = *state.locale.read();
-            if let Ok(Some(_)) = create_recipe(&services, &name, &subject).await {
+            if let Ok(Some(saved)) = create_recipe(&services, &name, &subject).await {
                 new_name.set(String::new());
                 new_subject.set(String::new());
                 state.reload_all(&services).await;
+                // Open the new recipe, so the next step lands in it.
+                let position = state.recipes.peek().iter().position(|r| r.id == saved.id);
+                if let Some(idx) = position {
+                    selected_idx.set(idx);
+                }
                 state.notify(loc.tr("Recette créée.", "Recipe created."));
             }
         });
