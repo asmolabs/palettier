@@ -106,14 +106,14 @@ pub(super) fn CustomTubeForm(
     };
 
     rsx! {
-        div { class: "card", style: "border-color: var(--accent);",
+        div { class: "card u-bc-accent",
             h3 { class: "card-title", {locale.tr("Ajouter un tube personnalisé au catalogue", "Add a custom tube to the catalog")} }
-            div { class: "grid-3", style: "margin-bottom: 12px;",
+            div { class: "grid-3 u-mb-12",
                 div {
                     label { class: "field-label", {locale.tr("Marque / Gamme", "Brand / Line")} }
                     input {
                         r#type: "text",
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         value: "{brand}",
                         oninput: move |e| brand.set(e.value()),
                     }
@@ -122,7 +122,7 @@ pub(super) fn CustomTubeForm(
                     label { class: "field-label", {locale.tr("Nom de la couleur", "Color Name")} }
                     input {
                         r#type: "text",
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         placeholder: locale.tr("ex. Ocre d'or maison", "e.g. Custom Gold Ochre"),
                         value: "{name}",
                         oninput: move |e| name.set(e.value()),
@@ -132,19 +132,19 @@ pub(super) fn CustomTubeForm(
                     label { class: "field-label", {locale.tr("Code / Référence", "Code / Reference")} }
                     input {
                         r#type: "text",
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         placeholder: "042",
                         value: "{code}",
                         oninput: move |e| code.set(e.value()),
                     }
                 }
             }
-            div { class: "grid-3", style: "margin-bottom: 12px;",
+            div { class: "grid-3 u-mb-12",
                 div {
                     label { class: "field-label", {locale.tr("Pigments C.I. (séparés par virgule)", "C.I. Pigments (comma-separated)")} }
                     input {
                         r#type: "text",
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         placeholder: "PY42, PR101",
                         value: "{pigments}",
                         oninput: move |e| pigments.set(e.value()),
@@ -153,7 +153,7 @@ pub(super) fn CustomTubeForm(
                 div {
                     label { class: "field-label", {locale.tr("Opacité", "Opacity")} }
                     select {
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         onchange: move |e| opacity.set(opacity_of(&e.value())),
                         for op in Opacity::ALL {
                             option {
@@ -167,7 +167,7 @@ pub(super) fn CustomTubeForm(
                 div {
                     label { class: "field-label", {locale.tr("Classe siccative", "Drying Class")} }
                     select {
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         onchange: move |e| drying.set(drying_class_of(&e.value())),
                         for dc in DryingClass::ALL {
                             option {
@@ -181,7 +181,7 @@ pub(super) fn CustomTubeForm(
             }
             div { class: "row-between",
                 div { class: "row",
-                    label { class: "field-label", style: "margin: 0;", {locale.tr("Teinte de sortie de tube :", "Masstone color:")} }
+                    label { class: "field-label u-m-0", {locale.tr("Teinte de sortie de tube :", "Masstone color:")} }
                     HexColorInput {
                         value: hex(),
                         onchange: move |v: String| hex.set(v),
@@ -243,12 +243,12 @@ fn RecognizedTubeRow(tube: RecognizedTube) -> Element {
     rsx! {
         div { class: "card-subtle row-between",
             div {
-                div { style: "font-weight: 600;", "{tube.read_brand} — {tube.read_name}" }
+                div { class: "u-fw-600", "{tube.read_brand} — {tube.read_name}" }
                 if !tube.read_code.is_empty() {
                     div { class: "muted mono", {locale.tr("Code lu : ", "Read code: ")}, "{tube.read_code}" }
                 }
                 if let Some(ref matched) = tube.matched {
-                    div { class: "row", style: "margin-top: 4px;",
+                    div { class: "row u-mt-4",
                         ColorSwatch { hex: matched.hex_color.clone(), size: 18 }
                         span { class: "pill pill-ok", {locale.tr("Correspondance : ", "Match: ")}, "{matched.display_name()}" }
                     }

@@ -98,7 +98,7 @@ pub fn CatalogView() -> Element {
                 shown: filtered.len(),
             }
 
-            div { class: "grid-2", style: "grid-template-columns: 1.6fr 1fr;",
+            div { class: "grid-2 u-gtc-1p6fr-1fr",
                 PaintTable {
                     paints: filtered,
                     selected_paint_id,
@@ -210,10 +210,10 @@ fn CatalogSearch(
     rsx! {
         div { class: "card",
             div { class: "row-between",
-                div { class: "row", style: "flex: 1;",
+                div { class: "row u-flex-1",
                     input {
                         r#type: "text",
-                        style: "min-width: 280px;",
+                        class: "u-minw-280",
                         placeholder: locale.tr("Rechercher par nom, marque, code ou pigment (ex: PB29, PR108, Zorn)…", "Search by name, brand, code, or pigment (e.g. PB29, PR108, Zorn)…"),
                         value: "{search}",
                         oninput: move |e| search.set(e.value()),
@@ -226,7 +226,7 @@ fn CatalogSearch(
                             option { value: "{b}", "{b}" }
                         }
                     }
-                    label { class: "row", style: "cursor: pointer;",
+                    label { class: "row u-cur-pointer",
                         input {
                             r#type: "checkbox",
                             checked: *stock_only.read(),
@@ -253,7 +253,7 @@ fn PaintTable(
     let locale = *state.locale.read();
 
     rsx! {
-        div { class: "card", style: "max-height: 68vh; overflow-y: auto;",
+        div { class: "card u-maxh-68vh u-oy-auto",
             table { class: "data-table",
                 thead {
                     tr {
@@ -327,8 +327,8 @@ fn PaintRow(
                 }
             }
             td {
-                div { style: "font-weight: 600;", "{paint.name}" }
-                div { class: "muted", style: "font-size: 11.5px;",
+                div { class: "u-fw-600", "{paint.name}" }
+                div { class: "muted u-fs-11p5",
                     "{paint.brand}"
                     if !paint.code.is_empty() {
                         " · #{paint.code}"

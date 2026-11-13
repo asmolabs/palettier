@@ -82,17 +82,17 @@ fn HudHeader(
 
     rsx! {
         header { class: "painter-hud-header",
-            div { class: "row", style: "gap: 16px; align-items: center;",
-                span { style: "font-size: 17px; font-weight: 750; letter-spacing: -0.2px; display: flex; align-items: center; gap: 8px;",
+            div { class: "row u-gap-16 u-ai-center",
+                span { class: "u-fs-17 u-fw-750 u-ls-0p2 u-d-flex u-ai-center u-gap-8",
                     "🎯 ",
                     {locale.tr("HUD Établi Peintre", "Painter Studio HUD")}
                 }
 
                 if !projects.is_empty() {
-                    div { class: "row", style: "gap: 8px; align-items: center;",
-                        span { class: "muted", style: "font-size: 12px;", {locale.tr("Projet :", "Project:")} }
+                    div { class: "row u-gap-8 u-ai-center",
+                        span { class: "muted u-fs-12", {locale.tr("Projet :", "Project:")} }
                         select {
-                            style: "background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 6px; padding: 4px 10px; font-size: 12.5px; font-weight: 600;",
+                            class: "u-bg-bg-input u-c-text-main u-b-1-solid-border-main u-r-6 u-p-4-10 u-fs-12p5 u-fw-600",
                             value: "{selected_project_idx}",
                             onchange: move |ev| {
                                 if let Ok(idx) = ev.value().parse::<usize>() {
@@ -109,9 +109,9 @@ fn HudHeader(
                 }
             }
 
-            div { class: "row", style: "gap: 10px; align-items: center;",
+            div { class: "row u-gap-10 u-ai-center",
                 // Climate quick readout
-                div { class: "pill", style: "font-size: 11.5px;",
+                div { class: "pill u-fs-11p5",
                     "🌡️ {workshop.temperature_celsius:.0}°C · 💧 {workshop.relative_humidity:.0}% · {workshop.ventilation.label(locale)}"
                 }
 
@@ -152,7 +152,7 @@ fn HudHeader(
                 // Exit button
                 button {
                     class: "btn-primary",
-                    style: "padding: 6px 14px; font-weight: 700;",
+                    class: "u-p-6-14 u-fw-700",
                     onclick: move |_| on_close.call(()),
                     "✕ ",
                     {locale.tr("Quitter HUD", "Exit HUD")}
@@ -202,29 +202,29 @@ fn HudReferencePane(
 
     rsx! {
         div { class: "painter-hud-pane",
-            div { class: "row-between", style: "margin-bottom: 12px;",
-                h3 { class: "card-title", style: "margin: 0; display: flex; align-items: center; gap: 8px;",
+            div { class: "row-between u-mb-12",
+                h3 { class: "card-title u-m-0 u-d-flex u-ai-center u-gap-8",
                     "🖼️ ",
                     {locale.tr("Modèle & Décomposition des Valeurs", "Reference Model & Value Breakdown")}
                 }
 
-                div { class: "row", style: "gap: 8px;",
+                div { class: "row u-gap-8",
                     button {
                         class: "btn-primary",
-                        style: "padding: 4px 10px; font-size: 12px;",
+                        class: "u-p-4-10 u-fs-12",
                         onclick: open_photo,
                         "📂 ",
                         {locale.tr("Ouvrir photo…", "Open photo…")}
                     }
 
                     if decoded_image.read().is_some() {
-                        div { class: "row", style: "gap: 4px;",
+                        div { class: "row u-gap-4",
                             button {
                                 class: "btn",
                                 onclick: move |_| zoom_pct.set((zoom_pct().saturating_sub(25)).max(25)),
                                 "−"
                             }
-                            span { class: "mono", style: "font-size: 11px; align-self: center;", "{zoom_pct}%" }
+                            span { class: "mono u-fs-11 u-as-center", "{zoom_pct}%" }
                             button {
                                 class: "btn",
                                 onclick: move |_| zoom_pct.set((zoom_pct() + 25).min(300)),
@@ -242,7 +242,7 @@ fn HudReferencePane(
 
             // Study Mode Switcher Bar
             if decoded_image.read().is_some() {
-                div { class: "row", style: "gap: 6px; margin-bottom: 12px; flex-wrap: wrap; background: var(--bg-subtle); padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle);",
+                div { class: "row u-gap-6 u-mb-12 u-fwrap-wrap u-bg-bg-subtle u-p-8 u-r-8 u-b-1-solid-border-subtle",
                     for mode in StudyMode::ALL {
                         {
                             let is_active = *study_mode.read() == mode;
@@ -250,7 +250,7 @@ fn HudReferencePane(
                             rsx! {
                                 button {
                                     class: if is_active { "btn-primary" } else { "btn" },
-                                    style: "padding: 4px 9px; font-size: 11.5px; font-weight: 600;",
+                                    class: "u-p-4-9 u-fs-11p5 u-fw-600",
                                     onclick: move |_| {
                                         show_study(&svc, mode, study_mode, image_data_url, study_data_url, decoded_image)
                                     },
@@ -264,7 +264,7 @@ fn HudReferencePane(
 
             // Photo Viewer / Canvas
             div {
-                style: "flex: 1; min-height: 280px; display: flex; align-items: center; justify-content: center; background: var(--bg-subtle); border-radius: 8px; border: 1px dashed var(--border-main); overflow: auto; position: relative;",
+                class: "u-flex-1 u-minh-280 u-d-flex u-ai-center u-jc-center u-bg-bg-subtle u-r-8 u-b-1-dashed-border-main u-o-auto u-pos-relative",
                 if let Some(ref uri) = *study_data_url.read() {
                     img {
                         src: "{uri}",
@@ -284,12 +284,12 @@ fn HudReferencePane(
                         }
                     }
                 } else {
-                    div { style: "text-align: center; padding: 40px; color: var(--text-muted);",
-                        div { style: "font-size: 38px; margin-bottom: 10px;", "🎨" }
-                        div { style: "font-size: 14px; font-weight: 600; color: var(--text-main);",
+                    div { class: "u-ta-center u-p-40 u-c-text-muted",
+                        div { class: "u-fs-38 u-mb-10", "🎨" }
+                        div { class: "u-fs-14 u-fw-600 u-c-text-main",
                             {locale.tr("Aucune photo de référence chargée", "No reference photo loaded")}
                         }
-                        div { style: "font-size: 12px; margin-top: 4px;",
+                        div { class: "u-fs-12 u-mt-4",
                             {locale.tr("Cliquez sur 'Ouvrir photo…' pour afficher votre modèle avec les 6 filtres de valeurs (Notan, Grisaille, Terminateur).", "Click 'Open photo…' to inspect your model with 6 visual study filters (Notan, Grisaille, Terminator).")}
                         }
                     }
@@ -298,12 +298,12 @@ fn HudReferencePane(
 
             // Sampled Eyedropper Card
             if let Some(ref h) = *sampled_hex.read() {
-                div { class: "card-subtle", style: "margin-top: 12px; display: flex; align-items: center; justify-content: space-between;",
-                    div { class: "row", style: "gap: 12px; align-items: center;",
+                div { class: "card-subtle u-mt-12 u-d-flex u-ai-center u-jc-space-between",
+                    div { class: "row u-gap-12 u-ai-center",
                         ColorSwatch { hex: h.clone(), size: 36 }
                         div {
-                            div { class: "mono", style: "font-weight: 700; font-size: 14px;", "{h}" }
-                            div { class: "muted", style: "font-size: 11px;", {locale.tr("Échantillon prélevé", "Sampled tone")} }
+                            div { class: "mono u-fw-700 u-fs-14", "{h}" }
+                            div { class: "muted u-fs-11", {locale.tr("Échantillon prélevé", "Sampled tone")} }
                         }
                     }
                     button {
@@ -333,8 +333,8 @@ fn HudCoatsPane(current_project: Option<Project>, eff_paints: Vec<Paint>) -> Ele
 
     rsx! {
         div { class: "painter-hud-pane",
-            div { class: "row-between", style: "margin-bottom: 12px;",
-                h3 { class: "card-title", style: "margin: 0; display: flex; align-items: center; gap: 8px;",
+            div { class: "row-between u-mb-12",
+                h3 { class: "card-title u-m-0 u-d-flex u-ai-center u-gap-8",
                     "🖌️ ",
                     {locale.tr("Couches & Suivi de Séchage", "Layers & Drying Progress")}
                 }
@@ -344,13 +344,13 @@ fn HudCoatsPane(current_project: Option<Project>, eff_paints: Vec<Paint>) -> Ele
             }
 
             if let Some(ref proj) = current_project {
-                div { style: "display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;",
+                div { class: "u-d-flex u-fd-column u-gap-10 u-mb-16",
                     for (z_idx, zone) in proj.zones.iter().cloned().enumerate() {
                         HudZoneCard { project: proj.clone(), z_idx, zone }
                     }
                 }
             } else {
-                div { class: "muted", style: "padding: 20px 0; text-align: center;",
+                div { class: "muted u-p-20-0 u-ta-center",
                     {locale.tr("Sélectionnez ou créez un projet pour suivre vos couches.", "Select or create a project to track your coats.")}
                 }
             }
@@ -370,8 +370,8 @@ fn HudZoneCard(project: Project, z_idx: usize, zone: ProjectZone) -> Element {
 
     rsx! {
         div { class: "hud-mix-card",
-            div { class: "row-between", style: "margin-bottom: 6px;",
-                strong { style: "font-size: 13.5px;", "{zone.name}" }
+            div { class: "row-between u-mb-6",
+                strong { class: "u-fs-13p5", "{zone.name}" }
                 span { class: "pill", "{applied_count}/{zone.layers.len()} ", {locale.tr("couches", "coats")} }
             }
 
@@ -392,20 +392,20 @@ fn HudCoatRow(project: Project, z_idx: usize, l_idx: usize, layer: ProjectLayer)
     let tech_text = layer.technique.label(locale).to_string();
 
     rsx! {
-        div { class: "row-between", style: "padding: 8px 0; border-top: 1px solid var(--border-subtle); align-items: center;",
-            div { class: "row", style: "gap: 10px; align-items: center;",
+        div { class: "row-between u-p-8-0 u-bt-1-solid-border-subtle u-ai-center",
+            div { class: "row u-gap-10 u-ai-center",
                 ColorSwatch { hex: layer.target_hex.clone(), size: 28 }
                 div {
-                    div { style: "font-weight: 600; font-size: 12.5px;", "{layer.role}" }
+                    div { class: "u-fw-600 u-fs-12p5", "{layer.role}" }
                     if !tech_text.is_empty() {
-                        div { class: "muted", style: "font-size: 11px;", "{tech_text}" }
+                        div { class: "muted u-fs-11", "{tech_text}" }
                     }
                 }
             }
 
-            div { class: "row", style: "gap: 8px; align-items: center;",
+            div { class: "row u-gap-8 u-ai-center",
                 if is_applied {
-                    span { class: "pill pill-ok", style: "font-size: 11px;",
+                    span { class: "pill pill-ok u-fs-11",
                         "✓ ",
                         {locale.tr("Posée", "Applied")}
                     }
@@ -413,7 +413,7 @@ fn HudCoatRow(project: Project, z_idx: usize, l_idx: usize, layer: ProjectLayer)
 
                 button {
                     class: if is_applied { "btn" } else { "btn-primary" },
-                    style: "padding: 4px 10px; font-size: 11.5px;",
+                    class: "u-p-4-10 u-fs-11p5",
                     onclick: move |_| {
                         let w = *state.workshop.read();
                         let next = toggle_layer_applied(&project, z_idx, l_idx, w, Utc::now());
@@ -442,15 +442,15 @@ fn HudPalette(eff_paints: Vec<Paint>) -> Element {
     let locale = *state.locale.read();
 
     rsx! {
-        div { style: "margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-main);",
-            div { class: "row-between", style: "margin-bottom: 8px;",
-                span { style: "font-weight: 700; font-size: 12.5px;",
+        div { class: "u-mt-auto u-pt-14 u-bt-1-solid-border-main",
+            div { class: "row-between u-mb-8",
+                span { class: "u-fw-700 u-fs-12p5",
                     {locale.tr("Palette de travail & Sécurité pigmentaire", "Working Palette & Pigment Safety")}
                 }
-                span { class: "muted", style: "font-size: 11px;", "{eff_paints.len()} tubes" }
+                span { class: "muted u-fs-11", "{eff_paints.len()} tubes" }
             }
 
-            div { style: "display: flex; flex-wrap: wrap; gap: 6px; max-height: 140px; overflow-y: auto;",
+            div { class: "u-d-flex u-fwrap-wrap u-gap-6 u-maxh-140 u-oy-auto",
                 for paint in &eff_paints {
                     {
                         let s_info = paint.safety_info();
@@ -463,18 +463,18 @@ fn HudPalette(eff_paints: Vec<Paint>) -> Element {
                         rsx! {
                             div {
                                 class: "card-subtle",
-                                style: "padding: 4px 8px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px;",
+                                class: "u-p-4-8 u-d-inline-flex u-ai-center u-gap-6 u-r-6",
                                 ColorSwatch { hex: paint.hex_color.clone(), size: 16 }
-                                span { style: "font-size: 11.5px; font-weight: 600;", "{paint.name}" }
+                                span { class: "u-fs-11p5 u-fw-600", "{paint.name}" }
                                 span {
                                     class: "pill {s_badge.0}",
-                                    style: "padding: 1px 5px; font-size: 9.5px;",
+                                    class: "u-p-1-5 u-fs-9p5",
                                     title: "{s_info.advice(locale)}",
                                     "{s_badge.1} {s_info.level.badge_label(locale)}"
                                 }
                                 span {
                                     class: "pill",
-                                    style: "padding: 1px 5px; font-size: 9.5px; opacity: 0.8;",
+                                    class: "u-p-1-5 u-fs-9p5 u-op-0p8",
                                     "{lf.label(locale)}"
                                 }
                             }

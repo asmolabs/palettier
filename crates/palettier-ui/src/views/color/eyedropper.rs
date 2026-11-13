@@ -94,7 +94,7 @@ pub fn EyedropperView() -> Element {
                 })
             }
 
-            div { class: "grid-2", style: "grid-template-columns: 1.25fr 1fr;",
+            div { class: "grid-2 u-gtc-1p25fr-1fr",
                 // Left column: Interactive photo canvas + K-Means dominants
                 div {
                     ReferencePhotoCard {
@@ -163,8 +163,8 @@ fn ReferencePhotoCard(
 
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom: 10px;",
-                h3 { class: "card-title", style: "margin: 0;",
+            div { class: "row-between u-mb-10",
+                h3 { class: "card-title u-m-0",
                     if image_name().is_empty() {
                         {locale.tr("Photo de référence (clic = pipette)", "Reference photo (click = eyedropper)")}
                     } else {
@@ -177,13 +177,13 @@ fn ReferencePhotoCard(
             }
 
             // Eyedropper toolbar (Radius, Zoom, Neutral grey point)
-            div { class: "card-subtle", style: "margin-bottom: 12px;",
+            div { class: "card-subtle u-mb-12",
                 div { class: "row-between",
                     div { class: "row",
-                        span { class: "field-label", style: "margin: 0;", {locale.tr("Rayon :", "Radius:")} }
+                        span { class: "field-label u-m-0", {locale.tr("Rayon :", "Radius:")} }
                         input {
                             r#type: "number",
-                            style: "width: 64px;",
+                            class: "u-w-64",
                             min: "0",
                             max: "30",
                             value: "{sample_radius}",
@@ -193,7 +193,7 @@ fn ReferencePhotoCard(
                                 }
                             }
                         }
-                        span { class: "muted", style: "font-size: 11.5px;", "px" }
+                        span { class: "muted u-fs-11p5", "px" }
 
                         button {
                             class: "btn",
@@ -243,8 +243,8 @@ fn ReferencePhotoCard(
 
                 // Value study mode selector (True color / 9-value Grisaille / 3-mass Notan / Squint)
                 if decoded_image.read().is_some() {
-                    div { class: "row", style: "margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle);",
-                        span { class: "field-label", style: "margin: 0;", {locale.tr("Étude des masses :", "Value study:")} }
+                    div { class: "row u-mt-8 u-pt-8 u-bt-1-solid-border-subtle",
+                        span { class: "field-label u-m-0", {locale.tr("Étude des masses :", "Value study:")} }
                         for mode in StudyMode::ALL {
                             {
                                 let is_active = *study_mode.read() == mode;
@@ -252,7 +252,7 @@ fn ReferencePhotoCard(
                                 rsx! {
                                     button {
                                         class: if is_active { "btn-primary" } else { "btn" },
-                                        style: "padding: 4px 10px; font-size: 11.5px;",
+                                        class: "u-p-4-10 u-fs-11p5",
                                         onclick: move |_| show_study(&svc, mode, study_mode, image_data_url, study_data_url, decoded_image),
                                         "{mode.label(locale)}"
                                     }
@@ -276,7 +276,7 @@ fn ReferencePhotoCard(
                     picked_hex,
                 }
                 if let Some((cx, cy)) = *last_click_coords.read() {
-                    div { class: "muted", style: "font-size: 11.5px; margin-top: 8px;",
+                    div { class: "muted u-fs-11p5 u-mt-8",
                         if locale.is_fr() {
                             "Dernier relevé au point ({cx}, {cy}) · Rayon {sample_radius} px (moyenne en lumière linéaire)"
                         } else {
@@ -285,7 +285,7 @@ fn ReferencePhotoCard(
                     }
                 }
             } else {
-                div { class: "card-subtle", style: "text-align: center; padding: 36px 20px;",
+                div { class: "card-subtle u-ta-center u-p-36-20",
                     p { class: "muted",
                         {locale.tr("Ouvrez une photo de référence pour activer la pipette au clic et extraire ses dominantes chromatiques.", "Open a reference photo to enable click sampling and extract its dominant color poles.")}
                     }

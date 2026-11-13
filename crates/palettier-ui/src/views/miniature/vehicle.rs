@@ -27,24 +27,24 @@ pub(super) fn VehicleWeathering(candidates: Vec<Paint>) -> Element {
     let locale = *state.locale.read();
 
     rsx! {
-        div { style: "display: flex; flex-direction: column; gap: 16px;",
+        div { class: "u-d-flex u-fd-column u-gap-16",
             div { class: "card",
-                div { class: "row-between", style: "margin-bottom: 12px; align-items: center;",
-                    h3 { class: "card-title", style: "margin: 0;",
+                div { class: "row-between u-mb-12 u-ai-center",
+                    h3 { class: "card-title u-m-0",
                         "🪖 ", {locale.tr("Jus & Filtres Véhicules (Équivalents Abteilung 502 / Ammo Mig)", "AFV & Vehicle Weathering (Abteilung 502 / Mig Equivalents)")}
                     }
                     span { class: "pill pill-accent",
                         {locale.tr("Formules aux Tubes d'Huile d'Artiste", "Artist Oil Tube Formulas")}
                     }
                 }
-                p { class: "muted", style: "margin-top: 0; font-size: 13px;",
+                p { class: "muted u-mt-0 u-fs-13",
                     {locale.tr(
                         "Reproduisez fidèlement les teintes cultes de weathering pour chars et véhicules (Abteilung 502, AK, Ammo Mig) à partir de vos tubes d'huile classiques, avec le diluant inodore approprié pour préserver le vernis acrylique.",
                         "Faithfully recreate iconic armor and vehicle weathering washes (Abteilung 502, AK, Ammo Mig) from standard artist oil tubes, using odorless spirits to protect acrylic coats."
                     )}
                 }
 
-                div { class: "row", style: "gap: 8px; margin-bottom: 16px; flex-wrap: wrap;",
+                div { class: "row u-gap-8 u-mb-16 u-fwrap-wrap",
                     for fx in VehicleEffectKind::ALL {
                         button {
                             class: if *selected_vehicle_fx.read() == fx { "btn-primary" } else { "btn" },
@@ -67,15 +67,15 @@ fn effect_card(services: &AppServices, locale: Locale, current_fx: VehicleEffect
     let drops = thinner_drops_per_part(tech, PaintSystem::Oil);
     let thinner = tech.default_medium_in(PaintSystem::Oil).label(locale).to_lowercase();
     rsx! {
-        div { class: "card-subtle", style: "padding: 16px;",
-            div { class: "row-between", style: "align-items: center; margin-bottom: 14px;",
-                div { class: "row", style: "gap: 12px; align-items: center;",
+        div { class: "card-subtle u-p-16",
+            div { class: "row-between u-ai-center u-mb-14",
+                div { class: "row u-gap-12 u-ai-center",
                     ColorSwatch { hex: current_fx.target_hex().to_string(), size: 40 }
                     div {
-                        div { style: "font-weight: 750; font-size: 15px; color: var(--accent);",
+                        div { class: "u-fw-750 u-fs-15 u-c-accent",
                             "{current_fx.commercial_name()}"
                         }
-                        div { class: "muted", style: "font-size: 12px;",
+                        div { class: "muted u-fs-12",
                             "{current_fx.category_i18n(locale)}"
                         }
                     }
@@ -83,13 +83,13 @@ fn effect_card(services: &AppServices, locale: Locale, current_fx: VehicleEffect
                 span { class: "pill", "{current_fx.finish_i18n(locale)}" }
             }
 
-            div { style: "display: grid; gap: 14px; margin-bottom: 12px;",
-                div { class: "card", style: "background: var(--bg);",
-                    strong { style: "font-size: 12.5px; color: var(--accent);",
+            div { class: "u-d-grid u-gap-14 u-mb-12",
+                div { class: "card u-bg-bg",
+                    strong { class: "u-fs-12p5 u-c-accent",
                         {locale.tr("💧 Dilution & Solvant Recommandé :", "💧 Dilution & Recommended Solvent:")}
                     }
-                    div { style: "font-size: 12px; margin-top: 6px;",
-                        div { style: "font-weight: 600; margin-bottom: 4px;",
+                    div { class: "u-fs-12 u-mt-6",
+                        div { class: "u-fw-600 u-mb-4",
                             "{tech.label(locale)} · "
                             if drops == 0 {
                                 {locale.tr("pâte pure", "neat paste")}
@@ -102,19 +102,19 @@ fn effect_card(services: &AppServices, locale: Locale, current_fx: VehicleEffect
                 }
             }
 
-            div { class: "row-between", style: "align-items: center; padding-top: 10px; border-top: 1px solid var(--border);",
-                span { style: "font-size: 12px; font-weight: 600;",
+            div { class: "row-between u-ai-center u-pt-10 u-bt-1-solid-border",
+                span { class: "u-fs-12 u-fw-600",
                     {locale.tr("Mélange calculé sur votre palette active :", "Mix computed from your active palette:")}
                 }
                 if let Some(ref s) = sugg {
-                    div { class: "row", style: "gap: 8px; align-items: center;",
-                        div { style: "font-weight: 650; font-size: 12px; color: var(--accent);",
+                    div { class: "row u-gap-8 u-ai-center",
+                        div { class: "u-fw-650 u-fs-12 u-c-accent",
                             "{s.describe_i18n(locale)}"
                         }
                         DeltaEBadge { delta_e: s.delta_e }
                     }
                 } else {
-                    span { class: "muted", style: "font-size: 11px;", {locale.tr("Aucun tube disponible", "No tubes available")} }
+                    span { class: "muted u-fs-11", {locale.tr("Aucun tube disponible", "No tubes available")} }
                 }
             }
         }

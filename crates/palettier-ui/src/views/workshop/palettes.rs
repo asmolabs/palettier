@@ -46,7 +46,7 @@ pub fn PalettesView() -> Element {
                     PaletteList { selected_idx }
                 }
 
-                div { style: "grid-column: span 2;",
+                div { class: "u-grid-column-span-2",
                     if let Some(pal) = active_pal {
                         PaletteDetail { pal: pal.clone(), selected_idx }
                         // 2-column grid: CIELAB Gamut Map + Intermediate Mother Mixes (Si, BF, NC)
@@ -108,43 +108,43 @@ fn NewPaletteCard(selected_idx: Signal<usize>) -> Element {
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Nouvelle palette", "New Palette")} }
-            div { style: "margin-bottom:8px;",
+            div { class: "u-mb-8",
                 label { class: "field-label", {locale.tr("Nom", "Name")} }
                 input {
                     r#type: "text",
-                    style: "width:100%;",
+                    class: "u-w-100pct",
                     placeholder: locale.tr("ex. Drap impérial bleu", "e.g. Imperial Blue Cloth"),
                     value: "{new_name}",
                     oninput: move |ev| new_name.set(ev.value())
                 }
             }
-            div { style: "margin-bottom:8px;",
+            div { class: "u-mb-8",
                 label { class: "field-label", {locale.tr("Usage / Sujet", "Purpose / Subject")} }
                 input {
                     r#type: "text",
-                    style: "width:100%;",
+                    class: "u-w-100pct",
                     placeholder: locale.tr("ex. Uniformes 75mm", "e.g. 75mm Uniforms"),
                     value: "{new_purpose}",
                     oninput: move |ev| new_purpose.set(ev.value())
                 }
             }
-            div { style: "margin-bottom:10px;",
+            div { class: "u-mb-10",
                 label { class: "field-label", {locale.tr("Notes d'atelier", "Studio Notes")} }
                 textarea {
-                    style: "width:100%;height:60px;",
+                    class: "u-w-100pct u-h-60",
                     value: "{new_notes}",
                     oninput: move |ev| new_notes.set(ev.value())
                 }
             }
             button {
                 class: "btn-primary",
-                style: "width:100%;",
+                class: "u-w-100pct",
                 onclick: create,
                 {locale.tr("+ Créer la palette", "+ Create palette")}
             }
             button {
                 class: "btn",
-                style: "width:100%; margin-top: 8px;",
+                class: "u-w-100pct u-mt-8",
                 onclick: add_norma_blue,
                 {locale.tr("+ Coffret Norma Blue (8 tubes)", "+ Norma Blue Set (8 tubes)")}
             }
@@ -176,10 +176,10 @@ fn PaletteList(selected_idx: Signal<usize>) -> Element {
                         span { class: "pill", "{pal.paints.len()} tubes" }
                     }
                     if !pal.purpose.is_empty() {
-                        div { class: "muted", style: "font-size:12px;", "{pal.purpose}" }
+                        div { class: "muted u-fs-12", "{pal.purpose}" }
                     }
                     if !pal.paints.is_empty() {
-                        div { class: "row", style: "margin-top: 6px; gap: 4px;",
+                        div { class: "row u-mt-6 u-gap-4",
                             for pt in &pal.paints {
                                 PaintSwatch {
                                     masstone_hex: pt.hex_color.clone(),
@@ -238,9 +238,9 @@ fn PaletteDetail(pal: Palette, selected_idx: Signal<usize>) -> Element {
 
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom:10px;",
+            div { class: "row-between u-mb-10",
                 div {
-                    h2 { class: "card-title", style: "font-size:18px;margin-bottom:2px;", "{pal.name}" }
+                    h2 { class: "card-title u-fs-18 u-mb-2", "{pal.name}" }
                     span { class: "muted", "{pal.purpose}" }
                 }
                 div { class: "row",
@@ -250,7 +250,7 @@ fn PaletteDetail(pal: Palette, selected_idx: Signal<usize>) -> Element {
                     }
                     button {
                         class: if show_matrix() { "btn-primary" } else { "btn" },
-                        style: "font-size: 11px; padding: 4px 10px;",
+                        class: "u-fs-11 u-p-4-10",
                         onclick: move |_| show_matrix.set(!show_matrix()),
                         "🎨 "
                         {locale.tr("Nuancier Matriciel", "Mixing Matrix")}
@@ -265,12 +265,12 @@ fn PaletteDetail(pal: Palette, selected_idx: Signal<usize>) -> Element {
                 }
             }
             if !pal.notes.is_empty() {
-                p { class: "muted", style: "margin-bottom:14px;white-space:pre-line;", "{pal.notes}" }
+                p { class: "muted u-mb-14 u-ws-pre-line", "{pal.notes}" }
             }
 
-            div { class: "row", style: "margin-bottom:14px;",
+            div { class: "row u-mb-14",
                 select {
-                    style: "flex:1;",
+                    class: "u-flex-1",
                     onchange: move |ev| {
                         if let Ok(i) = ev.value().parse::<usize>() {
                             paint_to_add_idx.set(i);
@@ -354,7 +354,7 @@ fn PaletteTubeRow(pal: Palette, pt: Paint, short_code: String, behavior: String)
     rsx! {
         tr {
             td {
-                span { class: "pill pill-accent mono", style: "font-weight: 800;", "{short_code}" }
+                span { class: "pill pill-accent mono u-fw-800", "{short_code}" }
             }
             td {
                 PaintSwatch {
@@ -369,9 +369,9 @@ fn PaletteTubeRow(pal: Palette, pt: Paint, short_code: String, behavior: String)
                 if !pt.code.is_empty() {
                     span { class: "muted", " ({pt.code})" }
                 }
-                div { class: "muted", style: "font-size:11.5px;", "{pt.brand}" }
+                div { class: "muted u-fs-11p5", "{pt.brand}" }
             }
-            td { class: "muted", style: "font-size:12px;", "{behavior}" }
+            td { class: "muted u-fs-12", "{behavior}" }
             td { class: "mono", "{pt.pigments.iter().cloned().collect::<Vec<_>>().join(\", \")}" }
             td { "{pt.drying_class.label(locale)}" }
             td {
@@ -393,23 +393,23 @@ fn PaletteMatrix(pal: Palette) -> Element {
     let matrix = pal.generate_matrix();
 
     rsx! {
-        div { class: "card-subtle", style: "margin-top: 16px; overflow-x: auto;",
-            h4 { style: "margin-bottom: 6px;",
+        div { class: "card-subtle u-mt-16 u-ox-auto",
+            h4 { class: "u-mb-6",
                 "🎨 "
                 {locale.tr("Nuancier Matriciel 2 à 2 (Pur / Coupe au blanc)", "2-Tube Mixing Matrix (Masstone / Tint)")}
             }
-            div { class: "muted", style: "font-size: 11.5px; margin-bottom: 12px;",
+            div { class: "muted u-fs-11p5 u-mb-12",
                 {locale.tr(
                     "Chaque cellule présente le mélange pur 1:1 à gauche et la coupe au blanc de titane à droite.",
                     "Each cell displays the 1:1 pure mixture on the left and 1:10 Titanium White tint on the right."
                 )}
             }
-            table { class: "data-table", style: "font-size: 11px;",
+            table { class: "data-table u-fs-11",
                 thead {
                     tr {
                         th { "×" }
                         for p in &matrix.paints {
-                            th { style: "text-align: center; max-width: 90px; overflow: hidden; text-overflow: ellipsis;", "{p.name}" }
+                            th { class: "u-ta-center u-maxw-90 u-o-hidden u-tov-ellipsis", "{p.name}" }
                         }
                     }
                 }
@@ -417,14 +417,14 @@ fn PaletteMatrix(pal: Palette) -> Element {
                     for (r_idx, row) in matrix.rows.iter().enumerate() {
                         tr {
                             td {
-                                div { class: "row", style: "gap: 6px;",
+                                div { class: "row u-gap-6",
                                     ColorSwatch { hex: matrix.paints[r_idx].hex_color.clone(), size: 16 }
-                                    span { style: "font-weight: 600;", "{matrix.paints[r_idx].name}" }
+                                    span { class: "u-fw-600", "{matrix.paints[r_idx].name}" }
                                 }
                             }
                             for cell in row {
-                                td { style: "text-align: center; padding: 4px;",
-                                    div { class: "row", style: "justify-content: center; gap: 3px;",
+                                td { class: "u-ta-center u-p-4",
+                                    div { class: "row u-jc-center u-gap-3",
                                         ColorSwatch { hex: cell.pure_mix_hex.clone(), size: 20 }
                                         ColorSwatch { hex: cell.tint_mix_hex.clone(), size: 20 }
                                     }
@@ -451,7 +451,7 @@ fn PaletteSubstitutes(pal: Palette) -> Element {
     }
 
     rsx! {
-        div { class: "card-subtle", style: "margin-top: 14px; border-color: var(--accent);",
+        div { class: "card-subtle u-mt-14 u-bc-accent",
             strong {
                 {locale.tr("Tubes hors stock dans cette palette", "Out-of-stock tubes in this palette")}, " ({missing.len()})"
             }
@@ -485,7 +485,7 @@ fn PaletteSubstituteRow(pal: Palette, m: MissingPaint) -> Element {
     };
 
     rsx! {
-        div { class: "row-between", style: "margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border-subtle);",
+        div { class: "row-between u-mt-8 u-pt-6 u-bt-1-solid-border-subtle",
             div { class: "row",
                 ColorSwatch { hex: m.paint.hex_color.clone(), size: 20 }
                 strong { "{m.paint.display_name()}" }
@@ -494,12 +494,12 @@ fn PaletteSubstituteRow(pal: Palette, m: MissingPaint) -> Element {
                     ColorSwatch { hex: near.hex_color.clone(), size: 20 }
                     DeltaEBadge { delta_e: m.delta_e }
                 }
-                span { class: "muted", style: "font-size: 12px;", "{m.verdict(locale)}" }
+                span { class: "muted u-fs-12", "{m.verdict(locale)}" }
             }
             if let Some(repl) = m.nearest.clone() {
                 button {
                     class: "btn-primary",
-                    style: "padding: 3px 10px; font-size: 11.5px;",
+                    class: "u-p-3-10 u-fs-11p5",
                     onclick: move |_| replace(repl.clone()),
                     {locale.tr("Remplacer dans la palette", "Replace in palette")}
                 }
@@ -527,7 +527,7 @@ fn PaletteGamut(pal: Palette) -> Element {
         div { class: "grid-2",
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("Couverture Gamut CIELAB (a* / b*)", "CIELAB Gamut Coverage (a* / b*)")} }
-                p { class: "muted", style: "font-size: 11.5px; margin-bottom: 10px;",
+                p { class: "muted u-fs-11p5 u-mb-10",
                     if locale.is_fr() {
                         "Polygone chromatique couvert par les {pal.paints.len()} tubes de la palette et leurs coupes au blanc."
                     } else {
@@ -543,17 +543,17 @@ fn PaletteGamut(pal: Palette) -> Element {
             }
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("Mélanges intermédiaires de début de séance", "Session-Start Intermediate Mother Mixes")} }
-                p { class: "muted", style: "font-size: 11.5px; margin-bottom: 10px;",
+                p { class: "muted u-fs-11p5 u-mb-10",
                     {locale.tr("Mélanges-mères (Sienne, Brun foncé, Noir coloré) calculés à partir de cette palette pour harmoniser les ombres.", "Mother mixes (Burnt Sienna, Dark Brown, Chromatic Black) computed from this palette to harmonize shadows.")}
                 }
                 for mm in &guide.mother_mixes {
-                    div { class: "card-subtle", style: "margin-bottom: 8px;",
-                        div { class: "row", style: "margin-bottom: 4px;",
+                    div { class: "card-subtle u-mb-8",
+                        div { class: "row u-mb-4",
                             ColorSwatch { hex: mm.hex_color.clone(), size: 24 }
-                            span { class: "pill pill-accent mono", style: "font-weight: 800;", "{mm.code}" }
+                            span { class: "pill pill-accent mono u-fw-800", "{mm.code}" }
                             strong { "{mm.name}" }
                         }
-                        div { class: "muted", style: "font-size: 12px;", "{mm.recipe_text}" }
+                        div { class: "muted u-fs-12", "{mm.recipe_text}" }
                     }
                 }
             }

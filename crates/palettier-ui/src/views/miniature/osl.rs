@@ -33,10 +33,10 @@ pub(super) fn OslEngine(candidates: Vec<Paint>) -> Element {
     ];
 
     rsx! {
-        div { class: "grid-2", style: "grid-template-columns: 1fr 1.35fr;",
+        div { class: "grid-2 u-gtc-1fr-1p35fr",
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("Sources d'Énergie & Effets Luminescents (OSL)", "Object Source Lighting (OSL) Energy Sources")} }
-                div { style: "display: flex; flex-direction: column; gap: 8px;",
+                div { class: "u-d-flex u-fd-column u-gap-8",
                     for preset in &OslPreset::ALL {
                         {swatch_option(selected_osl, preset, preset.glow_hex, preset.name_i18n(locale))}
                     }
@@ -44,11 +44,11 @@ pub(super) fn OslEngine(candidates: Vec<Paint>) -> Element {
             }
 
             div { class: "card",
-                div { class: "row-between", style: "margin-bottom: 14px;",
-                    div { class: "row", style: "gap: 12px; align-items: center;",
+                div { class: "row-between u-mb-14",
+                    div { class: "row u-gap-12 u-ai-center",
                         ColorSwatch { hex: osl.glow_hex.to_string(), size: 40 }
                         div {
-                            h3 { class: "card-title", style: "margin: 0;", "{osl.name_i18n(locale)}" }
+                            h3 { class: "card-title u-m-0", "{osl.name_i18n(locale)}" }
                             span { class: "pill pill-accent", "High-Intensity OSL Emitter" }
                         }
                     }
@@ -65,17 +65,17 @@ pub(super) fn OslEngine(candidates: Vec<Paint>) -> Element {
                 }
 
                 // 3-step OSL Radial Decay swatches with calculated mixes!
-                div { style: "display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;",
+                div { class: "u-d-flex u-fd-column u-gap-8 u-mb-16",
                     for (zone_name, zone_hex) in zones {
                         {zone_row(&services, locale, zone_name, zone_hex, &candidates)}
                     }
                 }
 
-                div { class: "card-subtle", style: "line-height: 1.5; font-size: 12.5px;",
-                    div { style: "font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--accent);",
+                div { class: "card-subtle u-lh-1p5 u-fs-12p5",
+                    div { class: "u-fw-700 u-fs-13 u-mb-6 u-c-accent",
                         {locale.tr("🎯 Protocole de Réussite de l'OSL aux Huiles :", "🎯 Pro Oil OSL Painting Protocol:")}
                     }
-                    ol { style: "margin-left: 20px; display: flex; flex-direction: column; gap: 6px;",
+                    ol { class: "u-ml-20 u-d-flex u-fd-column u-gap-6",
                         li {
                             strong { {locale.tr("Creux en blanc pur : ", "Pure white recess: ")} }
                             {locale.tr("Poser du blanc de titane pur au fond des rainures de plasma ou dans les yeux.", "Lay down pure titanium white in the plasma coils or eye lenses.")}
@@ -94,28 +94,28 @@ pub(super) fn OslEngine(candidates: Vec<Paint>) -> Element {
 fn zone_row(services: &AppServices, locale: Locale, zone_name: &str, zone_hex: &str, candidates: &[Paint]) -> Element {
     let sugg = best_mix(services, rgb_or_grey(zone_hex, 0.5), candidates);
     rsx! {
-        div { class: "card-subtle", style: "padding: 8px 12px;",
-            div { class: "row-between", style: "align-items: center;",
-                div { class: "row", style: "gap: 10px; align-items: center;",
+        div { class: "card-subtle u-p-8-12",
+            div { class: "row-between u-ai-center",
+                div { class: "row u-gap-10 u-ai-center",
                     ColorSwatch { hex: zone_hex.to_string(), size: 28 }
                     div {
-                        div { style: "font-weight: 700; font-size: 12px;", "{zone_name}" }
-                        div { class: "mono", style: "font-size: 10.5px; color: var(--text-dim);", "{zone_hex}" }
+                        div { class: "u-fw-700 u-fs-12", "{zone_name}" }
+                        div { class: "mono u-fs-10p5 u-c-text-dim", "{zone_hex}" }
                     }
                 }
 
                 if let Some(ref s) = sugg {
-                    div { class: "row", style: "gap: 8px; align-items: center;",
+                    div { class: "row u-gap-8 u-ai-center",
                         ColorSwatch { hex: s.color.to_hex(), size: 28 }
-                        div { style: "text-align: right; line-height: 1.3;",
-                            div { style: "font-weight: 650; font-size: 12px; color: var(--accent);", "{s.describe_i18n(locale)}" }
-                            div { style: "display: flex; gap: 4px; justify-content: flex-end; align-items: center; margin-top: 2px;",
+                        div { class: "u-ta-right u-lh-1p3",
+                            div { class: "u-fw-650 u-fs-12 u-c-accent", "{s.describe_i18n(locale)}" }
+                            div { class: "u-d-flex u-gap-4 u-jc-flex-end u-ai-center u-mt-2",
                                 DeltaEBadge { delta_e: s.delta_e }
                             }
                         }
                     }
                 } else {
-                    span { class: "muted", style: "font-size: 11px;", {locale.tr("Aucun tube disponible", "No tubes available")} }
+                    span { class: "muted u-fs-11", {locale.tr("Aucun tube disponible", "No tubes available")} }
                 }
             }
         }

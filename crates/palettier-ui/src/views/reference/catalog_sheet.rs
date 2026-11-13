@@ -35,7 +35,7 @@ pub(super) fn PaintSheet(
 
     rsx! {
         div {
-            div { class: "row-between", style: "margin-bottom: 12px;",
+            div { class: "row-between u-mb-12",
                 div { class: "row",
                     PaintSwatch {
                         masstone_hex: paint.hex_color.clone(),
@@ -44,7 +44,7 @@ pub(super) fn PaintSheet(
                         height: 40,
                     }
                     div {
-                        h3 { class: "card-title", style: "margin-bottom: 2px;", "{paint.name}" }
+                        h3 { class: "card-title u-mb-2", "{paint.name}" }
                         div { class: "muted", "{paint.brand} · #{paint.code} · {paint.hex_color}" }
                     }
                 }
@@ -59,7 +59,7 @@ pub(super) fn PaintSheet(
                 }
             }
 
-            div { class: "row", style: "margin-bottom: 14px; flex-wrap: wrap; gap: 6px;",
+            div { class: "row u-mb-14 u-fwrap-wrap u-gap-6",
                 span { class: "pill pill-accent", "Pigments: {pig_str}" }
                 span { class: "pill", {locale.tr("Opacité : ", "Opacity: ")}, "{paint.opacity.label(locale)}" }
                 span { class: "pill", {locale.tr("Séchage : ", "Drying: ")}, "{paint.drying_class.label(locale)}" }
@@ -71,13 +71,13 @@ pub(super) fn PaintSheet(
                 }
             }
             if !safety.hazards.is_empty() {
-                div { class: "card-subtle", style: "margin-bottom: 12px; border-color: var(--pill-warn-border); padding: 8px 12px;",
-                    div { style: "font-weight: 600; font-size: 12px; color: var(--pill-warn-text);",
+                div { class: "card-subtle u-mb-12 u-bc-pill-warn-border u-p-8-12",
+                    div { class: "u-fw-600 u-fs-12 u-c-pill-warn-text",
                         "⚠️ "
                         {locale.tr("Précautions atelier : ", "Studio precautions: ")}
                         "{safety.hazards.join(\", \")}"
                     }
-                    div { class: "muted", style: "font-size: 11.5px; margin-top: 3px;",
+                    div { class: "muted u-fs-11p5 u-mt-3",
                         "{safety.advice(locale)}"
                     }
                 }
@@ -90,7 +90,7 @@ pub(super) fn PaintSheet(
                 calibrate_tint_hex,
             }
 
-            h4 { style: "font-size: 13px; margin-bottom: 8px;", {locale.tr("Équivalents et substituts proches", "Closest Equivalents & Substitutes")} }
+            h4 { class: "u-fs-13 u-mb-8", {locale.tr("Équivalents et substituts proches", "Closest Equivalents & Substitutes")} }
             div {
                 for (sub, de) in substitutes {
                     SubstituteRow { sub, de }
@@ -125,12 +125,12 @@ fn CalibrationCard(
     };
 
     rsx! {
-        div { class: "card-subtle", style: "margin-bottom: 14px;",
-            h4 { style: "font-size: 13px; margin-bottom: 8px;", {locale.tr("Calibration optique du tube", "Optical Tube Calibration")} }
-            p { class: "muted", style: "font-size: 12px; margin-bottom: 10px;",
+        div { class: "card-subtle u-mb-14",
+            h4 { class: "u-fs-13 u-mb-8", {locale.tr("Calibration optique du tube", "Optical Tube Calibration")} }
+            p { class: "muted u-fs-12 u-mb-10",
                 {locale.tr("Relevez la sortie de tube (masstone) et la coupe 1:10 au blanc de titane pour affiner la courbe de Kubelka-Munk.", "Record the pure masstone and 1:10 Titanium White tint to refine the Kubelka-Munk scattering curve.")}
             }
-            div { class: "grid-2", style: "margin-bottom: 10px;",
+            div { class: "grid-2 u-mb-10",
                 div {
                     label { class: "field-label", {locale.tr("Sortie de tube (Masstone)", "Pure Tube (Masstone)")} }
                     HexColorInput {
@@ -175,7 +175,7 @@ fn PipetteButton(hex: String, target: Signal<String>) -> Element {
     rsx! {
         button {
             class: "btn",
-            style: "margin-top: 6px; font-size: 11px; padding: 3px 8px;",
+            class: "u-mt-6 u-fs-11 u-p-3-8",
             onclick: move |_| target.set(picked.clone()),
             "← ", {locale.tr("Pipette", "Eyedropper")}, " ({hex})"
         }
@@ -189,7 +189,7 @@ fn SubstituteRow(sub: Paint, de: f64) -> Element {
     let sub_pigs = pigment_codes(&sub);
 
     rsx! {
-        div { class: "row-between", style: "padding: 6px 0; border-bottom: 1px solid var(--border-subtle);",
+        div { class: "row-between u-p-6-0 u-bb-1-solid-border-subtle",
             div { class: "row",
                 PaintSwatch {
                     masstone_hex: sub.hex_color.clone(),
@@ -198,8 +198,8 @@ fn SubstituteRow(sub: Paint, de: f64) -> Element {
                     height: 18,
                 }
                 div {
-                    div { style: "font-size: 12.5px; font-weight: 600;", "{sub.name}" }
-                    div { class: "muted", style: "font-size: 11px;",
+                    div { class: "u-fs-12p5 u-fw-600", "{sub.name}" }
+                    div { class: "muted u-fs-11",
                         "{sub.brand} · {sub_pigs}"
                         if sub.in_stock {
                             span { " · (", {locale.tr("En stock", "In stock")}, ")" }

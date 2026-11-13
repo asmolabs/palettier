@@ -39,17 +39,17 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
     let acrylic_paints = acrylic_catalog(&state.paints.read());
 
     rsx! {
-        div { class: "grid-2", style: "grid-template-columns: 1fr 1.25fr; gap: 16px;",
+        div { class: "grid-2 u-gtc-1fr-1p25fr u-gap-16",
             // Left: Interactive Sheet Form
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("📄 Fiche de Recette d'Armée & Modélisme", "📄 Miniature Army Recipe Card Generator")} }
-                p { class: "muted", style: "font-size: 12px; margin-bottom: 14px;",
+                p { class: "muted u-fs-12 u-mb-14",
                     {locale.tr("Enregistrez et exportez vos recettes d'escouades pour garantir une cohérence absolue de vos figurines au fil des mois.", "Record and export your squad painting recipes to ensure perfect army-wide consistency over time.")}
                 }
 
-                div { style: "display: flex; flex-direction: column; gap: 10px;",
+                div { class: "u-d-flex u-fd-column u-gap-10",
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Nom de l'Armée / Compagnie :", "Army / Faction Name:")} }
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Nom de l'Armée / Compagnie :", "Army / Faction Name:")} }
                         input {
                             class: "input",
                             value: "{recipe_sheet.read().army_name}",
@@ -59,7 +59,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Nom de l'Unité / Figurine :", "Unit / Squad Name:")} }
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Nom de l'Unité / Figurine :", "Unit / Squad Name:")} }
                         input {
                             class: "input",
                             value: "{recipe_sheet.read().unit_name}",
@@ -69,7 +69,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Sous-couche (Primer) :", "Primer Base:")} }
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Sous-couche (Primer) :", "Primer Base:")} }
                         input {
                             class: "input",
                             value: "{recipe_sheet.read().primer}",
@@ -79,7 +79,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Acrylique de base :", "Base Acrylic Paint:")} }
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Acrylique de base :", "Base Acrylic Paint:")} }
                         // Picked from the catalog; the oil mix below follows from it.
                         select {
                             class: "input",
@@ -105,12 +105,12 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Mélange d'huiles calculé sur la palette :", "Oil mix computed from the palette:")} }
-                        div { class: "card-subtle", style: "padding: 8px 10px; font-size: 12.5px;",
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Mélange d'huiles calculé sur la palette :", "Oil mix computed from the palette:")} }
+                        div { class: "card-subtle u-p-8-10 u-fs-12p5",
                             if recipe_sheet.read().oil_mix_formula.is_empty() {
                                 span { class: "muted", {locale.tr("Choisissez une acrylique de base.", "Pick a base acrylic.")} }
                             } else {
-                                div { class: "row", style: "gap: 8px;",
+                                div { class: "row u-gap-8",
                                     ColorSwatch { hex: recipe_sheet.read().mixed_hex.clone(), size: 18 }
                                     strong { "{recipe_sheet.read().oil_mix_formula}" }
                                 }
@@ -119,7 +119,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Lavis & Pin Wash :", "Wash & Pin Wash:")} }
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Lavis & Pin Wash :", "Wash & Pin Wash:")} }
                         input {
                             class: "input",
                             value: "{recipe_sheet.read().wash_technique}",
@@ -129,7 +129,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Weathering & Altérations :", "Weathering & Effects:")} }
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Weathering & Altérations :", "Weathering & Effects:")} }
                         input {
                             class: "input",
                             value: "{recipe_sheet.read().weathering}",
@@ -139,7 +139,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Vernis final :", "Final Varnish:")} }
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Vernis final :", "Final Varnish:")} }
                         input {
                             class: "input",
                             value: "{recipe_sheet.read().varnish}",
@@ -149,7 +149,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        label { style: "font-size: 11.5px; font-weight: 600;", {locale.tr("Notes d'Atelier & Conseils :", "Studio Notes & Tips:")} }
+                        label { class: "u-fs-11p5 u-fw-600", {locale.tr("Notes d'Atelier & Conseils :", "Studio Notes & Tips:")} }
                         textarea {
                             class: "input",
                             rows: "3",
@@ -163,9 +163,9 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
 
             // Right: Live Sheet Preview & Export Actions
             div { class: "card",
-                div { class: "row-between", style: "margin-bottom: 12px; align-items: center;",
-                    h3 { class: "card-title", style: "margin: 0;", {locale.tr("Aperçu de la Fiche de Recette", "Recipe Sheet Preview")} }
-                    div { class: "row", style: "gap: 6px;",
+                div { class: "row-between u-mb-12 u-ai-center",
+                    h3 { class: "card-title u-m-0", {locale.tr("Aperçu de la Fiche de Recette", "Recipe Sheet Preview")} }
+                    div { class: "row u-gap-6",
                         button {
                             class: "btn",
                             onclick: {
@@ -192,64 +192,64 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                 }
 
                 // Styled Card Preview
-                div { style: "border: 1px solid var(--border-main); border-radius: 8px; padding: 18px; background: var(--bg-surface); line-height: 1.45;",
-                    h2 { style: "margin-top: 0; font-size: 18px; margin-bottom: 2px;", "{recipe_sheet.read().army_name}" }
-                    div { class: "muted", style: "font-size: 12.5px; margin-bottom: 16px;",
+                div { class: "u-b-1-solid-border-main u-r-8 u-p-18 u-bg-bg-surface u-lh-1p45",
+                    h2 { class: "u-mt-0 u-fs-18 u-mb-2", "{recipe_sheet.read().army_name}" }
+                    div { class: "muted u-fs-12p5 u-mb-16",
                         "{recipe_sheet.read().unit_name} · ",
                         strong { "{recipe_sheet.read().faction}" }
                     }
 
-                    div { class: "card-subtle", style: "margin-bottom: 10px;",
-                        div { style: "font-weight: 700; font-size: 11.5px; text-transform: uppercase; margin-bottom: 4px; color: var(--accent);",
+                    div { class: "card-subtle u-mb-10",
+                        div { class: "u-fw-700 u-fs-11p5 u-tt-uppercase u-mb-4 u-c-accent",
                             "1. Sous-couche"
                         }
-                        div { style: "font-size: 12.5px;", "{recipe_sheet.read().primer}" }
+                        div { class: "u-fs-12p5", "{recipe_sheet.read().primer}" }
                     }
 
-                    div { class: "card-subtle", style: "margin-bottom: 10px;",
-                        div { style: "font-weight: 700; font-size: 11.5px; text-transform: uppercase; margin-bottom: 6px; color: var(--accent);",
+                    div { class: "card-subtle u-mb-10",
+                        div { class: "u-fw-700 u-fs-11p5 u-tt-uppercase u-mb-6 u-c-accent",
                             "2. Couleur de Base & Formule Huile"
                         }
-                        div { class: "row", style: "gap: 8px; align-items: center; margin-bottom: 4px;",
+                        div { class: "row u-gap-8 u-ai-center u-mb-4",
                             if !recipe_sheet.read().base_hex.is_empty() {
                                 ColorSwatch { hex: recipe_sheet.read().base_hex.clone(), size: 20 }
                             }
-                            span { style: "font-size: 12.5px;", "{recipe_sheet.read().base_acrylic}" }
+                            span { class: "u-fs-12p5", "{recipe_sheet.read().base_acrylic}" }
                         }
-                        div { class: "row", style: "gap: 8px; align-items: center;",
+                        div { class: "row u-gap-8 u-ai-center",
                             if !recipe_sheet.read().mixed_hex.is_empty() {
                                 ColorSwatch { hex: recipe_sheet.read().mixed_hex.clone(), size: 20 }
                             }
-                            span { style: "font-size: 12.5px; font-weight: 600;", "{recipe_sheet.read().oil_mix_formula}" }
+                            span { class: "u-fs-12p5 u-fw-600", "{recipe_sheet.read().oil_mix_formula}" }
                         }
                     }
 
-                    div { class: "card-subtle", style: "margin-bottom: 10px;",
-                        div { style: "font-weight: 700; font-size: 11.5px; text-transform: uppercase; margin-bottom: 4px; color: var(--accent);",
+                    div { class: "card-subtle u-mb-10",
+                        div { class: "u-fw-700 u-fs-11p5 u-tt-uppercase u-mb-4 u-c-accent",
                             "3. Lavis & Pin Wash"
                         }
-                        div { style: "font-size: 12.5px;", "{recipe_sheet.read().wash_technique}" }
+                        div { class: "u-fs-12p5", "{recipe_sheet.read().wash_technique}" }
                     }
 
-                    div { class: "card-subtle", style: "margin-bottom: 10px;",
-                        div { style: "font-weight: 700; font-size: 11.5px; text-transform: uppercase; margin-bottom: 4px; color: var(--accent);",
+                    div { class: "card-subtle u-mb-10",
+                        div { class: "u-fw-700 u-fs-11p5 u-tt-uppercase u-mb-4 u-c-accent",
                             "4. Weathering & Usure"
                         }
-                        div { style: "font-size: 12.5px;", "{recipe_sheet.read().weathering}" }
+                        div { class: "u-fs-12p5", "{recipe_sheet.read().weathering}" }
                     }
 
-                    div { class: "card-subtle", style: "margin-bottom: 10px;",
-                        div { style: "font-weight: 700; font-size: 11.5px; text-transform: uppercase; margin-bottom: 4px; color: var(--accent);",
+                    div { class: "card-subtle u-mb-10",
+                        div { class: "u-fw-700 u-fs-11p5 u-tt-uppercase u-mb-4 u-c-accent",
                             "5. Vernis de Protection"
                         }
-                        div { style: "font-size: 12.5px;", "{recipe_sheet.read().varnish}" }
+                        div { class: "u-fs-12p5", "{recipe_sheet.read().varnish}" }
                     }
 
                     div { class: "card-subtle",
-                        div { style: "font-weight: 700; font-size: 11.5px; text-transform: uppercase; margin-bottom: 4px; color: var(--text-dim);",
+                        div { class: "u-fw-700 u-fs-11p5 u-tt-uppercase u-mb-4 u-c-text-dim",
                             "Notes d'Atelier"
                         }
-                        div { style: "font-size: 12px; font-style: italic;", "{recipe_sheet.read().notes}" }
+                        div { class: "u-fs-12 u-fst-italic", "{recipe_sheet.read().notes}" }
                     }
                 }
             }

@@ -100,12 +100,12 @@ pub(super) fn SolventsAndStripping() -> Element {
     let locale = *state.locale.read();
 
     rsx! {
-        div { style: "display: flex; flex-direction: column; gap: 16px;",
+        div { class: "u-d-flex u-fd-column u-gap-16",
             // Matrice de Décapage Sécurisé
             {stripping_card(tool, locale)}
 
             // Guide Solvants & Médiums
-            div { class: "grid-2", style: "gap: 16px;",
+            div { class: "grid-2 u-gap-16",
                 // Solvants
                 {solvents_card(locale)}
 
@@ -127,13 +127,13 @@ fn stripping_card(tool: SolventsState, locale: Locale) -> Element {
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("🧼 Matrice de Décapage Sécurisé par Matériau", "🧼 Miniature Paint Stripping Safety Matrix")} }
-            p { class: "muted", style: "font-size: 12px; margin-bottom: 14px;",
+            p { class: "muted u-fs-12 u-mb-14",
                 {locale.tr("Calculateur de sauvetage : vérifiez la compatibilité chimique pour décaper vos figurines sans risquer la destruction irréversible des détails ou la fonte du plastique.", "Rescue calculator: verify chemical safety before stripping miniatures to avoid melting fine plastics or warping resins.")}
             }
 
-            div { class: "grid-2", style: "gap: 16px; margin-bottom: 16px;",
+            div { class: "grid-2 u-gap-16 u-mb-16",
                 div {
-                    label { style: "font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;",
+                    label { class: "u-fs-12 u-fw-600 u-d-block u-mb-6",
                         {locale.tr("Matériau de la figurine :", "Miniature Material:")}
                     }
                     select {
@@ -147,7 +147,7 @@ fn stripping_card(tool: SolventsState, locale: Locale) -> Element {
                 }
 
                 div {
-                    label { style: "font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;",
+                    label { class: "u-fs-12 u-fw-600 u-d-block u-mb-6",
                         {locale.tr("Agent / Produit décapant :", "Chemical Stripping Agent:")}
                     }
                     select {
@@ -165,11 +165,11 @@ fn stripping_card(tool: SolventsState, locale: Locale) -> Element {
             // Stripping Verdict Card
             div {
                 style: "border: 1.5px solid {border_color}; border-radius: 8px; padding: 14px; {bg_style}",
-                div { class: "row-between", style: "align-items: center; margin-bottom: 8px;",
-                    strong { style: "font-size: 14px; letter-spacing: 0.5px;", "{verdict.title}" }
+                div { class: "row-between u-ai-center u-mb-8",
+                    strong { class: "u-fs-14 u-ls-0p5", "{verdict.title}" }
                     span { class: "{badge_cls}", {locale.tr("Durée conseillée : ", "Recommended time: ")}, "{verdict.recommended_duration}" }
                 }
-                p { style: "margin: 0; font-size: 13px; line-height: 1.45;", "{advice}" }
+                p { class: "u-m-0 u-fs-13 u-lh-1p45", "{advice}" }
             }
         }
     }
@@ -179,7 +179,7 @@ fn solvents_card(locale: Locale) -> Element {
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("🧪 Guide des Solvants pour Lavis d'Huile", "🧪 Oil Solvents & Wash Dilution Guide")} }
-            div { style: "display: flex; flex-direction: column; gap: 10px;",
+            div { class: "u-d-flex u-fd-column u-gap-10",
                 for sol in SolventType::ALL {
                     {
                         let (safety_text, badge_type) = sol.acrylic_safety_level_i18n(locale);
@@ -189,15 +189,15 @@ fn solvents_card(locale: Locale) -> Element {
                             _ => "pill pill-danger",
                         };
                         rsx! {
-                            div { class: "card-subtle", style: "padding: 10px;",
-                                div { class: "row-between", style: "margin-bottom: 4px;",
-                                    strong { style: "font-size: 13px;", "{sol.name()}" }
+                            div { class: "card-subtle u-p-10",
+                                div { class: "row-between u-mb-4",
+                                    strong { class: "u-fs-13", "{sol.name()}" }
                                     span { class: "{badge_cls}", "{safety_text}" }
                                 }
-                                div { class: "muted", style: "font-size: 11.5px; margin-bottom: 4px;",
+                                div { class: "muted u-fs-11p5 u-mb-4",
                                     "⏱️ {sol.evaporation_speed_i18n(locale)}"
                                 }
-                                div { style: "font-size: 11px; opacity: 0.85;",
+                                div { class: "u-fs-11 u-op-0p85",
                                     "🫁 {sol.odor_and_toxicity_i18n(locale)}"
                                 }
                             }
@@ -213,7 +213,7 @@ fn mediums_card(locale: Locale) -> Element {
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("🍯 Médiums Spécialisés Figurines", "🍯 Specialized Miniature Oil Mediums")} }
-            div { style: "display: flex; flex-direction: column; gap: 10px;",
+            div { class: "u-d-flex u-fd-column u-gap-10",
                 // The same mediums, factors and limits as the drying model.
                 for med in Medium::for_system(PaintSystem::Oil).into_iter().filter(|m| *m != Medium::None) {
                     {medium_row(locale, med)}
@@ -227,9 +227,9 @@ fn medium_row(locale: Locale, med: Medium) -> Element {
     let max = med.max_useful_ratio();
     let factor = med.drying_factor(max);
     rsx! {
-        div { class: "card-subtle", style: "padding: 10px;",
-            div { class: "row-between", style: "margin-bottom: 4px;",
-                strong { style: "font-size: 13px;", "{med.label(locale)}" }
+        div { class: "card-subtle u-p-10",
+            div { class: "row-between u-mb-4",
+                strong { class: "u-fs-13", "{med.label(locale)}" }
                 span {
                     class: if factor < 1.0 { "pill pill-ok" } else { "pill pill-warn" },
                     if factor < 1.0 {
@@ -240,10 +240,10 @@ fn medium_row(locale: Locale, med: Medium) -> Element {
                     " ×{factor:.2}"
                 }
             }
-            div { class: "muted", style: "font-size: 11.5px; margin-bottom: 4px;",
+            div { class: "muted u-fs-11p5 u-mb-4",
                 "{med.advice(locale)}"
             }
-            div { style: "font-size: 11px; color: var(--accent); font-weight: 600;",
+            div { class: "u-fs-11 u-c-accent u-fw-600",
                 "📏 ", {locale.tr("Au plus ", "At most ")}, "{(max * 100.0).round()} %"
             }
         }
@@ -265,13 +265,13 @@ fn freezer_card(tool: SolventsState, locale: Locale) -> Element {
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("❄️ Conservation de Palette d'Huile au Froid / Congélateur", "❄️ Oil Palette Preservation & Freezer Storage")} }
-            p { class: "muted", style: "font-size: 12px; margin-bottom: 14px;",
+            p { class: "muted u-fs-12 u-mb-14",
                 {locale.tr("Contrairement aux acryliques, l'huile ne sèche pas par évaporation mais par oxydo-polymérisation. Abaisser la température ralentit exponentiellement la réaction chimique (loi d'Arrhenius).", "Unlike acrylics, oils cure via oxidation rather than evaporation. Freezing drastically slows the cross-linking reaction rate.")}
             }
 
-            div { class: "grid-3", style: "gap: 14px; margin-bottom: 14px;",
+            div { class: "grid-3 u-gap-14 u-mb-14",
                 div { class: "card-subtle",
-                    label { class: "row", style: "gap: 8px; align-items: center; cursor: pointer; font-size: 13px; font-weight: 600;",
+                    label { class: "row u-gap-8 u-ai-center u-cur-pointer u-fs-13 u-fw-600",
                         input {
                             r#type: "checkbox",
                             checked: *freezer_airtight.read(),
@@ -279,13 +279,13 @@ fn freezer_card(tool: SolventsState, locale: Locale) -> Element {
                         }
                         span { {locale.tr("Boîte hermétique (Palette Seal)", "Airtight Palette Seal Box")} }
                     }
-                    p { class: "muted", style: "font-size: 11px; margin-top: 6px; margin-bottom: 0;",
+                    p { class: "muted u-fs-11 u-mt-6 u-mb-0",
                         {locale.tr("Empêche le renouvellement d'oxygène frais.", "Prevents fresh atmospheric oxygen exposure.")}
                     }
                 }
 
                 div { class: "card-subtle",
-                    label { class: "row", style: "gap: 8px; align-items: center; cursor: pointer; font-size: 13px; font-weight: 600;",
+                    label { class: "row u-gap-8 u-ai-center u-cur-pointer u-fs-13 u-fw-600",
                         input {
                             r#type: "checkbox",
                             checked: *freezer_is_freezer.read(),
@@ -293,17 +293,17 @@ fn freezer_card(tool: SolventsState, locale: Locale) -> Element {
                         }
                         span { {locale.tr("Placer au congélateur (-18°C)", "Store in Freezer (-18°C)")} }
                     }
-                    p { class: "muted", style: "font-size: 11px; margin-top: 6px; margin-bottom: 0;",
+                    p { class: "muted u-fs-11 u-mt-6 u-mb-0",
                         {locale.tr("L'huile d'artiste pure ne gèle pas en bloc à -18°C.", "Pure oil paint does not freeze solid at -18°C.")}
                     }
                 }
 
                 div { class: "card-subtle",
-                    div { style: "font-weight: 600; font-size: 12px; margin-bottom: 4px;",
+                    div { class: "u-fw-600 u-fs-12 u-mb-4",
                         {locale.tr("Température ambiante de l'atelier :", "Workshop Ambient Temperature:")}
                     }
                     div { class: "row-between",
-                        span { class: "mono", style: "font-size: 13px;", "{freezer_ambient_temp} °C" }
+                        span { class: "mono u-fs-13", "{freezer_ambient_temp} °C" }
                     }
                     input {
                         r#type: "range",
@@ -316,18 +316,18 @@ fn freezer_card(tool: SolventsState, locale: Locale) -> Element {
                                 freezer_ambient_temp.set(v);
                             }
                         },
-                        style: "width: 100%; margin-top: 6px;",
+                        class: "u-w-100pct u-mt-6",
                     }
                 }
             }
 
-            div { class: "card-subtle", style: "border: 1px solid var(--accent-border);",
-                div { class: "row-between", style: "align-items: center;",
+            div { class: "card-subtle u-b-1-solid-accent-border",
+                div { class: "row-between u-ai-center",
                     div {
-                        strong { style: "color: var(--accent); font-size: 14px;",
+                        strong { class: "u-c-accent u-fs-14",
                             {locale.tr("Temps de réutilisation garanti de vos mélanges :", "Estimated Safe Working Palette Lifetime:")}
                         }
-                        div { class: "muted", style: "font-size: 12px; margin-top: 2px;",
+                        div { class: "muted u-fs-12 u-mt-2",
                             {
                                 if *freezer_is_freezer.read() {
                                     locale.tr("Sortez la boîte du congélateur 10 minutes avant de peindre pour la laisser revenir à température ambiante.", "Remove palette from freezer 10 minutes before painting to let it warm up.")
@@ -337,7 +337,7 @@ fn freezer_card(tool: SolventsState, locale: Locale) -> Element {
                             }
                         }
                     }
-                    span { class: "pill pill-accent", style: "font-size: 14px; padding: 6px 14px; font-weight: 750;",
+                    span { class: "pill pill-accent u-fs-14 u-p-6-14 u-fw-750",
                         {usable_days_text(usable_days, locale)}
                     }
                 }

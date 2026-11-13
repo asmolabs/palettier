@@ -63,15 +63,15 @@ pub(super) fn PinWash(candidates: Vec<Paint>) -> Element {
     let elapsed = (*wash_timer_start.read()).map(|start| (Utc::now() - start).num_minutes());
 
     rsx! {
-        div { class: "grid-2", style: "grid-template-columns: 1fr 1fr;",
+        div { class: "grid-2 u-gtc-1fr-1fr",
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("Dosage de Dilution & Teinte de Lavis", "Dilution Ratio & Wash Tone")} }
-                p { class: "muted", style: "font-size: 12px; margin-bottom: 14px;",
+                p { class: "muted u-fs-12 u-mb-14",
                     {locale.tr("Le secret d'un pin wash réussi réside dans le bon ratio d'essence minérale sans odeur pour que le pigment glisse sans bavure.", "The key to a clean pin wash is the exact ratio of odorless mineral spirits so pigment flows instantly.")}
                 }
 
                 // Tone selector
-                div { class: "row", style: "gap: 6px; margin-bottom: 14px;",
+                div { class: "row u-gap-6 u-mb-14",
                     for (idx, (t_name, _t_hex)) in [
                         (locale.tr("Noir Profond", "Deep Black"), "#111111"),
                         (locale.tr("Terre d'Ombre Brûlée", "Burnt Umber"), "#3B2215"),
@@ -91,17 +91,17 @@ pub(super) fn PinWash(candidates: Vec<Paint>) -> Element {
                 }
 
                 // Calculated Wash Recipe
-                div { class: "card-subtle", style: "margin-bottom: 14px; border: 1px solid var(--accent-border);",
-                    div { style: "font-weight: 700; font-size: 12px; margin-bottom: 6px; color: var(--accent);",
+                div { class: "card-subtle u-mb-14 u-b-1-solid-accent-border",
+                    div { class: "u-fw-700 u-fs-12 u-mb-6 u-c-accent",
                         {locale.tr("🧪 Recette de pin wash calculée avec votre palette :", "🧪 Calculated Pin Wash from your palette:")}
                     }
                     if let Some(ref s) = sugg {
-                        div { class: "row-between", style: "align-items: center;",
-                            div { class: "row", style: "gap: 10px; align-items: center;",
+                        div { class: "row-between u-ai-center",
+                            div { class: "row u-gap-10 u-ai-center",
                                 ColorSwatch { hex: s.color.to_hex(), size: 28 }
                                 div {
-                                    div { style: "font-weight: 700; font-size: 12.5px;", "{s.describe_i18n(locale)}" }
-                                    div { class: "muted", style: "font-size: 11px;",
+                                    div { class: "u-fw-700 u-fs-12p5", "{s.describe_i18n(locale)}" }
+                                    div { class: "muted u-fs-11",
                                         {locale.tr("Diluer dans ", "Dilute with ")},
                                         strong { "{wash_solvent_ratio} parts " },
                                         {locale.tr("d'essence sans odeur", "of odorless spirits")}
@@ -111,18 +111,18 @@ pub(super) fn PinWash(candidates: Vec<Paint>) -> Element {
                             DeltaEBadge { delta_e: s.delta_e }
                         }
                     } else {
-                        span { class: "muted", style: "font-size: 11px;", {locale.tr("Aucun tube disponible dans la palette", "No tubes available in palette")} }
+                        span { class: "muted u-fs-11", {locale.tr("Aucun tube disponible dans la palette", "No tubes available in palette")} }
                     }
                 }
 
-                div { class: "card-subtle", style: "margin-bottom: 14px;",
-                    div { class: "row-between", style: "margin-bottom: 8px;",
+                div { class: "card-subtle u-mb-14",
+                    div { class: "row-between u-mb-8",
                         strong { {locale.tr("Ratio de Solvant :", "Solvent Ratio:")} }
                         span { class: "pill pill-accent", {locale.tr("1 part d'huile : ", "1 part oil : ")}, "{wash_solvent_ratio}", {locale.tr(" parts de diluant", " parts thinner")} }
                     }
                     input {
                         r#type: "range",
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         min: "1",
                         max: "15",
                         value: "{wash_solvent_ratio}",
@@ -132,12 +132,12 @@ pub(super) fn PinWash(candidates: Vec<Paint>) -> Element {
                             }
                         }
                     }
-                    div { style: "font-weight: 600; font-size: 12.5px; margin-top: 8px;",
+                    div { class: "u-fw-600 u-fs-12p5 u-mt-8",
                         "{wash_config.capillary_flow_desc(locale)}"
                     }
                 }
 
-                div { class: "row", style: "gap: 8px; flex-wrap: wrap;",
+                div { class: "row u-gap-8 u-fwrap-wrap",
                     button { class: "btn", onclick: move |_| wash_solvent_ratio.set(3), {locale.tr("Creux profonds (1:3)", "Deep recesses (1:3)")} }
                     button { class: "btn-primary", onclick: move |_| wash_solvent_ratio.set(6), {locale.tr("Pin wash standard (1:6)", "Standard Armor (1:6)")} }
                     button { class: "btn", onclick: move |_| wash_solvent_ratio.set(12), {locale.tr("Filtre d'ambiance (1:12)", "Glaze Filter (1:12)")} }
@@ -146,20 +146,20 @@ pub(super) fn PinWash(candidates: Vec<Paint>) -> Element {
 
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("Fenêtre de Nettoyage Réductif", "Reductive Cleaning Window")} }
-                div { class: "card-subtle", style: "margin-bottom: 16px; text-align: center; padding: 20px;",
+                div { class: "card-subtle u-mb-16 u-ta-center u-p-20",
                     if let Some(elapsed_mins) = elapsed {
                         {
                             let (status_class, status_text) = cleaning_stage(elapsed_mins, locale);
                             rsx! {
-                                div { class: "mono", style: "font-size: 28px; font-weight: 800; margin-bottom: 8px;", "{elapsed_mins} min" }
-                                div { class: "pill {status_class}", style: "padding: 4px 12px; font-size: 12px; font-weight: 700;", "{status_text}" }
-                                div { style: "margin-top: 14px;",
+                                div { class: "mono u-fs-28 u-fw-800 u-mb-8", "{elapsed_mins} min" }
+                                div { class: "pill {status_class}", class: "u-p-4-12 u-fs-12 u-fw-700", "{status_text}" }
+                                div { class: "u-mt-14",
                                     button { class: "btn", onclick: move |_| wash_timer_start.set(None), {locale.tr("Réinitialiser le chrono", "Reset Timer")} }
                                 }
                             }
                         }
                     } else {
-                        div { style: "font-size: 14px; font-weight: 600; margin-bottom: 10px;", {locale.tr("Chronomètre de séance inactif", "Session timer stopped")} }
+                        div { class: "u-fs-14 u-fw-600 u-mb-10", {locale.tr("Chronomètre de séance inactif", "Session timer stopped")} }
                         button { class: "btn-primary", onclick: move |_| wash_timer_start.set(Some(Utc::now())), "⏱️ ", {locale.tr("Démarrer la pose du Pin Wash", "Start Pin Wash Application")} }
                     }
                 }

@@ -344,15 +344,15 @@ pub fn MiniatureView() -> Element {
             }
 
             // Global Palette Selector Banner for ALL Miniature Tools
-            div { class: "card-subtle", style: "margin-bottom: 12px; padding: 10px 16px; border: 1px solid var(--accent-border);",
-                div { class: "row-between", style: "align-items: center; flex-wrap: wrap; gap: 10px;",
-                    div { class: "row", style: "gap: 10px; align-items: center;",
-                        span { style: "font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px;",
+            div { class: "card-subtle u-mb-12 u-p-10-16 u-b-1-solid-accent-border",
+                div { class: "row-between u-ai-center u-fwrap-wrap u-gap-10",
+                    div { class: "row u-gap-10 u-ai-center",
+                        span { class: "u-fw-700 u-fs-13 u-d-flex u-ai-center u-gap-6",
                             "🎨 ",
                             {locale.tr("Palette active pour le calcul des mélanges :", "Active Palette for Mix Calculations:")}
                         }
                         select {
-                            style: "background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-main); border-radius: 6px; padding: 5px 12px; font-size: 13px; font-weight: 650;",
+                            class: "u-bg-bg-input u-c-text-main u-b-1-solid-border-main u-r-6 u-p-5-12 u-fs-13 u-fw-650",
                             value: "{selected_palette_idx}",
                             onchange: move |ev| {
                                 if let Ok(idx) = ev.value().parse::<usize>() {
@@ -365,9 +365,9 @@ pub fn MiniatureView() -> Element {
                             option { value: "{palettes.len()}", {locale.tr("Tout mon stock en tiroir", "All in-stock drawer tubes")} }
                         }
                     }
-                    div { class: "row", style: "gap: 8px; align-items: center;",
-                        span { class: "pill pill-ok", style: "font-weight: 700;", "{candidates.len()} ", {locale.tr("tubes disponibles", "tubes available")} }
-                        span { class: "muted", style: "font-size: 11.5px;",
+                    div { class: "row u-gap-8 u-ai-center",
+                        span { class: "pill pill-ok u-fw-700", "{candidates.len()} ", {locale.tr("tubes disponibles", "tubes available")} }
+                        span { class: "muted u-fs-11p5",
                             {locale.tr("Mélanges calculés en direct pour chaque outil", "Live Kubelka-Munk mixes for every tool")}
                         }
                     }
@@ -408,7 +408,7 @@ pub fn MiniatureView() -> Element {
                         p { class: "muted", "{active_tab.blurb(locale)}" }
                     }
                     if system == PaintSystem::Acrylic && active_tab.is_oil_only() {
-                        div { class: "card-subtle", style: "margin-bottom: 12px; border-color: var(--warning, #c98a2b);",
+                        div { class: "card-subtle u-mb-12 u-bc-var-warning-hc98a2b",
                             strong { {locale.tr("Outil propre à l'huile. ", "Oil-only tool. ")} }
                             {locale.tr(
                                 "Vous travaillez en acrylique : cet outil ne s'applique que si vous terminez la pièce à l'huile sur une base acrylique sèche. Passez en Huile dans la barre du haut pour l'utiliser avec vos tubes.",

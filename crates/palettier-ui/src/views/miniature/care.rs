@@ -28,27 +28,27 @@ pub(super) fn BrushCare() -> Element {
 
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom: 14px;",
+            div { class: "row-between u-mb-14",
                 div {
-                    h3 { class: "card-title", style: "margin: 0;", {locale.tr("Soin des Pinceaux de Martre Kolinsky & Entretien", "Kolinsky Sable Brush Care & Maintenance")} }
-                    div { class: "muted", style: "font-size: 12px; margin-top: 2px;",
+                    h3 { class: "card-title u-m-0", {locale.tr("Soin des Pinceaux de Martre Kolinsky & Entretien", "Kolinsky Sable Brush Care & Maintenance")} }
+                    div { class: "muted u-fs-12 u-mt-2",
                         {locale.tr("Préservez la pointe fine de vos pinceaux les plus précieux face aux solvants et à l'huile.", "Protect the fine needle tip of your sable brushes from solvent wear.")}
                     }
                 }
             }
 
-            div { class: "grid-2", style: "grid-template-columns: 1.2fr 0.8fr; gap: 16px;",
-                div { style: "display: flex; flex-direction: column; gap: 8px;",
+            div { class: "grid-2 u-gtc-1p2fr-0p8fr u-gap-16",
+                div { class: "u-d-flex u-fd-column u-gap-8",
                     for (idx, brush) in brushes.read().iter().enumerate() {
                         {brush_row(brushes, locale, idx, brush)}
                     }
                 }
 
                 div { class: "card-subtle",
-                    div { style: "font-weight: 700; font-size: 13px; margin-bottom: 8px; color: var(--danger);",
+                    div { class: "u-fw-700 u-fs-13 u-mb-8 u-c-danger",
                         "⚠️ ", {locale.tr("Règles d'or de longévité du poil de martre :", "Golden Rules of Sable Brush Longevity:")}
                     }
-                    ul { style: "margin-left: 20px; font-size: 12.5px; line-height: 1.5; display: flex; flex-direction: column; gap: 8px;",
+                    ul { class: "u-ml-20 u-fs-12p5 u-lh-1p5 u-d-flex u-fd-column u-gap-8",
                         li {
                             strong { {locale.tr("Ne JAMAIS tremper la virole : ", "NEVER submerge the ferrule: ")} }
                             {locale.tr("L'essence sans odeur pénètre par capillarité sous la bague en métal et détruit la colle liant les poils.", "Spirits creep inside the metal ferrule and dissolve the binding glue.")}
@@ -85,13 +85,13 @@ fn mark_cleaned(brushes: &mut [BrushTracker], idx: usize) {
 fn brush_row(mut brushes: Signal<Vec<BrushTracker>>, locale: Locale, idx: usize, brush: &BrushTracker) -> Element {
     let needs_soap = brush.needs_deep_clean();
     rsx! {
-        div { class: "card-subtle", style: "padding: 10px 14px;",
-            div { class: "row-between", style: "align-items: center;",
+        div { class: "card-subtle u-p-10-14",
+            div { class: "row-between u-ai-center",
                 div {
                     strong { "{brush.name} ({brush.size})" }
-                    div { class: "muted", style: "font-size: 11px;", "{brush.brand} · {brush.hair_type}" }
+                    div { class: "muted u-fs-11", "{brush.brand} · {brush.hair_type}" }
                 }
-                div { class: "row", style: "gap: 8px; align-items: center;",
+                div { class: "row u-gap-8 u-ai-center",
                     span { class: if needs_soap { "pill pill-warn" } else { "pill pill-ok" },
                         "{brush.uses_count} ", {locale.tr("sessions", "sessions")}
                     }
@@ -118,14 +118,14 @@ pub(super) fn VarnishStudio() -> Element {
     let locale = *state.locale.read();
 
     rsx! {
-        div { class: "grid-2", style: "grid-template-columns: 1fr 1.25fr;",
+        div { class: "grid-2 u-gtc-1fr-1p25fr",
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("Simulateur d'Harmonisation par Vernis", "Varnish Finish Harmonizer")} }
-                p { class: "muted", style: "font-size: 12px; margin-bottom: 14px;",
+                p { class: "muted u-fs-12 u-mb-14",
                     {locale.tr("L'alliance acrylique et huile crée des disparités de brillance. Le vernis final scelle et harmonise l'ensemble de la figurine.", "Mixing acrylics and oils causes uneven shine. The final varnish unifies the entire miniature.")}
                 }
 
-                div { style: "display: flex; flex-direction: column; gap: 8px;",
+                div { class: "u-d-flex u-fd-column u-gap-8",
                     for v in VarnishFinish::ALL {
                         {
                             let is_sel = *selected_varnish.read() == v;
@@ -134,7 +134,7 @@ pub(super) fn VarnishStudio() -> Element {
                                     class: if is_sel { "card-subtle active" } else { "card-subtle" },
                                     style: if is_sel { "border-color: var(--accent); cursor: pointer; padding: 10px;" } else { "cursor: pointer; padding: 10px;" },
                                     onclick: move |_| selected_varnish.set(v),
-                                    div { style: "font-weight: 700; font-size: 13px;", "{v.label(locale)}" }
+                                    div { class: "u-fw-700 u-fs-13", "{v.label(locale)}" }
                                 }
                             }
                         }
@@ -147,15 +147,15 @@ pub(super) fn VarnishStudio() -> Element {
                     let v = *selected_varnish.read();
                     rsx! {
                         h3 { class: "card-title", "{v.label(locale)}" }
-                        div { class: "card-subtle", style: "font-size: 13.5px; line-height: 1.5; margin-bottom: 16px;",
+                        div { class: "card-subtle u-fs-13p5 u-lh-1p5 u-mb-16",
                             "{v.description_i18n(locale)}"
                         }
 
                         div { class: "card-subtle",
-                            div { style: "font-weight: 700; font-size: 12.5px; margin-bottom: 6px;",
+                            div { class: "u-fw-700 u-fs-12p5 u-mb-6",
                                 {locale.tr("💡 Conseil de pro pour figurines de concours :", "💡 Competition Miniature Pro Tip:")}
                             }
-                            p { class: "muted", style: "margin: 0; font-size: 12px; line-height: 1.45;",
+                            p { class: "muted u-m-0 u-fs-12 u-lh-1p45",
                                 {locale.tr(
                                     "Appliquez un vernis Ultra-Mat (AK Ultra Matte) à l'aérographe sur toute la figurine pour tuer les reflets et sublimer les fondus. Puis, repassez au pinceau fin avec un vernis brillant pur UNIQUEMENT sur les yeux, lentilles de visée et sang frais.",
                                     "Airbrush an Ultra-Matte varnish over the entire miniature to kill gloss and maximize contrast. Then, selectively brush pure gloss varnish ONLY on eye lenses, cockpit glass, and fresh gore."

@@ -115,8 +115,8 @@ fn MixerBenchCard(
 
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom: 10px;",
-                h3 { class: "card-title", style: "margin: 0;",
+            div { class: "row-between u-mb-10",
+                h3 { class: "card-title u-m-0",
                     {locale.tr("Composition du mélange sur la palette", "Palette Mix Composition")}
                 }
                 if !manual_parts.read().is_empty() {
@@ -128,10 +128,10 @@ fn MixerBenchCard(
                 }
             }
 
-            div { class: "card-subtle", style: "margin-bottom: 12px;",
+            div { class: "card-subtle u-mb-12",
                 div { class: "row",
                     select {
-                        style: "width: 155px;",
+                        class: "u-w-155",
                         value: "{sim_brand}",
                         onchange: move |e| {
                             sim_brand.set(e.value());
@@ -142,7 +142,7 @@ fn MixerBenchCard(
                         }
                     }
                     select {
-                        style: "flex: 1; min-width: 180px;",
+                        class: "u-flex-1 u-minw-180",
                         onchange: move |e| {
                             if let Ok(i) = e.value().parse::<usize>() {
                                 sim_paint_idx.set(i);
@@ -158,7 +158,7 @@ fn MixerBenchCard(
                     }
                     input {
                         r#type: "number",
-                        style: "width: 68px;",
+                        class: "u-w-68",
                         min: "0.5",
                         max: "20",
                         step: "0.5",
@@ -187,7 +187,7 @@ fn MixerBenchCard(
             }
 
             if manual_parts.read().is_empty() {
-                p { class: "muted", style: "padding: 14px 4px;",
+                p { class: "muted u-p-14-4",
                     {locale.tr("Ajoutez des tubes ci-dessus ou cliquez sur « ← Simuler » en face d'une recette suggérée à droite pour simuler le mélange.", "Add tubes above or click '← Simulate' next to a suggested recipe on the right to simulate the mix.")}
                 }
             } else {
@@ -243,8 +243,8 @@ fn BenchRow(
                         height: 20,
                     }
                     div {
-                        div { style: "font-weight: 600;", "{part.paint.name}" }
-                        div { class: "muted", style: "font-size: 11px;", "{part.paint.brand}" }
+                        div { class: "u-fw-600", "{part.paint.name}" }
+                        div { class: "muted u-fs-11", "{part.paint.brand}" }
                     }
                 }
             }
@@ -252,7 +252,7 @@ fn BenchRow(
                 div { class: "row",
                     button {
                         class: "btn",
-                        style: "padding: 2px 7px;",
+                        class: "u-p-2-7",
                         onclick: move |_| {
                             let list = mixer::nudge_part(&manual_parts.read(), idx, -0.5);
                             manual_parts.set(list);
@@ -262,7 +262,7 @@ fn BenchRow(
                     span { class: "mono", "{part.parts:.1}" }
                     button {
                         class: "btn",
-                        style: "padding: 2px 7px;",
+                        class: "u-p-2-7",
                         onclick: move |_| {
                             let list = mixer::nudge_part(&manual_parts.read(), idx, 0.5);
                             manual_parts.set(list);
@@ -322,27 +322,27 @@ fn MixerResultCard(
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Résultat du mélange simulé", "Simulated Mix Result")} }
-            div { class: "row-between", style: "margin-bottom: 12px;",
+            div { class: "row-between u-mb-12",
                 div { class: "row",
                     div {
-                        div { class: "muted", style: "font-size: 10.5px; margin-bottom: 3px;",
+                        div { class: "muted u-fs-10p5 u-mb-3",
                             {locale.tr("Obtenu", "Achieved")}
                         }
                         ColorSwatch { hex: res_hex.clone(), size: 68 }
                     }
                     div {
-                        div { class: "muted", style: "font-size: 10.5px; margin-bottom: 3px;",
+                        div { class: "muted u-fs-10p5 u-mb-3",
                             {locale.tr("Cible", "Target")}
                         }
                         ColorSwatch { hex: target_hex.clone(), size: 68 }
                     }
-                    div { style: "margin-left: 8px;",
-                        div { class: "mono", style: "font-size: 20px; font-weight: 700;", "{res_hex}" }
-                        div { class: "row", style: "margin-top: 4px;",
+                    div { class: "u-ml-8",
+                        div { class: "mono u-fs-20 u-fw-700", "{res_hex}" }
+                        div { class: "row u-mt-4",
                             DeltaEBadge { delta_e: gap_to_target }
                             span { class: "pill", {locale.tr("Séchage : ", "Drying: ")}, "{res.drying_class.label(locale)}" }
                         }
-                        div { class: "muted mono", style: "margin-top: 5px; font-size: 11.5px;",
+                        div { class: "muted mono u-mt-5 u-fs-11p5",
                             "Pigments: {pigs}"
                         }
                     }
@@ -350,15 +350,15 @@ fn MixerResultCard(
             }
 
             for w in &res.warnings {
-                div { class: "card-subtle", style: "border-color: var(--pill-warn-border); margin-bottom: 8px; font-size: 12px;",
+                div { class: "card-subtle u-bc-pill-warn-border u-mb-8 u-fs-12",
                     "• {w}"
                 }
             }
 
-            div { class: "row", style: "margin-top: 10px;",
+            div { class: "row u-mt-10",
                 input {
                     r#type: "text",
-                    style: "flex: 1;",
+                    class: "u-flex-1",
                     placeholder: locale.tr("Nom pour poser ce mélange sur la palette (ex. Ombre chaude)…", "Name to place this mix on the palette (e.g. Warm Shadow)…"),
                     value: "{save_mix_name}",
                     oninput: move |e| save_mix_name.set(e.value())

@@ -75,7 +75,7 @@ pub(super) fn Converter(oil_candidates: Vec<Paint>, palette_name: String) -> Ele
     let current = pick(&acrylics, tool.selected.read().as_deref());
 
     rsx! {
-        div { class: "grid-2", style: "grid-template-columns: 1fr 1.35fr;",
+        div { class: "grid-2 u-gtc-1fr-1p35fr",
             // Left: Acrylic Selector & Search
             {acrylic_picker(tool, locale, &acrylics, current.as_ref())}
 
@@ -90,15 +90,15 @@ fn acrylic_picker(tool: ConverterState, locale: Locale, acrylics: &[Paint], curr
     let filtered = filter_acrylics(acrylics, brand.read().as_deref(), &search.read());
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom: 10px;",
-                h3 { class: "card-title", style: "margin: 0;",
+            div { class: "row-between u-mb-10",
+                h3 { class: "card-title u-m-0",
                     {locale.tr("Acryliques Figurines de Référence", "Miniature Acrylic Reference Paints")}
                 }
                 span { class: "pill", "{filtered.len()} ", {locale.tr("teintes", "colours")} }
             }
 
             // Brand Filter chips
-            div { class: "row", style: "gap: 6px; margin-bottom: 10px; flex-wrap: wrap;",
+            div { class: "row u-gap-6 u-mb-10 u-fwrap-wrap",
                 button {
                     class: if brand.read().is_none() { "pill pill-accent" } else { "pill" },
                     onclick: move |_| brand.set(None),
@@ -122,14 +122,14 @@ fn acrylic_picker(tool: ConverterState, locale: Locale, acrylics: &[Paint], curr
             // Search bar
             input {
                 r#type: "text",
-                style: "width: 100%; margin-bottom: 12px;",
+                class: "u-w-100pct u-mb-12",
                 placeholder: locale.tr("Rechercher (ex: Mephiston, Blue, Nurgle, Flesh)…", "Search (e.g. Mephiston, Blue, Nurgle, Flesh)…"),
                 value: "{search}",
                 oninput: move |ev| search.set(ev.value()),
             }
 
             // Scrollable list
-            div { style: "max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;",
+            div { class: "u-maxh-480 u-oy-auto u-d-flex u-fd-column u-gap-4",
                 for acr in filtered {
                     {acrylic_row(tool, acr, current)}
                 }
@@ -147,16 +147,16 @@ fn acrylic_row(tool: ConverterState, acr: Paint, current: Option<&Paint>) -> Ele
             class: if is_active { "card-subtle active" } else { "card-subtle" },
             style: if is_active { "border-color: var(--accent); cursor: pointer; padding: 6px 10px;" } else { "cursor: pointer; padding: 6px 10px;" },
             onclick: move |_| selected.set(Some(k.clone())),
-            div { class: "row-between", style: "align-items: center;",
-                div { class: "row", style: "gap: 10px; align-items: center;",
+            div { class: "row-between u-ai-center",
+                div { class: "row u-gap-10 u-ai-center",
                     ColorSwatch { hex: acr.hex_color.clone(), size: 24 }
                     div {
-                        div { style: "font-weight: 650; font-size: 13px;", "{acr.name}" }
-                        div { class: "muted", style: "font-size: 11px;", "{acr.brand}" }
+                        div { class: "u-fw-650 u-fs-13", "{acr.name}" }
+                        div { class: "muted u-fs-11", "{acr.brand}" }
                     }
                 }
                 if !acr.code.is_empty() {
-                    span { class: "pill mono", style: "font-size: 10.5px;", "{acr.code}" }
+                    span { class: "pill mono u-fs-10p5", "{acr.code}" }
                 }
             }
         }
@@ -177,17 +177,17 @@ fn ladder_card(
     let steps = ladder.as_ref().map(|l| l.steps_hex().to_vec()).unwrap_or_default();
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom: 12px;",
+            div { class: "row-between u-mb-12",
                 div {
-                    div { class: "card-title", style: "margin: 0;",
+                    div { class: "card-title u-m-0",
                         {locale.tr("Échelle 5 Étapes & Recettes Calculées", "5-Stage Miniature Ladder & Calculated Mixes")}
                     }
-                    div { class: "muted", style: "font-size: 12px; margin-top: 2px;",
+                    div { class: "muted u-fs-12 u-mt-2",
                         {locale.tr("Calculé pour ", "Calculated for ")}
                         strong { "{name}" }
                         " ({hex}) "
                         {locale.tr("avec ", "with ")}
-                        span { class: "pill pill-accent", style: "padding: 1px 6px; font-size: 11px;", "{palette_name}" }
+                        span { class: "pill pill-accent u-p-1-6 u-fs-11", "{palette_name}" }
                     }
                 }
 
@@ -203,7 +203,7 @@ fn ladder_card(
             }
 
             // 5-Stage Computed Rows
-            div { style: "display: flex; flex-direction: column; gap: 8px;",
+            div { class: "u-d-flex u-fd-column u-gap-8",
                 for (idx, step_hex) in steps.iter().enumerate() {
                     {ladder_row(state, services, locale, idx, step_hex, oil_candidates)}
                 }
@@ -223,28 +223,28 @@ fn ladder_row(
     let short_label = step_label(locale, idx);
     let sugg = best_mix(services, rgb_or_grey(step_hex, 0.5), oil_candidates);
     rsx! {
-        div { class: "card-subtle", style: "padding: 10px 12px;",
-            div { class: "row-between", style: "align-items: center;",
-                div { class: "row", style: "gap: 10px; align-items: center;",
+        div { class: "card-subtle u-p-10-12",
+            div { class: "row-between u-ai-center",
+                div { class: "row u-gap-10 u-ai-center",
                     ColorSwatch { hex: step_hex.to_string(), size: 30 }
                     div {
-                        div { style: "font-weight: 700; font-size: 12.5px;", "{short_label}" }
-                        div { class: "mono", style: "font-size: 10.5px; color: var(--text-dim);", "{step_hex}" }
+                        div { class: "u-fw-700 u-fs-12p5", "{short_label}" }
+                        div { class: "mono u-fs-10p5 u-c-text-dim", "{step_hex}" }
                     }
                 }
 
                 if let Some(ref s) = sugg {
-                    div { class: "row", style: "gap: 10px; align-items: center;",
+                    div { class: "row u-gap-10 u-ai-center",
                         ColorSwatch { hex: s.color.to_hex(), size: 30 }
-                        div { style: "text-align: right; line-height: 1.3;",
-                            div { style: "font-weight: 650; font-size: 12px; color: var(--accent);", "{s.describe_i18n(locale)}" }
-                            div { style: "display: flex; gap: 4px; justify-content: flex-end; align-items: center; margin-top: 2px;",
+                        div { class: "u-ta-right u-lh-1p3",
+                            div { class: "u-fw-650 u-fs-12 u-c-accent", "{s.describe_i18n(locale)}" }
+                            div { class: "u-d-flex u-gap-4 u-jc-flex-end u-ai-center u-mt-2",
                                 DeltaEBadge { delta_e: s.delta_e }
                             }
                         }
                         button {
                             class: "btn",
-                            style: "padding: 4px 8px; font-size: 11px;",
+                            class: "u-p-4-8 u-fs-11",
                             title: locale.tr("Ouvrir cette teinte dans le Mélangeur", "Open target in Mixer"),
                             onclick: {
                                 let h = step_hex.to_string();
@@ -254,7 +254,7 @@ fn ladder_row(
                         }
                     }
                 } else {
-                    span { class: "muted", style: "font-size: 11.5px;",
+                    span { class: "muted u-fs-11p5",
                         {locale.tr("Aucun tube disponible dans la palette", "No tubes available in palette")}
                     }
                 }

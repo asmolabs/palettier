@@ -119,10 +119,10 @@ fn CoatParameters(
         h3 { class: "card-title", {locale.tr("Paramètres de la couche", "Coat Parameters")} }
 
         if is_oil {
-        div { style: "margin-bottom: 12px;",
+        div { class: "u-mb-12",
             label { class: "field-label", {locale.tr("Classe siccative du pigment", "Pigment Drying Class")} }
             select {
-                style: "width: 100%;",
+                class: "u-w-100pct",
                 onchange: move |e| {
                     let v = match e.value().as_str() {
                         "Fast" => DryingClass::Fast,
@@ -143,10 +143,10 @@ fn CoatParameters(
         }
         }
 
-        div { style: "margin-bottom: 12px;",
+        div { class: "u-mb-12",
             label { class: "field-label", {locale.tr("Médium ou diluant ajouté", "Added Medium or Thinner")} }
             select {
-                style: "width: 100%;",
+                class: "u-w-100pct",
                 onchange: move |e| {
                     let m = Medium::ALL
                         .into_iter()
@@ -164,7 +164,7 @@ fn CoatParameters(
             }
         }
 
-        div { style: "margin-bottom: 12px;",
+        div { class: "u-mb-12",
             label {
                 class: "field-label",
                 if locale.is_fr() {
@@ -175,7 +175,7 @@ fn CoatParameters(
             }
             input {
                 r#type: "range",
-                style: "width: 100%;",
+                class: "u-w-100pct",
                 min: "0",
                 max: "95",
                 step: "5",
@@ -188,7 +188,7 @@ fn CoatParameters(
             }
         }
 
-        div { style: "margin-bottom: 16px;",
+        div { class: "u-mb-16",
             label { class: "field-label", {locale.tr("Épaisseur de la touche", "Coat Thickness")} }
             div { class: "row",
                 for th in LayerThickness::ALL {

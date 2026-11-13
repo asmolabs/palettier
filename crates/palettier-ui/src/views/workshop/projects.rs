@@ -130,7 +130,7 @@ pub fn ProjectsView() -> Element {
                 }
 
                 // Columns 2 & 3: Active project details
-                div { style: "grid-column: span 2;",
+                div { class: "u-grid-column-span-2",
                     if let Some(proj) = active_proj {
                         ProjectDetail { proj }
                     } else {
@@ -193,27 +193,27 @@ fn NewProjectCard() -> Element {
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Nouveau projet", "New Project")} }
-            div { style: "margin-bottom:8px;",
+            div { class: "u-mb-8",
                 label { class: "field-label", {locale.tr("Nom de la pièce", "Piece Name")} }
                 input {
                     r#type: "text",
-                    style: "width:100%;",
+                    class: "u-w-100pct",
                     placeholder: locale.tr("ex. Grognard de la Garde", "e.g. Old Guard Grenadier"),
                     value: "{new_proj_name}",
                     oninput: move |ev| new_proj_name.set(ev.value())
                 }
             }
-            div { style: "margin-bottom:8px;",
+            div { class: "u-mb-8",
                 label { class: "field-label", {locale.tr("Sujet / Échelle", "Subject / Scale")} }
                 input {
                     r#type: "text",
-                    style: "width:100%;",
+                    class: "u-w-100pct",
                     placeholder: locale.tr("ex. Buste 1/10", "e.g. 1/10 Bust"),
                     value: "{new_proj_subject}",
                     oninput: move |ev| new_proj_subject.set(ev.value())
                 }
             }
-            div { style: "margin-bottom:8px;",
+            div { class: "u-mb-8",
                 label { class: "field-label", {locale.tr("Peinte à", "Painted in")} }
                 div { class: "system-switch",
                     for sys in PaintSystem::ALL {
@@ -227,14 +227,14 @@ fn NewProjectCard() -> Element {
                         }
                     }
                 }
-                p { class: "muted", style: "font-size:11px; margin-top:4px;",
+                p { class: "muted u-fs-11 u-mt-4",
                     "{new_proj_system().summary_i18n(locale)}"
                 }
             }
-            div { style: "margin-bottom:10px;",
+            div { class: "u-mb-10",
                 label { class: "field-label", {locale.tr("Palette associée", "Linked Palette")} }
                 select {
-                    style: "width:100%;",
+                    class: "u-w-100pct",
                     onchange: move |ev| {
                         if let Ok(idx) = ev.value().parse::<usize>() {
                             new_proj_palette_idx.set(idx);
@@ -247,7 +247,7 @@ fn NewProjectCard() -> Element {
             }
             button {
                 class: "btn-primary",
-                style: "width:100%;",
+                class: "u-w-100pct",
                 onclick: create,
                 {locale.tr("+ Créer le projet", "+ Create project")}
             }
@@ -311,18 +311,18 @@ fn ProjectListItem(p: Project) -> Element {
                 "margin-bottom:8px;cursor:pointer;"
             },
             onclick: move |_| ui.selected_id.set(pid),
-            div { class: "row-between", style: "align-items: center;",
+            div { class: "row-between u-ai-center",
                 div {
                     strong { "{p.name}" }
                     if !p.subject.is_empty() {
-                        div { class: "muted", style: "font-size:12px;", "{p.subject}" }
+                        div { class: "muted u-fs-12", "{p.subject}" }
                     }
                 }
-                div { class: "row", style: "gap: 6px; align-items: center;",
+                div { class: "row u-gap-6 u-ai-center",
                     span { class: "pill", "{p.zones.len()} zones" }
                     button {
                         class: "btn-danger",
-                        style: "padding: 3px 7px; font-size: 11px;",
+                        class: "u-p-3-7 u-fs-11",
                         title: locale.tr("Supprimer définitivement ce projet", "Delete this project permanently"),
                         onclick: delete,
                         "🗑️"

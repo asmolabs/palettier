@@ -38,10 +38,10 @@ pub fn ZoneCard(proj: Project, z_idx: usize) -> Element {
     };
 
     rsx! {
-        div { class: "card-subtle", style: "margin-bottom:14px;",
-            div { class: "row-between", style: "margin-bottom:4px;",
+        div { class: "card-subtle u-mb-14",
+            div { class: "row-between u-mb-4",
                 div {
-                    strong { style: "font-size:14.5px;", "{zone.name}" }
+                    strong { class: "u-fs-14p5", "{zone.name}" }
                     if !zone.material.is_empty() {
                         span { class: "muted", " · {zone.material}" }
                     }
@@ -52,7 +52,7 @@ pub fn ZoneCard(proj: Project, z_idx: usize) -> Element {
                     }
                     button {
                         class: "btn",
-                        style: "padding: 3px 9px; font-size: 11.5px;",
+                        class: "u-p-3-9 u-fs-11p5",
                         onclick: add_coat,
                         {locale.tr("+ Couche", "+ Coat")}
                     }
@@ -159,14 +159,14 @@ fn LayerRow(proj: Project, z_idx: usize, l_idx: usize) -> Element {
                 if is_editing {
                     input {
                         r#type: "text",
-                        style: "width: 110px;",
+                        class: "u-w-110",
                         value: "{ui.edit_role}",
                         oninput: move |e| ui.edit_role.set(e.value())
                     }
                 } else {
                     strong { "{layer.role}" }
                     if layer.kind == LayerKind::Accent {
-                        span { class: "pill pill-accent", style: "margin-left:6px;", "Accent" }
+                        span { class: "pill pill-accent u-ml-6", "Accent" }
                     }
                 }
             }
@@ -190,11 +190,11 @@ fn LayerRow(proj: Project, z_idx: usize, l_idx: usize) -> Element {
                     if let Some(ref rec) = computed.recipe {
                         div { class: "row",
                             ColorSwatch { hex: computed.achieved.to_hex(), size: 18 }
-                            strong { style: "font-size: 12.5px;", "{rec.describe_i18n(locale)}" }
+                            strong { class: "u-fs-12p5", "{rec.describe_i18n(locale)}" }
                             DeltaEBadge { delta_e: computed.delta_e }
                         }
                     }
-                    div { class: "muted", style: "font-size:11.5px; margin-top: 2px;",
+                    div { class: "muted u-fs-11p5 u-mt-2",
                         "{layer.technique.label(locale)}"
                         if !layer.note.is_empty() {
                             " · {layer.note}"

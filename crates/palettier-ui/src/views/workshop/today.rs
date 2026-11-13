@@ -62,7 +62,7 @@ fn ClimateCard() -> Element {
         div { class: "card",
             div { class: "row-between",
                 div {
-                    div { class: "card-title", style: "margin-bottom:2px;",
+                    div { class: "card-title u-mb-2",
                         {locale.tr("Conditions actuelles de l'atelier", "Current Studio Climate")}
                     }
                     span { class: "muted",
@@ -74,7 +74,7 @@ fn ClimateCard() -> Element {
                         label { class: "field-label", {locale.tr("Température (°C)", "Temperature (°C)")} }
                         input {
                             r#type: "number",
-                            style: "width:85px;",
+                            class: "u-w-85",
                             value: "{workshop.temperature_celsius}",
                             oninput: move |ev| {
                                 if let Ok(v) = ev.value().parse::<f64>()
@@ -88,7 +88,7 @@ fn ClimateCard() -> Element {
                         label { class: "field-label", {locale.tr("Humidité (%)", "Humidity (%)")} }
                         input {
                             r#type: "number",
-                            style: "width:85px;",
+                            class: "u-w-85",
                             value: "{workshop.relative_humidity}",
                             oninput: move |ev| {
                                 if let Ok(v) = ev.value().parse::<f64>()
@@ -130,8 +130,8 @@ fn BenchCard() -> Element {
 
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom:12px;",
-                h2 { class: "card-title", style: "margin:0;",
+            div { class: "row-between u-mb-12",
+                h2 { class: "card-title u-m-0",
                     {locale.tr("Pièces en cours", "Active Pieces")}, " ({bench.pieces.len()})"
                 }
                 span { class: "pill pill-ok",
@@ -157,9 +157,9 @@ fn BenchPiece(piece: PieceState) -> Element {
     let locale = *state.locale.read();
 
     rsx! {
-        div { class: "card-subtle", style: "margin-bottom:10px;",
+        div { class: "card-subtle u-mb-10",
             div { class: "row-between",
-                div { class: "row", style: "gap: 6px;",
+                div { class: "row u-gap-6",
                     strong { "{piece.project.name}" }
                     span {
                         class: if piece.project.system == PaintSystem::Acrylic { "pill pill-acrylic" } else { "pill pill-oil" },
@@ -171,10 +171,10 @@ fn BenchPiece(piece: PieceState) -> Element {
                 }
             }
             if !piece.project.subject.is_empty() {
-                div { class: "muted", style: "font-size:12px;margin-bottom:6px;", "{piece.project.subject}" }
+                div { class: "muted u-fs-12 u-mb-6", "{piece.project.subject}" }
             }
             for z in &piece.zones {
-                div { class: "row-between", style: "padding:4px 0;border-top:1px solid var(--border-subtle);",
+                div { class: "row-between u-p-4-0 u-bt-1-solid-border-subtle",
                     div { class: "row",
                         span { "{z.name}" }
                         span { class: "muted", "({z.applied}/{z.total})" }
@@ -256,13 +256,13 @@ fn NewMixForm() -> Element {
     };
 
     rsx! {
-        div { class: "card-subtle", style: "margin-bottom:12px;",
-            div { class: "grid-2", style: "gap:8px;margin-bottom:8px;",
+        div { class: "card-subtle u-mb-12",
+            div { class: "grid-2 u-gap-8 u-mb-8",
                 div {
                     label { class: "field-label", {locale.tr("Nom du mélange", "Mix Name")} }
                     input {
                         r#type: "text",
-                        style: "width:100%;",
+                        class: "u-w-100pct",
                         placeholder: locale.tr("ex. Chair d'ombre chaude", "e.g. Warm Shadow Flesh"),
                         value: "{new_mix_name}",
                         oninput: move |ev| new_mix_name.set(ev.value())
@@ -276,12 +276,12 @@ fn NewMixForm() -> Element {
                     }
                 }
             }
-            div { class: "grid-2", style: "gap:8px;margin-bottom:8px;",
+            div { class: "grid-2 u-gap-8 u-mb-8",
                 div {
                     label { class: "field-label", {locale.tr("Recette", "Recipe")} }
                     input {
                         r#type: "text",
-                        style: "width:100%;",
+                        class: "u-w-100pct",
                         placeholder: locale.tr("2 parts Ocre + 1 part Blanc", "2 parts Ochre + 1 part White"),
                         value: "{new_mix_recipe}",
                         oninput: move |ev| new_mix_recipe.set(ev.value())
@@ -290,7 +290,7 @@ fn NewMixForm() -> Element {
                 div {
                     label { class: "field-label", {locale.tr("Vitesse du pigment le plus lent", "Slowest Pigment Speed")} }
                     select {
-                        style: "width:100%;",
+                        class: "u-w-100pct",
                         value: "{new_mix_drying().as_db_str()}",
                         onchange: move |ev| {
                             if let Ok(dc) = DryingClass::from_str(&ev.value()) {
@@ -328,13 +328,13 @@ fn MixRow(ms: MixState) -> Element {
     };
 
     rsx! {
-        div { class: "card-subtle", style: "margin-bottom:8px;",
+        div { class: "card-subtle u-mb-8",
             div { class: "row-between",
                 div { class: "row",
                     ColorSwatch { hex: ms.mix.hex_color.clone(), size: 24 }
                     div {
                         strong { "{ms.mix.name}" }
-                        div { class: "muted", style: "font-size:11.5px;", "{ms.mix.recipe}" }
+                        div { class: "muted u-fs-11p5", "{ms.mix.recipe}" }
                     }
                 }
                 div { class: "row",

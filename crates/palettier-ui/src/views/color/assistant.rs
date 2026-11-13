@@ -113,24 +113,24 @@ fn AssistantRequestCard(
 
     rsx! {
         div { class: "card",
-            div { class: "grid-2", style: "margin-bottom:12px;",
+            div { class: "grid-2 u-mb-12",
                 div {
                     label { class: "field-label",
                         {locale.tr("Description du sujet et de l'ambiance lumineuse", "Subject Description & Lighting Mood")}
                     }
                     textarea {
-                        style: "width:100%;height:88px;",
+                        class: "u-w-100pct u-h-88",
                         value: "{description}",
                         oninput: move |ev| description.set(ev.value())
                     }
                 }
                 div {
-                    div { style: "margin-bottom:10px;",
+                    div { class: "u-mb-10",
                         label { class: "field-label",
                             {locale.tr("Palette à utiliser pour les mélanges", "Palette to Use for Mixes")}
                         }
                         select {
-                            style: "width:100%;",
+                            class: "u-w-100pct",
                             onchange: move |ev| {
                                 if let Ok(idx) = ev.value().parse::<usize>() {
                                     palette_idx.set(idx);
@@ -202,7 +202,7 @@ fn AssistantRequestCard(
             }
 
             if let Some(err) = error_msg() {
-                div { class: "card-subtle", style: "border-color:var(--danger);margin-top:12px;color:var(--danger);",
+                div { class: "card-subtle u-bc-danger u-mt-12 u-c-danger",
                     "{err}"
                 }
             }
@@ -272,9 +272,9 @@ fn AssistantPlanCard(
 
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom:14px;",
+            div { class: "row-between u-mb-14",
                 div {
-                    h2 { class: "card-title", style: "font-size:18px;margin-bottom:2px;", "{plan.subject}" }
+                    h2 { class: "card-title u-fs-18 u-mb-2", "{plan.subject}" }
                     p { class: "muted", "{plan.approach}" }
                 }
                 div { class: "row",
@@ -324,10 +324,10 @@ fn PlanZoneTable(zone: PlanZone) -> Element {
         .collect();
 
     rsx! {
-        div { class: "card-subtle", style: "margin-bottom:12px;",
-            strong { style: "font-size:14.5px;", "{z.name} ({z.material})" }
+        div { class: "card-subtle u-mb-12",
+            strong { class: "u-fs-14p5", "{z.name} ({z.material})" }
             ValueLadderStrip { steps: ladder_steps }
-            table { class: "data-table", style: "margin-top:8px;",
+            table { class: "data-table u-mt-8",
                 thead {
                     tr {
                         th { {locale.tr("Marche", "Step")} }
@@ -361,7 +361,7 @@ fn PlanZoneTable(zone: PlanZone) -> Element {
                             td {
                                 div { "{l.technique.label(locale)}" }
                                 if !l.note.is_empty() {
-                                    div { class: "muted", style: "font-size: 11px;", "{l.note}" }
+                                    div { class: "muted u-fs-11", "{l.note}" }
                                 }
                             }
                         }

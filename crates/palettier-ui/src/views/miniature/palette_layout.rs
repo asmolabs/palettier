@@ -23,24 +23,24 @@ pub(super) fn PaletteLayout() -> Element {
     let locale = *state.locale.read();
 
     rsx! {
-        div { style: "display: flex; flex-direction: column; gap: 16px;",
+        div { class: "u-d-flex u-fd-column u-gap-16",
             div { class: "card",
-                div { class: "row-between", style: "margin-bottom: 12px; align-items: center;",
-                    h3 { class: "card-title", style: "margin: 0;",
+                div { class: "row-between u-mb-12 u-ai-center",
+                    h3 { class: "card-title u-m-0",
                         "🗺️ ", {locale.tr("Guide d'Agencement de la Palette Physique d'Atelier", "Physical Studio Palette Layout Guide")}
                     }
                     span { class: "pill pill-accent",
                         {locale.tr("Prévention de la contamination des pigments", "Pigment Contamination Prevention")}
                     }
                 }
-                p { class: "muted", style: "margin-top: 0; font-size: 13px;",
+                p { class: "muted u-mt-0 u-fs-13",
                     {locale.tr(
                         "À l'huile, la disposition des noisettes de couleur sur la dalle de verre ou la palette étanche détermine la pureté de vos mélanges. Les pigments ultra-staining (Bleu de Prusse, Phtalo) doivent impérativement être isolés des blancs.",
                         "In miniature oils, paint dollop placement on your glass slab or stay-wet box governs mix purity. High-staining pigments (Prussian Blue, Phthalo) must be strictly isolated from whites."
                     )}
                 }
 
-                div { class: "row", style: "gap: 8px; margin-bottom: 16px; flex-wrap: wrap;",
+                div { class: "row u-gap-8 u-mb-16 u-fwrap-wrap",
                     for l in PaletteLayoutType::ALL {
                         button {
                             class: if *selected_palette_layout.read() == l { "btn-primary" } else { "btn" },
@@ -50,40 +50,40 @@ pub(super) fn PaletteLayout() -> Element {
                     }
                 }
 
-                div { class: "card-subtle", style: "margin-bottom: 16px;",
-                    div { class: "row-between", style: "margin-bottom: 8px;",
-                        strong { style: "font-size: 14px; color: var(--accent);",
+                div { class: "card-subtle u-mb-16",
+                    div { class: "row-between u-mb-8",
+                        strong { class: "u-fs-14 u-c-accent",
                             "🛡️ ", {selected_palette_layout.read().title_i18n(locale)}
                         }
                     }
-                    div { style: "font-size: 12.5px; line-height: 1.5; margin-bottom: 8px;",
+                    div { class: "u-fs-12p5 u-lh-1p5 u-mb-8",
                         strong { {locale.tr("Support recommandé : ", "Recommended surface: ")} }
                         {selected_palette_layout.read().surface_recommendation_i18n(locale)}
                     }
-                    div { style: "font-size: 12.5px; line-height: 1.5;",
+                    div { class: "u-fs-12p5 u-lh-1p5",
                         strong { {locale.tr("Règle d'agencement d'atelier : ", "Studio placement rule: ")} }
                         {selected_palette_layout.read().setup_advice_i18n(locale)}
                     }
                 }
 
-                h4 { style: "font-size: 13px; margin: 12px 0 8px 0;",
+                h4 { class: "u-fs-13 u-m-12-0-8-0",
                     {locale.tr("Disposition des Noisettes de Peinture (Pourtour) :", "Paint Dollop Perimeter Placement:")}
                 }
-                div { style: "display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;",
+                div { class: "u-d-grid u-gtc-repeat-auto-fill-minmax-280-1fr u-gap-10",
                     for slot in selected_palette_layout.read().slots(locale) {
-                        div { class: "card-subtle", style: "padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between;",
-                            div { class: "row", style: "gap: 10px; align-items: center; margin-bottom: 6px;",
+                        div { class: "card-subtle u-p-10-12 u-d-flex u-fd-column u-jc-space-between",
+                            div { class: "row u-gap-10 u-ai-center u-mb-6",
                                 ColorSwatch { hex: slot.hex.to_string(), size: 28 }
                                 div {
-                                    div { style: "font-weight: 700; font-size: 13px;", "{slot.name}" }
-                                    div { class: "muted", style: "font-size: 11px;", "{slot.position_desc}" }
+                                    div { class: "u-fw-700 u-fs-13", "{slot.name}" }
+                                    div { class: "muted u-fs-11", "{slot.position_desc}" }
                                 }
                             }
-                            div { style: "font-size: 11.5px; color: var(--fg); opacity: 0.85; margin-bottom: 6px;",
+                            div { class: "u-fs-11p5 u-c-fg u-op-0p85 u-mb-6",
                                 "{slot.role}"
                             }
                             if let Some(ref w) = slot.safety_warning {
-                                div { class: "badge badge-warning", style: "font-size: 10px; white-space: normal; padding: 4px 6px;",
+                                div { class: "badge badge-warning u-fs-10 u-ws-normal u-p-4-6",
                                     "{w}"
                                 }
                             }

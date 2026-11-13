@@ -132,11 +132,24 @@ Branche `claude/refactoring-lot-4`.
 Pas fait : passer à des fichiers de traduction (`fluent`) ; la plupart des textes de
 l'interface restent des `locale.tr("…", "…")` en ligne, ce qui suffit à deux langues.
 
-## Lot 5 : styles (priorité basse)
+## Lot 5 : styles — fait
 
-786 attributs `style: "…"` inline. Les rassembler en classes dans `theme.rs` (dont
-`card-subtle`, `row-between`, et les couleurs huile / acrylique déjà ajoutées) rend
-le thème clair / sombre cohérent et allège les vues avant le lot 2.
+Branche `claude/refactoring-lot-5`.
+
+- Les 800 attributs `style: "…"` statiques des vues sont devenus des classes utilitaires,
+  une par déclaration CSS : `margin-bottom: 8px` → `u-mb-8`, `font-size: 11.5px` →
+  `u-fs-11p5`, `color: var(--accent)` → `u-c-accent`. Elles sont générées en fin de
+  `APP_CSS` dans `theme.rs` (251 classes), en `!important` pour garder la priorité
+  qu'avait un style en ligne sur les règles de la feuille.
+- Restent en ligne les 31 styles qui calculent une valeur (`{…}`) ou qui sont choisis par
+  un `if`.
+- Rendu vérifié : les 54 pages du mode capture (11 écrans en sombre, en clair et en
+  anglais, 21 outils Miniature) ont été comparées avant et après, élément par élément,
+  sur 54 propriétés CSS calculées : aucune différence sur 24 901 éléments.
+
+Suite possible : regrouper les combinaisons qui reviennent souvent (par exemple
+`u-d-flex u-ai-center u-gap-8`) en classes nommées par leur rôle, au fil des
+retouches, plutôt que d'un coup.
 
 ## Lot 6 : tests de l'interface et de bout en bout (priorité basse)
 
@@ -154,4 +167,4 @@ clics.
 
 ## Ordre conseillé
 
-Lots 1 à 4 faits. Restent 5 → 6.
+Lots 1 à 5 faits. Reste le lot 6.

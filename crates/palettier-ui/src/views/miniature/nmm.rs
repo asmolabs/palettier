@@ -41,15 +41,15 @@ pub(super) fn NmmStudio(candidates: Vec<Paint>, palette_name: String) -> Element
     let steps = nmm.steps_hex();
 
     rsx! {
-        div { class: "grid-2", style: "grid-template-columns: 1fr 1.35fr;",
+        div { class: "grid-2 u-gtc-1fr-1p35fr",
             // Left: NMM Family selector
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("Familles de Métaux Non-Métalliques (NMM)", "Non-Metallic Metal (NMM) Families")} }
-                p { class: "muted", style: "font-size: 12px; margin-bottom: 14px;",
+                p { class: "muted u-fs-12 u-mb-14",
                     {locale.tr("Le NMM recrée l'illusion du métal poli sans particules scintillantes, par le contraste extrême d'ombres sourdes et de blancs spéculaires.", "NMM recreates the illusion of polished metal using extreme value contrast between deep shadows and pure white catchlights.")}
                 }
 
-                div { style: "display: flex; flex-direction: column; gap: 8px;",
+                div { class: "u-d-flex u-fd-column u-gap-8",
                     for nmm in NmmMetal::ALL {
                         {swatch_option(selected_nmm, nmm, nmm.steps_hex()[2], nmm.label(locale))}
                     }
@@ -58,33 +58,33 @@ pub(super) fn NmmStudio(candidates: Vec<Paint>, palette_name: String) -> Element
 
             // Right: NMM 5-Step Scale & Palette Mix Calculator
             div { class: "card",
-                div { class: "row-between", style: "margin-bottom: 14px; flex-wrap: wrap; gap: 8px;",
-                    div { class: "row", style: "gap: 12px; align-items: center;",
+                div { class: "row-between u-mb-14 u-fwrap-wrap u-gap-8",
+                    div { class: "row u-gap-12 u-ai-center",
                         ColorSwatch { hex: steps[2].to_string(), size: 40 }
                         div {
-                            h3 { class: "card-title", style: "margin: 0;", "{nmm.label(locale)}" }
+                            h3 { class: "card-title u-m-0", "{nmm.label(locale)}" }
                             span { class: "pill pill-accent", {locale.tr("Reflet spéculaire contrasté", "High-contrast specular")} }
                         }
                     }
 
-                    span { class: "pill", style: "font-size: 11.5px;",
+                    span { class: "pill u-fs-11p5",
                         {locale.tr("Calculé avec : ", "Calculated with: ")},
                         strong { "{palette_name}" }
                     }
                 }
 
                 // Computed mix rows for the 5 NMM steps
-                div { style: "display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;",
+                div { class: "u-d-flex u-fd-column u-gap-8 u-mb-16",
                     for (idx, step_hex_str) in steps.iter().enumerate() {
                         {step_row(state, &services, locale, idx, step_hex_str, &candidates)}
                     }
                 }
 
                 div { class: "card-subtle",
-                    div { style: "font-weight: 700; font-size: 12px; margin-bottom: 4px; color: var(--accent);",
+                    div { class: "u-fw-700 u-fs-12 u-mb-4 u-c-accent",
                         {locale.tr("🌍 Règle du reflet de sol (Ground Bounce) :", "🌍 Ground Bounce Reflection Physics:")}
                     }
-                    div { style: "font-size: 12.5px; line-height: 1.45;",
+                    div { class: "u-fs-12p5 u-lh-1p45",
                         "{nmm.ground_bounce_advice_i18n(locale)}"
                     }
                 }
@@ -104,28 +104,28 @@ fn step_row(
     let tag = step_label(locale, idx);
     let sugg = best_mix(services, rgb_or_grey(step_hex_str, 0.5), candidates);
     rsx! {
-        div { class: "card-subtle", style: "padding: 8px 12px;",
-            div { class: "row-between", style: "align-items: center;",
-                div { class: "row", style: "gap: 10px; align-items: center;",
+        div { class: "card-subtle u-p-8-12",
+            div { class: "row-between u-ai-center",
+                div { class: "row u-gap-10 u-ai-center",
                     ColorSwatch { hex: step_hex_str.to_string(), size: 28 }
                     div {
-                        div { style: "font-weight: 700; font-size: 12px;", "{tag}" }
-                        div { class: "mono", style: "font-size: 10.5px; color: var(--text-dim);", "{step_hex_str}" }
+                        div { class: "u-fw-700 u-fs-12", "{tag}" }
+                        div { class: "mono u-fs-10p5 u-c-text-dim", "{step_hex_str}" }
                     }
                 }
 
                 if let Some(ref s) = sugg {
-                    div { class: "row", style: "gap: 8px; align-items: center;",
+                    div { class: "row u-gap-8 u-ai-center",
                         ColorSwatch { hex: s.color.to_hex(), size: 28 }
-                        div { style: "text-align: right; line-height: 1.3;",
-                            div { style: "font-weight: 650; font-size: 12px; color: var(--accent);", "{s.describe_i18n(locale)}" }
-                            div { style: "display: flex; gap: 4px; justify-content: flex-end; align-items: center; margin-top: 2px;",
+                        div { class: "u-ta-right u-lh-1p3",
+                            div { class: "u-fw-650 u-fs-12 u-c-accent", "{s.describe_i18n(locale)}" }
+                            div { class: "u-d-flex u-gap-4 u-jc-flex-end u-ai-center u-mt-2",
                                 DeltaEBadge { delta_e: s.delta_e }
                             }
                         }
                         button {
                             class: "btn",
-                            style: "padding: 3px 8px; font-size: 11px;",
+                            class: "u-p-3-8 u-fs-11",
                             title: locale.tr("Ouvrir cette teinte dans le Mélangeur", "Open target in Mixer"),
                             onclick: {
                                 let h = step_hex_str.to_string();
@@ -135,7 +135,7 @@ fn step_row(
                         }
                     }
                 } else {
-                    span { class: "muted", style: "font-size: 11.5px;",
+                    span { class: "muted u-fs-11p5",
                         {locale.tr("Aucun tube disponible dans la palette", "No tubes available in palette")}
                     }
                 }

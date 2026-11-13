@@ -44,7 +44,7 @@ pub fn RecipesView() -> Element {
                 actions: None,
             }
 
-            div { class: "grid-2", style: "grid-template-columns: 1fr 2fr;",
+            div { class: "grid-2 u-gtc-1fr-2fr",
                 div {
                     div { class: "card",
                         h3 { class: "card-title", {locale.tr("Recettes enregistrées", "Saved Recipes")}, " ({recipes.len()})" }
@@ -99,8 +99,8 @@ fn RecipeItem(idx: usize, recipe: Recipe, selected_idx: Signal<usize>) -> Elemen
             style: if is_sel { "margin-bottom: 8px; border-color: var(--accent); cursor: pointer;" } else { "margin-bottom: 8px; cursor: pointer;" },
             onclick: move |_| selected_idx.set(idx),
             div {
-                div { style: "font-weight: 600;", "{recipe.name}" }
-                div { class: "muted", style: "font-size: 11.5px;", "{recipe.subject} · {recipe.steps.len()} ", {locale.tr("étape(s)", "step(s)")} }
+                div { class: "u-fw-600", "{recipe.name}" }
+                div { class: "muted u-fs-11p5", "{recipe.subject} · {recipe.steps.len()} ", {locale.tr("étape(s)", "step(s)")} }
             }
             if let Some(id) = recipe.id {
                 button {
@@ -137,21 +137,21 @@ fn NewRecipeCard(new_name: Signal<String>, new_subject: Signal<String>) -> Eleme
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Nouvelle recette", "New Recipe")} }
-            div { style: "margin-bottom: 8px;",
+            div { class: "u-mb-8",
                 label { class: "field-label", {locale.tr("Nom de la recette", "Recipe Name")} }
                 input {
                     r#type: "text",
-                    style: "width: 100%;",
+                    class: "u-w-100pct",
                     placeholder: locale.tr("Ex: Carnation chaude en 4 étapes", "e.g. Warm Skin Tone in 4 Steps"),
                     value: "{new_name}",
                     oninput: move |e| new_name.set(e.value()),
                 }
             }
-            div { style: "margin-bottom: 12px;",
+            div { class: "u-mb-12",
                 label { class: "field-label", {locale.tr("Sujet / Matière", "Subject / Material")} }
                 input {
                     r#type: "text",
-                    style: "width: 100%;",
+                    class: "u-w-100pct",
                     placeholder: locale.tr("Ex: Visage, Cuir usé, Drapé rouge…", "e.g. Face, Worn Leather, Red Cloak…"),
                     value: "{new_subject}",
                     oninput: move |e| new_subject.set(e.value()),

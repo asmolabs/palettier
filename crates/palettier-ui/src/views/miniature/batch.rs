@@ -35,18 +35,18 @@ pub(super) fn BatchSquadTool() -> Element {
 
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom: 14px;",
+            div { class: "row-between u-mb-14",
                 div {
-                    h3 { class: "card-title", style: "margin: 0;",
+                    h3 { class: "card-title u-m-0",
                         {locale.tr("Peinture d'Armée & Escouade à la Chaîne (Batch Painting)", "Batch Squad Painting Tracker")}
                     }
-                    div { class: "muted", style: "font-size: 12px; margin-top: 2px;",
+                    div { class: "muted u-fs-12 u-mt-2",
                         {locale.tr("Suivi rigoureux par figurine et par étape pour peindre une escouade homogène.", "Rigorous step-by-step progress tracking to paint an entire homogeneous squad.")}
                     }
                 }
 
-                div { class: "row", style: "gap: 12px; align-items: center;",
-                    div { class: "pill pill-ok", style: "font-size: 13px; font-weight: 750;",
+                div { class: "row u-gap-12 u-ai-center",
+                    div { class: "pill pill-ok u-fs-13 u-fw-750",
                         "{squad.read().progress_pct():.0}% ", {locale.tr("terminé", "completed")}
                     }
                     div { class: "pill pill-accent",
@@ -56,8 +56,8 @@ pub(super) fn BatchSquadTool() -> Element {
                 }
             }
 
-            div { class: "card-subtle", style: "margin-bottom: 16px;",
-                div { class: "row", style: "gap: 16px; align-items: center;",
+            div { class: "card-subtle u-mb-16",
+                div { class: "row u-gap-16 u-ai-center",
                     div {
                         label { class: "field-label", {locale.tr("Nom de l'escouade", "Squad Name")} }
                         input {
@@ -75,7 +75,7 @@ pub(super) fn BatchSquadTool() -> Element {
                         label { class: "field-label", {locale.tr("Effectif (Figurines)", "Headcount (Miniatures)")} }
                         input {
                             r#type: "number",
-                            style: "width: 80px;",
+                            class: "u-w-80",
                             min: "1",
                             max: "50",
                             value: "{squad_size}",
@@ -91,13 +91,13 @@ pub(super) fn BatchSquadTool() -> Element {
                 }
             }
 
-            div { style: "overflow-x: auto;",
+            div { class: "u-ox-auto",
                 table { class: "data-table",
                     thead {
                         tr {
-                            th { style: "width: 140px;", {locale.tr("Figurine", "Miniature")} }
+                            th { class: "u-w-140", {locale.tr("Figurine", "Miniature")} }
                             for step in &squad.read().steps {
-                                th { style: "font-size: 11px; text-align: center;", "{step}" }
+                                th { class: "u-fs-11 u-ta-center", "{step}" }
                             }
                         }
                     }
@@ -125,11 +125,11 @@ fn is_done(squad: &BatchSquad, m_idx: usize, s_idx: usize) -> bool {
 fn squad_cell(mut squad: Signal<BatchSquad>, m_idx: usize, s_idx: usize) -> Element {
     let is_done = is_done(&squad.read(), m_idx, s_idx);
     rsx! {
-        td { style: "text-align: center; cursor: pointer;",
+        td { class: "u-ta-center u-cur-pointer",
             onclick: move |_| squad.write().toggle(m_idx, s_idx),
             span {
                 class: if is_done { "pill pill-ok" } else { "pill" },
-                style: "padding: 2px 8px; font-size: 11px;",
+                class: "u-p-2-8 u-fs-11",
                 if is_done { "✓" } else { "○" }
             }
         }
@@ -144,26 +144,26 @@ pub(super) fn BatchMotherMix() -> Element {
     let locale = *state.locale.read();
 
     rsx! {
-        div { style: "display: flex; flex-direction: column; gap: 16px;",
+        div { class: "u-d-flex u-fd-column u-gap-16",
             div { class: "card",
-                div { class: "row-between", style: "margin-bottom: 12px; align-items: center;",
-                    h3 { class: "card-title", style: "margin: 0;",
+                div { class: "row-between u-mb-12 u-ai-center",
+                    h3 { class: "card-title u-m-0",
                         "🏺 ", {locale.tr("Calculateur de Mélanges Mères pour Escouades & Armées", "Batch Squad Mother Mix Calculator")}
                     }
                     span { class: "pill pill-accent",
                         {locale.tr("Volumes en Noisettes & Pots Scellés", "Hazelnut Volumes & Sealed Pots")}
                     }
                 }
-                p { class: "muted", style: "margin-top: 0; font-size: 13px;",
+                p { class: "muted u-mt-0 u-fs-13",
                     {locale.tr(
                         "Préparer un mélange mère en amont garantit une teinte 100% identique sur toute une armée de figurines. Calculez exactement le volume de pâte nécessaire et découvrez les astuces pour le garder frais plusieurs semaines.",
                         "Mixing a mother mix beforehand ensures identical uniform color across an entire army. Compute the exact paste volume needed and tips to keep it usable for weeks."
                     )}
                 }
 
-                div { class: "grid-3", style: "gap: 14px; margin-bottom: 16px;",
+                div { class: "grid-3 u-gap-14 u-mb-16",
                     div { class: "card-subtle",
-                        label { style: "font-weight: 700; font-size: 12.5px; display: block; margin-bottom: 6px;",
+                        label { class: "u-fw-700 u-fs-12p5 u-d-block u-mb-6",
                             {locale.tr("Échelle des figurines :", "Miniature Scale:")}
                         }
                         select {
@@ -184,7 +184,7 @@ pub(super) fn BatchMotherMix() -> Element {
                     }
 
                     div { class: "card-subtle",
-                        label { style: "font-weight: 700; font-size: 12.5px; display: block; margin-bottom: 6px;",
+                        label { class: "u-fw-700 u-fs-12p5 u-d-block u-mb-6",
                             {locale.tr("Nombre de figurines : ", "Number of models: ")},
                             "{mother_mix_count}"
                         }
@@ -202,12 +202,12 @@ pub(super) fn BatchMotherMix() -> Element {
                     }
 
                     div { class: "card-subtle",
-                        label { style: "font-weight: 700; font-size: 12.5px; display: block; margin-bottom: 6px;",
+                        label { class: "u-fw-700 u-fs-12p5 u-d-block u-mb-6",
                             {locale.tr("Surface couverte :", "Covered Surface:")}
                         }
                         button {
                             class: if *mother_mix_full_coverage.read() { "btn-primary" } else { "btn" },
-                            style: "width: 100%;",
+                            class: "u-w-100pct",
                             onclick: move |_| {
                                 let cur = *mother_mix_full_coverage.read();
                                 mother_mix_full_coverage.set(!cur);
@@ -224,34 +224,34 @@ pub(super) fn BatchMotherMix() -> Element {
                 {
                     let req = BatchMotherMixCalculator::calculate(*mother_mix_scale.read(), *mother_mix_count.read(), *mother_mix_full_coverage.read(), locale);
                     rsx! {
-                        div { class: "card-subtle", style: "border-left: 4px solid var(--accent); padding: 16px;",
-                            div { class: "row-between", style: "align-items: center; margin-bottom: 12px;",
-                                span { style: "font-weight: 750; font-size: 14px; color: var(--accent);",
+                        div { class: "card-subtle u-bl-4-solid-accent u-p-16",
+                            div { class: "row-between u-ai-center u-mb-12",
+                                span { class: "u-fw-750 u-fs-14 u-c-accent",
                                     "📊 ", {locale.tr("Volume Total Requis :", "Total Volume Needed:")}
                                 }
-                                div { class: "row", style: "gap: 8px; flex-wrap: wrap;",
+                                div { class: "row u-gap-8 u-fwrap-wrap",
                                     span { class: "pill pill-accent", "{req.volume_ml:.2} ml" }
                                     span { class: "pill", "~{req.hazelnuts} ", {locale.tr("noisettes", "hazelnut dabs")} }
                                     span { class: "pill", "{req.matchstick_heads} ", {locale.tr("têtes d'allumette", "matchstick heads")} }
                                 }
                             }
 
-                            div { style: "font-size: 13px; line-height: 1.5; margin-bottom: 12px;",
+                            div { class: "u-fs-13 u-lh-1p5 u-mb-12",
                                 "{req.advice}"
                             }
 
-                            div { style: "display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border);",
-                                div { class: "card", style: "background: var(--bg); text-align: center;",
-                                    div { class: "muted", style: "font-size: 11px;", {locale.tr("Palette Ouverte", "Open Palette")} }
-                                    div { style: "font-weight: 750; font-size: 14px; margin-top: 2px;", "~{req.open_palette_hours} h" }
+                            div { class: "u-d-grid u-gtc-repeat-3-1fr u-gap-10 u-mt-10 u-pt-12 u-bt-1-solid-border",
+                                div { class: "card u-bg-bg u-ta-center",
+                                    div { class: "muted u-fs-11", {locale.tr("Palette Ouverte", "Open Palette")} }
+                                    div { class: "u-fw-750 u-fs-14 u-mt-2", "~{req.open_palette_hours} h" }
                                 }
-                                div { class: "card", style: "background: var(--bg); text-align: center;",
-                                    div { class: "muted", style: "font-size: 11px;", {locale.tr("Godet Hermétique", "Sealed Pot")} }
-                                    div { style: "font-weight: 750; font-size: 14px; margin-top: 2px; color: var(--accent);", "{req.airtight_pot_days} jours" }
+                                div { class: "card u-bg-bg u-ta-center",
+                                    div { class: "muted u-fs-11", {locale.tr("Godet Hermétique", "Sealed Pot")} }
+                                    div { class: "u-fw-750 u-fs-14 u-mt-2 u-c-accent", "{req.airtight_pot_days} jours" }
                                 }
-                                div { class: "card", style: "background: var(--bg); text-align: center;",
-                                    div { class: "muted", style: "font-size: 11px;", {locale.tr("Congélateur (-18°C)", "Freezer (-18°C)")} }
-                                    div { style: "font-weight: 750; font-size: 14px; margin-top: 2px; color: #3b82f6;", "{req.freezer_days} jours" }
+                                div { class: "card u-bg-bg u-ta-center",
+                                    div { class: "muted u-fs-11", {locale.tr("Congélateur (-18°C)", "Freezer (-18°C)")} }
+                                    div { class: "u-fw-750 u-fs-14 u-mt-2 u-c-h3b82f6", "{req.freezer_days} jours" }
                                 }
                             }
                         }

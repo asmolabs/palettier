@@ -98,11 +98,11 @@ pub(super) fn swatch_option<T: Copy + PartialEq + 'static>(
             class: if is_sel { "card-subtle active" } else { "card-subtle" },
             style: if is_sel { "border-color: var(--accent); cursor: pointer; padding: 10px;" } else { "cursor: pointer; padding: 10px;" },
             onclick: move |_| selected.set(value),
-            div { class: "row", style: "gap: 10px; align-items: center;",
+            div { class: "row u-gap-10 u-ai-center",
                 ColorSwatch { hex: hex.to_string(), size: 28 }
                 div {
-                    div { style: "font-weight: 700; font-size: 13px;", "{label}" }
-                    div { class: "mono", style: "font-size: 11px; opacity: 0.7;", "{hex}" }
+                    div { class: "u-fw-700 u-fs-13", "{label}" }
+                    div { class: "mono u-fs-11 u-op-0p7", "{hex}" }
                 }
             }
         }

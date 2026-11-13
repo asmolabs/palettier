@@ -956,6 +956,263 @@ table.data-table tr:hover td {
     border: 1px solid #b5ada0;
     display: inline-block;
 }
+/* ---------------------------------------------------------------------------
+   Utilities (refactoring lot 5): one class per declaration, generated from the
+   inline styles the views used to carry. `!important` keeps the precedence an
+   inline style had over the rules above.
+   ------------------------------------------------------------------------- */
+.u-ai-center { align-items: center !important; }
+.u-ai-flex-start { align-items: flex-start !important; }
+.u-as-center { align-self: center !important; }
+.u-b-1-dashed-border-main { border: 1px dashed var(--border-main) !important; }
+.u-b-1-solid-accent-border { border: 1px solid var(--accent-border) !important; }
+.u-b-1-solid-border-main { border: 1px solid var(--border-main) !important; }
+.u-b-1-solid-border-subtle { border: 1px solid var(--border-subtle) !important; }
+.u-b-1-solid-hc8bfb0 { border: 1px solid #c8bfb0 !important; }
+.u-b-1p5-solid-accent { border: 1.5px solid var(--accent) !important; }
+.u-b-none { border: none !important; }
+.u-bb-1-solid-border-main { border-bottom: 1px solid var(--border-main) !important; }
+.u-bb-1-solid-border-subtle { border-bottom: 1px solid var(--border-subtle) !important; }
+.u-bb-1-solid-he2d9c8 { border-bottom: 1px solid #e2d9c8 !important; }
+.u-bc-accent { border-color: var(--accent) !important; }
+.u-bc-danger { border-color: var(--danger) !important; }
+.u-bc-h7c2d12 { border-color: #7c2d12 !important; }
+.u-bc-pill-danger-border { border-color: var(--pill-danger-border) !important; }
+.u-bc-pill-ok-border { border-color: var(--pill-ok-border) !important; }
+.u-bc-pill-warn-border { border-color: var(--pill-warn-border) !important; }
+.u-bc-var-warning-hc98a2b { border-color: var(--warning, #c98a2b) !important; }
+.u-bg-bg { background: var(--bg) !important; }
+.u-bg-bg-input { background: var(--bg-input) !important; }
+.u-bg-bg-subtle { background: var(--bg-subtle) !important; }
+.u-bg-bg-surface { background: var(--bg-surface) !important; }
+.u-bg-h7c2d12 { background: #7c2d12 !important; }
+.u-bg-pill-danger-bg { background: var(--pill-danger-bg) !important; }
+.u-bg-rgba-0-0-0-0p65 { background: rgba(0, 0, 0, 0.65) !important; }
+.u-bl-4-solid-accent { border-left: 4px solid var(--accent) !important; }
+.u-bt-1-solid-border { border-top: 1px solid var(--border) !important; }
+.u-bt-1-solid-border-main { border-top: 1px solid var(--border-main) !important; }
+.u-bt-1-solid-border-subtle { border-top: 1px solid var(--border-subtle) !important; }
+.u-c-accent { color: var(--accent) !important; }
+.u-c-accent-ok { color: var(--accent-ok) !important; }
+.u-c-danger { color: var(--danger) !important; }
+.u-c-fg { color: var(--fg) !important; }
+.u-c-h262320 { color: #262320 !important; }
+.u-c-h3b82f6 { color: #3b82f6 !important; }
+.u-c-h4a453e { color: #4a453e !important; }
+.u-c-h57524a { color: #57524a !important; }
+.u-c-h78716a { color: #78716a !important; }
+.u-c-h7c2d12 { color: #7c2d12 !important; }
+.u-c-hffffff { color: #ffffff !important; }
+.u-c-pill-ok-text { color: var(--pill-ok-text) !important; }
+.u-c-pill-warn-text { color: var(--pill-warn-text) !important; }
+.u-c-text-dim { color: var(--text-dim) !important; }
+.u-c-text-main { color: var(--text-main) !important; }
+.u-c-text-muted { color: var(--text-muted) !important; }
+.u-cur-pointer { cursor: pointer !important; }
+.u-d-block { display: block !important; }
+.u-d-flex { display: flex !important; }
+.u-d-grid { display: grid !important; }
+.u-d-inline-block { display: inline-block !important; }
+.u-d-inline-flex { display: inline-flex !important; }
+.u-fd-column { flex-direction: column !important; }
+.u-flex-1 { flex: 1 !important; }
+.u-fs-10 { font-size: 10px !important; }
+.u-fs-10p5 { font-size: 10.5px !important; }
+.u-fs-11 { font-size: 11px !important; }
+.u-fs-11p5 { font-size: 11.5px !important; }
+.u-fs-12 { font-size: 12px !important; }
+.u-fs-12p5 { font-size: 12.5px !important; }
+.u-fs-13 { font-size: 13px !important; }
+.u-fs-13p5 { font-size: 13.5px !important; }
+.u-fs-14 { font-size: 14px !important; }
+.u-fs-14p5 { font-size: 14.5px !important; }
+.u-fs-15 { font-size: 15px !important; }
+.u-fs-16 { font-size: 16px !important; }
+.u-fs-17 { font-size: 17px !important; }
+.u-fs-18 { font-size: 18px !important; }
+.u-fs-19 { font-size: 19px !important; }
+.u-fs-20 { font-size: 20px !important; }
+.u-fs-26 { font-size: 26px !important; }
+.u-fs-28 { font-size: 28px !important; }
+.u-fs-32 { font-size: 32px !important; }
+.u-fs-38 { font-size: 38px !important; }
+.u-fs-9p5 { font-size: 9.5px !important; }
+.u-fst-italic { font-style: italic !important; }
+.u-fw-600 { font-weight: 600 !important; }
+.u-fw-650 { font-weight: 650 !important; }
+.u-fw-700 { font-weight: 700 !important; }
+.u-fw-750 { font-weight: 750 !important; }
+.u-fw-800 { font-weight: 800 !important; }
+.u-fwrap-wrap { flex-wrap: wrap !important; }
+.u-gap-10 { gap: 10px !important; }
+.u-gap-12 { gap: 12px !important; }
+.u-gap-14 { gap: 14px !important; }
+.u-gap-16 { gap: 16px !important; }
+.u-gap-22 { gap: 22px !important; }
+.u-gap-3 { gap: 3px !important; }
+.u-gap-4 { gap: 4px !important; }
+.u-gap-6 { gap: 6px !important; }
+.u-gap-8 { gap: 8px !important; }
+.u-grid-column-span-2 { grid-column: span 2 !important; }
+.u-gtc-1fr-1fr { grid-template-columns: 1fr 1fr !important; }
+.u-gtc-1fr-1p25fr { grid-template-columns: 1fr 1.25fr !important; }
+.u-gtc-1fr-1p35fr { grid-template-columns: 1fr 1.35fr !important; }
+.u-gtc-1fr-2fr { grid-template-columns: 1fr 2fr !important; }
+.u-gtc-1p25fr-1fr { grid-template-columns: 1.25fr 1fr !important; }
+.u-gtc-1p2fr-0p8fr { grid-template-columns: 1.2fr 0.8fr !important; }
+.u-gtc-1p6fr-1fr { grid-template-columns: 1.6fr 1fr !important; }
+.u-gtc-repeat-3-1fr { grid-template-columns: repeat(3, 1fr) !important; }
+.u-gtc-repeat-auto-fill-minmax-280-1fr { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important; }
+.u-h-60 { height: 60px !important; }
+.u-h-88 { height: 88px !important; }
+.u-inset-0 { inset: 0 !important; }
+.u-jc-center { justify-content: center !important; }
+.u-jc-flex-end { justify-content: flex-end !important; }
+.u-jc-flex-start { justify-content: flex-start !important; }
+.u-jc-space-between { justify-content: space-between !important; }
+.u-lh-1p3 { line-height: 1.3 !important; }
+.u-lh-1p4 { line-height: 1.4 !important; }
+.u-lh-1p45 { line-height: 1.45 !important; }
+.u-lh-1p5 { line-height: 1.5 !important; }
+.u-ls-0p2 { letter-spacing: -0.2px !important; }
+.u-ls-0p5 { letter-spacing: 0.5px !important; }
+.u-ls-0p6 { letter-spacing: 0.6px !important; }
+.u-m-0 { margin: 0 !important; }
+.u-m-12-0-8-0 { margin: 12px 0 8px 0 !important; }
+.u-m-2-0-0-0 { margin: 2px 0 0 0 !important; }
+.u-m-6-0 { margin: 6px 0 !important; }
+.u-m-6-0-0-0 { margin: 6px 0 0 0 !important; }
+.u-m-6-0-12-0 { margin: 6px 0 12px 0 !important; }
+.u-maxh-140 { max-height: 140px !important; }
+.u-maxh-215 { max-height: 215px !important; }
+.u-maxh-480 { max-height: 480px !important; }
+.u-maxh-68vh { max-height: 68vh !important; }
+.u-maxh-82vh { max-height: 82vh !important; }
+.u-maxw-560 { max-width: 560px !important; }
+.u-maxw-90 { max-width: 90px !important; }
+.u-maxw-92vw { max-width: 92vw !important; }
+.u-mb-0 { margin-bottom: 0 !important; }
+.u-mb-10 { margin-bottom: 10px !important; }
+.u-mb-12 { margin-bottom: 12px !important; }
+.u-mb-14 { margin-bottom: 14px !important; }
+.u-mb-16 { margin-bottom: 16px !important; }
+.u-mb-18 { margin-bottom: 18px !important; }
+.u-mb-2 { margin-bottom: 2px !important; }
+.u-mb-3 { margin-bottom: 3px !important; }
+.u-mb-4 { margin-bottom: 4px !important; }
+.u-mb-5 { margin-bottom: 5px !important; }
+.u-mb-6 { margin-bottom: 6px !important; }
+.u-mb-8 { margin-bottom: 8px !important; }
+.u-minh-280 { min-height: 280px !important; }
+.u-minw-180 { min-width: 180px !important; }
+.u-minw-280 { min-width: 280px !important; }
+.u-ml-10 { margin-left: 10px !important; }
+.u-ml-20 { margin-left: 20px !important; }
+.u-ml-5 { margin-left: 5px !important; }
+.u-ml-6 { margin-left: 6px !important; }
+.u-ml-8 { margin-left: 8px !important; }
+.u-mr-4 { margin-right: 4px !important; }
+.u-mt-0 { margin-top: 0 !important; }
+.u-mt-10 { margin-top: 10px !important; }
+.u-mt-12 { margin-top: 12px !important; }
+.u-mt-14 { margin-top: 14px !important; }
+.u-mt-16 { margin-top: 16px !important; }
+.u-mt-18 { margin-top: 18px !important; }
+.u-mt-2 { margin-top: 2px !important; }
+.u-mt-3 { margin-top: 3px !important; }
+.u-mt-4 { margin-top: 4px !important; }
+.u-mt-5 { margin-top: 5px !important; }
+.u-mt-6 { margin-top: 6px !important; }
+.u-mt-8 { margin-top: 8px !important; }
+.u-mt-auto { margin-top: auto !important; }
+.u-o-auto { overflow: auto !important; }
+.u-o-hidden { overflow: hidden !important; }
+.u-of-cover { object-fit: cover !important; }
+.u-op-0p7 { opacity: 0.7 !important; }
+.u-op-0p75 { opacity: 0.75 !important; }
+.u-op-0p8 { opacity: 0.8 !important; }
+.u-op-0p85 { opacity: 0.85 !important; }
+.u-ox-auto { overflow-x: auto !important; }
+.u-oy-auto { overflow-y: auto !important; }
+.u-p-0-6 { padding: 0 6px !important; }
+.u-p-1-5 { padding: 1px 5px !important; }
+.u-p-1-6 { padding: 1px 6px !important; }
+.u-p-10 { padding: 10px !important; }
+.u-p-10-12 { padding: 10px 12px !important; }
+.u-p-10-14 { padding: 10px 14px !important; }
+.u-p-10-16 { padding: 10px 16px !important; }
+.u-p-12 { padding: 12px !important; }
+.u-p-14 { padding: 14px !important; }
+.u-p-14-16 { padding: 14px 16px !important; }
+.u-p-14-4 { padding: 14px 4px !important; }
+.u-p-16 { padding: 16px !important; }
+.u-p-18 { padding: 18px !important; }
+.u-p-2-7 { padding: 2px 7px !important; }
+.u-p-2-8 { padding: 2px 8px !important; }
+.u-p-20 { padding: 20px !important; }
+.u-p-20-0 { padding: 20px 0 !important; }
+.u-p-3-10 { padding: 3px 10px !important; }
+.u-p-3-7 { padding: 3px 7px !important; }
+.u-p-3-8 { padding: 3px 8px !important; }
+.u-p-3-9 { padding: 3px 9px !important; }
+.u-p-36-20 { padding: 36px 20px !important; }
+.u-p-4 { padding: 4px !important; }
+.u-p-4-0 { padding: 4px 0 !important; }
+.u-p-4-10 { padding: 4px 10px !important; }
+.u-p-4-12 { padding: 4px 12px !important; }
+.u-p-4-6 { padding: 4px 6px !important; }
+.u-p-4-8 { padding: 4px 8px !important; }
+.u-p-4-9 { padding: 4px 9px !important; }
+.u-p-40 { padding: 40px !important; }
+.u-p-5-0 { padding: 5px 0 !important; }
+.u-p-5-10 { padding: 5px 10px !important; }
+.u-p-5-12 { padding: 5px 12px !important; }
+.u-p-6-0 { padding: 6px 0 !important; }
+.u-p-6-14 { padding: 6px 14px !important; }
+.u-p-8 { padding: 8px !important; }
+.u-p-8-0 { padding: 8px 0 !important; }
+.u-p-8-10 { padding: 8px 10px !important; }
+.u-p-8-10-0-10 { padding: 8px 10px 0 10px !important; }
+.u-p-8-12 { padding: 8px 12px !important; }
+.u-pb-10 { padding-bottom: 10px !important; }
+.u-pb-8 { padding-bottom: 8px !important; }
+.u-pl-20 { padding-left: 20px !important; }
+.u-pos-fixed { position: fixed !important; }
+.u-pos-relative { position: relative !important; }
+.u-pt-10 { padding-top: 10px !important; }
+.u-pt-12 { padding-top: 12px !important; }
+.u-pt-14 { padding-top: 14px !important; }
+.u-pt-6 { padding-top: 6px !important; }
+.u-pt-8 { padding-top: 8px !important; }
+.u-pt-8vh { padding-top: 8vh !important; }
+.u-r-4 { border-radius: 4px !important; }
+.u-r-6 { border-radius: 6px !important; }
+.u-r-8 { border-radius: 8px !important; }
+.u-sh-0-20-40-rgba-0-0-0-0p4 { box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important; }
+.u-ta-center { text-align: center !important; }
+.u-ta-left { text-align: left !important; }
+.u-ta-right { text-align: right !important; }
+.u-tov-ellipsis { text-overflow: ellipsis !important; }
+.u-tt-uppercase { text-transform: uppercase !important; }
+.u-w-100pct { width: 100% !important; }
+.u-w-110 { width: 110px !important; }
+.u-w-120 { width: 120px !important; }
+.u-w-140 { width: 140px !important; }
+.u-w-155 { width: 155px !important; }
+.u-w-165 { width: 165px !important; }
+.u-w-35pct { width: 35% !important; }
+.u-w-42 { width: 42px !important; }
+.u-w-44 { width: 44px !important; }
+.u-w-64 { width: 64px !important; }
+.u-w-640 { width: 640px !important; }
+.u-w-68 { width: 68px !important; }
+.u-w-80 { width: 80px !important; }
+.u-w-85 { width: 85px !important; }
+.u-w-98 { width: 98px !important; }
+.u-ws-normal { white-space: normal !important; }
+.u-ws-pre-line { white-space: pre-line !important; }
+.u-z-9999 { z-index: 9999 !important; }
+
 "#;
 
 #[component]
@@ -1045,7 +1302,7 @@ pub fn ValueLadderStrip(steps: Vec<(String, String)>) -> Element {
                             style: "background-color: {hex}; color: {text_col};",
                             title: "{role} ({hex})",
                             span { "{role}" }
-                            span { class: "mono", style: "font-size: 9.5px; opacity: 0.85;", "{hex}" }
+                            span { class: "mono u-fs-9p5 u-op-0p85", "{hex}" }
                         }
                     }
                 }
@@ -1072,7 +1329,7 @@ pub fn HexColorInput(value: String, onchange: EventHandler<String>) -> Element {
             input {
                 r#type: "text",
                 class: "mono",
-                style: "width: 98px;",
+                class: "u-w-98",
                 value: "{value}",
                 oninput: move |e| onchange.call(e.value()),
             }
@@ -1292,7 +1549,7 @@ pub fn GamutMapSvg(
     let lbl_green = locale.tr("-a* Vert", "-a* Green");
 
     rsx! {
-        div { style: "display: flex; flex-direction: column; align-items: center; gap: 6px;",
+        div { class: "u-d-flex u-fd-column u-ai-center u-gap-6",
             svg {
                 width: "{size}",
                 height: "{size}",
@@ -1482,13 +1739,13 @@ pub fn MixingGuideCard(
 
     rsx! {
         div { class: "guide-sheet",
-            div { class: "row-between", style: "margin-bottom: 14px; border-bottom: 1px solid #e2d9c8; padding-bottom: 10px;",
-                span { style: "font-size: 11.5px; font-weight: 700; color: #7c2d12; text-transform: uppercase; letter-spacing: 0.6px;",
+            div { class: "row-between u-mb-14 u-bb-1-solid-he2d9c8 u-pb-10",
+                span { class: "u-fs-11p5 u-fw-700 u-c-h7c2d12 u-tt-uppercase u-ls-0p6",
                     "{header_label}"
                 }
                 button {
                     class: "btn-primary",
-                    style: "background: #7c2d12; color: #ffffff; border-color: #7c2d12;",
+                    class: "u-bg-h7c2d12 u-c-hffffff u-bc-h7c2d12",
                     onclick: move |_| {
                         match export_and_open_guide_html(&guide_for_export, photo_for_export.as_deref(), locale) {
                             Ok(path) => {
@@ -1505,14 +1762,14 @@ pub fn MixingGuideCard(
                 }
             }
 
-            div { style: "display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap;",
+            div { class: "u-d-flex u-gap-22 u-ai-flex-start u-fwrap-wrap",
                 if let Some(ref uri) = photo_data_uri {
                     img {
                         src: "{uri}",
-                        style: "width: 165px; max-height: 215px; object-fit: cover; border-radius: 4px; border: 1px solid #c8bfb0;",
+                        class: "u-w-165 u-maxh-215 u-of-cover u-r-4 u-b-1-solid-hc8bfb0",
                     }
                 }
-                div { style: "flex: 1; min-width: 280px;",
+                div { class: "u-flex-1 u-minw-280",
                     h1 { class: "guide-title", "{guide.title}" }
                     p { class: "guide-sub", "{guide.subtitle}" }
                     p { class: "guide-disclaimer", "{guide.disclaimer}" }
@@ -1523,20 +1780,20 @@ pub fn MixingGuideCard(
                             tbody {
                                 for entry in &guide.palette_entries {
                                     tr {
-                                        td { style: "width: 44px;",
+                                        td { class: "u-w-44",
                                             span {
                                                 class: "guide-swatch",
                                                 style: "background-color: {entry.paint.hex_color};",
                                             }
                                         }
-                                        td { style: "width: 42px; font-weight: 750;", "{entry.short_code}" }
+                                        td { class: "u-w-42 u-fw-750", "{entry.short_code}" }
                                         td {
                                             "{entry.paint.name}"
                                             if !entry.paint.code.trim().is_empty() {
-                                                span { style: "color: #78716a; margin-left: 5px;", "({entry.paint.code})" }
+                                                span { class: "u-c-h78716a u-ml-5", "({entry.paint.code})" }
                                             }
                                         }
-                                        td { style: "color: #57524a; font-size: 11.5px; width: 35%;", "{entry.behavior}" }
+                                        td { class: "u-c-h57524a u-fs-11p5 u-w-35pct", "{entry.behavior}" }
                                     }
                                 }
                             }
@@ -1551,19 +1808,19 @@ pub fn MixingGuideCard(
                     tbody {
                         for mm in &guide.mother_mixes {
                             tr {
-                                td { style: "width: 44px;",
+                                td { class: "u-w-44",
                                     span {
                                         class: "guide-swatch",
                                         style: "background-color: {mm.hex_color};",
                                     }
                                 }
-                                td { style: "width: 140px; font-weight: 750;", "{mm.code} — {mm.name}" }
+                                td { class: "u-w-140 u-fw-750", "{mm.code} — {mm.name}" }
                                 td { "{mm.recipe_text}" }
                             }
                         }
                     }
                 }
-                p { style: "font-size: 11.5px; color: #4a453e; margin: 6px 0 12px 0;",
+                p { class: "u-fs-11p5 u-c-h4a453e u-m-6-0-12-0",
                     "{guide.mother_mixes_note}"
                 }
             }
@@ -1574,19 +1831,19 @@ pub fn MixingGuideCard(
                     tbody {
                         for w in &guide.washes {
                             tr {
-                                td { style: "width: 44px;",
+                                td { class: "u-w-44",
                                     span {
                                         class: "guide-swatch",
                                         style: "background-color: {w.hex_color};",
                                     }
                                 }
-                                td { style: "width: 155px; font-weight: 750;", "{w.name}" }
+                                td { class: "u-w-155 u-fw-750", "{w.name}" }
                                 td { "{w.recipe_text}" }
                             }
                         }
                     }
                 }
-                p { style: "font-size: 11.5px; color: #4a453e; margin: 6px 0 12px 0;",
+                p { class: "u-fs-11p5 u-c-h4a453e u-m-6-0-12-0",
                     strong { "{method_label}" }
                     "{guide.washes_method}"
                 }
@@ -1604,14 +1861,14 @@ pub fn MixingGuideCard(
                     tbody {
                         for row in &zone.rows {
                             tr {
-                                td { style: "width: 44px;",
+                                td { class: "u-w-44",
                                     span {
                                         class: "guide-swatch",
                                         style: "background-color: {row.swatch_hex};",
                                         title: "{row.swatch_hex} / {row.target_hex}",
                                     }
                                 }
-                                td { style: "width: 140px; font-weight: 750;", "{row.role}" }
+                                td { class: "u-w-140 u-fw-750", "{row.role}" }
                                 td { "{row.painter_recipe}" }
                             }
                         }
@@ -1621,9 +1878,9 @@ pub fn MixingGuideCard(
 
             if !guide.advice.is_empty() {
                 h2 { "{tips_heading}" }
-                ol { style: "margin: 6px 0 0 0; padding-left: 20px; font-size: 12.5px; color: #262320;",
+                ol { class: "u-m-6-0-0-0 u-pl-20 u-fs-12p5 u-c-h262320",
                     for tip in &guide.advice {
-                        li { style: "margin-bottom: 5px;", "{tip}" }
+                        li { class: "u-mb-5", "{tip}" }
                     }
                 }
             }

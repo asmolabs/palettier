@@ -29,9 +29,9 @@ pub(super) fn RecipeDetail(recipe: Recipe, draft: StepDraft) -> Element {
 
     rsx! {
         div { class: "card",
-            div { class: "row-between", style: "margin-bottom: 12px;",
+            div { class: "row-between u-mb-12",
                 div {
-                    h3 { class: "card-title", style: "margin-bottom: 2px;", "{recipe.name}" }
+                    h3 { class: "card-title u-mb-2", "{recipe.name}" }
                     div { class: "muted", {locale.tr("Sujet : ", "Subject: ")}, "{recipe.subject}" }
                 }
                 div { class: "row",
@@ -56,19 +56,19 @@ fn FatOverLeanCheck(risks: Vec<FatOverLeanRisk>) -> Element {
 
     rsx! {
         if risks.is_empty() {
-            div { class: "card-subtle", style: "margin-bottom: 14px; border-color: var(--pill-ok-border);",
+            div { class: "card-subtle u-mb-14 u-bc-pill-ok-border",
                 span { class: "pill pill-ok", {locale.tr("Gras sur maigre respecté", "Fat over lean respected")} }
-                span { style: "margin-left: 10px; font-size: 12.5px;",
+                span { class: "u-ml-10 u-fs-12p5",
                     {locale.tr("L'enchaînement des médiums et épaisseurs ne présente pas de risque de gerçure.", "The sequence of mediums and coat thicknesses presents no cracking risk.")}
                 }
             }
         } else {
             for risk in &risks {
-                div { class: "card-subtle", style: "margin-bottom: 12px; border-color: var(--pill-danger-border);",
-                    div { style: "font-weight: 600; color: var(--danger);",
+                div { class: "card-subtle u-mb-12 u-bc-pill-danger-border",
+                    div { class: "u-fw-600 u-c-danger",
                         {locale.tr("Alerte gras sur maigre", "Fat over lean warning")}, " ({risk.under} → {risk.over})"
                     }
-                    div { style: "font-size: 12.5px; margin-top: 4px;", "{risk.explanation}" }
+                    div { class: "u-fs-12p5 u-mt-4", "{risk.explanation}" }
                 }
             }
         }
@@ -100,9 +100,9 @@ fn TimelineTable(timeline: Timeline) -> Element {
                             span { class: "pill pill-accent", "{entry.step.technique.label(locale)}" }
                         }
                         td {
-                            div { style: "font-weight: 600;", "{entry.step.paint_mix}" }
+                            div { class: "u-fw-600", "{entry.step.paint_mix}" }
                             if !entry.step.notes.is_empty() {
-                                div { class: "muted", style: "font-size: 11.5px;", "{entry.step.notes}" }
+                                div { class: "muted u-fs-11p5", "{entry.step.notes}" }
                             }
                         }
                         td {
@@ -149,13 +149,13 @@ fn AddStepForm(recipe: Recipe, draft: StepDraft) -> Element {
     };
 
     rsx! {
-        div { class: "card-subtle", style: "margin-top: 16px;",
-            h4 { style: "font-size: 13px; margin-bottom: 10px;", {locale.tr("Ajouter une étape à cette recette", "Add a step to this recipe")} }
-            div { class: "grid-3", style: "margin-bottom: 10px;",
+        div { class: "card-subtle u-mt-16",
+            h4 { class: "u-fs-13 u-mb-10", {locale.tr("Ajouter une étape à cette recette", "Add a step to this recipe")} }
+            div { class: "grid-3 u-mb-10",
                 div {
                     label { class: "field-label", "Technique" }
                     select {
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         onchange: move |e| {
                             technique.set(Technique::by_label(Some(&e.value()), Technique::Glaze));
                         },
@@ -172,7 +172,7 @@ fn AddStepForm(recipe: Recipe, draft: StepDraft) -> Element {
                     label { class: "field-label", {locale.tr("Mélange de tubes", "Tube Mix")} }
                     input {
                         r#type: "text",
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         placeholder: locale.tr("Ex: Ocre jaune + Blanc de titane", "e.g. Yellow Ochre + Titanium White"),
                         value: "{mix}",
                         oninput: move |e| mix.set(e.value()),
@@ -182,7 +182,7 @@ fn AddStepForm(recipe: Recipe, draft: StepDraft) -> Element {
                     label { class: "field-label", "Note" }
                     input {
                         r#type: "text",
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         placeholder: locale.tr("Ex: Tirer vers les tempes", "e.g. Feather toward the temples"),
                         value: "{notes}",
                         oninput: move |e| notes.set(e.value()),

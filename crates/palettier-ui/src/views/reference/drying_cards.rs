@@ -33,13 +33,13 @@ pub(super) fn StudioClimate() -> Element {
     let ws = *state.workshop.read();
 
     rsx! {
-        h3 { class: "card-title", style: "margin-top: 18px;", {locale.tr("Conditions de l'atelier", "Studio Climate")} }
+        h3 { class: "card-title u-mt-18", {locale.tr("Conditions de l'atelier", "Studio Climate")} }
         div { class: "grid-3",
             div {
                 label { class: "field-label", {locale.tr("Température (°C)", "Temperature (°C)")} }
                 input {
                     r#type: "number",
-                    style: "width: 100%;",
+                    class: "u-w-100pct",
                     value: "{ws.temperature_celsius}",
                     oninput: move |e| {
                         if let Ok(t) = e.value().parse::<f64>()
@@ -53,7 +53,7 @@ pub(super) fn StudioClimate() -> Element {
                 label { class: "field-label", {locale.tr("Humidité relative (%)", "Relative Humidity (%)")} }
                 input {
                     r#type: "number",
-                    style: "width: 100%;",
+                    class: "u-w-100pct",
                     value: "{ws.relative_humidity}",
                     oninput: move |e| {
                         if let Ok(h) = e.value().parse::<f64>()
@@ -66,7 +66,7 @@ pub(super) fn StudioClimate() -> Element {
             div {
                 label { class: "field-label", "Ventilation" }
                 select {
-                    style: "width: 100%;",
+                    class: "u-w-100pct",
                     onchange: move |e| {
                         let v = match e.value().as_str() {
                             "Confined" => Ventilation::Confined,
@@ -99,7 +99,7 @@ fn ShareInput(#[props(into)] label: String, share: Signal<u32>) -> Element {
             label { class: "field-label", "{label}" }
             input {
                 r#type: "number",
-                style: "width: 100%;",
+                class: "u-w-100pct",
                 min: "0",
                 max: "100",
                 value: "{share}",
@@ -120,44 +120,44 @@ pub(super) fn MediumFormulator(shares: MediumShares, fat_index: f64, drying_mult
     let locale = *state.locale.read();
 
     rsx! {
-        div { class: "card-subtle", style: "margin-top: 18px; border-color: var(--accent);",
-            h4 { style: "margin-bottom: 8px;",
+        div { class: "card-subtle u-mt-18 u-bc-accent",
+            h4 { class: "u-mb-8",
                 "🧪 "
                 {locale.tr("Formulateur de Médium Personnalisé", "Custom Medium Formulator")}
             }
-            div { class: "muted", style: "font-size: 11.5px; margin-bottom: 10px;",
+            div { class: "muted u-fs-11p5 u-mb-10",
                 {locale.tr(
                     "Composez votre propre mélange de liants et solvants. L'indice gras et le multiplicateur de séchage s'ajustent en temps réel.",
                     "Blend your own ratio of oils, thinners, and resins. The fat index and drying multiplier update in real time."
                 )}
             }
-            div { class: "row", style: "gap: 6px; margin-bottom: 12px;",
+            div { class: "row u-gap-6 u-mb-12",
                 button {
                     class: "btn",
-                    style: "font-size: 11px; padding: 3px 8px;",
+                    class: "u-fs-11 u-p-3-8",
                     onclick: move |_| shares.set(33, 33, 34, 0),
                     "1/3-1/3-1/3 "
                     {locale.tr("Flamand", "Flemish")}
                 }
                 button {
                     class: "btn",
-                    style: "font-size: 11px; padding: 3px 8px;",
+                    class: "u-fs-11 u-p-3-8",
                     onclick: move |_| shares.set(20, 80, 0, 0),
                     {locale.tr("Lavis maigre (20/80)", "Lean wash (20/80)")}
                 }
                 button {
                     class: "btn",
-                    style: "font-size: 11px; padding: 3px 8px;",
+                    class: "u-fs-11 u-p-3-8",
                     onclick: move |_| shares.set(50, 25, 25, 1),
                     {locale.tr("Glacis gras (50/25/25)", "Fat glaze (50/25/25)")}
                 }
             }
-            div { class: "grid-3", style: "margin-bottom: 8px;",
+            div { class: "grid-3 u-mb-8",
                 ShareInput { label: locale.tr("Huile (%)", "Oil (%)"), share: shares.oil }
                 ShareInput { label: locale.tr("Solvant (%)", "Thinner (%)"), share: shares.solvent }
                 ShareInput { label: locale.tr("Résine (%)", "Resin (%)"), share: shares.resin }
             }
-            div { class: "row-between", style: "margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-subtle);",
+            div { class: "row-between u-mt-10 u-pt-8 u-bt-1-solid-border-subtle",
                 div { class: "row",
                     span { class: "pill pill-accent",
                         {locale.tr("Indice gras calculé", "Calculated fat index")},
@@ -193,7 +193,7 @@ pub(super) fn DryingMilestones(estimate: DryingEstimate, current_medium: Medium)
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Jalons de séchage estimés", "Estimated Drying Milestones")} }
-            div { class: "grid-2", style: "margin-bottom: 16px;",
+            div { class: "grid-2 u-mb-16",
                 Milestone {
                     label: locale.tr("Temps ouvert (fondu dans le frais)", "Open time (wet-in-wet blending)"),
                     value: format_duration(estimate.open_time, locale),
@@ -215,20 +215,20 @@ pub(super) fn DryingMilestones(estimate: DryingEstimate, current_medium: Medium)
                     style: big,
                 }
             }
-            div { class: "card-subtle", style: "margin-bottom: 16px;",
+            div { class: "card-subtle u-mb-16",
                 div { class: "row-between",
                     span { class: "muted", {locale.tr("Polymérisation complète avant vernis définitif", "Full polymerization before final varnish")} }
                     span { class: "pill pill-accent", "{format_duration(estimate.full_cure, locale)}" }
                 }
             }
 
-            h4 { style: "font-size: 13px; margin-bottom: 8px;", {locale.tr("Conseils d'atelier & précautions", "Studio Tips & Precautions")} }
-            div { class: "card-subtle", style: "margin-bottom: 8px; font-size: 12.5px;",
+            h4 { class: "u-fs-13 u-mb-8", {locale.tr("Conseils d'atelier & précautions", "Studio Tips & Precautions")} }
+            div { class: "card-subtle u-mb-8 u-fs-12p5",
                 "• {current_medium.advice(locale)}"
             }
             // The estimate repeats the medium's advice: shown above already.
             for tip in estimate.advice.iter().filter(|t| **t != DryingAdvice::Medium(current_medium)) {
-                div { class: "card-subtle", style: "margin-bottom: 8px; font-size: 12.5px;",
+                div { class: "card-subtle u-mb-8 u-fs-12p5",
                     "• {tip.text(locale)}"
                 }
             }

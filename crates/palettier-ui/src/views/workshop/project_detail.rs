@@ -56,7 +56,7 @@ pub fn ProjectDetail(proj: Project) -> Element {
 
             // Photo journal with thumbnails
             if !proj.photos.is_empty() {
-                div { style: "margin-top:16px;",
+                div { class: "u-mt-16",
                     h3 { class: "card-title", {locale.tr("Journal photo", "Photo Journal")}, " ({proj.photos.len()})" }
                     div { class: "photo-grid",
                         for ph in proj.photos.clone() {
@@ -171,9 +171,9 @@ fn ProjectToolbar(proj: Project) -> Element {
     };
 
     rsx! {
-        div { class: "row-between", style: "margin-bottom:12px;",
+        div { class: "row-between u-mb-12",
             div {
-                h2 { class: "card-title", style: "font-size:19px;margin-bottom:2px;",
+                h2 { class: "card-title u-fs-19 u-mb-2",
                     "{proj.name} "
                     span {
                         class: if proj.system == PaintSystem::Acrylic { "pill pill-acrylic" } else { "pill pill-oil" },
@@ -245,7 +245,7 @@ fn ProjectGuide(proj: Project) -> Element {
     let photo_uri = projects::showcase_photo(&proj).map(data_uri);
 
     rsx! {
-        div { style: "margin-bottom: 18px;",
+        div { class: "u-mb-18",
             MixingGuideCard {
                 guide: guide,
                 photo_data_uri: photo_uri,
@@ -279,9 +279,9 @@ fn ProjectTubes(proj: Project) -> Element {
     };
 
     rsx! {
-        div { class: "card-subtle", style: "margin-bottom: 14px;",
-            div { class: "row-between", style: "margin-bottom: 8px;",
-                span { class: "field-label", style: "margin: 0;",
+        div { class: "card-subtle u-mb-14",
+            div { class: "row-between u-mb-8",
+                span { class: "field-label u-m-0",
                     {locale.tr("Tubes du projet", "Project Tubes")}, " ({proj.effective_paints().len()})"
                 }
                 if proj.diverges_from_palette() {
@@ -294,7 +294,7 @@ fn ProjectTubes(proj: Project) -> Element {
             }
             div { class: "row",
                 for pt in proj.effective_paints() {
-                    div { class: "pill", style: "gap: 6px; padding: 3px 9px;",
+                    div { class: "pill u-gap-6 u-p-3-9",
                         PaintSwatch {
                             masstone_hex: pt.hex_color.clone(),
                             tint_hex: pt.tint_hex.clone(),
@@ -303,7 +303,7 @@ fn ProjectTubes(proj: Project) -> Element {
                         }
                         span { "{pt.name}" }
                         if !pt.in_stock {
-                            span { style: "color: var(--danger); font-size: 10px;",
+                            span { class: "u-c-danger u-fs-10",
                                 " (", {locale.tr("hors stock", "out of stock")}, ")"
                             }
                         }
@@ -333,17 +333,17 @@ fn ProjectWarnings(proj: Project) -> Element {
 
     rsx! {
         if !risks.is_empty() {
-            div { class: "card-subtle", style: "border-color:var(--pill-warn-border);margin-bottom:14px;",
-                strong { style: "color:var(--pill-warn-text);",
+            div { class: "card-subtle u-bc-pill-warn-border u-mb-14",
+                strong { class: "u-c-pill-warn-text",
                     {locale.tr("Avertissements Gras sur Maigre", "Fat Over Lean Warnings")}, " ({risks.len()})"
                 }
                 for r in risks {
-                    div { class: "muted", style: "font-size:12px;margin-top:4px;", "• {r.where_name} ({r.under} → {r.over}) : {r.explanation}" }
+                    div { class: "muted u-fs-12 u-mt-4", "• {r.where_name} ({r.under} → {r.over}) : {r.explanation}" }
                 }
             }
         }
         if !missing.is_empty() {
-            div { class: "card-subtle", style: "border-color:var(--accent);margin-bottom:14px;",
+            div { class: "card-subtle u-bc-accent u-mb-14",
                 strong {
                     {locale.tr("Tubes hors stock et substituts sur votre étagère", "Out-of-stock tubes & substitutes in your drawer")}, " ({missing.len()})"
                 }
@@ -376,7 +376,7 @@ fn ProjectSubstituteRow(proj: Project, m: MissingPaint) -> Element {
     };
 
     rsx! {
-        div { class: "row-between", style: "margin-top:8px; padding-top:6px; border-top:1px solid var(--border-subtle);",
+        div { class: "row-between u-mt-8 u-pt-6 u-bt-1-solid-border-subtle",
             div { class: "row",
                 ColorSwatch { hex: m.paint.hex_color.clone(), size: 20 }
                 strong { "{m.paint.display_name()}" }
@@ -385,12 +385,12 @@ fn ProjectSubstituteRow(proj: Project, m: MissingPaint) -> Element {
                     ColorSwatch { hex: near.hex_color.clone(), size: 20 }
                     DeltaEBadge { delta_e: m.delta_e }
                 }
-                span { class: "muted", style: "font-size:12px;", "{m.verdict(locale)}" }
+                span { class: "muted u-fs-12", "{m.verdict(locale)}" }
             }
             if let Some(replacement) = m.nearest.clone() {
                 button {
                     class: "btn-primary",
-                    style: "padding: 3px 10px; font-size: 11.5px;",
+                    class: "u-p-3-10 u-fs-11p5",
                     onclick: move |_| replace(replacement.clone()),
                     {locale.tr("Remplacer dans le projet", "Replace in project")}
                 }
@@ -426,7 +426,7 @@ fn AddZoneRow(proj: Project) -> Element {
     };
 
     rsx! {
-        div { class: "row", style: "margin-top:10px;",
+        div { class: "row u-mt-10",
             input {
                 r#type: "text",
                 placeholder: locale.tr("Nouvelle zone (ex. Manteau)", "New zone (e.g. Coat)"),
@@ -456,8 +456,8 @@ fn ProgressCard() -> Element {
     let locale = *state.locale.read();
 
     rsx! {
-        div { class: "card-subtle", style: "margin-top: 16px; border-color: var(--accent);",
-            div { class: "row-between", style: "margin-bottom: 8px;",
+        div { class: "card-subtle u-mt-16 u-bc-accent",
+            div { class: "row-between u-mb-8",
                 strong { {locale.tr("Comparaison d'avancement sur la photo relevée", "Progress comparison on sampled photo")} }
                 button {
                     class: "btn",
@@ -466,14 +466,14 @@ fn ProgressCard() -> Element {
                 }
             }
             for obs in ui.progress_observations.read().iter() {
-                div { class: "row-between", style: "padding: 5px 0; border-top: 1px solid var(--border-subtle);",
+                div { class: "row-between u-p-5-0 u-bt-1-solid-border-subtle",
                     div { class: "row",
                         ColorSwatch { hex: obs.measured.to_hex(), size: 22 }
                         if let Some(target) = obs.target {
                             span { class: "muted", "vs" }
                             ColorSwatch { hex: target.to_hex(), size: 22 }
                         }
-                        span { style: "font-size: 12.5px;", "{obs.verdict(locale)}" }
+                        span { class: "u-fs-12p5", "{obs.verdict(locale)}" }
                     }
                     if obs.matches_plan() {
                         DeltaEBadge { delta_e: obs.delta_e }
@@ -521,20 +521,20 @@ fn PhotoCard(proj: Project, ph: ProjectPhoto) -> Element {
                 alt: "{ph.caption}",
             }
             div { class: "row-between",
-                strong { style: "font-size: 12px; overflow: hidden; text-overflow: ellipsis;", "{ph.caption}" }
+                strong { class: "u-fs-12 u-o-hidden u-tov-ellipsis", "{ph.caption}" }
                 span { class: "pill", "{ph.role.label(locale)}" }
             }
-            div { class: "row", style: "margin-top: 6px;",
+            div { class: "row u-mt-6",
                 button {
                     class: "btn",
-                    style: "padding: 3px 8px; font-size: 11px;",
+                    class: "u-p-3-8 u-fs-11",
                     onclick: compare,
                     {locale.tr("Comparer au plan", "Compare to plan")}
                 }
                 if let (Some(pid), Some(fid)) = (proj.id, ph.id) {
                     button {
                         class: "btn-danger",
-                        style: "padding: 3px 8px; font-size: 11px;",
+                        class: "u-p-3-8 u-fs-11",
                         onclick: move |_| remove((pid, fid)),
                         "✕"
                     }

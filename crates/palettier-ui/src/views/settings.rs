@@ -58,8 +58,8 @@ fn AppearanceCard() -> Element {
             div { class: "grid-2",
                 div { class: "card-subtle row-between",
                     div {
-                        div { style: "font-weight: 600;", {locale.tr("Thème d'éclairage (Mode Jour / Nuit)", "Lighting Theme (Day / Night Mode)")} }
-                        div { class: "muted", style: "font-size: 12px;", {locale.tr("Basculez entre le thème sombre d'atelier et le thème clair lumière du jour.", "Switch between the dark studio theme and the daylight high-contrast theme.")} }
+                        div { class: "u-fw-600", {locale.tr("Thème d'éclairage (Mode Jour / Nuit)", "Lighting Theme (Day / Night Mode)")} }
+                        div { class: "muted u-fs-12", {locale.tr("Basculez entre le thème sombre d'atelier et le thème clair lumière du jour.", "Switch between the dark studio theme and the daylight high-contrast theme.")} }
                     }
                     div { class: "row",
                         button {
@@ -91,8 +91,8 @@ fn AppearanceCard() -> Element {
 
                 div { class: "card-subtle row-between",
                     div {
-                        div { style: "font-weight: 600;", {locale.tr("Langue de l'application (i18n)", "Application Language (i18n)")} }
-                        div { class: "muted", style: "font-size: 12px;", {locale.tr("Traduit instantanément toute l'interface, les guides de mélanges et les prompts IA.", "Instantly translates the entire UI, mixing guides, and AI prompts.")} }
+                        div { class: "u-fw-600", {locale.tr("Langue de l'application (i18n)", "Application Language (i18n)")} }
+                        div { class: "muted u-fs-12", {locale.tr("Traduit instantanément toute l'interface, les guides de mélanges et les prompts IA.", "Instantly translates the entire UI, mixing guides, and AI prompts.")} }
                     }
                     div { class: "row",
                         for l in Locale::ALL {
@@ -168,14 +168,14 @@ fn AiEngineCard() -> Element {
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Moteur d'Intelligence Artificielle", "Artificial Intelligence Engine")} }
-            p { class: "muted", style: "margin-bottom: 14px; font-size: 12.5px;",
+            p { class: "muted u-mb-14 u-fs-12p5",
                 {locale.tr("Utilisé par l'Assistant de plan de peinture et la reconnaissance de tubes sur photo. Les clés API sont protégées par le trousseau système (macOS Keychain / Secret Service).", "Used by the Painting Plan Assistant and photo tube recognition. API keys are stored securely in the OS keyring (macOS Keychain / Secret Service).")}
             }
 
-            div { style: "margin-bottom: 12px;",
+            div { class: "u-mb-12",
                 label { class: "field-label", {locale.tr("Fournisseur IA", "AI Provider")} }
                 select {
-                    style: "width: 100%;",
+                    class: "u-w-100pct",
                     onchange: {
                         let services = services.clone();
                         move |e: Event<FormData>| {
@@ -202,22 +202,22 @@ fn AiEngineCard() -> Element {
                 }
             }
 
-            div { style: "margin-bottom: 12px;",
+            div { class: "u-mb-12",
                 label { class: "field-label", {locale.tr("URL du serveur (http / https)", "Server URL (http / https)")} }
                 input {
                     r#type: "text",
-                    style: "width: 100%;",
+                    class: "u-w-100pct",
                     value: "{base_url}",
                     oninput: move |e| base_url.set(e.value()),
                 }
             }
 
             if provider.read().needs_api_key() {
-                div { style: "margin-bottom: 12px;",
+                div { class: "u-mb-12",
                     label { class: "field-label", {locale.tr("Clé API (stockée dans le trousseau OS)", "API Key (stored in OS Keychain)")} }
                     input {
                         r#type: "password",
-                        style: "width: 100%;",
+                        class: "u-w-100pct",
                         placeholder: "sk-... / AIza...",
                         value: "{api_key}",
                         oninput: move |e| api_key.set(e.value()),
@@ -225,12 +225,12 @@ fn AiEngineCard() -> Element {
                 }
             }
 
-            div { style: "margin-bottom: 14px;",
+            div { class: "u-mb-14",
                 label { class: "field-label", {locale.tr("Modèle multimodal", "Multimodal Model")} }
                 div { class: "row",
                     input {
                         r#type: "text",
-                        style: "flex: 1;",
+                        class: "u-flex-1",
                         value: "{model}",
                         oninput: move |e| model.set(e.value()),
                     }
@@ -247,9 +247,9 @@ fn AiEngineCard() -> Element {
                 }
 
                 if !available_models.read().is_empty() {
-                    div { style: "margin-top: 8px;",
+                    div { class: "u-mt-8",
                         select {
-                            style: "width: 100%;",
+                            class: "u-w-100pct",
                             onchange: move |e| model.set(e.value()),
                             for m in available_models.read().iter() {
                                 option {
@@ -370,11 +370,11 @@ fn BackupCard() -> Element {
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Sauvegarde & Restauration de l'atelier", "Studio Backup & Restore")} }
-            p { class: "muted", style: "margin-bottom: 14px; font-size: 12.5px;", {locale.tr("Exportez ou restaurez une archive ZIP comprenant votre tiroir de tubes calibrés, vos palettes, vos recettes, vos projets et leurs photos.", "Export or restore a ZIP archive containing your calibrated paint drawer, palettes, recipes, projects, and photos.")} }
+            p { class: "muted u-mb-14 u-fs-12p5", {locale.tr("Exportez ou restaurez une archive ZIP comprenant votre tiroir de tubes calibrés, vos palettes, vos recettes, vos projets et leurs photos.", "Export or restore a ZIP archive containing your calibrated paint drawer, palettes, recipes, projects, and photos.")} }
 
-            div { class: "card-subtle", style: "margin-bottom: 14px;",
+            div { class: "card-subtle u-mb-14",
                 div { class: "muted", {locale.tr("Emplacement de la base SQLite (WAL activé)", "SQLite database path (WAL enabled)")} }
-                div { class: "mono", style: "margin-top: 4px;", "{services.db_dir.display()}/palettier.db" }
+                div { class: "mono u-mt-4", "{services.db_dir.display()}/palettier.db" }
             }
 
             div { class: "row",

@@ -30,7 +30,7 @@ pub fn ActiveColorCard(picked_hex: Signal<String>) -> Element {
                                 state.last_sampled_hex.set(Some(v));
                             }
                         }
-                        div { class: "muted", style: "font-size: 11.5px; margin-top: 4px;",
+                        div { class: "muted u-fs-11p5 u-mt-4",
                             {locale.tr("Disponible aussi dans le Catalogue pour calibrer un tube.", "Also available in the Catalog to calibrate a tube.")}
                         }
                     }
@@ -99,11 +99,11 @@ pub fn SampledGroupsCard(
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Groupes de relevés → Créer un projet mesuré", "Sampled Groups → Build Measured Project")} }
-            p { class: "muted", style: "font-size: 12px; margin-bottom: 10px;",
+            p { class: "muted u-fs-12 u-mb-10",
                 {locale.tr("Relevez plusieurs points par partie du sujet (ombre profonde, base, lumière) : Palettier les trie par luminance et calcule les recettes de chaque marche.", "Sample multiple points per zone (deep shadow, base, highlight): Palettier sorts them by luminance and computes recipes for each step.")}
             }
 
-            div { class: "row", style: "margin-bottom: 10px;",
+            div { class: "row u-mb-10",
                 input {
                     r#type: "text",
                     placeholder: locale.tr("Nouvelle zone (ex. Cape)", "New zone (e.g. Cloak)"),
@@ -112,7 +112,7 @@ pub fn SampledGroupsCard(
                 }
                 input {
                     r#type: "text",
-                    style: "width: 120px;",
+                    class: "u-w-120",
                     placeholder: locale.tr("Matière (ex. Drap)", "Material (e.g. Cloth)"),
                     value: "{new_group_mat}",
                     oninput: move |e| new_group_mat.set(e.value())
@@ -137,10 +137,10 @@ pub fn SampledGroupsCard(
                 SampledGroupRow { g_idx, grp, picked_hex, groups, selected_group_idx }
             }
 
-            div { class: "row", style: "margin-top: 12px;",
+            div { class: "row u-mt-12",
                 input {
                     r#type: "text",
-                    style: "flex: 1;",
+                    class: "u-flex-1",
                     placeholder: locale.tr("Nom du projet à créer", "Project name to create"),
                     value: "{group_project_name}",
                     oninput: move |e| group_project_name.set(e.value())
@@ -188,7 +188,7 @@ fn SampledGroupRow(
                     if !grp.material.is_empty() {
                         span { class: "muted", " · {grp.material}" }
                     }
-                    span { class: "pill", style: "margin-left: 8px;", "{grp.samples.len()} pt(s)" }
+                    span { class: "pill u-ml-8", "{grp.samples.len()} pt(s)" }
                 }
                 div { class: "row",
                     button {
@@ -236,7 +236,7 @@ pub fn PinZoneCard(picked_hex: Signal<String>, zone_name: Signal<String>, zone_m
     rsx! {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Épingler une teinte de base pour l'Assistant IA", "Pin a Base Color for the AI Assistant")} }
-            div { class: "row", style: "margin-bottom: 10px;",
+            div { class: "row u-mb-10",
                 input {
                     r#type: "text",
                     placeholder: locale.tr("Zone (ex. Tunique)", "Zone (e.g. Tunic)"),
@@ -245,7 +245,7 @@ pub fn PinZoneCard(picked_hex: Signal<String>, zone_name: Signal<String>, zone_m
                 }
                 input {
                     r#type: "text",
-                    style: "width: 120px;",
+                    class: "u-w-120",
                     placeholder: locale.tr("Matière", "Material"),
                     value: "{zone_material}",
                     oninput: move |ev| zone_material.set(ev.value())

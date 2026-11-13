@@ -32,29 +32,29 @@ pub(super) fn GlazePreview(candidates: Vec<Paint>) -> Element {
     let strength = *glaze_strength.read();
 
     rsx! {
-        div { style: "display: flex; flex-direction: column; gap: 16px;",
+        div { class: "u-d-flex u-fd-column u-gap-16",
             div { class: "card",
-                div { class: "row-between", style: "align-items: center; margin-bottom: 12px;",
+                div { class: "row-between u-ai-center u-mb-12",
                     div {
-                        h3 { class: "card-title", style: "margin: 0;",
+                        h3 { class: "card-title u-m-0",
                             {locale.tr("🖼️ Simulation Optique de Glacis d'Huile sur Sous-Couche Zénithale", "🖼️ Optical Oil Glaze on Zenithal Primer Simulator")}
                         }
-                        p { class: "muted", style: "font-size: 12px; margin: 2px 0 0 0;",
+                        p { class: "muted u-fs-12 u-m-2-0-0-0",
                             {locale.tr("Visualisez la physique du glacis d'huile : la lumière traverse le pigment transparent, rebondit sur le blanc spéculaire zénithal et s'éteint dans les ombres physiques.", "Simulate physical oil glazes: light transmits through transparent pigments, reflects off zenithal white, and extinguishes in deep recesses.")}
                         }
                     }
                 }
 
-                div { class: "grid-2", style: "gap: 16px; margin-bottom: 16px;",
+                div { class: "grid-2 u-gap-16 u-mb-16",
                     div {
-                        label { style: "font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;",
+                        label { class: "u-fs-12 u-fw-600 u-d-block u-mb-6",
                             {locale.tr("Teinte d'huile à vitrifier :", "Glaze Oil Pigment Tone:")}
                         }
-                        div { class: "row", style: "gap: 8px; align-items: center;",
+                        div { class: "row u-gap-8 u-ai-center",
                             ColorSwatch { hex: glaze_paint.as_ref().map(|p| p.hex_color.clone()).unwrap_or_default(), size: 28 }
                             select {
                                 class: "input",
-                                style: "flex: 1;",
+                                class: "u-flex-1",
                                 value: "{glaze_paint.as_ref().map(paint_key).unwrap_or_default()}",
                                 onchange: move |ev| glaze_key.set(Some(ev.value())),
                                 for p in candidates.iter() {
@@ -65,8 +65,8 @@ pub(super) fn GlazePreview(candidates: Vec<Paint>) -> Element {
                     }
 
                     div {
-                        div { class: "row-between", style: "margin-bottom: 6px;",
-                            label { style: "font-size: 12px; font-weight: 600;", {locale.tr("Intensité / Saturation du glacis :", "Glaze Saturation Strength:")} }
+                        div { class: "row-between u-mb-6",
+                            label { class: "u-fs-12 u-fw-600", {locale.tr("Intensité / Saturation du glacis :", "Glaze Saturation Strength:")} }
                             span { class: "pill pill-accent", "{glaze_strength * 100.0:.0}%" }
                         }
                         input {
@@ -80,7 +80,7 @@ pub(super) fn GlazePreview(candidates: Vec<Paint>) -> Element {
                                     glaze_strength.set(v);
                                 }
                             },
-                            style: "width: 100%;",
+                            class: "u-w-100pct",
                         }
                     }
                 }
@@ -89,7 +89,7 @@ pub(super) fn GlazePreview(candidates: Vec<Paint>) -> Element {
             // 5-step Zenithal Glaze Visualizer
             div { class: "card",
                 h3 { class: "card-title", {locale.tr("Échelle Optique Zénithale Glacée", "Optical Zenithal Glazed Ladder")} }
-                div { style: "display: flex; flex-direction: column; gap: 8px;",
+                div { class: "u-d-flex u-fd-column u-gap-8",
                     for (name_fr, name_en, lum) in OilGlazeZenithalSimulator::ZENITHAL_LEVELS {
                         {
                             let step_name = if locale.is_fr() { name_fr } else { name_en };
@@ -121,23 +121,23 @@ fn glaze_row(
     let glazed_hex = glazed_rgb.to_hex();
     let sugg = best_mix(services, glazed_rgb, candidates);
     rsx! {
-        div { class: "card-subtle", style: "padding: 10px 14px;",
-            div { class: "row-between", style: "align-items: center;",
-                div { class: "row", style: "gap: 12px; align-items: center;",
+        div { class: "card-subtle u-p-10-14",
+            div { class: "row-between u-ai-center",
+                div { class: "row u-gap-12 u-ai-center",
                     // Left: Primer value
-                    div { style: "text-align: center;",
+                    div { class: "u-ta-center",
                         ColorSwatch { hex: undercoat_hex.clone(), size: 28 }
-                        div { class: "mono", style: "font-size: 9.5px; margin-top: 2px;", "{undercoat_hex}" }
+                        div { class: "mono u-fs-9p5 u-mt-2", "{undercoat_hex}" }
                     }
-                    span { style: "font-size: 16px; color: var(--accent);", "➔" }
+                    span { class: "u-fs-16 u-c-accent", "➔" }
                     // Right: Glazed result
-                    div { style: "text-align: center;",
+                    div { class: "u-ta-center",
                         ColorSwatch { hex: glazed_hex.clone(), size: 36 }
-                        div { class: "mono", style: "font-size: 10px; font-weight: 700; margin-top: 2px;", "{glazed_hex}" }
+                        div { class: "mono u-fs-10 u-fw-700 u-mt-2", "{glazed_hex}" }
                     }
                     div {
-                        strong { style: "font-size: 13px;", "{step_name}" }
-                        div { class: "muted", style: "font-size: 11px;",
+                        strong { class: "u-fs-13", "{step_name}" }
+                        div { class: "muted u-fs-11",
                             {locale.tr("Luminance physique sous-jacente : ", "Physical undercoat luminance: ")},
                             "{lum * 100.0:.0}%"
                         }
@@ -146,9 +146,9 @@ fn glaze_row(
 
                 // Palette mix match
                 if let Some(ref s) = sugg {
-                    div { class: "row", style: "gap: 8px; align-items: center;",
-                        div { style: "text-align: right;",
-                            div { style: "font-weight: 650; font-size: 12px;", "{s.describe_i18n(locale)}" }
+                    div { class: "row u-gap-8 u-ai-center",
+                        div { class: "u-ta-right",
+                            div { class: "u-fw-650 u-fs-12", "{s.describe_i18n(locale)}" }
                         }
                         DeltaEBadge { delta_e: s.delta_e }
                     }

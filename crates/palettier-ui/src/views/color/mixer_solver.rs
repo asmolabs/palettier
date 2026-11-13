@@ -29,7 +29,7 @@ pub fn MixerSolverCard(
             h3 { class: "card-title",
                 {locale.tr("Comment obtenir cette couleur ? (Solveur inverse)", "How to Mix This Color? (Inverse Solver)")}
             }
-            div { class: "row-between", style: "margin-bottom: 12px;",
+            div { class: "row-between u-mb-12",
                 div { class: "row",
                     div {
                         label { class: "field-label", {locale.tr("Couleur visée", "Target Color")} }
@@ -131,8 +131,8 @@ fn SuggestionRow(sug: MixSuggestion, target_hex: String, manual_parts: Signal<Ve
             }
             td { DeltaEBadge { delta_e: sug.delta_e } }
             td {
-                div { style: "font-weight: 600;", "{sug.describe_i18n(locale)}" }
-                div { class: "muted", style: "font-size: 11px;",
+                div { class: "u-fw-600", "{sug.describe_i18n(locale)}" }
+                div { class: "muted u-fs-11",
                     {locale.tr("Séchage", "Drying")},
                     " : {sug.drying_class().label(locale)}"
                 }
@@ -161,7 +161,7 @@ pub fn GamutMapCard(gamut_paints: Vec<Paint>, target_hex: String, best_achieved:
             h3 { class: "card-title",
                 {locale.tr("Carte de Gamut Chromatique CIELAB (a* / b*)", "CIELAB Chromatic Gamut Map (a* / b*)")}
             }
-            p { class: "muted", style: "font-size: 11.5px; margin-bottom: 10px;",
+            p { class: "muted u-fs-11p5 u-mb-10",
                 {locale.tr("Polygone de couverture chromatique de la palette choisie : visualisez la position de chaque tube (code court) et vérifiez si la couleur visée est atteignable.", "Chromatic coverage polygon of the selected palette: visualize each tube position (short code) and check whether the target color is reachable.")}
             }
             GamutMapSvg {
