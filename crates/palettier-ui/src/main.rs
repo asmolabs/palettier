@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod actions;
 mod snapshot;
 mod state;
 mod theme;

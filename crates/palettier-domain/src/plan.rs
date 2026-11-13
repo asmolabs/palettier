@@ -59,7 +59,7 @@ impl PlanZone {
 pub struct PlanLayer {
     pub role: String,
     pub target: Rgb,
-    pub technique: String,
+    pub technique: Technique,
     pub note: String,
     pub recipe: Option<MixSuggestion>,
     pub achieved: Rgb,
@@ -99,7 +99,7 @@ impl PlanLayer {
             id: None,
             role: self.role.clone(),
             target_hex: self.target.to_hex(),
-            technique: self.technique.clone(),
+            technique: self.technique,
             note: self.note.clone(),
             kind,
             applied: None,
@@ -254,7 +254,7 @@ impl PlanDryingService {
         let mut offset = Duration::ZERO;
 
         for (i, layer) in layers.iter().enumerate() {
-            let technique = Technique::by_label_in(Some(&layer.technique), system);
+            let technique = layer.technique;
             let drying = Self::drying_class_of(layer);
 
             let estimate = self
@@ -266,7 +266,7 @@ impl PlanDryingService {
             let wait = if i + 1 == layers.len() {
                 Duration::ZERO
             } else if {
-                let next = Technique::by_label_in(Some(&layers[i + 1].technique), system);
+                let next = layers[i + 1].technique;
                 waits_for_through_dry(
                     technique.system_within(system),
                     next.system_within(system),
@@ -432,7 +432,7 @@ impl ProjectPlanner {
             return PlanLayer {
                 role: layer.role.clone(),
                 target,
-                technique: layer.technique.clone(),
+                technique: layer.technique,
                 note: layer.note.clone(),
                 recipe: None,
                 achieved: target,
@@ -445,7 +445,7 @@ impl ProjectPlanner {
         PlanLayer {
             role: layer.role.clone(),
             target,
-            technique: layer.technique.clone(),
+            technique: layer.technique,
             note: layer.note.clone(),
             recipe: Some(best),
             achieved,
@@ -594,7 +594,7 @@ impl SampledPlanService {
             None => PlanLayer {
                 role,
                 target,
-                technique: technique.label().to_string(),
+                technique,
                 note: String::new(),
                 recipe: None,
                 achieved: target,
@@ -606,7 +606,7 @@ impl SampledPlanService {
                 PlanLayer {
                     role,
                     target,
-                    technique: technique.label().to_string(),
+                    technique,
                     note: String::new(),
                     recipe: Some(sugg),
                     achieved,

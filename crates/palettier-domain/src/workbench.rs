@@ -283,7 +283,7 @@ impl WorkbenchService {
         now: DateTime<Utc>,
     ) -> CoatState {
         let applied = layer.applied.as_ref().expect("couche posée");
-        let technique = layer.technique_within(system);
+        let technique = layer.technique;
         let estimate = self
             .drying_time_service
             .estimate(&DryingContext::for_technique_in(
@@ -300,7 +300,7 @@ impl WorkbenchService {
                 if waits_for_through_dry(
                     layer.system_within(system),
                     n.system_within(system),
-                    n.technique_within(system),
+                    n.technique,
                 ) {
                     estimate.through_dry
                 } else {
@@ -426,7 +426,7 @@ mod tests {
 
     fn make_layer(role: &str) -> ProjectLayer {
         let mut l = ProjectLayer::new(role, "#C98F72");
-        l.technique = "Glacis".to_string();
+        l.technique = crate::paint::Technique::Glaze;
         l
     }
 
