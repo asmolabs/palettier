@@ -1,11 +1,12 @@
 //! Design snapshots: with `PALETTIER_SNAPSHOT_DIR` set, the app walks through every
-//! screen once and writes the rendered HTML of each to that folder, then quits.
+//! screen and every miniature tool once and writes the rendered HTML of each to that folder, then quits.
 //!
 //! The page is a still image (no interaction), but it carries the real markup and the
 //! theme, so it can be opened in any browser to review the design without a screen
 //! recording permission. Not used in normal runs.
 
 use crate::state::{AppState, Section, ThemeMode};
+use crate::views::miniature::MiniatureTab;
 use palettier_domain::i18n::Locale;
 use dioxus::prelude::*;
 use std::path::PathBuf;
@@ -35,6 +36,15 @@ pub fn run(mut state: AppState, dir: PathBuf) {
         // Let the initial data load settle.
         tokio::time::sleep(Duration::from_millis(2500)).await;
         state.locale.set(Locale::Fr);
+        // Every miniature tool, in dark theme.
+        state.theme.set(ThemeMode::Dark);
+        state.section.set(Section::Miniature);
+        for tab in MiniatureTab::ALL {
+            state.miniature_tab.set(tab.to_idx());
+            tokio::time::sleep(Duration::from_millis(700)).await;
+            let name = format!("tool-{:02}-{:?}.html", tab.to_idx(), tab).to_lowercase();
+            capture(&dir.join(name)).await;
+        }
         for theme in [ThemeMode::Dark, ThemeMode::Light] {
             state.theme.set(theme);
             for (i, section) in SECTIONS.iter().enumerate() {

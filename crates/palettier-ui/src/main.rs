@@ -47,7 +47,7 @@ fn main() {
         .init();
 
     let window = WindowBuilder::new()
-        .with_title("Palettier — Oil Painting Studio")
+        .with_title("Palettier — Atelier de figurines")
         .with_inner_size(dioxus::desktop::LogicalSize::new(1460.0, 930.0))
         .with_min_inner_size(dioxus::desktop::LogicalSize::new(1160.0, 740.0));
 
@@ -659,24 +659,21 @@ fn CommandPaletteModal() -> Element {
         .take(6)
         .collect();
 
-    let matching_acrylics: Vec<_> = palettier_domain::miniature::MINIATURE_ACRYLICS
-        .iter()
-        .filter(|a| {
-            !term.is_empty()
-                && (a.name.to_lowercase().contains(&term)
-                    || a.category.to_lowercase().contains(&term))
-        })
-        .take(6)
-        .collect();
-
-    let matching_oils: Vec<_> = all_paints
-        .iter()
-        .filter(|p| {
-            !term.is_empty()
-                && (p.name.to_lowercase().contains(&term) || p.brand.to_lowercase().contains(&term))
-        })
-        .take(6)
-        .collect();
+    let matches = |system: PaintSystem| -> Vec<_> {
+        all_paints
+            .iter()
+            .filter(|p| {
+                p.system == system
+                    && !term.is_empty()
+                    && (p.name.to_lowercase().contains(&term)
+                        || p.brand.to_lowercase().contains(&term))
+            })
+            .take(6)
+            .cloned()
+            .collect()
+    };
+    let matching_acrylics = matches(PaintSystem::Acrylic);
+    let matching_oils = matches(PaintSystem::Oil);
 
     rsx! {
         div {
@@ -739,7 +736,7 @@ fn CommandPaletteModal() -> Element {
                     div { style: "display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;",
                         for acr in matching_acrylics {
                             {
-                                let hex = acr.hex.to_string();
+                                let hex = acr.hex_color.clone();
                                 rsx! {
                                     button {
                                         class: "card-subtle",
@@ -757,7 +754,7 @@ fn CommandPaletteModal() -> Element {
                                             ColorSwatch { hex: hex.clone(), size: 22 }
                                             div {
                                                 strong { style: "font-size: 13px;", "{acr.name}" }
-                                                span { class: "muted", style: "font-size: 11px; margin-left: 8px;", "{acr.brand.display_name()}" }
+                                                span { class: "muted", style: "font-size: 11px; margin-left: 8px;", "{acr.brand}" }
                                             }
                                         }
                                         span { class: "pill pill-accent", "{hex}" }
