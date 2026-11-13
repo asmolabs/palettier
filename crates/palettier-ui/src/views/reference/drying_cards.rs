@@ -4,7 +4,8 @@ use super::format_duration;
 use crate::state::AppState;
 use dioxus::prelude::*;
 use palettier_domain::drying::{DryingAdvice, DryingEstimate, Workshop};
-use palettier_domain::paint::{Medium, Ventilation};
+use palettier_domain::i18n::Locale;
+use palettier_domain::paint::{Medium, PaintSystem, Ventilation};
 
 /// The shares of the painter's own medium. They live in the drying screen, so switching
 /// to acrylic and back keeps them.
@@ -184,10 +185,23 @@ fn Milestone(#[props(into)] label: String, value: String, #[props(into)] style: 
     }
 }
 
+/// What the last milestone waits for: oil cures by oxidation, acrylic dries when its
+/// film has lost its water and coalesced.
+fn full_cure_label(system: PaintSystem, locale: Locale) -> &'static str {
+    match system {
+        PaintSystem::Oil => locale.tr("Polymérisation complète avant vernis définitif", "Full polymerization before final varnish"),
+        PaintSystem::Acrylic => locale.tr(
+            "Film sec à cœur (coalescence) avant vernis définitif",
+            "Film fully dry (coalesced) before final varnish",
+        ),
+    }
+}
+
 #[component]
 pub(super) fn DryingMilestones(estimate: DryingEstimate, current_medium: Medium) -> Element {
     let state = use_context::<AppState>();
     let locale = *state.locale.read();
+    let system = *state.paint_system.read();
     let big = "font-size: 22px; font-weight: 700;";
 
     rsx! {
@@ -217,7 +231,7 @@ pub(super) fn DryingMilestones(estimate: DryingEstimate, current_medium: Medium)
             }
             div { class: "card-subtle u-mb-16",
                 div { class: "row-between",
-                    span { class: "muted", {locale.tr("Polymérisation complète avant vernis définitif", "Full polymerization before final varnish")} }
+                    span { class: "muted", {full_cure_label(system, locale)} }
                     span { class: "pill pill-accent", "{format_duration(estimate.full_cure, locale)}" }
                 }
             }
@@ -234,5 +248,18 @@ pub(super) fn DryingMilestones(estimate: DryingEstimate, current_medium: Medium)
             }
 
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_oil_waits_for_polymerization() {
+        assert!(full_cure_label(PaintSystem::Oil, Locale::Fr).contains("Polymérisation"));
+        assert!(full_cure_label(PaintSystem::Oil, Locale::En).contains("polymerization"));
+        assert!(!full_cure_label(PaintSystem::Acrylic, Locale::Fr).contains("olymérisation"));
+        assert!(!full_cure_label(PaintSystem::Acrylic, Locale::En).contains("olymerization"));
     }
 }

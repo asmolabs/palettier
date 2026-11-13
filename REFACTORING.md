@@ -3,7 +3,7 @@
 État des lieux après la séparation huile / acrylique (branche `claude/acrylique-ou-huile`).
 Le domaine et la persistance sont sains ; la dette est concentrée dans l'onglet Miniature
 et dans les vues. Chaque lot ci-dessous se livre seul, avec la suite de tests au vert
-(100 tests au départ, 181 après le lot 6, 186 après les corrections relevées), et ne change pas ce que voit le peintre sauf mention contraire.
+(100 tests au départ, 181 après le lot 6, 187 après les corrections relevées), et ne change pas ce que voit le peintre sauf mention contraire.
 
 ## Ce qui tient et qu'on ne touche pas
 
@@ -209,8 +209,10 @@ corrections ponctuelles du plan :
   du dossier courant ne sert plus que si celui du dossier personnel n'existe pas, avec
   un avertissement dans le journal.
 
-Reste relevé : en acrylique, le séchage parle de « polymérisation complète » avant
-vernis.
+- **Séchage acrylique :** le dernier jalon parle de « film sec à cœur (coalescence) »
+  avant vernis, et plus de « polymérisation complète », réservée à l'huile.
+
+Plus aucun point relevé en attente.
 
 ## Ordre conseillé
 

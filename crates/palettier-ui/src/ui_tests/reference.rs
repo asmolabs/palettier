@@ -56,6 +56,9 @@ async fn acrylic_drying_counts_in_minutes() {
         .await;
     // Fat over lean is an oil rule: no fat index in acrylic.
     ui.assert_hides("indice gras").await;
+    // Acrylic dries by evaporation: no polymerization before the varnish.
+    ui.assert_shows("Film sec à cœur (coalescence) avant vernis définitif").await;
+    ui.assert_hides("Polymérisation complète").await;
 }
 
 #[tokio::test(flavor = "current_thread")]
