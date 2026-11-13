@@ -182,7 +182,10 @@ fn ProjectToolbar(proj: Project) -> Element {
                     }
                 }
                 span { class: "muted",
-                    "{locale.tr(\"Sujet\", \"Subject\")} : {proj.subject} · {proj.effective_paints().len()} ",
+                    if !proj.subject.trim().is_empty() {
+                        "{locale.tr(\"Sujet\", \"Subject\")} : {proj.subject} · "
+                    }
+                    "{proj.effective_paints().len()} ",
                     {locale.tr("tubes figés", "locked tubes")}
                 }
             }

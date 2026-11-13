@@ -3,7 +3,7 @@
 État des lieux après la séparation huile / acrylique (branche `claude/acrylique-ou-huile`).
 Le domaine et la persistance sont sains ; la dette est concentrée dans l'onglet Miniature
 et dans les vues. Chaque lot ci-dessous se livre seul, avec la suite de tests au vert
-(100 tests au départ, 181 après le lot 6), et ne change pas ce que voit le peintre sauf mention contraire.
+(100 tests au départ, 181 après le lot 6, 186 après les corrections relevées), et ne change pas ce que voit le peintre sauf mention contraire.
 
 ## Ce qui tient et qu'on ne touche pas
 
@@ -179,20 +179,39 @@ Corrigé au passage, trouvé par ces tests :
 - le calculateur de séchage affichait l'« indice gras » en acrylique ;
 - accents : « Empâtement », « médiums acryliques … superposées ».
 
-Relevé sans le changer :
-- « Échap pour fermer » reste en français dans la palette de commandes, qui annonce
-  aussi « Siccatifs » en acrylique ;
-- « 1 zones » au singulier, et « Sujet : · » quand le sujet est vide ;
-- en acrylique, le séchage parle de « polymérisation complète » avant vernis.
+Relevé sans le changer : voir « Corrections relevées » plus bas.
 
-## Corrections ponctuelles à glisser dans le premier lot venu
+## Corrections relevées — faites
 
-- Le prompt IA huile annonce « 14 règles » mais n'en liste que 10.
-- `SampledPlanService` nomme ses couches en français en dur (« Ombre 1 »,
-  « Lumiere 1 ») quelle que soit la langue.
-- `default_db_dir()` préfère un `.palettier` dans le dossier courant : lancer l'appli
-  depuis un autre dossier peut ouvrir une autre base sans prévenir.
+Branche `claude/corrections-relevees`. Les points relevés par les lots 2 et 6, et les
+corrections ponctuelles du plan :
+
+- **Assistant :** avec « Tous mes tubes en stock », le projet enregistré prend les
+  tubes en stock (ceux du plan), plus tous les tubes du système.
+- **Pipette :** la liste des palettes pour « Créer un projet mesuré » ne garde que celles
+  du système de travail.
+- **HUD :**
+  - il suit la pièce par son identifiant : ajouter, retirer ou réordonner des projets
+    ne le fait plus changer de pièce ;
+  - un clic sur la photo relève le pixel cliqué (la photo est dimensionnée en pixels
+    comme à la Pipette), plus toujours le centre.
+- **Minuteur du lavis :** il se redessine seul toutes les 15 s tant qu'il tourne.
+- **Palette de commandes :**
+  - « Échap pour fermer » est traduit ;
+  - le catalogue et le séchage suivent le système (« Catalogue Acryliques (71
+    références) », plus de « Siccatifs » en acrylique).
+- **Affichage :** « 1 zone » au singulier ; plus de « Sujet : · » vide sur un projet
+  ou une recette sans sujet.
+- **Prompt IA huile :** annonce « 10 règles », le nombre qu'il liste.
+- **`SampledPlanService` :** le plan relevé (couches « Ombre 1 » / « Shadow 1 », notes,
+  message d'erreur) suit la langue.
+- **`default_db_dir()` :** `PALETTIER_DB_DIR`, sinon `~/.palettier`. Un `.palettier`
+  du dossier courant ne sert plus que si celui du dossier personnel n'existe pas, avec
+  un avertissement dans le journal.
+
+Reste relevé : en acrylique, le séchage parle de « polymérisation complète » avant
+vernis.
 
 ## Ordre conseillé
 
-Les six lots sont faits. Restent les corrections ponctuelles ci-dessus et les points relevés.
+Les six lots et les corrections relevées sont faits.

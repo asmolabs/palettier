@@ -154,6 +154,13 @@ impl Ui {
         self.dom.in_runtime(|| f(&state))
     }
 
+    /// Change the state from outside the screen (another window, a reload).
+    pub async fn set_state(&mut self, f: impl FnOnce(&mut AppState)) {
+        let mut state = self.state();
+        self.dom.in_runtime(|| f(&mut state));
+        self.settle().await;
+    }
+
     pub fn tree(&self) -> Element {
         let mut roots = Vec::new();
         walk_vnode(&self.dom, self.dom.base_scope().root_node(), &mut roots);

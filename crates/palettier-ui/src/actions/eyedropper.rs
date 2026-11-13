@@ -130,7 +130,7 @@ pub async fn create_project_from_groups(
     } else {
         name
     };
-    let plan = services.sampled_plan_service.plan(subject, palette, groups, 3)?;
+    let plan = services.sampled_plan_service.plan(subject, palette, groups, 3, locale)?;
     let unique = unique_name(&plan.subject, taken_names.iter().map(String::as_str));
     let project = plan.as_project(unique, palette);
     Ok(services.projects.save(&project).await.ok())

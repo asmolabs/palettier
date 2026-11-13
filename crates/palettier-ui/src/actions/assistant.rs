@@ -110,7 +110,7 @@ mod tests {
         let groups = add_group(&[], "Manteau", "Drap").unwrap();
         let groups = add_sample(&groups, 0, "#2B303A").unwrap();
         let groups = add_sample(&groups, 0, "#5E687D").unwrap();
-        svc.sampled_plan_service.plan("Grognard", palette, &groups, 3).unwrap()
+        svc.sampled_plan_service.plan("Grognard", palette, &groups, 3, Locale::Fr).unwrap()
     }
 
     #[tokio::test]

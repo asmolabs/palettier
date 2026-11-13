@@ -65,7 +65,11 @@ pub fn SampledGroupsCard(
     let mut state = use_context::<AppState>();
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
-    let palettes = state.palettes.read().clone();
+    // The measured project is painted in the working system: only its palettes.
+    let palettes = crate::actions::mixer::palettes_of_system(
+        &state.palettes.read(),
+        *state.paint_system.read(),
+    );
 
     let create_project = {
         let pals = palettes.clone();

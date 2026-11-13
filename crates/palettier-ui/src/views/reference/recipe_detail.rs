@@ -32,7 +32,9 @@ pub(super) fn RecipeDetail(recipe: Recipe, draft: StepDraft) -> Element {
             div { class: "row-between u-mb-12",
                 div {
                     h3 { class: "card-title u-mb-2", "{recipe.name}" }
-                    div { class: "muted", {locale.tr("Sujet : ", "Subject: ")}, "{recipe.subject}" }
+                    if !recipe.subject.trim().is_empty() {
+                        div { class: "muted", {locale.tr("Sujet : ", "Subject: ")}, "{recipe.subject}" }
+                    }
                 }
                 div { class: "row",
                     span { class: "pill pill-accent", {locale.tr("Durée active : ", "Active span: ")}, "{format_duration(timeline.total_active_span, locale)}" }

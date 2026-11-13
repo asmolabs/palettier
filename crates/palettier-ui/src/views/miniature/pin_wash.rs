@@ -60,6 +60,17 @@ pub(super) fn PinWash(candidates: Vec<Paint>) -> Element {
         max_cleaning_window_mins: 90,
     };
     let sugg = best_mix(&services, rgb_or_grey(wash_hex(*wash_tone_idx.read()), 0.1), &candidates);
+    // Redraw on its own while the timer runs: the minutes move without any click.
+    let mut tick = use_signal(|| 0u64);
+    use_future(move || async move {
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+            if wash_timer_start.peek().is_some() {
+                tick += 1;
+            }
+        }
+    });
+    let _ = tick();
     let elapsed = (*wash_timer_start.read()).map(|start| (Utc::now() - start).num_minutes());
 
     rsx! {

@@ -28,17 +28,61 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 fn default_db_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("PALETTIER_DB_DIR") {
-        return PathBuf::from(dir);
-    }
-    // Prefer workspace .palettier if it exists, otherwise home directory ~/.palettier
-    let local = PathBuf::from(".").join(".palettier");
-    if local.exists() {
-        return local;
-    }
-    dirs::home_dir()
+    let home = dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".palettier")
+        .join(".palettier");
+    let local = PathBuf::from(".").join(".palettier");
+    let dir = choose_db_dir(
+        std::env::var_os("PALETTIER_DB_DIR").map(PathBuf::from),
+        &home,
+        &local,
+    );
+    if dir == local {
+        tracing::warn!(
+            "No database in {:?}: using the one in the current folder, {:?}",
+            home,
+            local
+        );
+    }
+    dir
+}
+
+/// Where the database lives: `PALETTIER_DB_DIR` when set, else `~/.palettier`. A
+/// `.palettier` in the current folder is only used when the home one does not exist
+/// yet, so launching the app from another folder cannot switch databases silently.
+fn choose_db_dir(env: Option<PathBuf>, home: &std::path::Path, local: &std::path::Path) -> PathBuf {
+    if let Some(dir) = env {
+        return dir;
+    }
+    if !home.exists() && local.exists() {
+        return local.to_path_buf();
+    }
+    home.to_path_buf()
+}
+
+#[cfg(test)]
+mod db_dir_tests {
+    use super::choose_db_dir;
+    use std::path::PathBuf;
+
+    #[test]
+    fn the_home_database_wins_over_a_stray_local_one() {
+        let tmp = std::env::temp_dir().join(format!("palettier-dbdir-{}", std::process::id()));
+        let home = tmp.join("home");
+        let local = tmp.join("local");
+        std::fs::create_dir_all(&local).expect("temp dir");
+
+        // Only the local one exists: it is used.
+        assert_eq!(choose_db_dir(None, &home, &local), local);
+        // Both exist: the home one wins.
+        std::fs::create_dir_all(&home).expect("temp dir");
+        assert_eq!(choose_db_dir(None, &home, &local), home);
+        // The environment variable wins over both.
+        let env = PathBuf::from("/elsewhere");
+        assert_eq!(choose_db_dir(Some(env.clone()), &home, &local), env);
+
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
 }
 
 fn main() {
@@ -462,6 +506,14 @@ fn CommandPaletteModal() -> Element {
     let term = search.read().to_lowercase().trim().to_string();
 
     let all_paints = state.paints.read().clone();
+    let system = *state.paint_system.read();
+    let system_count = all_paints.iter().filter(|p| p.system == system).count();
+    let catalog_title = match (system, locale) {
+        (PaintSystem::Oil, Locale::Fr) => format!("Catalogue Tubes d'Huile ({system_count} références)"),
+        (PaintSystem::Oil, Locale::En) => format!("Oil Paint Catalog ({system_count} tubes)"),
+        (PaintSystem::Acrylic, Locale::Fr) => format!("Catalogue Acryliques ({system_count} références)"),
+        (PaintSystem::Acrylic, Locale::En) => format!("Acrylic Paint Catalog ({system_count} paints)"),
+    };
 
     // Section and tab matches
     let tools = [
@@ -629,16 +681,16 @@ fn CommandPaletteModal() -> Element {
         ),
         (
             "📚",
-            locale.tr(
-                "Catalogue Tubes d'Huile (680 références)",
-                "Oil Paint Catalog (680 tubes)",
-            ),
+            catalog_title.as_str(),
             Section::Catalog,
             0,
         ),
         (
             "⏳",
-            locale.tr("Temps de Séchage & Siccatifs", "Drying Times & Mediums"),
+            match system {
+                PaintSystem::Oil => locale.tr("Temps de Séchage & Siccatifs", "Drying Times & Mediums"),
+                PaintSystem::Acrylic => locale.tr("Temps de Séchage acrylique", "Acrylic Drying Times"),
+            },
             Section::Drying,
             0,
         ),
@@ -694,7 +746,7 @@ fn CommandPaletteModal() -> Element {
                         span { class: "u-fs-18", "🔍" }
                         strong { class: "u-fs-15", {locale.tr("Palette de Commandes & Recherche Globale", "Command Palette & Quick Search")} }
                     }
-                    span { class: "pill", "Échap pour fermer" }
+                    span { class: "pill", {locale.tr("Échap pour fermer", "Esc to close")} }
                 }
 
                 input {

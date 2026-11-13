@@ -115,3 +115,22 @@ async fn theme_switch_changes_the_shell_class() {
     );
     ui.assert_shows("Jour · Français").await;
 }
+
+#[tokio::test(flavor = "current_thread")]
+async fn command_palette_follows_the_system_and_the_language() {
+    let mut ui = Ui::studio().await;
+    ui.click_in("system-segment", "Acrylique").await;
+    ui.press_cmd("k").await;
+    ui.type_into("Rechercher un outil", "catalogue").await;
+    ui.assert_shows("Catalogue Acryliques (71 références)")
+        .await;
+    ui.type_into("Rechercher un outil", "séchage").await;
+    ui.assert_shows("Temps de Séchage acrylique").await;
+    ui.assert_hides("Siccatifs").await;
+    ui.press_cmd("k").await;
+
+    ui.click_in("quick-toggles", "EN").await;
+    ui.press_cmd("k").await;
+    ui.assert_shows("Esc to close").await;
+    ui.assert_hides("Échap pour fermer").await;
+}

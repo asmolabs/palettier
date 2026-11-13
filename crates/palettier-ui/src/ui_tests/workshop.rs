@@ -16,7 +16,11 @@ async fn creating_an_acrylic_project_opens_it_in_acrylic() {
     new_project(&mut ui, "Space Marine", "Acrylique").await;
 
     ui.assert_shows("Mes pièces (1)").await;
-    ui.assert_shows("Space Marine Acrylique").await;
+    ui.assert_shows("Space Marine 1 zone").await;
+    ui.assert_shows("Space Marine Acrylique 7 tubes figés")
+        .await;
+    // No subject was given: no empty « Sujet : » line.
+    ui.assert_hides("Sujet :").await;
     // The sidebar follows the open project.
     ui.assert_shows("Tiroir acrylique").await;
     // Its starting layers use acrylic techniques and acrylic paints only.
@@ -93,4 +97,48 @@ async fn creating_a_palette_lists_it() {
 
     ui.assert_shows("Palettes enregistrées (4)").await;
     ui.assert_shows("Drap bleu").await;
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn the_hud_follows_its_piece_when_the_list_changes() {
+    let mut ui = Ui::studio().await;
+    new_project(&mut ui, "Hussard", "Huile").await;
+    new_project(&mut ui, "Dragon", "Huile").await;
+    let hussard = ui.peek(|s| {
+        s.projects
+            .peek()
+            .iter()
+            .find(|p| p.name == "Hussard")
+            .and_then(|p| p.id)
+            .expect("saved")
+    });
+
+    ui.press_cmd("h").await;
+    ui.assert_shows("HUD Établi Peintre").await;
+    ui.type_into("Pièce suivie", &hussard.to_string()).await;
+
+    // Another piece leaves the list: the HUD stays on the Hussard.
+    ui.set_state(|s| s.projects.write().retain(|p| p.name != "Dragon"))
+        .await;
+    ui.set_state(|s| {
+        let all = s.projects.peek().clone();
+        let mut reordered = all.clone();
+        reordered.reverse();
+        s.projects.set(reordered);
+    })
+    .await;
+    let select = ui
+        .tree()
+        .descendants()
+        .into_iter()
+        .find(|e| e.attr("title") == Some("Pièce suivie"))
+        .cloned()
+        .expect("piece selector");
+    let chosen: Vec<String> = select
+        .descendants()
+        .into_iter()
+        .filter(|e| e.tag == "option" && e.attr("selected") == Some("true"))
+        .map(|e| e.text())
+        .collect();
+    assert_eq!(chosen, vec!["Hussard".to_string()]);
 }

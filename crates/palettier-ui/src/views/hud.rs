@@ -20,7 +20,8 @@ pub fn PainterHudView(on_close: EventHandler<()>) -> Element {
     let projects = state.projects.read().clone();
     let palettes = state.palettes.read().clone();
 
-    let selected_project_idx = use_signal(|| 0usize);
+    // The piece followed, by id: a project added or removed does not shift it.
+    let selected_project_id = use_signal(|| None::<i64>);
     let image_name = use_signal(String::new);
     let image_data_url = use_signal(|| None::<String>);
     let study_data_url = use_signal(|| None::<String>);
@@ -29,7 +30,11 @@ pub fn PainterHudView(on_close: EventHandler<()>) -> Element {
     let zoom_pct = use_signal(|| 100u32);
     let sampled_hex = use_signal(|| None::<String>);
 
-    let current_project: Option<Project> = projects.get(selected_project_idx()).cloned();
+    let current_project: Option<Project> = selected_project_id()
+        .and_then(|id| projects.iter().find(|p| p.id == Some(id)))
+        .or_else(|| projects.first())
+        .cloned();
+    let current_id = current_project.as_ref().and_then(|p| p.id);
 
     let eff_paints: Vec<Paint> = current_project
         .as_ref()
@@ -44,7 +49,7 @@ pub fn PainterHudView(on_close: EventHandler<()>) -> Element {
     rsx! {
         div { class: "painter-hud {theme.css_class()}",
             // HUD Top Navigation Bar
-            HudHeader { projects, selected_project_idx, on_close }
+            HudHeader { projects, current_id, selected_project_id, on_close }
 
             // HUD Two-Column Workspace
             div { class: "painter-hud-body",
@@ -71,7 +76,8 @@ pub fn PainterHudView(on_close: EventHandler<()>) -> Element {
 #[component]
 fn HudHeader(
     projects: Vec<Project>,
-    selected_project_idx: Signal<usize>,
+    current_id: Option<i64>,
+    selected_project_id: Signal<Option<i64>>,
     on_close: EventHandler<()>,
 ) -> Element {
     let mut state = use_context::<AppState>();
@@ -93,14 +99,18 @@ fn HudHeader(
                         span { class: "muted u-fs-12", {locale.tr("Projet :", "Project:")} }
                         select {
                             class: "u-bg-bg-input u-c-text-main u-b-1-solid-border-main u-r-6 u-p-4-10 u-fs-12p5 u-fw-600",
-                            value: "{selected_project_idx}",
+                            title: locale.tr("Pièce suivie", "Piece followed"),
                             onchange: move |ev| {
-                                if let Ok(idx) = ev.value().parse::<usize>() {
-                                    selected_project_idx.set(idx);
+                                if let Ok(id) = ev.value().parse::<i64>() {
+                                    selected_project_id.set(Some(id));
                                 }
                             },
-                            for (idx, p) in projects.iter().enumerate() {
-                                option { value: "{idx}", "{p.name}" }
+                            for p in projects.iter() {
+                                option {
+                                    value: "{p.id.unwrap_or_default()}",
+                                    selected: p.id == current_id,
+                                    "{p.name}"
+                                }
                             }
                         }
                     }
@@ -177,6 +187,10 @@ fn HudReferencePane(
     let mut state = use_context::<AppState>();
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
+    let img_width = match *decoded_image.read() {
+        Some(ref map) => format!("{}px", (map.width as f64 * zoom_pct() as f64 / 100.0).round()),
+        None => format!("{zoom_pct}%"),
+    };
 
     let open_photo = {
         let svc = services.clone();
@@ -268,13 +282,14 @@ fn HudReferencePane(
                 if let Some(ref uri) = *study_data_url.read() {
                     img {
                         src: "{uri}",
-                        style: "width: {zoom_pct}%; max-width: none; border-radius: 4px; cursor: crosshair; user-select: none; display: block; margin: auto;",
+                        // Sized in pixels from the photo, like the eyedropper, so that a
+                        // click maps back to the pixel under the cursor.
+                        style: "width: {img_width}; max-width: none; border-radius: 4px; cursor: crosshair; user-select: none; display: block; margin: auto;",
                         title: locale.tr("Cliquez pour prélever une teinte", "Click to sample color"),
-                        onclick: move |_ev| {
+                        onclick: move |ev: Event<MouseData>| {
                             if let Some(ref map) = *decoded_image.read() {
-                                let cx = (map.width / 2) as isize;
-                                let cy = (map.height / 2) as isize;
-                                if let Some(rgb) = map.sample_around(cx, cy, 4) {
+                                let at = ev.element_coordinates();
+                                if let Some((_, rgb)) = eye::sample_click(map, at.x, at.y, zoom_pct(), 4) {
                                     let h = rgb.to_hex();
                                     sampled_hex.set(Some(h.clone()));
                                     state.mixer_target_hex.set(h.clone());

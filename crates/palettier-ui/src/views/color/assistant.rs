@@ -243,7 +243,8 @@ fn AssistantPlanCard(
             let attached_img = image_bytes();
             let svc = svc.clone();
             let plan = plan.clone();
-            let fallback = pts.clone();
+            // The same tubes the plan was mixed from: the stock, not the whole catalog.
+            let fallback = plan_actions::stock_or_all(&pts);
             spawn(async move {
                 let created = plan_actions::create_project_from_plan(
                     &svc,

@@ -319,7 +319,9 @@ fn ProjectListItem(p: Project) -> Element {
                     }
                 }
                 div { class: "row u-gap-6 u-ai-center",
-                    span { class: "pill", "{p.zones.len()} zones" }
+                    span { class: "pill",
+                        if p.zones.len() == 1 { "1 zone" } else { "{p.zones.len()} zones" }
+                    }
                     button {
                         class: "btn-danger",
                         class: "u-p-3-7 u-fs-11",
