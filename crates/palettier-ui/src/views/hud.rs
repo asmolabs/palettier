@@ -112,7 +112,7 @@ fn HudHeader(
             div { class: "row", style: "gap: 10px; align-items: center;",
                 // Climate quick readout
                 div { class: "pill", style: "font-size: 11.5px;",
-                    "🌡️ {workshop.temperature_celsius:.0}°C · 💧 {workshop.relative_humidity:.0}% · {workshop.ventilation.label_i18n(locale)}"
+                    "🌡️ {workshop.temperature_celsius:.0}°C · 💧 {workshop.relative_humidity:.0}% · {workshop.ventilation.label(locale)}"
                 }
 
                 // Theme toggle
@@ -254,7 +254,7 @@ fn HudReferencePane(
                                     onclick: move |_| {
                                         show_study(&svc, mode, study_mode, image_data_url, study_data_url, decoded_image)
                                     },
-                                    "{mode.label_i18n(locale)}"
+                                    "{mode.label(locale)}"
                                 }
                             }
                         }
@@ -389,7 +389,7 @@ fn HudCoatRow(project: Project, z_idx: usize, l_idx: usize, layer: ProjectLayer)
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
     let is_applied = layer.is_applied();
-    let tech_text = layer.technique.label_i18n(locale).to_string();
+    let tech_text = layer.technique.label(locale).to_string();
 
     rsx! {
         div { class: "row-between", style: "padding: 8px 0; border-top: 1px solid var(--border-subtle); align-items: center;",
@@ -469,13 +469,13 @@ fn HudPalette(eff_paints: Vec<Paint>) -> Element {
                                 span {
                                     class: "pill {s_badge.0}",
                                     style: "padding: 1px 5px; font-size: 9.5px;",
-                                    title: "{s_info.advice_i18n(locale)}",
+                                    title: "{s_info.advice(locale)}",
                                     "{s_badge.1} {s_info.level.badge_label(locale)}"
                                 }
                                 span {
                                     class: "pill",
                                     style: "padding: 1px 5px; font-size: 9.5px; opacity: 0.8;",
-                                    "{lf.label_i18n(locale)}"
+                                    "{lf.label(locale)}"
                                 }
                             }
                         }

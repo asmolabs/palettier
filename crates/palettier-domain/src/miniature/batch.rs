@@ -100,39 +100,43 @@ pub struct ArmyRecipeSheet {
 }
 
 impl ArmyRecipeSheet {
-    pub fn to_markdown(&self) -> String {
+    pub fn to_markdown(&self, locale: Locale) -> String {
+        let t = SheetTitles::of(locale);
         format!(
-            "# Fiche de Recette Figurine : {} - {}\n\n\
-             **Faction / Système** : {}\n\n\
+            "# {} : {} - {}\n\n\
+             **{}** : {}\n\n\
              ---\n\n\
-             ### 1. Préparation & Sous-couche\n\
-             - **Sous-couche (Primer)** : {}\n\n\
-             ### 2. Formule de Couleur de Base\n\
-             - **Référence Acrylique** : {} (`{}`)\n\
-             - **Mélange Huile Calculé** : {} (`{}`)\n\n\
-             ### 3. Ombres, Lavis & Contrastes\n\
-             - **Lavis & Pin Wash** : {}\n\n\
-             ### 4. Weathering & Effets Spéciaux\n\
-             - **Altération & Usure** : {}\n\n\
-             ### 5. Finition & Protection\n\
-             - **Vernis** : {}\n\n\
-             ### Notes d'Atelier\n\
+             ### {}\n\
+             - {}\n\n\
+             ### {}\n\
+             - **{}** {} (`{}`)\n\
+             - **{}** {} (`{}`)\n\n\
+             ### {}\n\
+             - {}\n\n\
+             ### {}\n\
+             - {}\n\n\
+             ### {}\n\
+             - **{}** : {}\n\n\
+             ### {}\n\
              {}\n",
-            self.army_name, self.unit_name, self.faction,
-            self.primer,
-            self.base_acrylic, self.base_hex,
-            self.oil_mix_formula, self.mixed_hex,
-            self.wash_technique,
-            self.weathering,
-            self.varnish,
-            self.notes,
+            t.sheet, self.army_name, self.unit_name,
+            t.faction, self.faction,
+            t.primer, self.primer,
+            t.base,
+            t.reference, self.base_acrylic, self.base_hex,
+            t.mix, self.oil_mix_formula, self.mixed_hex,
+            t.wash, self.wash_technique,
+            t.weathering, self.weathering,
+            t.finish, t.varnish, self.varnish,
+            t.notes, self.notes,
         )
     }
 
-    pub fn to_printable_html(&self) -> String {
+    pub fn to_printable_html(&self, locale: Locale) -> String {
+        let t = SheetTitles::of(locale);
         format!(
             r#"<!DOCTYPE html>
-<html lang="fr">
+<html lang="{lang}">
 <head>
 <meta charset="utf-8">
 <title>{army} - {unit}</title>
@@ -152,39 +156,39 @@ impl ArmyRecipeSheet {
   <div class="subtitle">{unit} · <strong>{faction}</strong></div>
 
   <div class="card">
-    <div class="card-title">1. Sous-couche & Préparation</div>
+    <div class="card-title">{t_primer}</div>
     <div>{primer}</div>
   </div>
 
   <div class="card">
-    <div class="card-title">2. Couleur de Base & Formule d'Huile</div>
+    <div class="card-title">{t_base}</div>
     <div style="margin-bottom: 8px;">
       <span class="swatch" style="background-color: {base_hex};"></span>
-      <strong>Acrylique de référence :</strong> {base_acrylic} (<code>{base_hex}</code>)
+      <strong>{t_reference}</strong> {base_acrylic} (<code>{base_hex}</code>)
     </div>
     <div>
       <span class="swatch" style="background-color: {mixed_hex};"></span>
-      <strong>Mélange d'huiles :</strong> {oil_mix_formula} (<code>{mixed_hex}</code>)
+      <strong>{t_mix}</strong> {oil_mix_formula} (<code>{mixed_hex}</code>)
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title">3. Lavis & Travail Réductif</div>
+    <div class="card-title">{t_wash}</div>
     <div>{wash_technique}</div>
   </div>
 
   <div class="card">
-    <div class="card-title">4. Weathering & Altération</div>
+    <div class="card-title">{t_weathering}</div>
     <div>{weathering}</div>
   </div>
 
   <div class="card">
-    <div class="card-title">5. Finition & Protection</div>
-    <div><span class="pill">Vernis</span> {varnish}</div>
+    <div class="card-title">{t_finish}</div>
+    <div><span class="pill">{t_varnish}</span> {varnish}</div>
   </div>
 
   <div class="card">
-    <div class="card-title">Notes d'Atelier</div>
+    <div class="card-title">{t_notes}</div>
     <div style="font-style: italic; color: #475569;">{notes}</div>
   </div>
 </body>
@@ -201,6 +205,16 @@ impl ArmyRecipeSheet {
             weathering = self.weathering,
             varnish = self.varnish,
             notes = self.notes,
+            lang = t.lang,
+            t_primer = t.primer,
+            t_base = t.base,
+            t_reference = t.reference,
+            t_mix = t.mix,
+            t_wash = t.wash,
+            t_weathering = t.weathering,
+            t_finish = t.finish,
+            t_varnish = t.varnish,
+            t_notes = t.notes,
         )
     }
 }
@@ -223,7 +237,7 @@ impl MiniatureScale {
         MiniatureScale::Bust1_10,
     ];
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::Scale28mm, Locale::Fr) => "28mm (Infanterie classique / Historique)",
             (Self::Scale28mm, Locale::En) => "28mm (Classic infantry / Historical)",
@@ -278,11 +292,11 @@ impl BatchMotherMixCalculator {
         let advice = match locale {
             Locale::Fr => format!(
                 "Pour {} figurine(s) à l'échelle {} : préparez environ {} ml de mélange mère (~{} noisettes de pâte). Conservez dans un petit godet hermétique pour éviter l'oxydation entre vos sessions.",
-                model_count, scale.label_i18n(locale), (volume_ml * 100.0).round() / 100.0, hazelnuts
+                model_count, scale.label(locale), (volume_ml * 100.0).round() / 100.0, hazelnuts
             ),
             Locale::En => format!(
                 "For {} model(s) at {} scale: prepare approx {} ml of mother mix (~{} hazelnut portions). Store in an airtight screw pot between painting sessions.",
-                model_count, scale.label_i18n(locale), (volume_ml * 100.0).round() / 100.0, hazelnuts
+                model_count, scale.label(locale), (volume_ml * 100.0).round() / 100.0, hazelnuts
             ),
         };
 
@@ -294,6 +308,41 @@ impl BatchMotherMixCalculator {
             airtight_pot_days: 7,
             freezer_days: 30,
             advice,
+        }
+    }
+}
+
+/// Headings of the printed army recipe sheet, in the reader's language.
+struct SheetTitles {
+    lang: &'static str,
+    sheet: &'static str,
+    faction: &'static str,
+    primer: &'static str,
+    base: &'static str,
+    reference: &'static str,
+    mix: &'static str,
+    wash: &'static str,
+    weathering: &'static str,
+    finish: &'static str,
+    varnish: &'static str,
+    notes: &'static str,
+}
+
+impl SheetTitles {
+    fn of(locale: Locale) -> Self {
+        Self {
+            lang: locale.tr("fr", "en"),
+            sheet: locale.tr("Fiche de recette", "Recipe sheet"),
+            faction: locale.tr("Faction / système", "Faction / system"),
+            primer: locale.tr("1. Sous-couche & préparation", "1. Primer & preparation"),
+            base: locale.tr("2. Couleur de base & formule d'huile", "2. Base colour & oil formula"),
+            reference: locale.tr("Acrylique de référence :", "Reference acrylic:"),
+            mix: locale.tr("Mélange d'huiles :", "Oil mix:"),
+            wash: locale.tr("3. Lavis & travail réductif", "3. Washes & reductive work"),
+            weathering: locale.tr("4. Weathering & altération", "4. Weathering"),
+            finish: locale.tr("5. Finition & protection", "5. Finish & protection"),
+            varnish: locale.tr("Vernis", "Varnish"),
+            notes: locale.tr("Notes d'atelier", "Studio notes"),
         }
     }
 }

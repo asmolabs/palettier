@@ -136,7 +136,7 @@ fn CoatParameters(
                     option {
                         value: "{dc:?}",
                         selected: *drying_class.read() == dc,
-                        "{dc.label_i18n(locale)} — {dc.typical_pigments_i18n(locale)}"
+                        "{dc.label(locale)} — {dc.typical_pigments(locale)}"
                     }
                 }
             }
@@ -158,7 +158,7 @@ fn CoatParameters(
                     option {
                         value: "{m:?}",
                         selected: current_medium == m,
-                        "{m.label_i18n(locale)}"
+                        "{m.label(locale)}"
                     }
                 }
             }
@@ -195,7 +195,7 @@ fn CoatParameters(
                     button {
                         class: if *thickness.read() == th { "btn-primary" } else { "btn" },
                         onclick: move |_| thickness.set(th),
-                        "{th.label_i18n(locale)}"
+                        "{th.label(locale)}"
                     }
                 }
             }

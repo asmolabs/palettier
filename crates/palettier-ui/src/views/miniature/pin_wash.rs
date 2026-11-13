@@ -118,7 +118,7 @@ pub(super) fn PinWash(candidates: Vec<Paint>) -> Element {
                 div { class: "card-subtle", style: "margin-bottom: 14px;",
                     div { class: "row-between", style: "margin-bottom: 8px;",
                         strong { {locale.tr("Ratio de Solvant :", "Solvent Ratio:")} }
-                        span { class: "pill pill-accent", "1 part Huile : {wash_solvent_ratio} parts Essence" }
+                        span { class: "pill pill-accent", {locale.tr("1 part d'huile : ", "1 part oil : ")}, "{wash_solvent_ratio}", {locale.tr(" parts de diluant", " parts thinner")} }
                     }
                     input {
                         r#type: "range",

@@ -24,18 +24,14 @@ impl DryingClass {
         DryingClass::VerySlow,
     ];
 
-    pub fn label(&self) -> &'static str {
-        match self {
-            DryingClass::Fast => "Rapide",
-            DryingClass::Medium => "Moyen",
-            DryingClass::Slow => "Lent",
-            DryingClass::VerySlow => "Tres lent",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                DryingClass::Fast => "Rapide",
+                DryingClass::Medium => "Moyen",
+                DryingClass::Slow => "Lent",
+                DryingClass::VerySlow => "Très lent",
+            },
             Locale::En => match self {
                 DryingClass::Fast => "Fast",
                 DryingClass::Medium => "Medium",
@@ -54,18 +50,14 @@ impl DryingClass {
         }
     }
 
-    pub fn typical_pigments(&self) -> &'static str {
-        match self {
-            DryingClass::Fast => "Terres d'ombre, bleu de Prusse, siccatifs naturels.",
-            DryingClass::Medium => "Terres de Sienne, ocres, bleus et verts courants.",
-            DryingClass::Slow => "Noirs d'ivoire, blancs de titane, la plupart des rouges.",
-            DryingClass::VerySlow => "Cadmiums, blanc de zinc, laques organiques.",
-        }
-    }
-
-    pub fn typical_pigments_i18n(&self, locale: Locale) -> &'static str {
+    pub fn typical_pigments(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.typical_pigments(),
+            Locale::Fr => match self {
+                DryingClass::Fast => "Terres d'ombre, bleu de Prusse, siccatifs naturels.",
+                DryingClass::Medium => "Terres de Sienne, ocres, bleus et verts courants.",
+                DryingClass::Slow => "Noirs d'ivoire, blancs de titane, la plupart des rouges.",
+                DryingClass::VerySlow => "Cadmiums, blanc de zinc, laques organiques.",
+            },
             Locale::En => match self {
                 DryingClass::Fast => "Umbers, Prussian blue, natural driers.",
                 DryingClass::Medium => "Siennas, ochres, common blues and greens.",
@@ -107,7 +99,7 @@ impl FromStr for DryingClass {
 
 impl fmt::Display for DryingClass {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(self.label(Locale::Fr))
     }
 }
 
@@ -128,18 +120,14 @@ impl Opacity {
         Opacity::Opaque,
     ];
 
-    pub fn label(&self) -> &'static str {
-        match self {
-            Opacity::Transparent => "Transparent",
-            Opacity::SemiTransparent => "Semi-transparent",
-            Opacity::SemiOpaque => "Semi-opaque",
-            Opacity::Opaque => "Opaque",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                Opacity::Transparent => "Transparent",
+                Opacity::SemiTransparent => "Semi-transparent",
+                Opacity::SemiOpaque => "Semi-opaque",
+                Opacity::Opaque => "Opaque",
+            },
             Locale::En => match self {
                 Opacity::Transparent => "Transparent",
                 Opacity::SemiTransparent => "Semi-transparent",
@@ -149,20 +137,16 @@ impl Opacity {
         }
     }
 
-    pub fn advice(&self) -> &'static str {
-        match self {
-            Opacity::Transparent => {
-                "Ideal pour les glacis et les filtres : la couche du dessous reste visible."
-            }
-            Opacity::SemiTransparent => "Bon compromis pour un jus ou un fondu leger.",
-            Opacity::SemiOpaque => "Couvre en deux passes, garde un peu de profondeur.",
-            Opacity::Opaque => "Couvre en une passe : pour les aplats et les points lumineux.",
-        }
-    }
-
-    pub fn advice_i18n(&self, locale: Locale) -> &'static str {
+    pub fn advice(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.advice(),
+            Locale::Fr => match self {
+                Opacity::Transparent => {
+                    "Idéal pour les glacis et les filtres : la couche du dessous reste visible."
+                }
+                Opacity::SemiTransparent => "Bon compromis pour un jus ou un fondu leger.",
+                Opacity::SemiOpaque => "Couvre en deux passes, garde un peu de profondeur.",
+                Opacity::Opaque => "Couvre en une passe : pour les aplats et les points lumineux.",
+            },
             Locale::En => match self {
                 Opacity::Transparent => {
                     "Ideal for glazes and filters: the underlying layer remains visible."
@@ -202,7 +186,7 @@ impl FromStr for Opacity {
 
 impl fmt::Display for Opacity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(self.label(Locale::Fr))
     }
 }
 
@@ -225,19 +209,15 @@ impl LayerThickness {
         LayerThickness::Impasto,
     ];
 
-    pub fn label(&self) -> &'static str {
-        match self {
-            LayerThickness::Glaze => "Glacis / voile",
-            LayerThickness::Thin => "Couche fine",
-            LayerThickness::Normal => "Couche normale",
-            LayerThickness::Thick => "Couche chargee",
-            LayerThickness::Impasto => "Empatement",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                LayerThickness::Glaze => "Glacis / voile",
+                LayerThickness::Thin => "Couche fine",
+                LayerThickness::Normal => "Couche normale",
+                LayerThickness::Thick => "Couche chargée",
+                LayerThickness::Impasto => "Empatement",
+            },
             Locale::En => match self {
                 LayerThickness::Glaze => "Glaze / veil",
                 LayerThickness::Thin => "Thin coat",
@@ -288,7 +268,7 @@ impl FromStr for LayerThickness {
 
 impl fmt::Display for LayerThickness {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(self.label(Locale::Fr))
     }
 }
 
@@ -307,17 +287,13 @@ impl Ventilation {
         Ventilation::Good,
     ];
 
-    pub fn label(&self) -> &'static str {
-        match self {
-            Ventilation::Confined => "Boite fermee / vitrine",
-            Ventilation::Normal => "Piece normale",
-            Ventilation::Good => "Bien aere ou courant d'air",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                Ventilation::Confined => "Boîte fermée / vitrine",
+                Ventilation::Normal => "Pièce normale",
+                Ventilation::Good => "Bien aere ou courant d'air",
+            },
             Locale::En => match self {
                 Ventilation::Confined => "Closed box / cabinet",
                 Ventilation::Normal => "Normal room",
@@ -360,7 +336,7 @@ impl FromStr for Ventilation {
 
 impl fmt::Display for Ventilation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(self.label(Locale::Fr))
     }
 }
 
@@ -382,14 +358,7 @@ pub enum PaintSystem {
 impl PaintSystem {
     pub const ALL: [PaintSystem; 2] = [PaintSystem::Oil, PaintSystem::Acrylic];
 
-    pub fn label(&self) -> &'static str {
-        match self {
-            PaintSystem::Oil => "Huile",
-            PaintSystem::Acrylic => "Acrylique",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match self {
             PaintSystem::Oil => locale.tr("Huile", "Oil"),
             PaintSystem::Acrylic => locale.tr("Acrylique", "Acrylic"),
@@ -400,7 +369,7 @@ impl PaintSystem {
     pub fn summary_i18n(&self, locale: Locale) -> &'static str {
         match self {
             PaintSystem::Oil => locale.tr(
-                "Diluant ou huile, sechage en jours, gras sur maigre a respecter.",
+                "Diluant ou huile, séchage en jours, gras sur maigre à respecter.",
                 "Thinner or oil, drying in days, fat over lean applies.",
             ),
             PaintSystem::Acrylic => locale.tr(
@@ -434,7 +403,7 @@ impl FromStr for PaintSystem {
 
 impl fmt::Display for PaintSystem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(self.label(Locale::Fr))
     }
 }
 
@@ -504,27 +473,23 @@ impl Medium {
         }
     }
 
-    pub fn label(&self) -> &'static str {
-        match self {
-            Medium::Water => "Eau",
-            Medium::AcrylicGlazeMedium => "Médium à glacis acrylique",
-            Medium::FlowImprover => "Fluidifiant (flow improver)",
-            Medium::Retarder => "Retardateur",
-            Medium::None => "Pur (sortie de tube)",
-            Medium::OdorlessThinner => "Diluant inodore",
-            Medium::WhiteSpirit => "White spirit",
-            Medium::Turpentine => "Essence de térébenthine",
-            Medium::AlkydMedium => "Médium alkyde (type Liquin)",
-            Medium::LinseedOil => "Huile de lin",
-            Medium::WalnutOil => "Huile de noix",
-            Medium::StandOil => "Huile stand",
-            Medium::CobaltDrier => "Siccatif au cobalt",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                Medium::Water => "Eau",
+                Medium::AcrylicGlazeMedium => "Médium à glacis acrylique",
+                Medium::FlowImprover => "Fluidifiant (flow improver)",
+                Medium::Retarder => "Retardateur",
+                Medium::None => "Pur (sortie de tube)",
+                Medium::OdorlessThinner => "Diluant inodore",
+                Medium::WhiteSpirit => "White spirit",
+                Medium::Turpentine => "Essence de térébenthine",
+                Medium::AlkydMedium => "Médium alkyde (type Liquin)",
+                Medium::LinseedOil => "Huile de lin",
+                Medium::WalnutOil => "Huile de noix",
+                Medium::StandOil => "Huile stand",
+                Medium::CobaltDrier => "Siccatif au cobalt",
+            },
             Locale::En => match self {
                 Medium::Water => "Water",
                 Medium::AcrylicGlazeMedium => "Acrylic glaze medium",
@@ -594,35 +559,31 @@ impl Medium {
         }
     }
 
-    pub fn advice(&self) -> &'static str {
-        match self {
-            Medium::Water => {
-                "Le diluant de l'acrylique : au-delà de moitié d'eau, le liant ne tient plus et la couche poudre."
-            }
-            Medium::AcrylicGlazeMedium => {
-                "Dilue sans casser le liant : glacis et lavis acryliques transparents qui tiennent."
-            }
-            Medium::FlowImprover => {
-                "Quelques gouttes : la peinture file mieux et marque moins le pinceau."
-            }
-            Medium::Retarder => {
-                "Allonge le temps ouvert pour les fondus humides ; au-delà de 20 %, la couche reste poisseuse."
-            }
-            Medium::None => "Pâte épaisse : réservée aux empâtements et aux textures.",
-            Medium::OdorlessThinner => "Le standard pour les jus et les fondus sur figurine.",
-            Medium::WhiteSpirit => "Plus agressif : vérifier la tenue du vernis en dessous.",
-            Medium::Turpentine => "Évapore vite, odeur forte, bonne accroche.",
-            Medium::AlkydMedium => "Accélère fortement et lisse le fondu.",
-            Medium::LinseedOil => "Rallonge le temps ouvert, jaunit légèrement en couche épaisse.",
-            Medium::WalnutOil => "Temps ouvert très long, ne jaunit presque pas.",
-            Medium::StandOil => "Très lent, très lissant : pour les fondus longs.",
-            Medium::CobaltDrier => "Quelques gouttes suffisent ; au-dela, la couche craquelle.",
-        }
-    }
-
-    pub fn advice_i18n(&self, locale: Locale) -> &'static str {
+    pub fn advice(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.advice(),
+            Locale::Fr => match self {
+                Medium::Water => {
+                    "Le diluant de l'acrylique : au-delà de moitié d'eau, le liant ne tient plus et la couche poudre."
+                }
+                Medium::AcrylicGlazeMedium => {
+                    "Dilue sans casser le liant : glacis et lavis acryliques transparents qui tiennent."
+                }
+                Medium::FlowImprover => {
+                    "Quelques gouttes : la peinture file mieux et marque moins le pinceau."
+                }
+                Medium::Retarder => {
+                    "Allonge le temps ouvert pour les fondus humides ; au-delà de 20 %, la couche reste poisseuse."
+                }
+                Medium::None => "Pâte épaisse : réservée aux empâtements et aux textures.",
+                Medium::OdorlessThinner => "Le standard pour les jus et les fondus sur figurine.",
+                Medium::WhiteSpirit => "Plus agressif : vérifier la tenue du vernis en dessous.",
+                Medium::Turpentine => "Évapore vite, odeur forte, bonne accroche.",
+                Medium::AlkydMedium => "Accélère fortement et lisse le fondu.",
+                Medium::LinseedOil => "Rallonge le temps ouvert, jaunit légèrement en couche épaisse.",
+                Medium::WalnutOil => "Temps ouvert très long, ne jaunit presque pas.",
+                Medium::StandOil => "Très lent, très lissant : pour les fondus longs.",
+                Medium::CobaltDrier => "Quelques gouttes suffisent ; au-delà, la couche craquelle.",
+            },
             Locale::En => match self {
                 Medium::Water => {
                     "The acrylic thinner: beyond half water the binder gives up and the coat turns chalky."
@@ -710,7 +671,7 @@ impl FromStr for Medium {
 
 impl fmt::Display for Medium {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(self.label(Locale::Fr))
     }
 }
 
@@ -798,30 +759,26 @@ impl Technique {
         Self::ALL.into_iter().filter(|t| t.fits(system)).collect()
     }
 
-    pub fn label(&self) -> &'static str {
-        match self {
-            Technique::OilWash => "Jus à l'huile",
-            Technique::PinWash => "Jus capillaire (pin wash)",
-            Technique::Filter => "Filtre",
-            Technique::Glaze => "Glacis",
-            Technique::Blending => "Fondu / dégradé",
-            Technique::DotFading => "Dot fading",
-            Technique::StreakingGrime => "Coulures et salissures",
-            Technique::OilRendering => "Oil Paint Rendering (OPR)",
-            Technique::BaseLayer => "Aplat de base",
-            Technique::Highlight => "Éclaircis et points lumineux",
-            Technique::Layering => "Couches superposées (layering)",
-            Technique::WetBlending => "Fondu humide (wet blending)",
-            Technique::Drybrush => "Brossage à sec (drybrush)",
-            Technique::EdgeHighlight => "Liserés d'arêtes (edge highlight)",
-            Technique::ShadeWash => "Lavis d'ombrage",
-            Technique::ContrastPaint => "Peinture contraste (speedpaint)",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                Technique::OilWash => "Jus à l'huile",
+                Technique::PinWash => "Jus capillaire (pin wash)",
+                Technique::Filter => "Filtre",
+                Technique::Glaze => "Glacis",
+                Technique::Blending => "Fondu / dégradé",
+                Technique::DotFading => "Dot fading",
+                Technique::StreakingGrime => "Coulures et salissures",
+                Technique::OilRendering => "Oil Paint Rendering (OPR)",
+                Technique::BaseLayer => "Aplat de base",
+                Technique::Highlight => "Éclaircis et points lumineux",
+                Technique::Layering => "Couches superposées (layering)",
+                Technique::WetBlending => "Fondu humide (wet blending)",
+                Technique::Drybrush => "Brossage à sec (drybrush)",
+                Technique::EdgeHighlight => "Liserés d'arêtes (edge highlight)",
+                Technique::ShadeWash => "Lavis d'ombrage",
+                Technique::ContrastPaint => "Peinture contraste (speedpaint)",
+            },
             Locale::En => match self {
                 Technique::OilWash => "Oil wash",
                 Technique::PinWash => "Pin wash",
@@ -934,15 +891,6 @@ impl Technique {
         !matches!(self, Technique::BaseLayer) && self.native_system() != Some(PaintSystem::Acrylic)
     }
 
-    /// Tips for the technique in its native system (oil for shared techniques).
-    pub fn tips(&self) -> &'static [&'static str] {
-        self.tips_in(self.system_within(PaintSystem::Oil), Locale::Fr)
-    }
-
-    pub fn tips_i18n(&self, locale: Locale) -> &'static [&'static str] {
-        self.tips_in(self.system_within(PaintSystem::Oil), locale)
-    }
-
     /// Tips for the technique when done in `system`.
     pub fn tips_in(&self, system: PaintSystem, locale: Locale) -> &'static [&'static str] {
         let system = self.system_within(system);
@@ -957,45 +905,45 @@ impl Technique {
     fn oil_tips_fr(&self) -> &'static [&'static str] {
         match self {
             Technique::OilWash => &[
-                "Le vernis brillant en dessous doit etre sec depuis 24 h au minimum.",
+                "Le vernis brillant en dessous doit être sec depuis 24 h au minimum.",
                 "Charger le pinceau puis l'essuyer : le jus doit couler, pas s'etaler.",
-                "Retirer l'exces au coton-tige a peine humide de diluant avant la prise.",
+                "Retirer l'excès au coton-tige à peine humide de diluant avant la prise.",
             ],
             Technique::PinWash => &[
                 "Poser la pointe du pinceau dans le creux et laisser la capillarite faire le trajet.",
                 "Un seul passage par ligne : repasser dessus casse le depot.",
             ],
             Technique::Filter => &[
-                "Tres dilue : le filtre unifie une teinte, il ne la remplace pas.",
+                "Très dilué : le filtre unifie une teinte, il ne la remplace pas.",
                 "Deux filtres legers valent mieux qu'un seul charge.",
             ],
             Technique::Glaze => &[
                 "Privilegier une huile transparente : une opaque tue la profondeur.",
-                "Laisser secher entre deux glacis, sinon la couche precedente se releve.",
+                "Laisser sécher entre deux glacis, sinon la couche précédente se relève.",
             ],
             Technique::Blending => &[
                 "Travailler dans le temps ouvert : une fois la prise commencee, arreter.",
-                "Pinceau propre et sec pour tirer la transition, essuye a chaque passage.",
+                "Pinceau propre et sec pour tirer la transition, essuyé à chaque passage.",
             ],
             Technique::DotFading => &[
                 "Poser des points minuscules de plusieurs teintes, puis les tirer vers le bas.",
-                "Moins de peinture que ce que l'on croit : le pinceau doit etre presque sec.",
+                "Moins de peinture que ce que l'on croit : le pinceau doit être presque sec.",
             ],
             Technique::StreakingGrime => &[
                 "Tracer le trait, laisser mordre une a deux minutes, puis tirer vers le bas.",
                 "Suivre le sens de l'eau : verticales sur les flancs, en eventail sous les rivets.",
             ],
             Technique::OilRendering => &[
-                "Poser clair et fonce cote a cote, puis fondre la frontiere.",
-                "Construire en plusieurs seances plutot qu'en une couche chargee.",
+                "Poser clair et foncé côte à côte, puis fondre la frontière.",
+                "Construire en plusieurs séances plutôt qu'en une couche chargée.",
             ],
             Technique::BaseLayer => &[
-                "A l'huile, un aplat de base reste rare : il seche lentement et bloque la suite.",
+                "À l'huile, un aplat de base reste rare : il sèche lentement et bloque la suite.",
                 "Utile surtout sur les grandes surfaces lisses (bustes, 1/10).",
             ],
             Technique::Highlight => &[
                 "Une huile opaque tient mieux le point lumineux qu'une transparente.",
-                "Le blanc de titane seche tres lentement : prevoir la couche suivante a distance.",
+                "Le blanc de titane sèche très lentement : prévoir la couche suivante à distance.",
             ],
             _ => &[],
         }
@@ -1055,28 +1003,28 @@ impl Technique {
                 "L'acrylique ne se reprend pas une fois sec : nettoyer les debordements tout de suite au pinceau humide.",
             ],
             Technique::Filter => &[
-                "Tres dilue, au medium plutot qu'a l'eau seule, pour ne pas laisser d'aureoles.",
+                "Très dilué, au médium plutôt qu'à l'eau seule, pour ne pas laisser d'auréoles.",
                 "Sur une surface satinee ou brillante, le filtre s'etale sans taches.",
             ],
             Technique::Glaze => &[
-                "Diluer au medium a glacis plutot qu'a l'eau : la couche reste transparente sans poudrer.",
-                "Pinceau presque sec, plusieurs passages fins : l'acrylique seche entre deux et se superpose.",
+                "Diluer au médium à glacis plutôt qu'à l'eau : la couche reste transparente sans poudrer.",
+                "Pinceau presque sec, plusieurs passages fins : l'acrylique sèche entre deux et se superpose.",
             ],
             Technique::BaseLayer => &[
-                "Deux couches fines valent mieux qu'une epaisse : consistance de lait entier.",
-                "Laisser secher quelques minutes entre les deux : la seconde couvre sans arracher la premiere.",
+                "Deux couches fines valent mieux qu'une épaisse : consistance de lait entier.",
+                "Laisser sécher quelques minutes entre les deux : la seconde couvre sans arracher la première.",
             ],
             Technique::Highlight => &[
-                "Peinture opaque, a peine diluee, sur la pointe du pinceau.",
+                "Peinture opaque, à peine diluée, sur la pointe du pinceau.",
                 "Pas de blanc pur d'emblee : monter par paliers, le point le plus clair en dernier.",
             ],
             Technique::Layering => &[
-                "Chaque couche un peu plus claire et un peu plus petite que la precedente.",
+                "Chaque couche un peu plus claire et un peu plus petite que la précédente.",
                 "Consistance de lait : si la couche marque le pinceau, ajouter une goutte d'eau.",
             ],
             Technique::WetBlending => &[
-                "Quelques gouttes de retardateur : l'acrylique seche sinon avant d'avoir fondu.",
-                "Poser les deux teintes cote a cote encore humides et tirer la frontiere en un passage.",
+                "Quelques gouttes de retardateur : l'acrylique sèche sinon avant d'avoir fondu.",
+                "Poser les deux teintes côte à côte encore humides et tirer la frontière en un passage.",
             ],
             Technique::Drybrush => &[
                 "Charger puis essuyer le pinceau presque entierement sur un papier absorbant.",
@@ -1084,15 +1032,15 @@ impl Technique {
             ],
             Technique::EdgeHighlight => &[
                 "Le plat du pinceau sur l'arete, pas la pointe : le trait reste fin et regulier.",
-                "Peinture legerement diluee, sinon elle fait bourrelet.",
+                "Peinture légèrement diluée, sinon elle fait bourrelet.",
             ],
             Technique::ShadeWash => &[
-                "Laisser couler dans les creux sans repasser : le lavis se fixe en sechant.",
+                "Laisser couler dans les creux sans repasser : le lavis se fixe en séchant.",
                 "Absorber les flaques sur les surfaces planes avec un pinceau essore.",
             ],
             Technique::ContrastPaint => &[
-                "Sur une sous-couche claire et lisse : la teinte depend de ce qu'il y a dessous.",
-                "Une seule couche genereuse, sans y revenir pendant qu'elle seche.",
+                "Sur une sous-couche claire et lisse : la teinte dépend de ce qu'il y a dessous.",
+                "Une seule couche généreuse, sans y revenir pendant qu'elle sèche.",
             ],
             _ => &[],
         }
@@ -1157,8 +1105,8 @@ impl Technique {
         }
         Self::ALL.into_iter().find(|t| {
             fold(t.as_db_str()) == wanted
-                || fold(t.label()) == wanted
-                || fold(t.label_i18n(Locale::En)) == wanted
+                || fold(t.label(Locale::Fr)) == wanted
+                || fold(t.label(Locale::En)) == wanted
         })
     }
 
@@ -1182,7 +1130,7 @@ impl Technique {
     /// The French label without accents, as the Java version of the application wrote it.
     /// Used in backups so that the older application still recognises the technique.
     pub fn legacy_label(&self) -> String {
-        strip_accents(self.label())
+        strip_accents(self.label(Locale::Fr))
     }
 
     pub fn as_db_str(&self) -> &'static str {
@@ -1218,7 +1166,7 @@ impl FromStr for Technique {
 
 impl fmt::Display for Technique {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(self.label(Locale::Fr))
     }
 }
 
@@ -1459,7 +1407,7 @@ pub struct SafetyInfo {
 }
 
 impl SafetyInfo {
-    pub fn advice_i18n(&self, locale: Locale) -> &'static str {
+    pub fn advice(&self, locale: Locale) -> &'static str {
         match locale {
             Locale::Fr => self.advice,
             Locale::En => self.advice_en,
@@ -1479,17 +1427,13 @@ pub enum Lightfastness {
 }
 
 impl Lightfastness {
-    pub fn label(&self) -> &'static str {
-        match self {
-            Self::ClassI => "ASTM I (Excellent)",
-            Self::ClassII => "ASTM II (Très bon)",
-            Self::ClassIII => "ASTM III (Fugitif)",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                Self::ClassI => "ASTM I (Excellent)",
+                Self::ClassII => "ASTM II (Très bon)",
+                Self::ClassIII => "ASTM III (Fugitif)",
+            },
             Locale::En => match self {
                 Self::ClassI => "ASTM I (Excellent)",
                 Self::ClassII => "ASTM II (Very Good)",

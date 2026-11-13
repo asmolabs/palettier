@@ -131,7 +131,7 @@ impl Section {
         }
     }
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match self {
             Self::Miniature => locale.tr("Figurine & Weathering", "Miniatures & Weathering"),
             Self::Today => locale.tr("Aujourd'hui", "Today"),

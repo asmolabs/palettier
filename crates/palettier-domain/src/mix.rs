@@ -95,11 +95,7 @@ impl MixSuggestion {
             .join("  +  ")
     }
 
-    pub fn verdict(&self) -> &'static str {
-        self.verdict_i18n(Locale::Fr)
-    }
-
-    pub fn verdict_i18n(&self, locale: Locale) -> &'static str {
+    pub fn verdict(&self, locale: Locale) -> &'static str {
         match locale {
             Locale::Fr => match self.delta_e.floor() as i32 {
                 0 | 1 => "Identique à l'œil",
@@ -127,17 +123,13 @@ pub struct PaintMatch {
 }
 
 impl PaintMatch {
-    pub fn verdict(&self) -> &'static str {
-        self.verdict_i18n(Locale::Fr)
-    }
-
-    pub fn verdict_i18n(&self, locale: Locale) -> &'static str {
+    pub fn verdict(&self, locale: Locale) -> &'static str {
         match locale {
             Locale::Fr => match self.delta_e.floor() as i32 {
-                0 | 1 => "Identique a l'oeil",
-                2 | 3 => "Tres proche",
-                4..=7 => "Proche, ecart visible cote a cote",
-                8..=14 => "Meme famille de teinte",
+                0 | 1 => "Identique à l'oeil",
+                2 | 3 => "Très proche",
+                4..=7 => "Proche, écart visible côte à côte",
+                8..=14 => "Même famille de teinte",
                 _ => "Couleur differente",
             },
             Locale::En => match self.delta_e.floor() as i32 {
@@ -239,7 +231,7 @@ impl ColorMixService {
         let mut out = Vec::new();
         if components.len() >= Self::MUDDY_MIX_THRESHOLD {
             out.push(format!(
-                "{} huiles dans le melange : le resultat va tendre vers le gris. Deux ou trois suffisent presque toujours.",
+                "{} huiles dans le mélange : le résultat va tendre vers le gris. Deux ou trois suffisent presque toujours.",
                 components.len()
             ));
         }
@@ -249,7 +241,7 @@ impl ColorMixService {
             .filter(|c| c.pigment_share > 0.6 && c.volume_share < 0.25)
         {
             out.push(format!(
-                "{} occupe {} % du volume mais {} % de la couleur finale : dosez-la a la pointe du pinceau.",
+                "{} occupe {} % du volume mais {} % de la couleur finale : dosez-la à la pointe du pinceau.",
                 comp.paint.name,
                 (comp.volume_share * 100.0).round() as i64,
                 (comp.pigment_share * 100.0).round() as i64
@@ -271,8 +263,8 @@ impl ColorMixService {
 
         if drying >= DryingClass::Slow {
             out.push(format!(
-                "Sechage {} impose par le pigment le plus lent : prevoyez la couche suivante en consequence.",
-                drying.label().to_lowercase()
+                "Séchage {} imposé par le pigment le plus lent : prévoyez la couche suivante en conséquence.",
+                drying.label(Locale::Fr).to_lowercase()
             ));
         }
 
@@ -284,7 +276,7 @@ impl ColorMixService {
         }
         if pigments.len() > 4 {
             out.push(format!(
-                "{} pigments differents en presence : au-dela de quatre, la teinte devient difficile a reproduire.",
+                "{} pigments différents en présence : au-delà de quatre, la teinte devient difficile à reproduire.",
                 pigments.len()
             ));
         }

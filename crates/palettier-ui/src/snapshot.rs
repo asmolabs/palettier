@@ -54,6 +54,16 @@ pub fn run(mut state: AppState, dir: PathBuf) {
                 capture(&dir.join(name)).await;
             }
         }
+        // Every screen once more in English, to spot untranslated text.
+        state.theme.set(ThemeMode::Dark);
+        state.locale.set(Locale::En);
+        for (i, section) in SECTIONS.iter().enumerate() {
+            state.section.set(*section);
+            tokio::time::sleep(Duration::from_millis(900)).await;
+            let name = format!("en-{:02}-{:?}.html", i, section).to_lowercase();
+            capture(&dir.join(name)).await;
+        }
+        state.locale.set(Locale::Fr);
         std::process::exit(0);
     });
 }

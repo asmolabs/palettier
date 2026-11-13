@@ -5,6 +5,7 @@ use crate::actions::projects::{self, LayerEdit, NewProject, ProjectChange};
 use crate::state::{AppServices, AppState};
 use crate::theme::SectionHeader;
 use dioxus::prelude::*;
+use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{PaintSystem, Technique};
 use palettier_domain::palette::Palette;
 use palettier_domain::project::{ObservedColour, PhotoRole, Project};
@@ -222,7 +223,7 @@ fn NewProjectCard() -> Element {
                                 new_proj_system.set(sys);
                                 new_proj_palette_idx.set(0);
                             },
-                            "{sys.label_i18n(locale)}"
+                            "{sys.label(locale)}"
                         }
                     }
                 }
@@ -291,7 +292,11 @@ fn ProjectListItem(p: Project) -> Element {
                 {
                     ui.selected_id.set(all.first().and_then(|pr| pr.id));
                     state.projects.set(all);
-                    state.notify(format!("Projet « {pname} » supprimé."));
+                    let msg = match *state.locale.peek() {
+                        Locale::Fr => format!("Projet « {pname} » supprimé."),
+                        Locale::En => format!("Project “{pname}” deleted."),
+                    };
+                    state.notify(msg);
                 }
             });
         }

@@ -201,7 +201,7 @@ mod tests {
             .unwrap();
         let outlook = recipe_outlook(&svc, &recipe, ws, Locale::Fr);
         assert_eq!(outlook.risks.len(), 1);
-        assert!(outlook.risks[0].over.contains("Etape 3"), "{:?}", outlook.risks[0]);
+        assert!(outlook.risks[0].over.contains("Étape 3"), "{:?}", outlook.risks[0]);
         assert_eq!(outlook.timeline.entries.len(), 3);
     }
 

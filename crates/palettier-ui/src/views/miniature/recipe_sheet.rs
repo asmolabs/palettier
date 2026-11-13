@@ -169,7 +169,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                         button {
                             class: "btn",
                             onclick: {
-                                let md = recipe_sheet.read().to_markdown();
+                                let md = recipe_sheet.read().to_markdown(locale);
                                 move |_| {
                                     copy_to_clipboard(&md);
                                     state.notify(locale.tr("📋 Fiche copiée dans le presse-papiers (Markdown) !", "📋 Recipe card copied to clipboard (Markdown)!"));
@@ -180,7 +180,7 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                         button {
                             class: "btn btn-primary",
                             onclick: {
-                                let html = recipe_sheet.read().to_printable_html();
+                                let html = recipe_sheet.read().to_printable_html(locale);
                                 move |_| {
                                     copy_to_clipboard(&html);
                                     state.notify(locale.tr("🖨️ HTML imprimable copié dans le presse-papiers !", "🖨️ Printable HTML copied to clipboard!"));

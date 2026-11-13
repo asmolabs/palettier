@@ -5,7 +5,7 @@ use crate::actions::recipes::{create_recipe, delete_recipe};
 use crate::state::{AppServices, AppState};
 use crate::theme::SectionHeader;
 use dioxus::prelude::*;
-use palettier_domain::paint::Technique;
+use palettier_domain::paint::{PaintSystem, Technique};
 use palettier_domain::recipe::Recipe;
 
 #[component]
@@ -30,10 +30,17 @@ pub fn RecipesView() -> Element {
         div {
             SectionHeader {
                 title: locale.tr("Recettes & séquences d'étapes", "Recipes & Step Sequences").to_string(),
-                subtitle: locale.tr(
-                    "Construisez vos enchaînements de couches à l'huile, vérifiez la règle du gras sur maigre et déroulez le calendrier jusqu'au vernis.",
-                    "Build multi-step oil sequences, validate the fat-over-lean rule, and preview the timeline through final varnish."
-                ).to_string(),
+                subtitle: match *state.paint_system.read() {
+                    PaintSystem::Oil => locale.tr(
+                        "Construisez vos enchaînements de couches à l'huile, vérifiez la règle du gras sur maigre et déroulez le calendrier jusqu'au vernis.",
+                        "Build multi-step oil sequences, validate the fat-over-lean rule, and preview the timeline through final varnish.",
+                    ),
+                    PaintSystem::Acrylic => locale.tr(
+                        "Construisez vos enchaînements de couches acryliques, avec ou sans finition à l'huile, et déroulez le calendrier jusqu'au vernis.",
+                        "Build acrylic layer sequences, with or without an oil finish, and preview the timeline through final varnish.",
+                    ),
+                }
+                .to_string(),
                 actions: None,
             }
 

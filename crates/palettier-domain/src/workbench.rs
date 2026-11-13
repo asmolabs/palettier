@@ -21,20 +21,16 @@ pub enum Stage {
 }
 
 impl Stage {
-    pub fn label(&self) -> &'static str {
-        match self {
-            Stage::Open => "Encore ouverte",
-            Stage::Setting => "En prise",
-            Stage::TouchDry => "Seche au toucher",
-            Stage::Recoatable => "Recouvrable",
-            Stage::ThroughDry => "Seche a coeur",
-            Stage::Cured => "Polymerisee",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                Stage::Open => "Encore ouverte",
+                Stage::Setting => "En prise",
+                Stage::TouchDry => "Sèche au toucher",
+                Stage::Recoatable => "Recouvrable",
+                Stage::ThroughDry => "Sèche à cœur",
+                Stage::Cured => "Polymerisee",
+            },
             Locale::En => match self {
                 Stage::Open => "Still open",
                 Stage::Setting => "Setting",
@@ -46,22 +42,18 @@ impl Stage {
         }
     }
 
-    pub fn meaning(&self) -> &'static str {
-        match self {
-            Stage::Open => "Fondus et reprises dans le frais sont encore possibles.",
-            Stage::Setting => "Elle ne se travaille plus sans l'arracher : ne la touchez pas.",
-            Stage::TouchDry => {
-                "Elle ne marque plus, mais une couche posee dessus la releverait encore."
-            }
-            Stage::Recoatable => "La couche suivante peut etre posee sans relever celle-ci.",
-            Stage::ThroughDry => "Manipulation, masquage et montage possibles.",
-            Stage::Cured => "Vernis final possible.",
-        }
-    }
-
-    pub fn meaning_i18n(&self, locale: Locale) -> &'static str {
+    pub fn meaning(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.meaning(),
+            Locale::Fr => match self {
+                Stage::Open => "Fondus et reprises dans le frais sont encore possibles.",
+                Stage::Setting => "Elle ne se travaille plus sans l'arracher : ne la touchez pas.",
+                Stage::TouchDry => {
+                    "Elle ne marque plus, mais une couche posée dessus la releverait encore."
+                }
+                Stage::Recoatable => "La couche suivante peut être posée sans relever celle-ci.",
+                Stage::ThroughDry => "Manipulation, masquage et montage possibles.",
+                Stage::Cured => "Vernis final possible.",
+            },
             Locale::En => match self {
                 Stage::Open => "Wet-in-wet blending and rework are still possible.",
                 Stage::Setting => "Working it now will tear the film: leave it alone.",
@@ -78,7 +70,7 @@ impl Stage {
 
 impl fmt::Display for Stage {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(self.label(Locale::Fr))
     }
 }
 
@@ -443,7 +435,7 @@ mod tests {
                 layers: vec![
                     make_layer("Ombre 1"),
                     make_layer("Base"),
-                    make_layer("Lumiere 1"),
+                    make_layer("Lumière 1"),
                 ],
             },
             ProjectZone {
@@ -454,7 +446,7 @@ mod tests {
                 layers: vec![
                     make_layer("Ombre 1"),
                     make_layer("Base"),
-                    make_layer("Lumiere 1"),
+                    make_layer("Lumière 1"),
                 ],
             },
         ];
@@ -593,10 +585,10 @@ mod tests {
             .clone()
             .unwrap();
         assert_eq!("Base", last_base.role);
-        assert_eq!(Some("Lumiere 1".to_string()), last_base.next_role);
+        assert_eq!(Some("Lumière 1".to_string()), last_base.next_role);
 
         let after_hl = apply_layer(
-            make_piece("Lumiere d'abord", 1),
+            make_piece("Lumière d'abord", 1),
             0,
             2,
             now,
@@ -607,7 +599,7 @@ mod tests {
             .last
             .clone()
             .unwrap();
-        assert_eq!("Lumiere 1", last_hl.role);
+        assert_eq!("Lumière 1", last_hl.role);
         assert_eq!(Some("Ombre 1".to_string()), last_hl.next_role);
     }
 }

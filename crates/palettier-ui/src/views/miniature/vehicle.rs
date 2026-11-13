@@ -65,7 +65,7 @@ fn effect_card(services: &AppServices, locale: Locale, current_fx: VehicleEffect
     let sugg = best_mix(services, rgb_or_grey(current_fx.target_hex(), 0.3), candidates);
     let tech = current_fx.technique();
     let drops = thinner_drops_per_part(tech, PaintSystem::Oil);
-    let thinner = tech.default_medium_in(PaintSystem::Oil).label_i18n(locale).to_lowercase();
+    let thinner = tech.default_medium_in(PaintSystem::Oil).label(locale).to_lowercase();
     rsx! {
         div { class: "card-subtle", style: "padding: 16px;",
             div { class: "row-between", style: "align-items: center; margin-bottom: 14px;",
@@ -90,7 +90,7 @@ fn effect_card(services: &AppServices, locale: Locale, current_fx: VehicleEffect
                     }
                     div { style: "font-size: 12px; margin-top: 6px;",
                         div { style: "font-weight: 600; margin-bottom: 4px;",
-                            "{tech.label_i18n(locale)} · "
+                            "{tech.label(locale)} · "
                             if drops == 0 {
                                 {locale.tr("pâte pure", "neat paste")}
                             } else {

@@ -79,11 +79,17 @@ fn verdict_style(severity: StrippingVerdictSeverity) -> (&'static str, &'static 
 }
 
 /// How long mixes keep, in weeks past a week, in days below.
-fn usable_days_text(usable_days: f64) -> String {
+fn usable_days_text(usable_days: f64, locale: Locale) -> String {
     if usable_days >= 7.0 {
-        format!("{:.0} semaines (environ {:.0} jours)", usable_days / 7.0, usable_days)
+        match locale {
+            Locale::Fr => format!("{:.0} semaines (environ {:.0} jours)", usable_days / 7.0, usable_days),
+            Locale::En => format!("{:.0} weeks (about {:.0} days)", usable_days / 7.0, usable_days),
+        }
     } else {
-        format!("{:.1} jours", usable_days)
+        match locale {
+            Locale::Fr => format!("{:.1} jours", usable_days),
+            Locale::En => format!("{:.1} days", usable_days),
+        }
     }
 }
 
@@ -134,9 +140,9 @@ fn stripping_card(tool: SolventsState, locale: Locale) -> Element {
                         class: "input",
                         value: material_value(*selected_material.read()),
                         onchange: move |ev| selected_material.set(material_of(&ev.value())),
-                        option { value: "plastic", "{MiniatureMaterial::PolystyrenePlastic.label_i18n(locale)}" }
-                        option { value: "resin", "{MiniatureMaterial::ResinSla3d.label_i18n(locale)}" }
-                        option { value: "metal", "{MiniatureMaterial::WhiteMetal.label_i18n(locale)}" }
+                        option { value: "plastic", "{MiniatureMaterial::PolystyrenePlastic.label(locale)}" }
+                        option { value: "resin", "{MiniatureMaterial::ResinSla3d.label(locale)}" }
+                        option { value: "metal", "{MiniatureMaterial::WhiteMetal.label(locale)}" }
                     }
                 }
 
@@ -148,10 +154,10 @@ fn stripping_card(tool: SolventsState, locale: Locale) -> Element {
                         class: "input",
                         value: stripper_value(*selected_stripper.read()),
                         onchange: move |ev| selected_stripper.set(stripper_of(&ev.value())),
-                        option { value: "ipa", "{StrippingAgent::Ipa99.label_i18n(locale)}" }
-                        option { value: "biostrip", "{StrippingAgent::Biostrip20.label_i18n(locale)}" }
-                        option { value: "glanzer", "{StrippingAgent::Glanzer.label_i18n(locale)}" }
-                        option { value: "acetone", "{StrippingAgent::PureAcetone.label_i18n(locale)}" }
+                        option { value: "ipa", "{StrippingAgent::Ipa99.label(locale)}" }
+                        option { value: "biostrip", "{StrippingAgent::Biostrip20.label(locale)}" }
+                        option { value: "glanzer", "{StrippingAgent::Glanzer.label(locale)}" }
+                        option { value: "acetone", "{StrippingAgent::PureAcetone.label(locale)}" }
                     }
                 }
             }
@@ -161,7 +167,7 @@ fn stripping_card(tool: SolventsState, locale: Locale) -> Element {
                 style: "border: 1.5px solid {border_color}; border-radius: 8px; padding: 14px; {bg_style}",
                 div { class: "row-between", style: "align-items: center; margin-bottom: 8px;",
                     strong { style: "font-size: 14px; letter-spacing: 0.5px;", "{verdict.title}" }
-                    span { class: "{badge_cls}", "Durée conseillée : {verdict.recommended_duration}" }
+                    span { class: "{badge_cls}", {locale.tr("Durée conseillée : ", "Recommended time: ")}, "{verdict.recommended_duration}" }
                 }
                 p { style: "margin: 0; font-size: 13px; line-height: 1.45;", "{advice}" }
             }
@@ -223,7 +229,7 @@ fn medium_row(locale: Locale, med: Medium) -> Element {
     rsx! {
         div { class: "card-subtle", style: "padding: 10px;",
             div { class: "row-between", style: "margin-bottom: 4px;",
-                strong { style: "font-size: 13px;", "{med.label_i18n(locale)}" }
+                strong { style: "font-size: 13px;", "{med.label(locale)}" }
                 span {
                     class: if factor < 1.0 { "pill pill-ok" } else { "pill pill-warn" },
                     if factor < 1.0 {
@@ -235,7 +241,7 @@ fn medium_row(locale: Locale, med: Medium) -> Element {
                 }
             }
             div { class: "muted", style: "font-size: 11.5px; margin-bottom: 4px;",
-                "{med.advice_i18n(locale)}"
+                "{med.advice(locale)}"
             }
             div { style: "font-size: 11px; color: var(--accent); font-weight: 600;",
                 "📏 ", {locale.tr("Au plus ", "At most ")}, "{(max * 100.0).round()} %"
@@ -332,7 +338,7 @@ fn freezer_card(tool: SolventsState, locale: Locale) -> Element {
                         }
                     }
                     span { class: "pill pill-accent", style: "font-size: 14px; padding: 6px 14px; font-weight: 750;",
-                        {usable_days_text(usable_days)}
+                        {usable_days_text(usable_days, locale)}
                     }
                 }
             }
@@ -367,7 +373,8 @@ mod tests {
 
     #[test]
     fn usable_time_reads_in_weeks_past_a_week() {
-        assert_eq!("2.5 jours", usable_days_text(2.5));
-        assert_eq!("2 semaines (environ 14 jours)", usable_days_text(14.0));
+        assert_eq!("2.5 jours", usable_days_text(2.5, Locale::Fr));
+        assert_eq!("2 semaines (environ 14 jours)", usable_days_text(14.0, Locale::Fr));
+        assert_eq!("2 weeks (about 14 days)", usable_days_text(14.0, Locale::En));
     }
 }

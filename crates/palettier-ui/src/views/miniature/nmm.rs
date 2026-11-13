@@ -51,7 +51,7 @@ pub(super) fn NmmStudio(candidates: Vec<Paint>, palette_name: String) -> Element
 
                 div { style: "display: flex; flex-direction: column; gap: 8px;",
                     for nmm in NmmMetal::ALL {
-                        {swatch_option(selected_nmm, nmm, nmm.steps_hex()[2], nmm.label_i18n(locale))}
+                        {swatch_option(selected_nmm, nmm, nmm.steps_hex()[2], nmm.label(locale))}
                     }
                 }
             }
@@ -62,8 +62,8 @@ pub(super) fn NmmStudio(candidates: Vec<Paint>, palette_name: String) -> Element
                     div { class: "row", style: "gap: 12px; align-items: center;",
                         ColorSwatch { hex: steps[2].to_string(), size: 40 }
                         div {
-                            h3 { class: "card-title", style: "margin: 0;", "{nmm.label_i18n(locale)}" }
-                            span { class: "pill pill-accent", "High-Contrast NMM Specular" }
+                            h3 { class: "card-title", style: "margin: 0;", "{nmm.label(locale)}" }
+                            span { class: "pill pill-accent", {locale.tr("Reflet spéculaire contrasté", "High-contrast specular")} }
                         }
                     }
 

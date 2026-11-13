@@ -168,17 +168,17 @@ pub(super) fn BatchMotherMix() -> Element {
                         }
                         select {
                             class: "input",
-                            value: "{mother_mix_scale.read().label_i18n(locale)}",
+                            value: "{mother_mix_scale.read().label(locale)}",
                             onchange: move |ev: Event<FormData>| {
                                 for s in MiniatureScale::ALL {
-                                    if s.label_i18n(locale) == ev.value() {
+                                    if s.label(locale) == ev.value() {
                                         mother_mix_scale.set(s);
                                         break;
                                     }
                                 }
                             },
                             for s in MiniatureScale::ALL {
-                                option { value: "{s.label_i18n(locale)}", "{s.label_i18n(locale)}" }
+                                option { value: "{s.label(locale)}", "{s.label(locale)}" }
                             }
                         }
                     }
@@ -231,8 +231,8 @@ pub(super) fn BatchMotherMix() -> Element {
                                 }
                                 div { class: "row", style: "gap: 8px; flex-wrap: wrap;",
                                     span { class: "pill pill-accent", "{req.volume_ml:.2} ml" }
-                                    span { class: "pill", "~{req.hazelnuts} noisettes" }
-                                    span { class: "pill", "{req.matchstick_heads} allumettes" }
+                                    span { class: "pill", "~{req.hazelnuts} ", {locale.tr("noisettes", "hazelnut dabs")} }
+                                    span { class: "pill", "{req.matchstick_heads} ", {locale.tr("têtes d'allumette", "matchstick heads")} }
                                 }
                             }
 

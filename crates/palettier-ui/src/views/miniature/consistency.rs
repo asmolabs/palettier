@@ -51,7 +51,7 @@ pub(super) fn OilConsistency() -> Element {
                 div { class: "card-subtle",
                     div { class: "row-between", style: "margin-bottom: 8px;",
                         strong { style: "font-size: 12.5px;", {locale.tr("Volume de pâte d'huile préparé :", "Oil Paint Volume:")} }
-                        span { class: "pill pill-ok", style: "font-size: 13px; font-weight: 750;", "{consistency_parts} parts (noisettes)" }
+                        span { class: "pill pill-ok", style: "font-size: 13px; font-weight: 750;", "{consistency_parts} ", {locale.tr("parts (noisettes)", "parts (hazelnut dabs)")} }
                     }
                     input {
                         r#type: "range",
@@ -83,12 +83,12 @@ pub(super) fn OilConsistency() -> Element {
                             div { class: "card-subtle", style: "text-align: center; padding: 12px;",
                                 div { style: "font-size: 26px; font-weight: 800; color: var(--accent);", "{parts}" }
                                 strong { style: "font-size: 12px;", {locale.tr("Parts de Pâte d'Huile", "Oil Paste Parts")} }
-                                div { class: "muted", style: "font-size: 10.5px; margin-top: 2px;", "Noisettes / Têtes d'allumette" }
+                                div { class: "muted", style: "font-size: 10.5px; margin-top: 2px;", {locale.tr("Noisettes / têtes d'allumette", "Hazelnut dabs / matchstick heads")} }
                             }
                             div { class: "card-subtle", style: "text-align: center; padding: 12px;",
                                 div { style: "font-size: 26px; font-weight: 800; color: var(--accent-ok);", "{tot_solvent_drops}" }
-                                strong { style: "font-size: 12px;", {locale.tr("Gouttes de ", "Drops of ")}, "{thinner.label_i18n(locale).to_lowercase()}" }
-                                div { class: "muted", style: "font-size: 10.5px; margin-top: 2px;", "Compte-gouttes / Pipette" }
+                                strong { style: "font-size: 12px;", {locale.tr("Gouttes de ", "Drops of ")}, "{thinner.label(locale).to_lowercase()}" }
+                                div { class: "muted", style: "font-size: 10.5px; margin-top: 2px;", {locale.tr("Compte-gouttes / pipette", "Dropper / pipette")} }
                             }
                         }
 
@@ -117,7 +117,7 @@ fn technique_option(mut consistency_technique: Signal<Technique>, locale: Locale
             style: "cursor: pointer; padding: 10px;",
             onclick: move |_| consistency_technique.set(tech),
             div { class: "row-between", style: "align-items: center; margin-bottom: 4px;",
-                strong { style: "font-size: 13px;", "{tech.label_i18n(locale)}" }
+                strong { style: "font-size: 13px;", "{tech.label(locale)}" }
                 span { class: "pill pill-accent",
                     if drops == 0 {
                         {locale.tr("pure", "neat")}
@@ -127,7 +127,7 @@ fn technique_option(mut consistency_technique: Signal<Technique>, locale: Locale
                 }
             }
             div { class: "muted", style: "font-size: 11.5px;",
-                strong { "{consistency.label_i18n(locale)}. " }
+                strong { "{consistency.label(locale)}. " }
                 "{consistency.description_i18n(locale)}"
             }
         }
@@ -170,7 +170,7 @@ pub(super) fn WetOnWetBlending() -> Element {
                                     class: if *blending_base_tech.read() == tech { "btn-primary" } else { "btn" },
                                     style: "justify-content: flex-start; text-align: left; font-size: 12px;",
                                     onclick: move |_| blending_base_tech.set(tech),
-                                    "{tech.label_i18n(locale)}"
+                                    "{tech.label(locale)}"
                                 }
                             }
                         }
@@ -186,7 +186,7 @@ pub(super) fn WetOnWetBlending() -> Element {
                                     class: if *blending_accent_tech.read() == tech { "btn-primary" } else { "btn" },
                                     style: "justify-content: flex-start; text-align: left; font-size: 12px;",
                                     onclick: move |_| blending_accent_tech.set(tech),
-                                    "{tech.label_i18n(locale)}"
+                                    "{tech.label(locale)}"
                                 }
                             }
                         }
@@ -199,7 +199,7 @@ pub(super) fn WetOnWetBlending() -> Element {
                         div { class: "card-subtle", style: "border-left: 4px solid var(--accent); padding: 14px 16px;",
                             div { class: "row-between", style: "margin-bottom: 10px; align-items: center;",
                                 span { class: eval.rating.badge_class(), style: "font-size: 12.5px; padding: 5px 10px;",
-                                    "{eval.rating.label_i18n(locale)}"
+                                    "{eval.rating.label(locale)}"
                                 }
                                 span { class: "mono muted", style: "font-size: 11.5px;",
                                     {locale.tr("Fenêtre de tirage : ", "Working window: ")},

@@ -195,7 +195,7 @@ fn LayerRow(proj: Project, z_idx: usize, l_idx: usize) -> Element {
                         }
                     }
                     div { class: "muted", style: "font-size:11.5px; margin-top: 2px;",
-                        "{layer.technique.label_i18n(locale)}"
+                        "{layer.technique.label(locale)}"
                         if !layer.note.is_empty() {
                             " · {layer.note}"
                         }
@@ -276,12 +276,12 @@ fn LayerEditor(system: PaintSystem) -> Element {
                 // techniques stay available (oil over dry acrylic is sound),
                 // never the reverse.
                 for t in Technique::for_system(system) {
-                    option { value: "{t.as_db_str()}", selected: edit_tech == t, "{t.label_i18n(locale)}" }
+                    option { value: "{t.as_db_str()}", selected: edit_tech == t, "{t.label(locale)}" }
                 }
                 if system == PaintSystem::Acrylic {
                     optgroup { label: "{locale.tr(\"À l'huile, par-dessus\", \"In oil, on top\")}",
                         for t in oil_on_top {
-                            option { value: "{t.as_db_str()}", selected: edit_tech == t, "{t.label_i18n(locale)}" }
+                            option { value: "{t.as_db_str()}", selected: edit_tech == t, "{t.label(locale)}" }
                         }
                     }
                 }

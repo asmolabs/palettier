@@ -104,16 +104,33 @@ Branche `claude/refactoring-lot-3`.
 - Un nouveau projet ou une nouvelle zone démarre avec des techniques adaptées au
   système de la pièce (en acrylique : lavis d'ombrage, couches, aplat, liserés).
 
-## Lot 4 : une seule source pour les libellés (priorité moyenne)
+## Lot 4 : une seule source pour les libellés — fait
 
-21 paires `label()` / `label_i18n()` répètent les mêmes `match`. Le domaine écrit sans
-accents (« sechage », « Pate »), l'interface avec.
+Branche `claude/refactoring-lot-4`.
 
-- Un seul `label(locale)` par type, `Display` délégué à `label(Locale::Fr)`.
-- Rétablir les accents dans le domaine. Les tests qui cherchent un texte
-  (`contains("limite utile")`, `contains("15 degres")`) devront tester une variante
-  d'enum ou une clé, pas une phrase.
-- Plus tard, si l'anglais grandit : passer aux fichiers de traduction (`fluent`).
+- Un seul `label(locale)` par type du domaine : les paires `label()` / `label_i18n()`,
+  `advice()` / `advice_i18n()`, `typical_pigments`, `meaning`, `verdict`,
+  `reachability` sont fusionnées (le texte français est inliné dans la version à
+  langue), et `tips()` / `tips_i18n()` disparaissent au profit de `tips_in`. Les
+  `*_i18n` restants de l'interface (`Section`…) prennent le même nom.
+- Accents rétablis dans le domaine : conseils de séchage, libellés d'épaisseur et
+  d'aération, messages du mélangeur et du plan, notes des recettes de démo. Les noms
+  des palettes et recettes de démo ne changent pas : le chargement initial les reconnaît
+  par leur nom.
+- Les conseils de séchage deviennent une énumération `DryingAdvice` qui s'écrit dans
+  les deux langues ; ils n'existaient qu'en français. Les tests vérifient la valeur, plus
+  la phrase.
+- Traduits : fiche recette d'armée (Markdown et HTML), mélanges intermédiaires du guide
+  (« Sienne », « Brun foncé », « Noir coloré », « une pointe de »…), durées du
+  congélateur, ratio du lavis, consistance, mélange mère, outils NMM, pigments, solvants
+  et pinceaux, suppression d'un projet. Le sous-titre de Recettes suit le système, et
+  l'en-tête du mélangeur ne dit plus « Huile » en acrylique.
+- Le mode capture prend aussi les 11 écrans en anglais. Ce qui y reste en français est
+  du contenu enregistré (notes des palettes et étapes des recettes de démo déjà en base,
+  pinceaux d'exemple), pas l'interface.
+
+Pas fait : passer à des fichiers de traduction (`fluent`) ; la plupart des textes de
+l'interface restent des `locale.tr("…", "…")` en ligne, ce qui suffit à deux langues.
 
 ## Lot 5 : styles (priorité basse)
 
@@ -137,4 +154,4 @@ clics.
 
 ## Ordre conseillé
 
-Lots 1, 2 et 3 faits. Ensuite 4 → 5 → 6.
+Lots 1 à 4 faits. Restent 5 → 6.

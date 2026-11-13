@@ -32,7 +32,7 @@ impl Consistency {
         }
     }
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match self {
             Self::Paste => locale.tr("Pâte pure (empâtement)", "Pure paste (impasto)"),
             Self::Cream => locale.tr("Crème onctueuse (fondus)", "Creamy (blending)"),
@@ -84,7 +84,7 @@ impl BlendingRating {
         }
     }
 
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::Excellent, Locale::Fr) => "🟢 Fondu Idéal (Friction Parfaite)",
             (Self::Excellent, Locale::En) => "🟢 Ideal Blend (Zero Resistance)",

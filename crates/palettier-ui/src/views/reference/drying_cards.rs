@@ -3,7 +3,7 @@
 use super::format_duration;
 use crate::state::AppState;
 use dioxus::prelude::*;
-use palettier_domain::drying::{DryingEstimate, Workshop};
+use palettier_domain::drying::{DryingAdvice, DryingEstimate, Workshop};
 use palettier_domain::paint::{Medium, Ventilation};
 
 /// The shares of the painter's own medium. They live in the drying screen, so switching
@@ -82,7 +82,7 @@ pub(super) fn StudioClimate() -> Element {
                         option {
                             value: "{v:?}",
                             selected: ws.ventilation == v,
-                            "{v.label_i18n(locale)}"
+                            "{v.label(locale)}"
                         }
                     }
                 }
@@ -224,12 +224,12 @@ pub(super) fn DryingMilestones(estimate: DryingEstimate, current_medium: Medium)
 
             h4 { style: "font-size: 13px; margin-bottom: 8px;", {locale.tr("Conseils d'atelier & précautions", "Studio Tips & Precautions")} }
             div { class: "card-subtle", style: "margin-bottom: 8px; font-size: 12.5px;",
-                "• {current_medium.advice_i18n(locale)}"
+                "• {current_medium.advice(locale)}"
             }
-            // The estimate repeats the medium's advice (untranslated): shown above already.
-            for tip in estimate.advice.iter().filter(|t| t.as_str() != current_medium.advice()) {
+            // The estimate repeats the medium's advice: shown above already.
+            for tip in estimate.advice.iter().filter(|t| **t != DryingAdvice::Medium(current_medium)) {
                 div { class: "card-subtle", style: "margin-bottom: 8px; font-size: 12.5px;",
-                    "• {tip}"
+                    "• {tip.text(locale)}"
                 }
             }
 
