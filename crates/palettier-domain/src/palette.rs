@@ -1,6 +1,6 @@
 use crate::color::{Colorant, Rgb, delta_e_2000};
 use crate::drying::{DryingContext, DryingTimeService, Workshop};
-use crate::paint::{DryingClass, LayerThickness, Medium, Paint};
+use crate::paint::{DryingClass, LayerThickness, Medium, Paint, PaintSystem};
 use chrono::{DateTime, Utc};
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
@@ -17,6 +17,21 @@ pub struct Palette {
 }
 
 impl Palette {
+    /// The system of the palette: acrylic when most of its paints are acrylic, oil
+    /// otherwise (and for an empty palette).
+    pub fn system(&self) -> PaintSystem {
+        let acrylic = self
+            .paints
+            .iter()
+            .filter(|p| p.system == PaintSystem::Acrylic)
+            .count();
+        if acrylic * 2 > self.paints.len() {
+            PaintSystem::Acrylic
+        } else {
+            PaintSystem::Oil
+        }
+    }
+
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             id: None,
@@ -28,9 +43,9 @@ impl Palette {
     }
 
     pub fn slowest_drying_class(&self) -> DryingClass {
-        self.paints
-            .iter()
-            .fold(DryingClass::Fast, |slowest, p| slowest.slowest(p.drying_class))
+        self.paints.iter().fold(DryingClass::Fast, |slowest, p| {
+            slowest.slowest(p.drying_class)
+        })
     }
 
     pub fn pigments(&self) -> IndexSet<String> {
@@ -142,6 +157,9 @@ pub struct PaletteMix {
     pub hex_color: String,
     pub recipe: String,
     pub drying_class: DryingClass,
+    /// An acrylic mix skins over in minutes on the palette, an oil mix in hours.
+    #[serde(default)]
+    pub system: PaintSystem,
     pub mixed_at: DateTime<Utc>,
     pub workshop: Workshop,
 }
@@ -183,6 +201,7 @@ impl PaletteMixService {
 
     pub fn state(&self, mix: &PaletteMix, now: DateTime<Utc>) -> MixState {
         let context = DryingContext {
+            system: mix.system,
             drying_class: mix.drying_class,
             medium: Medium::None,
             medium_ratio: 0.0,

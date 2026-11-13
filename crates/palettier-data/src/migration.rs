@@ -5,7 +5,10 @@ pub struct Migrator;
 #[async_trait::async_trait]
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
-        vec![Box::new(InitialSchemaMigration)]
+        vec![
+            Box::new(InitialSchemaMigration),
+            Box::new(PaintSystemMigration),
+        ]
     }
 }
 
@@ -176,6 +179,47 @@ impl MigrationTrait for InitialSchemaMigration {
             DROP TABLE IF EXISTS palette;
             DROP TABLE IF EXISTS paint_pigment;
             DROP TABLE IF EXISTS paint;
+            "#,
+        )
+        .await?;
+        Ok(())
+    }
+}
+
+/// Oil or acrylic, on tubes, projects and palette mixes. Existing rows were all oil.
+pub struct PaintSystemMigration;
+
+// Both migrations live in this file: the derived name (the file name) would collide.
+impl MigrationName for PaintSystemMigration {
+    fn name(&self) -> &str {
+        "m0002_paint_system"
+    }
+}
+
+#[async_trait::async_trait]
+impl MigrationTrait for PaintSystemMigration {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        let db = manager.get_connection();
+        db.execute_unprepared(
+            r#"
+            ALTER TABLE paint       ADD COLUMN paint_system TEXT NOT NULL DEFAULT 'OIL';
+            ALTER TABLE project     ADD COLUMN paint_system TEXT NOT NULL DEFAULT 'OIL';
+            ALTER TABLE palette_mix ADD COLUMN paint_system TEXT NOT NULL DEFAULT 'OIL';
+            CREATE INDEX IF NOT EXISTS paint_system ON paint(paint_system);
+            "#,
+        )
+        .await?;
+        Ok(())
+    }
+
+    async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        let db = manager.get_connection();
+        db.execute_unprepared(
+            r#"
+            DROP INDEX IF EXISTS paint_system;
+            ALTER TABLE palette_mix DROP COLUMN paint_system;
+            ALTER TABLE project     DROP COLUMN paint_system;
+            ALTER TABLE paint       DROP COLUMN paint_system;
             "#,
         )
         .await?;

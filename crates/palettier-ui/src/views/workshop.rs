@@ -9,7 +9,7 @@ use dioxus::prelude::*;
 use palettier_domain::drying::Workshop;
 use palettier_domain::guide::MixingGuideBuilder;
 use palettier_domain::i18n::Locale;
-use palettier_domain::paint::{DryingClass, Technique, Ventilation};
+use palettier_domain::paint::{DryingClass, PaintSystem, Technique, Ventilation};
 use palettier_domain::palette::{Palette, PaletteMix};
 use palettier_domain::port::{PaletteMixRepository, PaletteRepository, ProjectRepository};
 use palettier_domain::project::{
@@ -161,7 +161,13 @@ pub fn TodayView() -> Element {
                             for piece in &bench.pieces {
                                 div { class: "card-subtle", style: "margin-bottom:10px;",
                                     div { class: "row-between",
-                                        strong { "{piece.project.name}" }
+                                        div { class: "row", style: "gap: 6px;",
+                                            strong { "{piece.project.name}" }
+                                            span {
+                                                class: if piece.project.system == PaintSystem::Acrylic { "pill pill-acrylic" } else { "pill pill-oil" },
+                                                "{piece.project.system.label_i18n(locale)}"
+                                            }
+                                        }
                                         span { class: "pill",
                                             "{piece.applied_coats()}/{piece.total_coats()} ", {locale.tr("couches", "coats")}
                                         }
@@ -267,6 +273,7 @@ pub fn TodayView() -> Element {
                                                 hex_color: if hex.starts_with('#') { hex } else { format!("#{hex}") },
                                                 recipe,
                                                 drying_class: dc,
+                                                system: *state.paint_system.peek(),
                                                 mixed_at: Utc::now(),
                                                 workshop: w,
                                             };
@@ -345,7 +352,15 @@ pub fn ProjectsView() -> Element {
 
     let locale = *state.locale.read();
     let projects = state.projects.read().clone();
-    let palettes = state.palettes.read().clone();
+    let mut new_proj_system = use_signal(|| *state.paint_system.peek());
+    // A new piece only offers the palettes of its own system.
+    let palettes: Vec<Palette> = state
+        .palettes
+        .read()
+        .iter()
+        .filter(|p| p.paints.is_empty() || p.system() == new_proj_system())
+        .cloned()
+        .collect();
     let mut selected_id = use_signal(|| projects.first().and_then(|p| p.id));
     let mut full_project = use_signal(|| None::<Project>);
 
@@ -384,8 +399,17 @@ pub fn ProjectsView() -> Element {
         });
     }));
 
-    let active_proj = full_project()
-        .or_else(|| projects.iter().find(|p| p.id == selected_id()).cloned());
+    let active_proj =
+        full_project().or_else(|| projects.iter().find(|p| p.id == selected_id()).cloned());
+
+    // The open piece sets the working system of the other screens.
+    let active_system = active_proj.as_ref().map(|p| p.system);
+    let svc_for_system = services.clone();
+    use_effect(use_reactive!(|active_system| {
+        if let Some(sys) = active_system {
+            state.set_paint_system(&svc_for_system, sys);
+        }
+    }));
 
     rsx! {
         div {
@@ -421,6 +445,24 @@ pub fn ProjectsView() -> Element {
                                 placeholder: locale.tr("ex. Buste 1/10", "e.g. 1/10 Bust"),
                                 value: "{new_proj_subject}",
                                 oninput: move |ev| new_proj_subject.set(ev.value())
+                            }
+                        }
+                        div { style: "margin-bottom:8px;",
+                            label { class: "field-label", {locale.tr("Peinte à", "Painted in")} }
+                            div { class: "system-switch",
+                                for sys in PaintSystem::ALL {
+                                    button {
+                                        class: if new_proj_system() == sys { "toggle-chip active" } else { "toggle-chip" },
+                                        onclick: move |_| {
+                                            new_proj_system.set(sys);
+                                            new_proj_palette_idx.set(0);
+                                        },
+                                        "{sys.label_i18n(locale)}"
+                                    }
+                                }
+                            }
+                            p { class: "muted", style: "font-size:11px; margin-top:4px;",
+                                "{new_proj_system().summary_i18n(locale)}"
                             }
                         }
                         div { style: "margin-bottom:10px;",
@@ -460,6 +502,7 @@ pub fn ProjectsView() -> Element {
                                             subject,
                                             approach: String::new(),
                                             notes: String::new(),
+                                            system: new_proj_system(),
                                             palette: chosen_pal,
                                             paints,
                                             zones: vec![ProjectZone {
@@ -556,13 +599,20 @@ pub fn ProjectsView() -> Element {
                         div { class: "card",
                             div { class: "row-between", style: "margin-bottom:12px;",
                                 div {
-                                    h2 { class: "card-title", style: "font-size:19px;margin-bottom:2px;", "{proj.name}" }
+                                    h2 { class: "card-title", style: "font-size:19px;margin-bottom:2px;",
+                                        "{proj.name} "
+                                        span {
+                                            class: if proj.system == PaintSystem::Acrylic { "pill pill-acrylic" } else { "pill pill-oil" },
+                                            title: "{proj.system.summary_i18n(locale)}",
+                                            "{proj.system.label_i18n(locale)}"
+                                        }
+                                    }
                                     span { class: "muted",
                                         "{locale.tr(\"Sujet\", \"Subject\")} : {proj.subject} · {proj.effective_paints().len()} ",
                                         {locale.tr("tubes figés", "locked tubes")}
                                     }
                                 }
-                                div { class: "row",
+                                div { class: "row project-toolbar",
                                     button {
                                         class: if *show_project_guide.read() { "btn-primary" } else { "btn" },
                                         onclick: move |_| {
@@ -606,6 +656,7 @@ pub fn ProjectsView() -> Element {
                                         },
                                         {locale.tr("Imprimer / Exporter Guide A4", "Print / Export A4 Guide")}
                                     }
+                                    span { class: "toolbar-sep" }
                                     select {
                                         value: "{photo_role_to_add().as_db_str()}",
                                         onchange: move |e| {
@@ -693,6 +744,7 @@ pub fn ProjectsView() -> Element {
                                         "📷 "
                                         {locale.tr("Carte PNG", "PNG Card")}
                                     }
+                                    span { class: "toolbar-spacer" }
                                     button {
                                         class: "btn-danger",
                                         onclick: {
@@ -993,8 +1045,18 @@ pub fn ProjectsView() -> Element {
                                                                                 select {
                                                                                     value: "{edit_tech}",
                                                                                     onchange: move |e| edit_tech.set(e.value()),
-                                                                                    for t in Technique::ALL {
+                                                                                    // The piece's own techniques first; on an acrylic piece the oil
+                                                                                    // techniques stay available (oil over dry acrylic is sound),
+                                                                                    // never the reverse.
+                                                                                    for t in Technique::for_system(proj.system) {
                                                                                         option { value: "{t.label_i18n(locale)}", "{t.label_i18n(locale)}" }
+                                                                                    }
+                                                                                    if proj.system == PaintSystem::Acrylic {
+                                                                                        optgroup { label: "{locale.tr(\"À l'huile, par-dessus\", \"In oil, on top\")}",
+                                                                                            for t in Technique::ALL.into_iter().filter(|t| t.native_system() == Some(PaintSystem::Oil)) {
+                                                                                                option { value: "{t.label_i18n(locale)}", "{t.label_i18n(locale)}" }
+                                                                                            }
+                                                                                        }
                                                                                     }
                                                                                 }
                                                                                 input {
@@ -1329,8 +1391,17 @@ pub fn PalettesView() -> Element {
     let services = use_context::<AppServices>();
 
     let locale = *state.locale.read();
-    let palettes = state.palettes.read().clone();
-    let all_paints = state.paints.read().clone();
+    let palettes: Vec<Palette> = {
+        let system = *state.paint_system.read();
+        state
+            .palettes
+            .read()
+            .iter()
+            .filter(|p| p.paints.is_empty() || p.system() == system)
+            .cloned()
+            .collect()
+    };
+    let all_paints = state.paints_of_system();
 
     let mut selected_idx = use_signal(|| 0usize);
     let mut new_name = use_signal(String::new);
@@ -1763,6 +1834,7 @@ pub fn PalettesView() -> Element {
                                     subject: pal.name.clone(),
                                     palette_name: pal.name.clone(),
                                     approach: String::new(),
+                                    system: pal.system(),
                                     zones: Vec::new(),
                                 };
                                 let guide = services.guide_builder.from_plan_i18n(&dummy_plan, &pal.paints, locale);

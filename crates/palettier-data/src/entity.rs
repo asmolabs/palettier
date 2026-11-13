@@ -20,6 +20,7 @@ pub mod paint {
         pub user_added: i64,
         pub in_stock: i64,
         pub notes: String,
+        pub paint_system: String,
     }
 
     #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -158,6 +159,7 @@ pub mod project {
         pub notes: String,
         pub palette_id: Option<i64>,
         pub created_at: i64,
+        pub paint_system: String,
     }
 
     #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -440,6 +442,7 @@ pub mod palette_mix {
         pub temperature: f64,
         pub humidity: f64,
         pub ventilation: String,
+        pub paint_system: String,
     }
 
     #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

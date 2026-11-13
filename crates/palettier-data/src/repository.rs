@@ -9,7 +9,9 @@ use indexmap::{IndexMap, IndexSet};
 use palettier_domain::color::Rgb;
 use palettier_domain::drying::Workshop;
 use palettier_domain::error::{DomainError, DomainResult};
-use palettier_domain::paint::{DryingClass, LayerThickness, Medium, Opacity, Paint, Technique, Ventilation};
+use palettier_domain::paint::{
+    DryingClass, LayerThickness, Medium, Opacity, Paint, PaintSystem, Technique, Ventilation,
+};
 use palettier_domain::palette::{Palette, PaletteMix};
 use palettier_domain::port::{
     PaintCatalogRepository, PaletteMixRepository, PaletteRepository, ProjectRepository,
@@ -63,7 +65,11 @@ impl SeaOrmPaintCatalogRepository {
             .collect())
     }
 
-    async fn pigments_of<C: ConnectionTrait>(&self, conn: &C, paint_id: i64) -> DomainResult<IndexSet<String>> {
+    async fn pigments_of<C: ConnectionTrait>(
+        &self,
+        conn: &C,
+        paint_id: i64,
+    ) -> DomainResult<IndexSet<String>> {
         let rows = paint_pigment::Entity::find()
             .filter(paint_pigment::Column::PaintId.eq(paint_id))
             .order_by_asc(paint_pigment::Column::Position)
@@ -92,6 +98,7 @@ fn row_to_paint(row: paint::Model, pigments: IndexSet<String>) -> Paint {
         user_added: row.user_added != 0,
         in_stock: row.in_stock != 0,
         notes: row.notes,
+        system: PaintSystem::from_str(&row.paint_system).unwrap_or_default(),
     }
 }
 
@@ -161,6 +168,7 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
             user_added: Set(i64::from(p.user_added)),
             in_stock: Set(i64::from(p.in_stock)),
             notes: Set(p.notes.clone()),
+            paint_system: Set(p.system.as_db_str().to_string()),
             ..Default::default()
         };
         let inserted = active.insert(&txn).await.map_err(map_db_err)?;
@@ -207,6 +215,7 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
                 user_added: Set(i64::from(p.user_added)),
                 in_stock: Set(i64::from(p.in_stock)),
                 notes: Set(p.notes.clone()),
+                paint_system: Set(p.system.as_db_str().to_string()),
                 ..Default::default()
             };
             let inserted = active.insert(&txn).await.map_err(map_db_err)?;
@@ -240,7 +249,9 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
             .await
             .map_err(map_db_err)?
         else {
-            return Err(DomainError::InvalidArgument(format!("Tube introuvable: {paint_id}")));
+            return Err(DomainError::InvalidArgument(format!(
+                "Tube introuvable: {paint_id}"
+            )));
         };
         let mut active: paint::ActiveModel = row.into();
         active.in_stock = Set(i64::from(owned));
@@ -254,7 +265,9 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
             .await
             .map_err(map_db_err)?
         else {
-            return Err(DomainError::InvalidArgument(format!("Tube introuvable: {paint_id}")));
+            return Err(DomainError::InvalidArgument(format!(
+                "Tube introuvable: {paint_id}"
+            )));
         };
         let mut active: paint::ActiveModel = row.into();
         active.tint_hex = Set(Some(tint.to_hex()));
@@ -268,7 +281,9 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
             .await
             .map_err(map_db_err)?
         else {
-            return Err(DomainError::InvalidArgument(format!("Tube introuvable: {paint_id}")));
+            return Err(DomainError::InvalidArgument(format!(
+                "Tube introuvable: {paint_id}"
+            )));
         };
         let mut active: paint::ActiveModel = row.into();
         active.hex_color = Set(measured.to_hex());
@@ -286,20 +301,24 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
     }
 
     async fn count(&self) -> DomainResult<u64> {
-        paint::Entity::find().count(&self.db).await.map_err(map_db_err)
+        paint::Entity::find()
+            .count(&self.db)
+            .await
+            .map_err(map_db_err)
     }
 
     async fn refresh_identity(&self, p: &Paint) -> DomainResult<()> {
-        let id = p
-            .id
-            .ok_or_else(|| DomainError::InvalidArgument("Tube sans identifiant".to_string()))?;
+        let id =
+            p.id.ok_or_else(|| DomainError::InvalidArgument("Tube sans identifiant".to_string()))?;
         let txn = self.db.begin().await.map_err(map_db_err)?;
         let Some(row) = paint::Entity::find_by_id(id)
             .one(&txn)
             .await
             .map_err(map_db_err)?
         else {
-            return Err(DomainError::InvalidArgument(format!("Tube introuvable: {id}")));
+            return Err(DomainError::InvalidArgument(format!(
+                "Tube introuvable: {id}"
+            )));
         };
         let mut active: paint::ActiveModel = row.into();
         active.code = Set(p.code.clone());
@@ -308,6 +327,7 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
         active.drying_class = Set(p.drying_class.as_db_str().to_string());
         active.tinting_strength = Set(p.tinting_strength);
         active.pigments_verified = Set(i64::from(p.pigments_verified));
+        active.paint_system = Set(p.system.as_db_str().to_string());
         active.hex_color = Set(p.hex_color.clone());
         active.colour_derived = Set(i64::from(p.color_derived));
         active.update(&txn).await.map_err(map_db_err)?;
@@ -401,7 +421,10 @@ impl SeaOrmPaletteRepository {
 
         let mut links_by_palette: IndexMap<i64, Vec<i64>> = IndexMap::new();
         for l in links {
-            links_by_palette.entry(l.palette_id).or_default().push(l.paint_id);
+            links_by_palette
+                .entry(l.palette_id)
+                .or_default()
+                .push(l.paint_id);
         }
 
         Ok(rows
@@ -520,7 +543,11 @@ impl SeaOrmProjectRepository {
         }
     }
 
-    async fn unique_name<C: ConnectionTrait>(&self, conn: &C, wanted: &str) -> DomainResult<String> {
+    async fn unique_name<C: ConnectionTrait>(
+        &self,
+        conn: &C,
+        wanted: &str,
+    ) -> DomainResult<String> {
         let base = if wanted.trim().is_empty() {
             "Projet"
         } else {
@@ -542,9 +569,7 @@ impl SeaOrmProjectRepository {
             [name.into()],
         );
         let row = conn.query_one_raw(stmt).await.map_err(map_db_err)?;
-        let count: i64 = row
-            .map(|r| r.try_get("", "cnt").unwrap_or(0))
-            .unwrap_or(0);
+        let count: i64 = row.map(|r| r.try_get("", "cnt").unwrap_or(0)).unwrap_or(0);
         Ok(count > 0)
     }
 
@@ -611,7 +636,11 @@ impl SeaOrmProjectRepository {
             .map(|row| {
                 let paints = frozen
                     .get(&row.id)
-                    .map(|ids| ids.iter().filter_map(|id| paints_by_id.get(id).cloned()).collect())
+                    .map(|ids| {
+                        ids.iter()
+                            .filter_map(|id| paints_by_id.get(id).cloned())
+                            .collect()
+                    })
                     .unwrap_or_default();
                 let zones = zones_by_project
                     .swap_remove(&row.id)
@@ -645,7 +674,10 @@ impl SeaOrmProjectRepository {
                     subject: row.subject,
                     approach: row.approach,
                     notes: row.notes,
-                    palette: row.palette_id.and_then(|pid| palettes_by_id.get(&pid).cloned()),
+                    system: PaintSystem::from_str(&row.paint_system).unwrap_or_default(),
+                    palette: row
+                        .palette_id
+                        .and_then(|pid| palettes_by_id.get(&pid).cloned()),
                     paints,
                     zones,
                     photos,
@@ -659,9 +691,16 @@ impl SeaOrmProjectRepository {
 fn layer_row_to_domain(row: project_layer::Model) -> ProjectLayer {
     let std_workshop = Workshop::standard();
     let applied = row.applied_at.map(|ms| {
-        let at = Utc.timestamp_millis_opt(ms).single().unwrap_or_else(Utc::now);
-        let temp = row.applied_temperature.unwrap_or(std_workshop.temperature_celsius);
-        let hum = row.applied_humidity.unwrap_or(std_workshop.relative_humidity);
+        let at = Utc
+            .timestamp_millis_opt(ms)
+            .single()
+            .unwrap_or_else(Utc::now);
+        let temp = row
+            .applied_temperature
+            .unwrap_or(std_workshop.temperature_celsius);
+        let hum = row
+            .applied_humidity
+            .unwrap_or(std_workshop.relative_humidity);
         let vent = row
             .applied_ventilation
             .as_deref()
@@ -746,6 +785,7 @@ impl ProjectRepository for SeaOrmProjectRepository {
                 notes: Set(proj.notes.clone()),
                 palette_id: Set(proj.palette.as_ref().and_then(|p| p.id)),
                 created_at: Set(proj.created_at.timestamp_millis()),
+                paint_system: Set(proj.system.as_db_str().to_string()),
             };
             active.update(&txn).await.map_err(map_db_err)?;
             (existing_id, proj.name.clone())
@@ -758,6 +798,7 @@ impl ProjectRepository for SeaOrmProjectRepository {
                 notes: Set(proj.notes.clone()),
                 palette_id: Set(proj.palette.as_ref().and_then(|p| p.id)),
                 created_at: Set(proj.created_at.timestamp_millis()),
+                paint_system: Set(proj.system.as_db_str().to_string()),
                 ..Default::default()
             };
             let inserted = active.insert(&txn).await.map_err(map_db_err)?;
@@ -872,9 +913,9 @@ impl ProjectRepository for SeaOrmProjectRepository {
         active.insert(&txn).await.map_err(map_db_err)?;
         txn.commit().await.map_err(map_db_err)?;
 
-        self.find_with_photos(project_id)
-            .await?
-            .ok_or_else(|| DomainError::InvalidArgument(format!("Projet introuvable: {project_id}")))
+        self.find_with_photos(project_id).await?.ok_or_else(|| {
+            DomainError::InvalidArgument(format!("Projet introuvable: {project_id}"))
+        })
     }
 
     async fn remove_photo(&self, project_id: i64, photo_id: i64) -> DomainResult<Project> {
@@ -882,9 +923,9 @@ impl ProjectRepository for SeaOrmProjectRepository {
             .exec(&self.db)
             .await
             .map_err(map_db_err)?;
-        self.find_with_photos(project_id)
-            .await?
-            .ok_or_else(|| DomainError::InvalidArgument(format!("Projet introuvable: {project_id}")))
+        self.find_with_photos(project_id).await?.ok_or_else(|| {
+            DomainError::InvalidArgument(format!("Projet introuvable: {project_id}"))
+        })
     }
 
     async fn delete(&self, project_id: i64) -> DomainResult<()> {
@@ -924,6 +965,7 @@ fn mix_row_to_domain(row: palette_mix::Model) -> PaletteMix {
             .single()
             .unwrap_or_else(Utc::now),
         workshop,
+        system: PaintSystem::from_str(&row.paint_system).unwrap_or_default(),
     }
 }
 
@@ -948,6 +990,7 @@ impl PaletteMixRepository for SeaOrmPaletteMixRepository {
             temperature: Set(mix.workshop.temperature_celsius),
             humidity: Set(mix.workshop.relative_humidity),
             ventilation: Set(mix.workshop.ventilation.as_db_str().to_string()),
+            paint_system: Set(mix.system.as_db_str().to_string()),
             ..Default::default()
         };
         let inserted = active.insert(&self.db).await.map_err(map_db_err)?;
@@ -998,15 +1041,19 @@ impl RecipeRepository for SeaOrmRecipeRepository {
 
         let mut steps_by_recipe: IndexMap<i64, Vec<RecipeStep>> = IndexMap::new();
         for s in step_rows {
-            steps_by_recipe.entry(s.recipe_id).or_default().push(RecipeStep {
-                id: Some(s.id),
-                technique: Technique::from_str(&s.technique).unwrap_or(Technique::BaseLayer),
-                paint_mix: s.paint_mix,
-                medium: Medium::from_str(&s.medium).unwrap_or(Medium::None),
-                medium_ratio: s.medium_ratio,
-                thickness: LayerThickness::from_str(&s.thickness).unwrap_or(LayerThickness::Normal),
-                notes: s.notes,
-            });
+            steps_by_recipe
+                .entry(s.recipe_id)
+                .or_default()
+                .push(RecipeStep {
+                    id: Some(s.id),
+                    technique: Technique::from_str(&s.technique).unwrap_or(Technique::BaseLayer),
+                    paint_mix: s.paint_mix,
+                    medium: Medium::from_str(&s.medium).unwrap_or(Medium::None),
+                    medium_ratio: s.medium_ratio,
+                    thickness: LayerThickness::from_str(&s.thickness)
+                        .unwrap_or(LayerThickness::Normal),
+                    notes: s.notes,
+                });
         }
 
         Ok(rows
@@ -1028,9 +1075,7 @@ impl RecipeRepository for SeaOrmRecipeRepository {
             [name.into()],
         );
         let row = self.db.query_one_raw(stmt).await.map_err(map_db_err)?;
-        let count: i64 = row
-            .map(|r| r.try_get("", "cnt").unwrap_or(0))
-            .unwrap_or(0);
+        let count: i64 = row.map(|r| r.try_get("", "cnt").unwrap_or(0)).unwrap_or(0);
         Ok(count > 0)
     }
 

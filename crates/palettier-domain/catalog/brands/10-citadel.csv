@@ -1,0 +1,47 @@
+# Citadel (acryliques pour figurines)
+#
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
+# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
+# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
+#
+# Selection partielle des teintes courantes, pas la gamme complete.
+brand;name;code;pigments;opacity;hex;system
+Citadel;Khorne Red;;;;#6A0001;ACRYLIC
+Citadel;Mephiston Red;;;;#9A1115;ACRYLIC
+Citadel;Evil Sunz Scarlet;;;;#C21814;ACRYLIC
+Citadel;Wild Rider Red;;;;#EA2F28;ACRYLIC
+Citadel;Averland Sunset;;;;#FBB813;ACRYLIC
+Citadel;Yriel Yellow;;;;#FFDC00;ACRYLIC
+Citadel;Flash Gitz Yellow;;;;#FFF300;ACRYLIC
+Citadel;Kantor Blue;;;;#002040;ACRYLIC
+Citadel;Macragge Blue;;;;#0E3E7C;ACRYLIC
+Citadel;Altdorf Guard Blue;;;;#265DB0;ACRYLIC
+Citadel;Calgar Blue;;;;#427EC1;ACRYLIC
+Citadel;Fenrisian Grey;;;;#6D94B3;ACRYLIC
+Citadel;Naggaroth Night;;;;#3B2B4F;ACRYLIC
+Citadel;Xereus Purple;;;;#471F5E;ACRYLIC
+Citadel;Genestealer Purple;;;;#7658A5;ACRYLIC
+Citadel;Caliban Green;;;;#00401F;ACRYLIC
+Citadel;Warpstone Glow;;;;#1E7332;ACRYLIC
+Citadel;Moot Green;;;;#52B734;ACRYLIC
+Citadel;Death Guard Green;;;;#6D774D;ACRYLIC
+Citadel;Nurgling Green;;;;#849B63;ACRYLIC
+Citadel;Orruk Flesh;;;;#81A75B;ACRYLIC
+Citadel;Bugman's Glow;;;;#804C43;ACRYLIC
+Citadel;Cadian Fleshtone;;;;#C48A6F;ACRYLIC
+Citadel;Kislev Flesh;;;;#D1A582;ACRYLIC
+Citadel;Flayed One Flesh;;;;#E4D1AC;ACRYLIC
+Citadel;Rhinox Hide;;;;#463836;ACRYLIC
+Citadel;Mournfang Brown;;;;#62391F;ACRYLIC
+Citadel;Skrag Brown;;;;#8B4E1A;ACRYLIC
+Citadel;Zandri Dust;;;;#9E9162;ACRYLIC
+Citadel;Ushabti Bone;;;;#BBAD7A;ACRYLIC
+Citadel;Screaming Skull;;;;#D4CE9E;ACRYLIC
+Citadel;Abaddon Black;;;;#1C1C1C;ACRYLIC
+Citadel;Corvus Black;;;;#272A2E;ACRYLIC
+Citadel;Mechanicus Standard Grey;;;;#3D4447;ACRYLIC
+Citadel;Dawnstone;;;;#6E7474;ACRYLIC
+Citadel;Celestra Grey;;;;#8FA3A3;ACRYLIC
+Citadel;Grey Seer;;;;#A2A5A7;ACRYLIC
+Citadel;Corax White;;;;#D6D8D5;ACRYLIC
+Citadel;White Scar;;;;#FFFFFF;ACRYLIC

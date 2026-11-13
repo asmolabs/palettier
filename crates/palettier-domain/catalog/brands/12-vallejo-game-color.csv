@@ -1,0 +1,14 @@
+# Vallejo Game Color (acryliques pour figurines)
+#
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
+# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
+# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
+#
+# Selection partielle des teintes courantes, pas la gamme complete.
+brand;name;code;pigments;opacity;hex;system
+Vallejo Game Color;Orange Fire;72.008;;;#EC631E;ACRYLIC
+Vallejo Game Color;Scarlet Blood;72.012;;;#A81D23;ACRYLIC
+Vallejo Game Color;Magic Blue;72.021;;;#0067A3;ACRYLIC
+Vallejo Game Color;Sick Green;72.029;;;#2F6E3B;ACRYLIC
+Vallejo Game Color;Beasty Brown;72.043;;;#5C3E28;ACRYLIC
+Vallejo Game Color;Cadmium Skin;72.099;;;#D99371;ACRYLIC

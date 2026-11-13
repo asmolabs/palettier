@@ -3,7 +3,7 @@ use palettier_domain::color::Rgb;
 use palettier_domain::error::{DomainError, DomainResult};
 use palettier_domain::i18n::Locale;
 use palettier_domain::mix::ColorMixService;
-use palettier_domain::paint::Paint;
+use palettier_domain::paint::{Paint, PaintSystem, Technique};
 use palettier_domain::plan::{PaintingPlan, PlanLayer, PlanZone};
 use palettier_image::ImageDecoder;
 use serde::{Deserialize, Serialize};
@@ -124,12 +124,14 @@ impl PlanEnricher {
         palette: &[Paint],
         locale: Locale,
     ) -> PaintingPlan {
+        let system = Self::system_of(palette);
         let zones = draft
             .zones
             .iter()
             .map(|z| self.enrich_zone(z, palette, locale))
             .collect();
         PaintingPlan {
+            system,
             subject: if draft.subject.trim().is_empty() {
                 match locale {
                     Locale::En => "Unspecified subject".to_string(),
@@ -144,6 +146,19 @@ impl PlanEnricher {
         }
     }
 
+    /// The system the plan is painted in: that of most of the palette's paints.
+    pub fn system_of(palette: &[Paint]) -> PaintSystem {
+        let acrylic = palette
+            .iter()
+            .filter(|p| p.system == PaintSystem::Acrylic)
+            .count();
+        if acrylic * 2 > palette.len() {
+            PaintSystem::Acrylic
+        } else {
+            PaintSystem::Oil
+        }
+    }
+
     fn enrich_zone(&self, zone: &ZoneDraft, palette: &[Paint], locale: Locale) -> PlanZone {
         let fallback_shadow = Rgb::new(0.23, 0.16, 0.13);
         let fallback_base = Rgb::new(0.55, 0.42, 0.34);
@@ -152,10 +167,8 @@ impl PlanEnricher {
         let base_rgb = Self::parse_or(zone.base.as_ref(), fallback_base);
         let shadow1_rgb = Self::parse_or(zone.shadow1.as_ref(), fallback_shadow);
         let highlight2_rgb = Self::parse_or(zone.highlight2.as_ref(), fallback_light);
-        let shadow2_rgb = Self::parse_or(
-            zone.shadow2.as_ref(),
-            Self::midpoint(shadow1_rgb, base_rgb),
-        );
+        let shadow2_rgb =
+            Self::parse_or(zone.shadow2.as_ref(), Self::midpoint(shadow1_rgb, base_rgb));
         let highlight1_rgb = Self::parse_or(
             zone.highlight1.as_ref(),
             Self::midpoint(base_rgb, highlight2_rgb),
@@ -239,10 +252,11 @@ impl PlanEnricher {
             .filter(|s| !s.is_empty())
             .unwrap_or(default_role)
             .to_string();
-        let default_technique = match locale {
-            Locale::En => "Wet-on-wet blending",
-            Locale::Fr => "Fondu dans le frais",
-        };
+        let default_technique = match Self::system_of(palette) {
+            PaintSystem::Oil => Technique::Blending,
+            PaintSystem::Acrylic => Technique::Layering,
+        }
+        .label_i18n(locale);
         let technique = draft
             .map(|d| d.technique.trim())
             .filter(|s| !s.is_empty())
@@ -284,11 +298,7 @@ pub struct SampledZone {
 }
 
 impl SampledZone {
-    pub fn new(
-        name: impl Into<String>,
-        material: impl Into<String>,
-        target: Rgb,
-    ) -> Self {
+    pub fn new(name: impl Into<String>, material: impl Into<String>, target: Rgb) -> Self {
         Self {
             name: name.into(),
             material: material.into(),
@@ -376,6 +386,59 @@ IMPORTANT: do NOT invent any mixing recipe in targetHex and do not cite any pain
 
 Respond in English, only with the JSON requested by the schema."##;
 
+    /// Same task, painted entirely in acrylic: no oil rule, no solvent, no drying in days.
+    const ACRYLIC_SYSTEM_PROMPT: &'static str = r##"Tu es un maître peintre de figurines d'exposition (bustes 1/10, 75mm, figurines 28-32mm, véhicules 1/35) qui peint ENTIÈREMENT À L'ACRYLIQUE (peintures à l'eau pour figurines), sans huile ni solvant.
+
+Pour chaque zone du sujet, construis une ÉCHELLE DE VALEURS complète à 5 marches, du plus sombre au plus clair :
+  - shadow1    (role = "Ombre 2")   : ombre profonde, creux, occlusion maximale
+  - shadow2    (role = "Ombre 1")   : ombre propre, demi-teinte d'ombre
+  - base       (role = "Base")      : teinte locale à mi-valeur
+  - highlight1 (role = "Lumière 1") : première montée de lumière
+  - highlight2 (role = "Lumière 2") : éclat final sur les arêtes et crêtes exposées
+
+Les 5 champs shadow1, shadow2, base, highlight1, highlight2 sont OBLIGATOIRES sur chaque zone. Leurs codes targetHex (#RRGGBB) doivent former une vraie progression de clarté.
+
+Règles de l'acrylique à respecter :
+1. L'acrylique sèche en quelques minutes : on ne fond pas dans le frais, on SUPERPOSE des couches fines (layering), chacune un peu plus claire et un peu plus petite que la précédente. Pour un fondu humide (wet blending), il faut un retardateur.
+2. Consistance de lait : deux couches fines valent mieux qu'une épaisse, qui empâte les détails.
+3. Les ombres se posent en lavis ou en glacis dilués au médium plutôt qu'à l'eau seule, pour éviter les auréoles ; pas de noir pur, des ombres colorées.
+4. Éclaircir par le jaune ou l'ocre avant le blanc pour éviter l'effet crayeux ; le blanc pur est réservé au point de lumière final.
+5. Liserés d'arêtes (edge highlight) au plat du pinceau sur les armures, armes et véhicules ; brossage à sec (drybrush) pour les textures (fourrure, socle, métal usé).
+6. Ordre : sous-couche, aplats de base, lavis d'ombrage, reprise des couches, liserés, points de lumière, vernis.
+7. Utilise pour "technique" l'un de ces libellés : "Aplat de base", "Lavis d'ombrage", "Glacis", "Jus capillaire (pin wash)", "Filtre", "Couches superposees (layering)", "Fondu humide (wet blending)", "Brossage a sec (drybrush)", "Liseres d'aretes (edge highlight)", "Eclaircis et points lumineux", "Peinture contraste (speedpaint)".
+
+Dans le champ "note" de chaque couche, indique PRÉCISÉMENT où poser la teinte sur la sculpture. Dans "accents", ajoute les sous-éléments et effets propres à la zone (yeux, lèvres, rougeurs, usure, reflets...).
+
+IMPORTANT : n'invente AUCUNE recette de mélange et ne cite aucun nom de pot : donne le code targetHex (#RRGGBB) exact de la teinte visée à chaque marche. Le solveur calculera les mélanges à partir des acryliques de la palette.
+
+Réponds en français, uniquement avec le JSON demandé par le schéma."##;
+
+    const ACRYLIC_SYSTEM_PROMPT_EN: &'static str = r##"You are a master display miniature painter (1/10 busts, 75mm figures, 28-32mm miniatures, 1/35 vehicles) painting ENTIRELY IN ACRYLICS (water-based miniature paints), with no oil and no solvent.
+
+For each zone of the subject, build a complete 5-step VALUE LADDER, from darkest to lightest:
+  - shadow1    (role = "Shadow 2")   : deep shadow, recesses, maximum occlusion
+  - shadow2    (role = "Shadow 1")   : core shadow, shadow half-tone
+  - base       (role = "Base")       : local colour at mid value
+  - highlight1 (role = "Highlight 1"): first step of light
+  - highlight2 (role = "Highlight 2"): final glint on exposed edges and ridges
+
+The 5 fields shadow1, shadow2, base, highlight1, highlight2 are MANDATORY for every zone. Their targetHex codes (#RRGGBB) must form a real lightness progression.
+
+Acrylic rules to follow:
+1. Acrylic dries in minutes: do not blend wet-on-wet, STACK thin layers (layering), each slightly lighter and smaller than the one below. Wet blending requires a retarder.
+2. Milk consistency: two thin coats beat one thick coat that clogs detail.
+3. Shadows go on as washes or glazes thinned with medium rather than water alone, to avoid tide marks; no pure black, coloured shadows.
+4. Lighten through yellow or ochre before white to avoid chalkiness; pure white is kept for the final glint.
+5. Edge highlights with the flat of the brush on armour, weapons and vehicles; drybrush for textures (fur, bases, worn metal).
+6. Order: undercoat, base coats, shade wash, layering back up, edge highlights, glints, varnish.
+7. For "technique", use one of: "Base coat", "Shade wash", "Glaze", "Pin wash", "Filter", "Layering", "Wet blending", "Drybrush", "Edge highlight", "Highlights & catchlights", "Contrast paint (speedpaint)".
+
+In each layer's "note", state PRECISELY where the tone goes on the sculpt. In "accents", add the sub-elements and effects of the zone (eyes, lips, flush, wear, reflections...).
+
+IMPORTANT: do NOT invent any mixing recipe and do not cite any paint name: provide the exact targetHex (#RRGGBB) of the target tone at each step. The solver will compute mixes from the acrylics in the palette.
+
+Respond in English, only with the JSON requested by the schema."##;
+
     pub fn new(engine: Arc<dyn ChatEngine>) -> Self {
         Self {
             engine,
@@ -436,9 +499,11 @@ Respond in English, only with the JSON requested by the schema."##;
             attachments.push(ImageAttachment::jpeg(scaled));
         }
 
-        let system_prompt = match locale {
-            Locale::En => Self::SYSTEM_PROMPT_EN,
-            Locale::Fr => Self::SYSTEM_PROMPT,
+        let system_prompt = match (PlanEnricher::system_of(palette), locale) {
+            (PaintSystem::Oil, Locale::En) => Self::SYSTEM_PROMPT_EN,
+            (PaintSystem::Oil, Locale::Fr) => Self::SYSTEM_PROMPT,
+            (PaintSystem::Acrylic, Locale::En) => Self::ACRYLIC_SYSTEM_PROMPT_EN,
+            (PaintSystem::Acrylic, Locale::Fr) => Self::ACRYLIC_SYSTEM_PROMPT,
         };
 
         let raw = self
@@ -461,9 +526,7 @@ Respond in English, only with the JSON requested by the schema."##;
         };
         serde_json::from_str::<PlanDraft>(cleaned).map_err(|e| {
             let preview: String = raw.chars().take(200).collect();
-            DomainError::InvalidArgument(format!(
-                "Réponse du modèle illisible ({e}) : {preview}"
-            ))
+            DomainError::InvalidArgument(format!("Réponse du modèle illisible ({e}) : {preview}"))
         })
     }
 
@@ -516,11 +579,7 @@ Respond in English, only with the JSON requested by the schema."##;
         }
     }
 
-    fn build_prompt(
-        description: &str,
-        palette: &[Paint],
-        sampled_zones: &[SampledZone],
-    ) -> String {
+    fn build_prompt(description: &str, palette: &[Paint], sampled_zones: &[SampledZone]) -> String {
         let mut out = String::from("Sujet à peindre : ");
         if description.trim().is_empty() {
             out.push_str("(voir la photo jointe)");
@@ -534,7 +593,10 @@ Respond in English, only with the JSON requested by the schema."##;
                 "Zones relevées à la pipette sur la photo de référence (conserve ces zones et utilise chaque couleur relevée comme teinte de \"base\" de sa zone, puis construis autour d'elle les 2 ombres plus sombres et les 2 lumières plus claires) :\n",
             );
             for z in sampled_zones {
-                out.push_str(&format!("- {} ({}) : base = {}\n", z.name, z.material, z.target_hex));
+                out.push_str(&format!(
+                    "- {} ({}) : base = {}\n",
+                    z.name, z.material, z.target_hex
+                ));
             }
             out.push('\n');
         }

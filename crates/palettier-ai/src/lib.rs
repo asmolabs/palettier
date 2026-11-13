@@ -91,6 +91,7 @@ mod tests {
                 user_added: false,
                 in_stock: true,
                 notes: String::new(),
+                system: palettier_domain::paint::PaintSystem::Oil,
             },
             Paint {
                 id: Some(2),
@@ -109,6 +110,7 @@ mod tests {
                 user_added: false,
                 in_stock: true,
                 notes: String::new(),
+                system: palettier_domain::paint::PaintSystem::Oil,
             },
             Paint {
                 id: Some(3),
@@ -127,6 +129,7 @@ mod tests {
                 user_added: false,
                 in_stock: true,
                 notes: String::new(),
+                system: palettier_domain::paint::PaintSystem::Oil,
             },
             Paint {
                 id: Some(4),
@@ -145,6 +148,7 @@ mod tests {
                 user_added: false,
                 in_stock: true,
                 notes: String::new(),
+                system: palettier_domain::paint::PaintSystem::Oil,
             },
         ]
     }
@@ -271,10 +275,7 @@ mod tests {
         );
         assert_eq!("Unspecified subject", en_plan.subject);
         let layers = en_plan.zones[0].layers();
-        let en_roles: Vec<&str> = layers
-            .iter()
-            .map(|l| l.role.as_str())
-            .collect();
+        let en_roles: Vec<&str> = layers.iter().map(|l| l.role.as_str()).collect();
         assert_eq!(
             vec!["Shadow 1", "Shadow 2", "Base", "Highlight 1", "Highlight 2"],
             en_roles

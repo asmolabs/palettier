@@ -148,11 +148,194 @@ body, html {
 }
 
 .quick-toggles {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-    padding: 4px 6px 10px 6px;
+    padding: 4px 6px 12px 6px;
     border-bottom: 1px solid var(--border-main);
     margin-bottom: 6px;
+}
+
+.icon-btn {
+    height: 30px;
+    border: 1px solid var(--border-main);
+    border-radius: 7px;
+    background: var(--bg-input);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    border-color: var(--accent-border);
+}
+
+.icon-btn.active {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+}
+
+/* Project header actions: guide & print | photos | (spacer) delete. */
+.project-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.toolbar-sep {
+    width: 1px;
+    align-self: stretch;
+    margin: 2px 4px;
+    background: var(--border-main);
+}
+
+.toolbar-spacer {
+    flex: 1 1 12px;
+}
+
+/* "Painting in": oil / acrylic segmented control at the top of the sidebar. */
+.system-segment-block {
+    padding: 2px 6px 10px 6px;
+}
+
+.system-segment-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.system-segment {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 3px;
+    gap: 3px;
+    border-radius: 9px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-main);
+}
+
+.system-segment .segment {
+    padding: 6px 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.system-segment .segment:hover {
+    color: var(--text-main);
+}
+
+.system-segment .segment.active.oil {
+    background: #c98a2b;
+    color: #1a1208;
+}
+
+.system-segment .segment.active.acrylic {
+    background: #2a9d8f;
+    color: #ffffff;
+}
+
+/* Miniature studio: themed tool list on the left, the open tool on the right. */
+.mini-layout {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.mini-nav {
+    position: sticky;
+    top: 0;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    padding: 10px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-main);
+    border-radius: 10px;
+}
+
+.mini-nav-search {
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.mini-nav-group {
+    margin-bottom: 10px;
+}
+
+.mini-nav-group-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 4px 8px;
+}
+
+.mini-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mini-nav-item:hover {
+    background: var(--bg-input);
+}
+
+.mini-nav-item.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-weight: 650;
+}
+
+.mini-nav-icon {
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.mini-content-header {
+    margin-bottom: 14px;
+}
+
+.mini-content-header h2 {
+    display: inline;
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.mini-content-header p {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+}
+
+@media (max-width: 900px) {
+    .mini-layout {
+        grid-template-columns: 1fr;
+    }
+    .mini-nav {
+        position: static;
+        max-height: none;
+    }
 }
 
 .toggle-chip {
@@ -534,6 +717,24 @@ input[type="color"]::-webkit-color-swatch {
     border-color: var(--accent-border);
 }
 
+/* Oil / acrylic: warm amber for oil, cool teal for acrylic, readable in both themes. */
+.pill-oil {
+    background-color: rgba(201, 138, 43, 0.15);
+    color: #c98a2b;
+    border-color: rgba(201, 138, 43, 0.45);
+}
+
+.pill-acrylic {
+    background-color: rgba(42, 157, 143, 0.15);
+    color: #2a9d8f;
+    border-color: rgba(42, 157, 143, 0.45);
+}
+
+.system-switch {
+    display: inline-flex;
+    gap: 4px;
+}
+
 .pill-ok {
     background-color: var(--pill-ok-bg);
     color: var(--pill-ok-text);
@@ -815,7 +1016,8 @@ pub fn PaintSwatch(
             }
         }
     } else {
-        let style = format!("width: {width}px; height: {height}px; background-color: {masstone_hex};");
+        let style =
+            format!("width: {width}px; height: {height}px; background-color: {masstone_hex};");
         rsx! {
             span {
                 class: "swatch",
@@ -898,22 +1100,38 @@ pub fn DeltaEBadge(delta_e: f64) -> Element {
     let (cls, label) = if delta_e < 1.0 {
         (
             "pill pill-ok",
-            format!("ΔE {:.1} · {}", delta_e, locale.tr("imperceptible", "imperceptible")),
+            format!(
+                "ΔE {:.1} · {}",
+                delta_e,
+                locale.tr("imperceptible", "imperceptible")
+            ),
         )
     } else if delta_e < 2.0 {
         (
             "pill pill-ok",
-            format!("ΔE {:.1} · {}", delta_e, locale.tr("identique à l'œil", "indistinguishable")),
+            format!(
+                "ΔE {:.1} · {}",
+                delta_e,
+                locale.tr("identique à l'œil", "indistinguishable")
+            ),
         )
     } else if delta_e < 4.5 {
         (
             "pill pill-accent",
-            format!("ΔE {:.1} · {}", delta_e, locale.tr("très proche", "very close")),
+            format!(
+                "ΔE {:.1} · {}",
+                delta_e,
+                locale.tr("très proche", "very close")
+            ),
         )
     } else if delta_e < 8.0 {
         (
             "pill pill-warn",
-            format!("ΔE {:.1} · {}", delta_e, locale.tr("écart visible", "visible gap")),
+            format!(
+                "ΔE {:.1} · {}",
+                delta_e,
+                locale.tr("écart visible", "visible gap")
+            ),
         )
     } else {
         (
@@ -1204,7 +1422,13 @@ pub fn export_and_open_guide_html(
     let safe_name: String = guide
         .subtitle
         .chars()
-        .map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
+        .map(|c| {
+            if c.is_alphanumeric() {
+                c.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
         .collect::<String>()
         .split('-')
         .filter(|s| !s.is_empty())
@@ -1243,10 +1467,7 @@ pub fn MixingGuideCard(
         "Fiche d'établi · Format Guide de mélanges",
         "Workbench Sheet · Mixing Guide Format",
     );
-    let print_btn_label = locale.tr(
-        "Imprimer / Exporter en PDF A4",
-        "Print / Export A4 PDF",
-    );
+    let print_btn_label = locale.tr("Imprimer / Exporter en PDF A4", "Print / Export A4 PDF");
     let palette_heading = locale.tr("Ta palette", "Your Palette");
     let mother_heading = locale.tr(
         "Mélanges intermédiaires à préparer en début de séance",

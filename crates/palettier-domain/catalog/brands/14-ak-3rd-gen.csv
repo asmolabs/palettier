@@ -1,0 +1,15 @@
+# AK Interactive 3rd Gen (acryliques pour figurines)
+#
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
+# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
+# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
+#
+# Selection partielle des teintes courantes, pas la gamme complete.
+brand;name;code;pigments;opacity;hex;system
+AK Interactive 3rd Gen;White;AK11001;;;#FAFAFA;ACRYLIC
+AK Interactive 3rd Gen;Black;AK11029;;;#191919;ACRYLIC
+AK Interactive 3rd Gen;Dirty Red;AK11097;;;#7E2325;ACRYLIC
+AK Interactive 3rd Gen;Medium Blue;AK11184;;;#224F88;ACRYLIC
+AK Interactive 3rd Gen;Deep Green;AK11142;;;#1B4729;ACRYLIC
+AK Interactive 3rd Gen;Deep Brown;AK11075;;;#3B2C24;ACRYLIC
+AK Interactive 3rd Gen;Pale Flesh;AK11055;;;#E1BCA6;ACRYLIC

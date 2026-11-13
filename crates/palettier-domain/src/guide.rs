@@ -107,7 +107,12 @@ impl MixingGuideBuilder {
             guide.title = project.name.clone();
         }
         if !project.notes.trim().is_empty() {
-            for line in project.notes.lines().map(str::trim).filter(|l| !l.is_empty()) {
+            for line in project
+                .notes
+                .lines()
+                .map(str::trim)
+                .filter(|l| !l.is_empty())
+            {
                 if !guide.advice.iter().any(|a| a == line) {
                     guide.advice.push(line.to_string());
                 }
@@ -122,7 +127,12 @@ impl MixingGuideBuilder {
     }
 
     /// Construit un guide de mélanges complet à partir d'un `PaintingPlan` et des tubes de la palette dans la langue choisie.
-    pub fn from_plan_i18n(&self, plan: &PaintingPlan, paints: &[Paint], locale: Locale) -> MixingGuide {
+    pub fn from_plan_i18n(
+        &self,
+        plan: &PaintingPlan,
+        paints: &[Paint],
+        locale: Locale,
+    ) -> MixingGuide {
         let palette_entries = Self::build_palette_entries_i18n(paints, locale);
         let code_map: IndexMap<String, String> = palette_entries
             .iter()
@@ -217,36 +227,72 @@ impl MixingGuideBuilder {
         let low = paint.name.to_lowercase();
         let pigs = &paint.pigments;
 
-        if low.contains("blanc") || low.contains("white") || pigs.contains("PW6") || pigs.contains("PW4") {
+        if low.contains("blanc")
+            || low.contains("white")
+            || pigs.contains("PW6")
+            || pigs.contains("PW4")
+        {
             return "B".to_string();
         }
         if low.contains("citron") || low.contains("lemon") || pigs.contains("PY3") {
             return "JC".to_string();
         }
-        if (low.contains("jaune") || low.contains("yellow")) && (low.contains("cadmium") || pigs.contains("PY35")) {
+        if (low.contains("jaune") || low.contains("yellow"))
+            && (low.contains("cadmium") || pigs.contains("PY35"))
+        {
             return "JCd".to_string();
         }
-        if low.contains("ocre") || low.contains("ochre") || pigs.contains("PY42") || pigs.contains("PY43") {
+        if low.contains("ocre")
+            || low.contains("ochre")
+            || pigs.contains("PY42")
+            || pigs.contains("PY43")
+        {
             return "Oc".to_string();
         }
-        if low.contains("garance") || low.contains("alizarin") || low.contains("carmin") || low.contains("madder") || pigs.contains("PR83") || pigs.contains("PV19") {
+        if low.contains("garance")
+            || low.contains("alizarin")
+            || low.contains("carmin")
+            || low.contains("madder")
+            || pigs.contains("PR83")
+            || pigs.contains("PV19")
+        {
             return "Ga".to_string();
         }
-        if (low.contains("rouge") || low.contains("red") || low.contains("scarlet") || low.contains("vermilion"))
-            && (low.contains("cadmium") || pigs.contains("PR108") || pigs.contains("PR254") || pigs.contains("PR255"))
+        if (low.contains("rouge")
+            || low.contains("red")
+            || low.contains("scarlet")
+            || low.contains("vermilion"))
+            && (low.contains("cadmium")
+                || pigs.contains("PR108")
+                || pigs.contains("PR254")
+                || pigs.contains("PR255"))
         {
             return "Rc".to_string();
         }
-        if low.contains("prusse") || low.contains("prussian") || low.contains("phtalo") || low.contains("phthalo") || pigs.contains("PB27") || pigs.contains("PB15") {
+        if low.contains("prusse")
+            || low.contains("prussian")
+            || low.contains("phtalo")
+            || low.contains("phthalo")
+            || pigs.contains("PB27")
+            || pigs.contains("PB15")
+        {
             return "Pr".to_string();
         }
         if low.contains("outremer") || low.contains("ultramarine") || pigs.contains("PB29") {
             return "Out".to_string();
         }
-        if low.contains("cobalt") && (low.contains("bleu") || low.contains("blue") || pigs.contains("PB28")) {
+        if low.contains("cobalt")
+            && (low.contains("bleu") || low.contains("blue") || pigs.contains("PB28"))
+        {
             return "Co".to_string();
         }
-        if low.contains("viridian") || low.contains("émeraude") || low.contains("emeraude") || low.contains("chrome feu") || pigs.contains("PG18") || pigs.contains("PG7") {
+        if low.contains("viridian")
+            || low.contains("émeraude")
+            || low.contains("emeraude")
+            || low.contains("chrome feu")
+            || pigs.contains("PG18")
+            || pigs.contains("PG7")
+        {
             return "Vi".to_string();
         }
         if low.contains("sienne") || low.contains("sienna") {
@@ -255,7 +301,12 @@ impl MixingGuideBuilder {
         if low.contains("ombre") || low.contains("umber") {
             return "TO".to_string();
         }
-        if low.contains("noir") || low.contains("black") || pigs.contains("PBk9") || pigs.contains("PBk11") || pigs.contains("PBk7") {
+        if low.contains("noir")
+            || low.contains("black")
+            || pigs.contains("PBk9")
+            || pigs.contains("PBk11")
+            || pigs.contains("PBk7")
+        {
             return "N".to_string();
         }
 
@@ -288,27 +339,57 @@ impl MixingGuideBuilder {
         let low = paint.name.to_lowercase();
         let pigs = &paint.pigments;
 
-        if low.contains("prusse") || low.contains("prussian") || pigs.contains("PB27") || paint.tinting_strength >= 0.88 {
-            return locale.tr("Très puissant : trace au cure-dent", "Extremely potent: toothpick trace only").to_string();
+        if low.contains("prusse")
+            || low.contains("prussian")
+            || pigs.contains("PB27")
+            || paint.tinting_strength >= 0.88
+        {
+            return locale
+                .tr(
+                    "Très puissant : trace au cure-dent",
+                    "Extremely potent: toothpick trace only",
+                )
+                .to_string();
         }
-        if low.contains("ocre") || low.contains("ochre") || pigs.contains("PY42") || pigs.contains("PY43") {
-            return locale.tr("Opaque, le « ciment » de la palette", "Opaque, the studio palette backbone").to_string();
+        if low.contains("ocre")
+            || low.contains("ochre")
+            || pigs.contains("PY42")
+            || pigs.contains("PY43")
+        {
+            return locale
+                .tr(
+                    "Opaque, le « ciment » de la palette",
+                    "Opaque, the studio palette backbone",
+                )
+                .to_string();
         }
-        if low.contains("noir minéral") || low.contains("mineral black") || pigs.contains("PBk11") {
-            return locale.tr("Surtout pour les olives et rabattre les verts", "Mainly for olives and subduing greens").to_string();
+        if low.contains("noir minéral") || low.contains("mineral black") || pigs.contains("PBk11")
+        {
+            return locale
+                .tr(
+                    "Surtout pour les olives et rabattre les verts",
+                    "Mainly for olives and subduing greens",
+                )
+                .to_string();
         }
         if low.contains("viridian") || low.contains("chrome feu") || pigs.contains("PG18") {
-            return locale.tr("Viridian, transparent", "Viridian, transparent").to_string();
+            return locale
+                .tr("Viridian, transparent", "Viridian, transparent")
+                .to_string();
         }
         if low.contains("garance") || low.contains("alizarin") || pigs.contains("PR83") {
-            return locale.tr("Froid, transparent", "Cool, transparent").to_string();
+            return locale
+                .tr("Froid, transparent", "Cool, transparent")
+                .to_string();
         }
         if low.contains("citron") || low.contains("lemon") || pigs.contains("PY3") {
             return locale.tr("Froid, lumineux", "Cool, bright").to_string();
         }
         if low.contains("blanc") || low.contains("white") || pigs.contains("PW6") {
             let drying_str = match paint.drying_class {
-                DryingClass::Slow | DryingClass::VerySlow => locale.tr("lent à sécher", "slow drying"),
+                DryingClass::Slow | DryingClass::VerySlow => {
+                    locale.tr("lent à sécher", "slow drying")
+                }
                 DryingClass::Medium => locale.tr("séchage moyen", "medium drying"),
                 DryingClass::Fast => locale.tr("séchage rapide", "fast drying"),
             };
@@ -542,7 +623,11 @@ impl MixingGuideBuilder {
         if zones.iter().any(|z| {
             let l = z.name.to_lowercase();
             let m = z.material.to_lowercase();
-            l.contains("peau") || l.contains("visage") || l.contains("main") || m.contains("peau") || m.contains("chair")
+            l.contains("peau")
+                || l.contains("visage")
+                || l.contains("main")
+                || m.contains("peau")
+                || m.contains("chair")
         }) {
             washes.push(UndercoatWash {
                 name: "Lavis peau".to_string(),
@@ -558,8 +643,13 @@ impl MixingGuideBuilder {
         // Lavis froid ou vert selon les autres zones
         for z in zones {
             let l = z.name.to_lowercase();
-            if (l.contains("dragon") || l.contains("créature") || l.contains("creature") || l.contains("vert"))
-                && !washes.iter().any(|w| w.name.contains("créature") || w.name.contains("vert"))
+            if (l.contains("dragon")
+                || l.contains("créature")
+                || l.contains("creature")
+                || l.contains("vert"))
+                && !washes
+                    .iter()
+                    .any(|w| w.name.contains("créature") || w.name.contains("vert"))
                 && let Some(vi) = Self::find_by_code(paints, code_map, "Vi")
             {
                 let vi_c = Self::code_of(vi, code_map);
@@ -568,7 +658,11 @@ impl MixingGuideBuilder {
                     hex_color: "#3F5338".to_string(),
                     recipe_text: format!("{vi_c} + une pointe de BF, même dilution."),
                 });
-            } else if (l.contains("katana") || l.contains("fourreau") || l.contains("bleu") || l.contains("armure") || l.contains("métal"))
+            } else if (l.contains("katana")
+                || l.contains("fourreau")
+                || l.contains("bleu")
+                || l.contains("armure")
+                || l.contains("métal"))
                 && !washes.iter().any(|w| w.name.contains("froid"))
                 && let Some(pr) = Self::find_by_code(paints, code_map, "Pr")
             {
@@ -613,9 +707,7 @@ impl MixingGuideBuilder {
         let base_layer = zone.base.as_ref();
         let rows = ordered_layers
             .iter()
-            .map(|layer| {
-                self.build_layer_row(layer, base_layer, paints, code_map, mother_mixes)
-            })
+            .map(|layer| self.build_layer_row(layer, base_layer, paints, code_map, mother_mixes))
             .collect();
 
         GuideZone {
@@ -651,7 +743,8 @@ impl MixingGuideBuilder {
         };
 
         let placement_note = layer.note.trim().to_string();
-        let painter_recipe = if !placement_note.is_empty() && !raw_recipe.contains(&placement_note) {
+        let painter_recipe = if !placement_note.is_empty() && !raw_recipe.contains(&placement_note)
+        {
             if placement_note.starts_with('(') {
                 format!("{raw_recipe} {placement_note}")
             } else {
@@ -703,12 +796,18 @@ impl MixingGuideBuilder {
         let total_parts: f64 = sugg.parts.iter().map(|p| p.parts).sum::<f64>().max(1e-6);
         if (role_low == "lumière 1" || role_low == "lumiere 1")
             && base_layer.is_some()
-            && sugg.parts.iter().any(|c| Self::code_of(&c.paint, code_map) == white_code)
+            && sugg
+                .parts
+                .iter()
+                .any(|c| Self::code_of(&c.paint, code_map) == white_code)
         {
             let extras: Vec<String> = sugg
                 .parts
                 .iter()
-                .filter(|c| Self::code_of(&c.paint, code_map) != white_code && (c.parts / total_parts) < 0.22)
+                .filter(|c| {
+                    Self::code_of(&c.paint, code_map) != white_code
+                        && (c.parts / total_parts) < 0.22
+                })
                 .map(|c| format!("une trace de {}", Self::code_of(&c.paint, code_map)))
                 .collect();
             if extras.is_empty() {
@@ -794,7 +893,11 @@ impl MixingGuideBuilder {
             .collect();
         let minor: Vec<&&PaintPart> = sorted
             .iter()
-            .filter(|c| !major.iter().any(|m| Self::paint_key(&m.paint) == Self::paint_key(&c.paint)))
+            .filter(|c| {
+                !major
+                    .iter()
+                    .any(|m| Self::paint_key(&m.paint) == Self::paint_key(&c.paint))
+            })
             .collect();
 
         let mut parts_str = Vec::new();
@@ -874,7 +977,10 @@ impl MixingGuideBuilder {
                 .to_string(),
         );
 
-        if let Some(pr) = entries.iter().find(|e| e.paint.tinting_strength >= 0.85 || e.short_code == "Pr") {
+        if let Some(pr) = entries
+            .iter()
+            .find(|e| e.paint.tinting_strength >= 0.85 || e.short_code == "Pr")
+        {
             tips.push(format!(
                 "{} ({}) : extrêmement puissant, prélève-le toujours à la pointe d'un cure-dent.",
                 pr.paint.name, pr.short_code
@@ -947,10 +1053,12 @@ impl MixingGuide {
         let mut html = String::with_capacity(16384);
         html.push_str("<!DOCTYPE html>\n<html lang=\"");
         html.push_str(locale.code());
-        html.push_str(r#"">
+        html.push_str(
+            r#"">
 <head>
 <meta charset="utf-8">
-<title>"#);
+<title>"#,
+        );
         html.push_str(&Self::escape_html(&self.title));
         html.push_str(" — ");
         html.push_str(&Self::escape_html(&self.subtitle));
@@ -1100,14 +1208,24 @@ impl MixingGuide {
   <div><strong>"#);
         html.push_str(locale.tr("Fiche d'établi Palettier", "Palettier Workbench Sheet"));
         html.push_str("</strong> — ");
-        html.push_str(locale.tr("Prête à imprimer en A4 ou enregistrer en PDF", "Ready to print on A4 or save as PDF"));
-        html.push_str(r#"</div>
-  <button onclick="window.print()">"#);
-        html.push_str(locale.tr("Imprimer / Enregistrer en PDF (⌘P)", "Print / Save to PDF (⌘P)"));
-        html.push_str(r#"</button>
+        html.push_str(locale.tr(
+            "Prête à imprimer en A4 ou enregistrer en PDF",
+            "Ready to print on A4 or save as PDF",
+        ));
+        html.push_str(
+            r#"</div>
+  <button onclick="window.print()">"#,
+        );
+        html.push_str(locale.tr(
+            "Imprimer / Enregistrer en PDF (⌘P)",
+            "Print / Save to PDF (⌘P)",
+        ));
+        html.push_str(
+            r#"</button>
 </div>
 <div class="header-grid">
-"#);
+"#,
+        );
 
         if let Some(uri) = photo_data_uri {
             let alt_txt = locale.tr("Pièce de référence", "Reference Piece");
@@ -1126,12 +1244,18 @@ impl MixingGuide {
 
         // Section Ta palette / Your palette
         if !self.palette_entries.is_empty() {
-            html.push_str(&format!("<h2>{}</h2>\n<table class=\"guide-table\">\n", locale.tr("Ta palette", "Your Palette")));
+            html.push_str(&format!(
+                "<h2>{}</h2>\n<table class=\"guide-table\">\n",
+                locale.tr("Ta palette", "Your Palette")
+            ));
             for entry in &self.palette_entries {
                 let code_suffix = if entry.paint.code.trim().is_empty() {
                     String::new()
                 } else {
-                    format!(" <span style=\"color:#78716A;\">({})</span>", Self::escape_html(&entry.paint.code))
+                    format!(
+                        " <span style=\"color:#78716A;\">({})</span>",
+                        Self::escape_html(&entry.paint.code)
+                    )
                 };
                 html.push_str(&format!(
                     "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"code-cell\">{}</td><td>{}{code_suffix}</td><td class=\"behavior-cell\">{}</td></tr>\n",
@@ -1147,7 +1271,13 @@ impl MixingGuide {
 
         // Mélanges intermédiaires / Mother mixes
         if !self.mother_mixes.is_empty() {
-            html.push_str(&format!("<h2>{}</h2>\n<table class=\"guide-table\">\n", locale.tr("Mélanges intermédiaires à préparer en début de séance", "Intermediate Mother Mixes to Prepare Before Painting")));
+            html.push_str(&format!(
+                "<h2>{}</h2>\n<table class=\"guide-table\">\n",
+                locale.tr(
+                    "Mélanges intermédiaires à préparer en début de séance",
+                    "Intermediate Mother Mixes to Prepare Before Painting"
+                )
+            ));
             for mm in &self.mother_mixes {
                 html.push_str(&format!(
                     "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"role-cell\"><strong>{}</strong> — {}</td><td>{}</td></tr>\n",
@@ -1166,7 +1296,13 @@ impl MixingGuide {
 
         // Lavis sur sous-couche blanche / Washes
         if !self.washes.is_empty() {
-            html.push_str(&format!("<h2>{}</h2>\n<table class=\"guide-table\">\n", locale.tr("Lavis sur sous-couche blanche (à l'huile)", "Oil Washes Over White Undercoat")));
+            html.push_str(&format!(
+                "<h2>{}</h2>\n<table class=\"guide-table\">\n",
+                locale.tr(
+                    "Lavis sur sous-couche blanche (à l'huile)",
+                    "Oil Washes Over White Undercoat"
+                )
+            ));
             for w in &self.washes {
                 html.push_str(&format!(
                     "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"role-cell\">{}</td><td>{}</td></tr>\n",
@@ -1186,7 +1322,10 @@ impl MixingGuide {
         // Zones
         for zone in &self.zones {
             let zone_heading = if zone.material.trim().is_empty()
-                || zone.name.to_lowercase().contains(&zone.material.to_lowercase())
+                || zone
+                    .name
+                    .to_lowercase()
+                    .contains(&zone.material.to_lowercase())
             {
                 zone.name.clone()
             } else {
@@ -1215,7 +1354,10 @@ impl MixingGuide {
 
         // Conseils / Studio tips
         if !self.advice.is_empty() {
-            html.push_str(&format!("<h2>{}</h2>\n<ol class=\"advice-list\">\n", locale.tr("Conseils", "Studio Tips")));
+            html.push_str(&format!(
+                "<h2>{}</h2>\n<ol class=\"advice-list\">\n",
+                locale.tr("Conseils", "Studio Tips")
+            ));
             for tip in &self.advice {
                 html.push_str(&format!("  <li>{}</li>\n", Self::escape_html(tip)));
             }
@@ -1246,7 +1388,9 @@ mod tests {
 
     fn norma_blue_starter_box() -> Vec<Paint> {
         let all = CatalogLoader::default().load();
-        let codes = ["21114", "21236", "21311", "21318", "21418", "21502", "21600", "21705"];
+        let codes = [
+            "21114", "21236", "21311", "21318", "21418", "21502", "21600", "21705",
+        ];
         codes
             .iter()
             .filter_map(|code| {
@@ -1274,6 +1418,7 @@ mod tests {
             subject: "Buste de samouraï".to_string(),
             palette_name: "Schmincke Norma Blue (coffret 71200097)".to_string(),
             approach: String::new(),
+            system: crate::paint::PaintSystem::Oil,
             zones: vec![PlanZone {
                 name: "Peau".to_string(),
                 material: "Chair chaude".to_string(),

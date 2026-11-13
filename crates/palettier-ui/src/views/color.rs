@@ -11,7 +11,7 @@ use palettier_domain::color::{Rgb, delta_e_2000, neutralise};
 use palettier_domain::i18n::Locale;
 use palettier_domain::image::{PixelMap, StudyMode};
 use palettier_domain::mix::{MixSuggestion, PaintPart};
-use palettier_domain::palette::PaletteMix;
+use palettier_domain::palette::{Palette, PaletteMix};
 use palettier_domain::plan::{ColourGroup, PaintingPlan};
 use palettier_domain::port::{PaletteMixRepository, ProjectRepository};
 use std::collections::BTreeSet;
@@ -644,8 +644,18 @@ pub fn AssistantView() -> Element {
     let services = use_context::<AppServices>();
 
     let locale = *state.locale.read();
-    let palettes = state.palettes.read().clone();
-    let all_paints = state.paints.read().clone();
+    let palettes: Vec<Palette> = {
+        let system = *state.paint_system.read();
+        state
+            .palettes
+            .read()
+            .iter()
+            .filter(|p| p.paints.is_empty() || p.system() == system)
+            .cloned()
+            .collect()
+    };
+    // Only the working system: an acrylic plan is mixed from acrylics, an oil plan from oils.
+    let all_paints = state.paints_of_system();
     let sampled = state.sampled_zones.read().clone();
     let ai = state.ai_settings.read().clone();
 
@@ -972,8 +982,18 @@ pub fn MixerView() -> Element {
     let services = use_context::<AppServices>();
 
     let locale = *state.locale.read();
-    let all_paints = state.paints.read().clone();
-    let palettes = state.palettes.read().clone();
+    // Oil and acrylic never mix: the mixer only offers paints of the working system.
+    let all_paints = state.paints_of_system();
+    let palettes: Vec<Palette> = {
+        let system = *state.paint_system.read();
+        state
+            .palettes
+            .read()
+            .iter()
+            .filter(|p| p.paints.is_empty() || p.system() == system)
+            .cloned()
+            .collect()
+    };
     let target_hex = state.mixer_target_hex.read().clone();
 
     // Left panel: Freeform bench simulator (ColorMixService::mix)
@@ -1025,7 +1045,9 @@ pub fn MixerView() -> Element {
             } else {
                 pts.clone()
             };
-            let found = svc.mix_service.suggest_mixes(target_rgb, &pool, 6, Some(mp));
+            let found = svc
+                .mix_service
+                .suggest_mixes(target_rgb, &pool, 6, Some(mp));
             suggestions.set(found);
         }
     };
@@ -1310,6 +1332,7 @@ pub fn MixerView() -> Element {
                                                             hex_color: hex_to_save,
                                                             recipe: rec_str,
                                                             drying_class: dc,
+                                                            system: *state.paint_system.peek(),
                                                             mixed_at: Utc::now(),
                                                             workshop: w,
                                                         };

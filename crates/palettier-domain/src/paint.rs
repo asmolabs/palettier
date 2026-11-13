@@ -301,7 +301,11 @@ pub enum Ventilation {
 }
 
 impl Ventilation {
-    pub const ALL: [Ventilation; 3] = [Ventilation::Confined, Ventilation::Normal, Ventilation::Good];
+    pub const ALL: [Ventilation; 3] = [
+        Ventilation::Confined,
+        Ventilation::Normal,
+        Ventilation::Good,
+    ];
 
     pub fn label(&self) -> &'static str {
         match self {
@@ -360,7 +364,82 @@ impl fmt::Display for Ventilation {
     }
 }
 
-/// Thinner or medium added to oil paint.
+/// The paint family a piece, a coat or a tube belongs to.
+///
+/// Oil and acrylic do not obey the same rules: an acrylic coat is touch dry in minutes
+/// and thinned with water, an oil coat takes days, is thinned with solvent and must
+/// respect fat over lean. Every rule of the application reads this value instead of
+/// assuming oil.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, Default,
+)]
+pub enum PaintSystem {
+    #[default]
+    Oil,
+    Acrylic,
+}
+
+impl PaintSystem {
+    pub const ALL: [PaintSystem; 2] = [PaintSystem::Oil, PaintSystem::Acrylic];
+
+    pub fn label(&self) -> &'static str {
+        match self {
+            PaintSystem::Oil => "Huile",
+            PaintSystem::Acrylic => "Acrylique",
+        }
+    }
+
+    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+        match self {
+            PaintSystem::Oil => locale.tr("Huile", "Oil"),
+            PaintSystem::Acrylic => locale.tr("Acrylique", "Acrylic"),
+        }
+    }
+
+    /// One-line reminder of what changes when working in this system.
+    pub fn summary_i18n(&self, locale: Locale) -> &'static str {
+        match self {
+            PaintSystem::Oil => locale.tr(
+                "Diluant ou huile, sechage en jours, gras sur maigre a respecter.",
+                "Thinner or oil, drying in days, fat over lean applies.",
+            ),
+            PaintSystem::Acrylic => locale.tr(
+                "Eau et mediums acryliques, sec au toucher en minutes, couches fines et superposees.",
+                "Water and acrylic mediums, touch dry in minutes, thin stacked layers.",
+            ),
+        }
+    }
+
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            PaintSystem::Oil => "OIL",
+            PaintSystem::Acrylic => "ACRYLIC",
+        }
+    }
+}
+
+impl FromStr for PaintSystem {
+    type Err = DomainError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_uppercase().as_str() {
+            "OIL" | "HUILE" | "" => Ok(PaintSystem::Oil),
+            "ACRYLIC" | "ACRYLIQUE" => Ok(PaintSystem::Acrylic),
+            other => Err(DomainError::InvalidArgument(format!(
+                "Systeme de peinture inconnu : {other}"
+            ))),
+        }
+    }
+}
+
+impl fmt::Display for PaintSystem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.label())
+    }
+}
+
+/// Thinner or medium added to the paint: solvents and oils for oil paint, water and
+/// acrylic mediums for acrylics. `None` (straight from the pot or tube) belongs to both.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Medium {
     None,
@@ -372,10 +451,14 @@ pub enum Medium {
     WalnutOil,
     StandOil,
     CobaltDrier,
+    Water,
+    AcrylicGlazeMedium,
+    FlowImprover,
+    Retarder,
 }
 
 impl Medium {
-    pub const ALL: [Medium; 9] = [
+    pub const ALL: [Medium; 13] = [
         Medium::None,
         Medium::OdorlessThinner,
         Medium::WhiteSpirit,
@@ -385,15 +468,53 @@ impl Medium {
         Medium::WalnutOil,
         Medium::StandOil,
         Medium::CobaltDrier,
+        Medium::Water,
+        Medium::AcrylicGlazeMedium,
+        Medium::FlowImprover,
+        Medium::Retarder,
     ];
+
+    /// The system this medium belongs to, or `None` when it fits both (pure paint).
+    pub fn system(&self) -> Option<PaintSystem> {
+        match self {
+            Medium::None => None,
+            Medium::Water
+            | Medium::AcrylicGlazeMedium
+            | Medium::FlowImprover
+            | Medium::Retarder => Some(PaintSystem::Acrylic),
+            _ => Some(PaintSystem::Oil),
+        }
+    }
+
+    /// Whether this medium can be mixed into paint of the given system.
+    pub fn fits(&self, system: PaintSystem) -> bool {
+        self.system().is_none_or(|s| s == system)
+    }
+
+    /// The mediums offered when painting in the given system.
+    pub fn for_system(system: PaintSystem) -> Vec<Medium> {
+        Self::ALL.into_iter().filter(|m| m.fits(system)).collect()
+    }
+
+    /// The usual thinner of the system: what a wash or a glaze is diluted with.
+    pub fn thinner_of(system: PaintSystem) -> Medium {
+        match system {
+            PaintSystem::Oil => Medium::OdorlessThinner,
+            PaintSystem::Acrylic => Medium::Water,
+        }
+    }
 
     pub fn label(&self) -> &'static str {
         match self {
+            Medium::Water => "Eau",
+            Medium::AcrylicGlazeMedium => "Médium à glacis acrylique",
+            Medium::FlowImprover => "Fluidifiant (flow improver)",
+            Medium::Retarder => "Retardateur",
             Medium::None => "Pur (sortie de tube)",
             Medium::OdorlessThinner => "Diluant inodore",
             Medium::WhiteSpirit => "White spirit",
-            Medium::Turpentine => "Essence de terebenthine",
-            Medium::AlkydMedium => "Medium alkyde (type Liquin)",
+            Medium::Turpentine => "Essence de térébenthine",
+            Medium::AlkydMedium => "Médium alkyde (type Liquin)",
             Medium::LinseedOil => "Huile de lin",
             Medium::WalnutOil => "Huile de noix",
             Medium::StandOil => "Huile stand",
@@ -405,6 +526,10 @@ impl Medium {
         match locale {
             Locale::Fr => self.label(),
             Locale::En => match self {
+                Medium::Water => "Water",
+                Medium::AcrylicGlazeMedium => "Acrylic glaze medium",
+                Medium::FlowImprover => "Flow improver",
+                Medium::Retarder => "Retarder",
                 Medium::None => "Pure (from tube)",
                 Medium::OdorlessThinner => "Odorless thinner",
                 Medium::WhiteSpirit => "White spirit",
@@ -429,6 +554,11 @@ impl Medium {
             Medium::WalnutOil => 2.20,
             Medium::StandOil => 2.60,
             Medium::CobaltDrier => 0.28,
+            // Acrylic factors apply to the acrylic model, whose base is in minutes.
+            Medium::Water => 0.90,
+            Medium::AcrylicGlazeMedium => 1.50,
+            Medium::FlowImprover => 1.30,
+            Medium::Retarder => 3.00,
         }
     }
 
@@ -443,12 +573,22 @@ impl Medium {
             Medium::WalnutOil => 0.40,
             Medium::StandOil => 0.30,
             Medium::CobaltDrier => 0.05,
+            Medium::Water => 0.90,
+            Medium::AcrylicGlazeMedium => 0.80,
+            Medium::FlowImprover => 0.20,
+            Medium::Retarder => 0.20,
         }
     }
 
     fn fat_direction(&self) -> i32 {
         match self {
-            Medium::None | Medium::CobaltDrier => 0,
+            // Fat over lean is an oil rule: acrylic mediums carry no oil.
+            Medium::None
+            | Medium::CobaltDrier
+            | Medium::Water
+            | Medium::AcrylicGlazeMedium
+            | Medium::FlowImprover
+            | Medium::Retarder => 0,
             Medium::OdorlessThinner | Medium::WhiteSpirit | Medium::Turpentine => -1,
             Medium::AlkydMedium | Medium::LinseedOil | Medium::WalnutOil | Medium::StandOil => 1,
         }
@@ -456,19 +596,27 @@ impl Medium {
 
     pub fn advice(&self) -> &'static str {
         match self {
-            Medium::None => "Pate epaisse : reserve aux empatements et aux textures.",
+            Medium::Water => {
+                "Le diluant de l'acrylique : au-delà de moitié d'eau, le liant ne tient plus et la couche poudre."
+            }
+            Medium::AcrylicGlazeMedium => {
+                "Dilue sans casser le liant : glacis et lavis acryliques transparents qui tiennent."
+            }
+            Medium::FlowImprover => {
+                "Quelques gouttes : la peinture file mieux et marque moins le pinceau."
+            }
+            Medium::Retarder => {
+                "Allonge le temps ouvert pour les fondus humides ; au-delà de 20 %, la couche reste poisseuse."
+            }
+            Medium::None => "Pâte épaisse : réservée aux empâtements et aux textures.",
             Medium::OdorlessThinner => "Le standard pour les jus et les fondus sur figurine.",
-            Medium::WhiteSpirit => "Plus agressif : verifier la tenue du vernis en dessous.",
-            Medium::Turpentine => "Evapore vite, odeur forte, bonne accroche.",
-            Medium::AlkydMedium => "Accelere fortement et lisse le fondu.",
-            Medium::LinseedOil => {
-                "Rallonge le temps ouvert, jaunit legerement en couche epaisse."
-            }
-            Medium::WalnutOil => "Temps ouvert tres long, ne jaunit presque pas.",
-            Medium::StandOil => "Tres lent, tres lissant : pour les fondus longs.",
-            Medium::CobaltDrier => {
-                "Quelques gouttes suffisent ; au-dela, la couche craquelle."
-            }
+            Medium::WhiteSpirit => "Plus agressif : vérifier la tenue du vernis en dessous.",
+            Medium::Turpentine => "Évapore vite, odeur forte, bonne accroche.",
+            Medium::AlkydMedium => "Accélère fortement et lisse le fondu.",
+            Medium::LinseedOil => "Rallonge le temps ouvert, jaunit légèrement en couche épaisse.",
+            Medium::WalnutOil => "Temps ouvert très long, ne jaunit presque pas.",
+            Medium::StandOil => "Très lent, très lissant : pour les fondus longs.",
+            Medium::CobaltDrier => "Quelques gouttes suffisent ; au-dela, la couche craquelle.",
         }
     }
 
@@ -476,14 +624,26 @@ impl Medium {
         match locale {
             Locale::Fr => self.advice(),
             Locale::En => match self {
+                Medium::Water => {
+                    "The acrylic thinner: beyond half water the binder gives up and the coat turns chalky."
+                }
+                Medium::AcrylicGlazeMedium => {
+                    "Thins without breaking the binder: durable transparent acrylic glazes and washes."
+                }
+                Medium::FlowImprover => {
+                    "A few drops: paint flows better and shows fewer brush marks."
+                }
+                Medium::Retarder => {
+                    "Extends open time for wet blending; beyond 20% the coat stays tacky."
+                }
                 Medium::None => "Thick paste: best saved for impasto and texture work.",
                 Medium::OdorlessThinner => "The standard choice for miniature washes and blending.",
-                Medium::WhiteSpirit => "More aggressive: check that the underlying varnish holds up.",
+                Medium::WhiteSpirit => {
+                    "More aggressive: check that the underlying varnish holds up."
+                }
                 Medium::Turpentine => "Evaporates quickly, strong odor, good grip.",
                 Medium::AlkydMedium => "Speeds up drying significantly and smooths out blends.",
-                Medium::LinseedOil => {
-                    "Extends open time; yellows slightly in thick coats."
-                }
+                Medium::LinseedOil => "Extends open time; yellows slightly in thick coats.",
                 Medium::WalnutOil => "Very long open time, barely yellows.",
                 Medium::StandOil => "Very slow, self-leveling: great for long blends.",
                 Medium::CobaltDrier => {
@@ -515,6 +675,10 @@ impl Medium {
             Medium::WalnutOil => "WALNUT_OIL",
             Medium::StandOil => "STAND_OIL",
             Medium::CobaltDrier => "COBALT_DRIER",
+            Medium::Water => "WATER",
+            Medium::AcrylicGlazeMedium => "ACRYLIC_GLAZE_MEDIUM",
+            Medium::FlowImprover => "FLOW_IMPROVER",
+            Medium::Retarder => "RETARDER",
         }
     }
 }
@@ -533,6 +697,10 @@ impl FromStr for Medium {
             "WALNUT_OIL" => Ok(Medium::WalnutOil),
             "STAND_OIL" => Ok(Medium::StandOil),
             "COBALT_DRIER" => Ok(Medium::CobaltDrier),
+            "WATER" => Ok(Medium::Water),
+            "ACRYLIC_GLAZE_MEDIUM" => Ok(Medium::AcrylicGlazeMedium),
+            "FLOW_IMPROVER" => Ok(Medium::FlowImprover),
+            "RETARDER" => Ok(Medium::Retarder),
             other => Err(DomainError::InvalidArgument(format!(
                 "Medium inconnu : {other}"
             ))),
@@ -546,7 +714,11 @@ impl fmt::Display for Medium {
     }
 }
 
-/// Oil painting technique, along with its typical settings.
+/// Miniature painting technique, along with its typical settings.
+///
+/// Some techniques belong to one system only (oil rendering, wet-on-wet blending and
+/// streaking are oil work; layering, drybrush and edge highlighting are acrylic work),
+/// others exist in both and change their thinner and their advice with the system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Technique {
     OilWash,
@@ -559,10 +731,16 @@ pub enum Technique {
     OilRendering,
     BaseLayer,
     Highlight,
+    Layering,
+    WetBlending,
+    Drybrush,
+    EdgeHighlight,
+    ShadeWash,
+    ContrastPaint,
 }
 
 impl Technique {
-    pub const ALL: [Technique; 10] = [
+    pub const ALL: [Technique; 16] = [
         Technique::OilWash,
         Technique::PinWash,
         Technique::Filter,
@@ -573,7 +751,52 @@ impl Technique {
         Technique::OilRendering,
         Technique::BaseLayer,
         Technique::Highlight,
+        Technique::Layering,
+        Technique::WetBlending,
+        Technique::Drybrush,
+        Technique::EdgeHighlight,
+        Technique::ShadeWash,
+        Technique::ContrastPaint,
     ];
+
+    /// The only system this technique belongs to, or `None` when it exists in both.
+    pub fn native_system(&self) -> Option<PaintSystem> {
+        match self {
+            Technique::OilWash
+            | Technique::Blending
+            | Technique::DotFading
+            | Technique::StreakingGrime
+            | Technique::OilRendering => Some(PaintSystem::Oil),
+            Technique::Layering
+            | Technique::WetBlending
+            | Technique::Drybrush
+            | Technique::EdgeHighlight
+            | Technique::ShadeWash
+            | Technique::ContrastPaint => Some(PaintSystem::Acrylic),
+            Technique::PinWash
+            | Technique::Filter
+            | Technique::Glaze
+            | Technique::BaseLayer
+            | Technique::Highlight => None,
+        }
+    }
+
+    /// Whether this technique can be done in the given system.
+    pub fn fits(&self, system: PaintSystem) -> bool {
+        self.native_system().is_none_or(|s| s == system)
+    }
+
+    /// The system a coat done with this technique is painted in, within a piece painted
+    /// in `project`: a technique that exists in one system only imposes it (an oil wash
+    /// on an acrylic piece is still oil), a shared one follows the piece.
+    pub fn system_within(&self, project: PaintSystem) -> PaintSystem {
+        self.native_system().unwrap_or(project)
+    }
+
+    /// The techniques offered when painting in the given system.
+    pub fn for_system(system: PaintSystem) -> Vec<Technique> {
+        Self::ALL.into_iter().filter(|t| t.fits(system)).collect()
+    }
 
     pub fn label(&self) -> &'static str {
         match self {
@@ -587,6 +810,12 @@ impl Technique {
             Technique::OilRendering => "Oil Paint Rendering (OPR)",
             Technique::BaseLayer => "Aplat de base",
             Technique::Highlight => "Eclaircis et points lumineux",
+            Technique::Layering => "Couches superposees (layering)",
+            Technique::WetBlending => "Fondu humide (wet blending)",
+            Technique::Drybrush => "Brossage a sec (drybrush)",
+            Technique::EdgeHighlight => "Liseres d'aretes (edge highlight)",
+            Technique::ShadeWash => "Lavis d'ombrage",
+            Technique::ContrastPaint => "Peinture contraste (speedpaint)",
         }
     }
 
@@ -604,66 +833,128 @@ impl Technique {
                 Technique::OilRendering => "Oil Paint Rendering (OPR)",
                 Technique::BaseLayer => "Base coat",
                 Technique::Highlight => "Highlights & catchlights",
+                Technique::Layering => "Layering",
+                Technique::WetBlending => "Wet blending",
+                Technique::Drybrush => "Drybrush",
+                Technique::EdgeHighlight => "Edge highlight",
+                Technique::ShadeWash => "Shade wash",
+                Technique::ContrastPaint => "Contrast paint (speedpaint)",
             },
         }
     }
 
+    /// Medium of the technique in its native system (oil for shared techniques).
     pub fn default_medium(&self) -> Medium {
-        match self {
-            Technique::Blending | Technique::DotFading | Technique::Highlight => Medium::None,
-            _ => Medium::OdorlessThinner,
+        self.default_medium_in(self.system_within(PaintSystem::Oil))
+    }
+
+    /// Medium of the technique when done in `system`.
+    pub fn default_medium_in(&self, system: PaintSystem) -> Medium {
+        match self.system_within(system) {
+            PaintSystem::Oil => match self {
+                Technique::Blending | Technique::DotFading | Technique::Highlight => Medium::None,
+                _ => Medium::OdorlessThinner,
+            },
+            PaintSystem::Acrylic => match self {
+                Technique::Drybrush | Technique::Highlight | Technique::ContrastPaint => {
+                    Medium::None
+                }
+                Technique::Glaze | Technique::ShadeWash => Medium::AcrylicGlazeMedium,
+                Technique::WetBlending => Medium::Retarder,
+                _ => Medium::Water,
+            },
         }
     }
 
+    /// Lowest useful medium ratio, in the technique's native system.
     pub fn min_ratio(&self) -> f64 {
-        match self {
-            Technique::OilWash => 0.80,
-            Technique::PinWash => 0.85,
-            Technique::Filter => 0.88,
-            Technique::Glaze => 0.70,
-            Technique::Blending => 0.00,
-            Technique::DotFading => 0.00,
-            Technique::StreakingGrime => 0.60,
-            Technique::OilRendering => 0.50,
-            Technique::BaseLayer => 0.10,
-            Technique::Highlight => 0.00,
-        }
+        self.ratio_range_in(self.system_within(PaintSystem::Oil)).0
     }
 
+    /// Highest useful medium ratio, in the technique's native system.
     pub fn max_ratio(&self) -> f64 {
-        match self {
-            Technique::OilWash => 0.92,
-            Technique::PinWash => 0.94,
-            Technique::Filter => 0.96,
-            Technique::Glaze => 0.88,
-            Technique::Blending => 0.25,
-            Technique::DotFading => 0.20,
-            Technique::StreakingGrime => 0.85,
-            Technique::OilRendering => 0.80,
-            Technique::BaseLayer => 0.35,
-            Technique::Highlight => 0.20,
-        }
+        self.ratio_range_in(self.system_within(PaintSystem::Oil)).1
     }
 
     pub fn default_ratio(&self) -> f64 {
-        (self.min_ratio() + self.max_ratio()) / 2.0
+        self.default_ratio_in(self.system_within(PaintSystem::Oil))
+    }
+
+    pub fn default_ratio_in(&self, system: PaintSystem) -> f64 {
+        let (min, max) = self.ratio_range_in(system);
+        (min + max) / 2.0
+    }
+
+    /// Useful range of the default medium's ratio when the technique is done in `system`.
+    pub fn ratio_range_in(&self, system: PaintSystem) -> (f64, f64) {
+        match (self.system_within(system), self) {
+            (PaintSystem::Oil, Technique::OilWash) => (0.80, 0.92),
+            (PaintSystem::Oil, Technique::PinWash) => (0.85, 0.94),
+            (PaintSystem::Oil, Technique::Filter) => (0.88, 0.96),
+            (PaintSystem::Oil, Technique::Glaze) => (0.70, 0.88),
+            (PaintSystem::Oil, Technique::Blending) => (0.00, 0.25),
+            (PaintSystem::Oil, Technique::DotFading) => (0.00, 0.20),
+            (PaintSystem::Oil, Technique::StreakingGrime) => (0.60, 0.85),
+            (PaintSystem::Oil, Technique::OilRendering) => (0.50, 0.80),
+            (PaintSystem::Oil, Technique::BaseLayer) => (0.10, 0.35),
+            (PaintSystem::Oil, Technique::Highlight) => (0.00, 0.20),
+            (PaintSystem::Acrylic, Technique::PinWash) => (0.60, 0.80),
+            (PaintSystem::Acrylic, Technique::Filter) => (0.80, 0.90),
+            (PaintSystem::Acrylic, Technique::Glaze) => (0.50, 0.75),
+            (PaintSystem::Acrylic, Technique::BaseLayer) => (0.20, 0.35),
+            (PaintSystem::Acrylic, Technique::Highlight) => (0.00, 0.00),
+            (PaintSystem::Acrylic, Technique::Layering) => (0.30, 0.50),
+            (PaintSystem::Acrylic, Technique::WetBlending) => (0.10, 0.20),
+            (PaintSystem::Acrylic, Technique::Drybrush) => (0.00, 0.00),
+            (PaintSystem::Acrylic, Technique::EdgeHighlight) => (0.20, 0.40),
+            (PaintSystem::Acrylic, Technique::ShadeWash) => (0.50, 0.70),
+            (PaintSystem::Acrylic, Technique::ContrastPaint) => (0.00, 0.00),
+            // Unreachable: system_within never pairs a native technique with the other system.
+            _ => (0.0, 0.0),
+        }
     }
 
     pub fn typical_thickness(&self) -> LayerThickness {
         match self {
-            Technique::OilWash | Technique::PinWash | Technique::Filter | Technique::Glaze => {
-                LayerThickness::Glaze
-            }
+            Technique::OilWash
+            | Technique::PinWash
+            | Technique::Filter
+            | Technique::Glaze
+            | Technique::ShadeWash => LayerThickness::Glaze,
             Technique::BaseLayer => LayerThickness::Normal,
             _ => LayerThickness::Thin,
         }
     }
 
+    /// Whether, in oil, the previous coat must be fully dry before this technique.
+    ///
+    /// Only meaningful between two oil coats: acrylic coats are sealed once touch dry
+    /// and only need their recoat time. See [`crate::drying::waits_for_through_dry`].
     pub fn requires_cured_base(&self) -> bool {
-        !matches!(self, Technique::BaseLayer)
+        !matches!(self, Technique::BaseLayer) && self.native_system() != Some(PaintSystem::Acrylic)
     }
 
+    /// Tips for the technique in its native system (oil for shared techniques).
     pub fn tips(&self) -> &'static [&'static str] {
+        self.tips_in(self.system_within(PaintSystem::Oil), Locale::Fr)
+    }
+
+    pub fn tips_i18n(&self, locale: Locale) -> &'static [&'static str] {
+        self.tips_in(self.system_within(PaintSystem::Oil), locale)
+    }
+
+    /// Tips for the technique when done in `system`.
+    pub fn tips_in(&self, system: PaintSystem, locale: Locale) -> &'static [&'static str] {
+        let system = self.system_within(system);
+        match (locale, system) {
+            (Locale::Fr, PaintSystem::Oil) => self.oil_tips_fr(),
+            (Locale::En, PaintSystem::Oil) => self.oil_tips_en(),
+            (Locale::Fr, PaintSystem::Acrylic) => self.acrylic_tips_fr(),
+            (Locale::En, PaintSystem::Acrylic) => self.acrylic_tips_en(),
+        }
+    }
+
+    fn oil_tips_fr(&self) -> &'static [&'static str] {
         match self {
             Technique::OilWash => &[
                 "Le vernis brillant en dessous doit etre sec depuis 24 h au minimum.",
@@ -706,55 +997,154 @@ impl Technique {
                 "Une huile opaque tient mieux le point lumineux qu'une transparente.",
                 "Le blanc de titane seche tres lentement : prevoir la couche suivante a distance.",
             ],
+            _ => &[],
         }
     }
 
-    pub fn tips_i18n(&self, locale: Locale) -> &'static [&'static str] {
-        match locale {
-            Locale::Fr => self.tips(),
-            Locale::En => match self {
-                Technique::OilWash => &[
-                    "The underlying gloss varnish must cure for at least 24 hours.",
-                    "Load the brush then blot it: the wash should flow, not flood.",
-                    "Wipe away excess with a cotton swab barely dampened with thinner before it sets.",
-                ],
-                Technique::PinWash => &[
-                    "Touch the tip of the brush into the recess and let capillary action pull the wash along.",
-                    "One pass per panel line: going back over it disturbs the deposit.",
-                ],
-                Technique::Filter => &[
-                    "Heavily thinned: a filter unifies a hue without replacing it.",
-                    "Two light filters are better than one heavy pass.",
-                ],
-                Technique::Glaze => &[
-                    "Favor transparent oils: an opaque pigment kills depth.",
-                    "Let each glaze dry before applying the next, otherwise you will lift the previous coat.",
-                ],
-                Technique::Blending => &[
-                    "Work within the open time: once the paint starts setting, stop.",
-                    "Use a clean, dry brush to feather the transition, wiping it between strokes.",
-                ],
-                Technique::DotFading => &[
-                    "Apply tiny dots of several hues, then streak them downward.",
-                    "Use less paint than you think: the brush should be almost dry.",
-                ],
-                Technique::StreakingGrime => &[
-                    "Paint the streak, let it bite for a minute or two, then feather downward.",
-                    "Follow gravity and water flow: vertical on flat sides, fanned out under rivets.",
-                ],
-                Technique::OilRendering => &[
-                    "Lay light and dark side by side, then blend the boundary.",
-                    "Build up over several sessions rather than in one heavy coat.",
-                ],
-                Technique::BaseLayer => &[
-                    "In oils, a full base coat is rare: it dries slowly and holds up subsequent steps.",
-                    "Mostly useful on large, smooth surfaces (busts, 1/10 scale).",
-                ],
-                Technique::Highlight => &[
-                    "An opaque oil holds a sharp catchlight better than a transparent one.",
-                    "Titanium white dries very slowly: plan the next coat accordingly.",
-                ],
-            },
+    fn oil_tips_en(&self) -> &'static [&'static str] {
+        match self {
+            Technique::OilWash => &[
+                "The underlying gloss varnish must cure for at least 24 hours.",
+                "Load the brush then blot it: the wash should flow, not flood.",
+                "Wipe away excess with a cotton swab barely dampened with thinner before it sets.",
+            ],
+            Technique::PinWash => &[
+                "Touch the tip of the brush into the recess and let capillary action pull the wash along.",
+                "One pass per panel line: going back over it disturbs the deposit.",
+            ],
+            Technique::Filter => &[
+                "Heavily thinned: a filter unifies a hue without replacing it.",
+                "Two light filters are better than one heavy pass.",
+            ],
+            Technique::Glaze => &[
+                "Favor transparent oils: an opaque pigment kills depth.",
+                "Let each glaze dry before applying the next, otherwise you will lift the previous coat.",
+            ],
+            Technique::Blending => &[
+                "Work within the open time: once the paint starts setting, stop.",
+                "Use a clean, dry brush to feather the transition, wiping it between strokes.",
+            ],
+            Technique::DotFading => &[
+                "Apply tiny dots of several hues, then streak them downward.",
+                "Use less paint than you think: the brush should be almost dry.",
+            ],
+            Technique::StreakingGrime => &[
+                "Paint the streak, let it bite for a minute or two, then feather downward.",
+                "Follow gravity and water flow: vertical on flat sides, fanned out under rivets.",
+            ],
+            Technique::OilRendering => &[
+                "Lay light and dark side by side, then blend the boundary.",
+                "Build up over several sessions rather than in one heavy coat.",
+            ],
+            Technique::BaseLayer => &[
+                "In oils, a full base coat is rare: it dries slowly and holds up subsequent steps.",
+                "Mostly useful on large, smooth surfaces (busts, 1/10 scale).",
+            ],
+            Technique::Highlight => &[
+                "An opaque oil holds a sharp catchlight better than a transparent one.",
+                "Titanium white dries very slowly: plan the next coat accordingly.",
+            ],
+            _ => &[],
+        }
+    }
+
+    fn acrylic_tips_fr(&self) -> &'static [&'static str] {
+        match self {
+            Technique::PinWash => &[
+                "Une goutte de medium ou de mouillant casse la tension de surface : le lavis file dans le creux au lieu de perler.",
+                "L'acrylique ne se reprend pas une fois sec : nettoyer les debordements tout de suite au pinceau humide.",
+            ],
+            Technique::Filter => &[
+                "Tres dilue, au medium plutot qu'a l'eau seule, pour ne pas laisser d'aureoles.",
+                "Sur une surface satinee ou brillante, le filtre s'etale sans taches.",
+            ],
+            Technique::Glaze => &[
+                "Diluer au medium a glacis plutot qu'a l'eau : la couche reste transparente sans poudrer.",
+                "Pinceau presque sec, plusieurs passages fins : l'acrylique seche entre deux et se superpose.",
+            ],
+            Technique::BaseLayer => &[
+                "Deux couches fines valent mieux qu'une epaisse : consistance de lait entier.",
+                "Laisser secher quelques minutes entre les deux : la seconde couvre sans arracher la premiere.",
+            ],
+            Technique::Highlight => &[
+                "Peinture opaque, a peine diluee, sur la pointe du pinceau.",
+                "Pas de blanc pur d'emblee : monter par paliers, le point le plus clair en dernier.",
+            ],
+            Technique::Layering => &[
+                "Chaque couche un peu plus claire et un peu plus petite que la precedente.",
+                "Consistance de lait : si la couche marque le pinceau, ajouter une goutte d'eau.",
+            ],
+            Technique::WetBlending => &[
+                "Quelques gouttes de retardateur : l'acrylique seche sinon avant d'avoir fondu.",
+                "Poser les deux teintes cote a cote encore humides et tirer la frontiere en un passage.",
+            ],
+            Technique::Drybrush => &[
+                "Charger puis essuyer le pinceau presque entierement sur un papier absorbant.",
+                "Un vieux pinceau plat et dur : le brossage use les poils.",
+            ],
+            Technique::EdgeHighlight => &[
+                "Le plat du pinceau sur l'arete, pas la pointe : le trait reste fin et regulier.",
+                "Peinture legerement diluee, sinon elle fait bourrelet.",
+            ],
+            Technique::ShadeWash => &[
+                "Laisser couler dans les creux sans repasser : le lavis se fixe en sechant.",
+                "Absorber les flaques sur les surfaces planes avec un pinceau essore.",
+            ],
+            Technique::ContrastPaint => &[
+                "Sur une sous-couche claire et lisse : la teinte depend de ce qu'il y a dessous.",
+                "Une seule couche genereuse, sans y revenir pendant qu'elle seche.",
+            ],
+            _ => &[],
+        }
+    }
+
+    fn acrylic_tips_en(&self) -> &'static [&'static str] {
+        match self {
+            Technique::PinWash => &[
+                "A drop of medium or flow aid breaks surface tension: the wash runs into the recess instead of beading.",
+                "Acrylic cannot be reworked once dry: clean overflow right away with a damp brush.",
+            ],
+            Technique::Filter => &[
+                "Heavily thinned, with medium rather than water alone, to avoid tide marks.",
+                "On a satin or gloss surface, the filter spreads without staining.",
+            ],
+            Technique::Glaze => &[
+                "Thin with glaze medium rather than water: the coat stays transparent without turning chalky.",
+                "Nearly dry brush, several thin passes: acrylic dries between them and stacks up.",
+            ],
+            Technique::BaseLayer => &[
+                "Two thin coats beat one thick one: whole-milk consistency.",
+                "Let it dry a few minutes in between: the second coat covers without lifting the first.",
+            ],
+            Technique::Highlight => &[
+                "Opaque paint, barely thinned, on the tip of the brush.",
+                "No pure white straight away: build up in steps, brightest point last.",
+            ],
+            Technique::Layering => &[
+                "Each layer slightly lighter and slightly smaller than the one below.",
+                "Milk consistency: if the coat shows brush marks, add a drop of water.",
+            ],
+            Technique::WetBlending => &[
+                "A few drops of retarder: otherwise acrylic dries before it blends.",
+                "Lay both hues side by side while wet and pull the boundary in one stroke.",
+            ],
+            Technique::Drybrush => &[
+                "Load then wipe the brush almost completely on a paper towel.",
+                "Use an old, stiff flat brush: drybrushing wears the bristles.",
+            ],
+            Technique::EdgeHighlight => &[
+                "The flat of the brush on the edge, not the tip: the line stays thin and even.",
+                "Slightly thinned paint, otherwise it leaves a ridge.",
+            ],
+            Technique::ShadeWash => &[
+                "Let it flow into recesses without going back: the wash sets as it dries.",
+                "Soak up pools on flat areas with a squeezed-out brush.",
+            ],
+            Technique::ContrastPaint => &[
+                "Over a light, smooth undercoat: the hue depends on what lies beneath.",
+                "One generous coat, without going back over it while it dries.",
+            ],
+            _ => &[],
         }
     }
 
@@ -773,6 +1163,15 @@ impl Technique {
             .unwrap_or(fallback)
     }
 
+    /// Like [`Technique::by_label`], with a fallback that matches the system of the piece.
+    pub fn by_label_in(label: Option<&str>, system: PaintSystem) -> Technique {
+        let fallback = match system {
+            PaintSystem::Oil => Technique::Glaze,
+            PaintSystem::Acrylic => Technique::Layering,
+        };
+        Self::by_label(label, fallback)
+    }
+
     pub fn as_db_str(&self) -> &'static str {
         match self {
             Technique::OilWash => "OIL_WASH",
@@ -785,6 +1184,12 @@ impl Technique {
             Technique::OilRendering => "OIL_RENDERING",
             Technique::BaseLayer => "BASE_LAYER",
             Technique::Highlight => "HIGHLIGHT",
+            Technique::Layering => "LAYERING",
+            Technique::WetBlending => "WET_BLENDING",
+            Technique::Drybrush => "DRYBRUSH",
+            Technique::EdgeHighlight => "EDGE_HIGHLIGHT",
+            Technique::ShadeWash => "SHADE_WASH",
+            Technique::ContrastPaint => "CONTRAST_PAINT",
         }
     }
 }
@@ -793,30 +1198,17 @@ impl FromStr for Technique {
     type Err = DomainError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim().to_uppercase().as_str() {
-            "OIL_WASH" => Ok(Technique::OilWash),
-            "PIN_WASH" => Ok(Technique::PinWash),
-            "FILTER" => Ok(Technique::Filter),
-            "GLAZE" => Ok(Technique::Glaze),
-            "BLENDING" => Ok(Technique::Blending),
-            "DOT_FADING" => Ok(Technique::DotFading),
-            "STREAKING_GRIME" => Ok(Technique::StreakingGrime),
-            "OIL_RENDERING" => Ok(Technique::OilRendering),
-            "BASE_LAYER" => Ok(Technique::BaseLayer),
-            "HIGHLIGHT" => Ok(Technique::Highlight),
-            other => {
-                if let Some(found) = Self::ALL.into_iter().find(|t| {
-                    t.label().eq_ignore_ascii_case(s.trim())
-                        || t.label_i18n(Locale::En).eq_ignore_ascii_case(s.trim())
-                }) {
-                    Ok(found)
-                } else {
-                    Err(DomainError::InvalidArgument(format!(
-                        "Technique inconnue : {other}"
-                    )))
-                }
-            }
+        let key = s.trim().to_uppercase();
+        if let Some(found) = Self::ALL.into_iter().find(|t| t.as_db_str() == key) {
+            return Ok(found);
         }
+        Self::ALL
+            .into_iter()
+            .find(|t| {
+                t.label().eq_ignore_ascii_case(s.trim())
+                    || t.label_i18n(Locale::En).eq_ignore_ascii_case(s.trim())
+            })
+            .ok_or_else(|| DomainError::InvalidArgument(format!("Technique inconnue : {key}")))
     }
 }
 
@@ -882,10 +1274,17 @@ pub struct Paint {
     pub user_added: bool,
     pub in_stock: bool,
     pub notes: String,
+    /// Oil tube or acrylic pot.
+    #[serde(default)]
+    pub system: PaintSystem,
 }
 
 impl Paint {
-    pub fn new(brand: impl Into<String>, name: impl Into<String>, hex_color: impl Into<String>) -> Self {
+    pub fn new(
+        brand: impl Into<String>,
+        name: impl Into<String>,
+        hex_color: impl Into<String>,
+    ) -> Self {
         Self {
             id: None,
             brand: brand.into(),
@@ -903,7 +1302,14 @@ impl Paint {
             user_added: false,
             in_stock: true,
             notes: String::new(),
+            system: PaintSystem::Oil,
         }
+    }
+
+    /// Same paint, declared as belonging to another system.
+    pub fn in_system(mut self, system: PaintSystem) -> Self {
+        self.system = system;
+        self
     }
 
     pub fn color(&self) -> Rgb {
@@ -936,10 +1342,22 @@ impl Paint {
 
         for pig in &self.pigments {
             let p = pig.to_uppercase();
-            if p.starts_with("PR108") || p.starts_with("PY35") || p.starts_with("PY37") || p.starts_with("PO20") {
+            if p.starts_with("PR108")
+                || p.starts_with("PY35")
+                || p.starts_with("PY37")
+                || p.starts_with("PO20")
+            {
                 hazards.push("Cadmium (sulfoséléniure)".to_string());
                 level = SafetyLevel::Hazard;
-            } else if p.starts_with("PB28") || p.starts_with("PB35") || p.starts_with("PB36") || p.starts_with("PB72") || p.starts_with("PB74") || p.starts_with("PG19") || p.starts_with("PG26") || p.starts_with("PV14") {
+            } else if p.starts_with("PB28")
+                || p.starts_with("PB35")
+                || p.starts_with("PB36")
+                || p.starts_with("PB72")
+                || p.starts_with("PB74")
+                || p.starts_with("PG19")
+                || p.starts_with("PG26")
+                || p.starts_with("PV14")
+            {
                 hazards.push("Cobalt".to_string());
                 level = SafetyLevel::Hazard;
             } else if p.starts_with("PW1") {
@@ -1312,5 +1730,75 @@ mod tests {
         assert_eq!(2, closest.len());
         assert!(closest[0].delta_e <= closest[1].delta_e);
         assert_eq!("Burnt Umber", closest[0].paint.name);
+    }
+}
+
+#[cfg(test)]
+mod system_tests {
+    use super::*;
+
+    #[test]
+    fn mediums_belong_to_one_system_except_pure_paint() {
+        assert!(Medium::None.fits(PaintSystem::Oil) && Medium::None.fits(PaintSystem::Acrylic));
+        assert!(!Medium::Water.fits(PaintSystem::Oil));
+        assert!(!Medium::LinseedOil.fits(PaintSystem::Acrylic));
+        assert!(Medium::for_system(PaintSystem::Acrylic).contains(&Medium::Retarder));
+        assert!(!Medium::for_system(PaintSystem::Acrylic).contains(&Medium::OdorlessThinner));
+    }
+
+    #[test]
+    fn acrylic_mediums_never_make_a_coat_fatter_or_leaner() {
+        for m in Medium::for_system(PaintSystem::Acrylic) {
+            assert_eq!(1.0, m.fatness(0.5), "{m:?}");
+        }
+    }
+
+    #[test]
+    fn shared_technique_changes_thinner_with_the_system() {
+        assert_eq!(
+            Medium::OdorlessThinner,
+            Technique::PinWash.default_medium_in(PaintSystem::Oil)
+        );
+        assert_eq!(
+            Medium::Water,
+            Technique::PinWash.default_medium_in(PaintSystem::Acrylic)
+        );
+        assert_eq!(
+            Medium::AcrylicGlazeMedium,
+            Technique::Glaze.default_medium_in(PaintSystem::Acrylic)
+        );
+        assert_ne!(
+            Technique::BaseLayer.tips_in(PaintSystem::Oil, Locale::Fr),
+            Technique::BaseLayer.tips_in(PaintSystem::Acrylic, Locale::Fr)
+        );
+    }
+
+    #[test]
+    fn native_technique_imposes_its_system_on_the_piece() {
+        // An oil wash on an acrylic piece stays oil; layering on an oil piece stays acrylic.
+        assert_eq!(
+            PaintSystem::Oil,
+            Technique::OilWash.system_within(PaintSystem::Acrylic)
+        );
+        assert_eq!(
+            PaintSystem::Acrylic,
+            Technique::Layering.system_within(PaintSystem::Oil)
+        );
+        assert_eq!(
+            PaintSystem::Acrylic,
+            Technique::Glaze.system_within(PaintSystem::Acrylic)
+        );
+        assert!(!Technique::for_system(PaintSystem::Oil).contains(&Technique::Drybrush));
+        assert!(!Technique::for_system(PaintSystem::Acrylic).contains(&Technique::OilRendering));
+    }
+
+    #[test]
+    fn every_technique_survives_its_db_name() {
+        for t in Technique::ALL {
+            assert_eq!(t, Technique::from_str(t.as_db_str()).unwrap());
+        }
+        for m in Medium::ALL {
+            assert_eq!(m, Medium::from_str(m.as_db_str()).unwrap());
+        }
     }
 }

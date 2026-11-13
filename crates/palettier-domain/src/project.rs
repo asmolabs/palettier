@@ -2,7 +2,7 @@ use crate::color::{Rgb, delta_e_2000};
 use crate::drying::Workshop;
 use crate::error::DomainError;
 use crate::i18n::Locale;
-use crate::paint::{DryingClass, LayerThickness, Paint, Technique, Ventilation};
+use crate::paint::{DryingClass, LayerThickness, Paint, PaintSystem, Technique, Ventilation};
 use crate::palette::Palette;
 use crate::recipe::Recipe;
 use chrono::{DateTime, Utc};
@@ -99,6 +99,16 @@ impl ProjectLayer {
 
     pub fn is_applied(&self) -> bool {
         self.applied.is_some()
+    }
+
+    /// The technique of this coat, read in the system of the piece.
+    pub fn technique_within(&self, project: PaintSystem) -> Technique {
+        Technique::by_label_in(Some(&self.technique), project)
+    }
+
+    /// The system this coat is painted in, within a piece painted in `project`.
+    pub fn system_within(&self, project: PaintSystem) -> PaintSystem {
+        self.technique_within(project).system_within(project)
     }
 
     pub fn mark_applied(
@@ -223,6 +233,11 @@ pub struct Project {
     pub subject: String,
     pub approach: String,
     pub notes: String,
+    /// Oil or acrylic: decides the thinners, techniques, drying model and rules offered.
+    /// A coat whose technique belongs to the other system (an oil wash over an acrylic
+    /// piece) keeps its own system, see [`ProjectLayer::system_within`].
+    #[serde(default)]
+    pub system: PaintSystem,
     pub palette: Option<Palette>,
     pub paints: Vec<Paint>,
     pub zones: Vec<ProjectZone>,
@@ -238,6 +253,7 @@ impl Project {
             subject: String::new(),
             approach: String::new(),
             notes: String::new(),
+            system: PaintSystem::Oil,
             palette: None,
             paints: Vec::new(),
             zones: Vec::new(),
@@ -285,6 +301,7 @@ pub struct FatOverLeanRisk {
 struct Coat {
     label: String,
     role: String,
+    system: PaintSystem,
     fatness: f64,
     thickness: LayerThickness,
 }
@@ -308,7 +325,7 @@ impl FatOverLeanService {
                 let coats: Vec<Coat> = zone
                     .layers
                     .iter()
-                    .map(|l| Self::coat_of(l, locale))
+                    .map(|l| Self::coat_of(l, project.system, locale))
                     .collect();
                 Self::inspect(&zone.name, &coats, locale)
             })
@@ -328,6 +345,7 @@ impl FatOverLeanService {
             .map(|(idx, step)| Coat {
                 label: step.technique.label_i18n(locale).to_string(),
                 role: format!("{step_prefix} {}", idx + 1),
+                system: step.system(),
                 fatness: step.medium.fatness(step.medium_ratio),
                 thickness: step.thickness,
             })
@@ -360,6 +378,23 @@ impl FatOverLeanService {
         over: &Coat,
         locale: Locale,
     ) -> Option<FatOverLeanRisk> {
+        match (under.system, over.system) {
+            // Acrylic does not hold on oil: the water-based film finds no grip on an
+            // oily surface and peels. The reverse (oil over acrylic) is the classic
+            // miniature workflow and is fine once the acrylic is dry.
+            (PaintSystem::Oil, PaintSystem::Acrylic) => {
+                return Some(FatOverLeanRisk {
+                    where_name: where_name.to_string(),
+                    under: under.role.clone(),
+                    over: over.role.clone(),
+                    drop: 1.0,
+                    explanation: Self::explain_acrylic_over_oil(&under.label, &over.label, locale),
+                });
+            }
+            // Fat over lean is an oil rule only.
+            (PaintSystem::Oil, PaintSystem::Oil) => {}
+            _ => return None,
+        }
         let drop = under.fatness - over.fatness;
         if drop < Self::SIGNIFICANT_DROP {
             return None;
@@ -376,13 +411,25 @@ impl FatOverLeanService {
         })
     }
 
-    fn coat_of(layer: &ProjectLayer, locale: Locale) -> Coat {
-        let technique = Technique::by_label(Some(&layer.technique), Technique::Glaze);
+    fn coat_of(layer: &ProjectLayer, project: PaintSystem, locale: Locale) -> Coat {
+        let technique = layer.technique_within(project);
         Coat {
             label: technique.label_i18n(locale).to_string(),
             role: layer.role.clone(),
+            system: technique.system_within(project),
             fatness: Self::fatness(technique),
             thickness: technique.typical_thickness(),
+        }
+    }
+
+    fn explain_acrylic_over_oil(below: &str, above: &str, locale: Locale) -> String {
+        match locale {
+            Locale::Fr => format!(
+                "{above} est a l'acrylique, posee sur {below} a l'huile : l'acrylique n'accroche pas sur un film gras et s'ecaillera. Gardez l'ordre acrylique puis huile, ou faites cette etape a l'huile."
+            ),
+            Locale::En => format!(
+                "{above} is acrylic, applied over {below} in oil: acrylic does not grip an oily film and will flake off. Keep the order acrylic then oil, or do this step in oil."
+            ),
         }
     }
 
@@ -636,6 +683,34 @@ mod tests {
         }
         p.zones.push(z);
         p
+    }
+
+    #[test]
+    fn fat_over_lean_is_not_applied_between_acrylic_coats() {
+        let service = FatOverLeanService::new();
+        // In oil, a lean filter over an opaque highlight would be flagged; in acrylic it is normal.
+        let mut p = piece_with(&[
+            Technique::BaseLayer.label(),
+            Technique::Highlight.label(),
+            Technique::Filter.label(),
+            Technique::Layering.label(),
+        ]);
+        p.system = PaintSystem::Acrylic;
+        assert!(service.inspect_project(&p).is_empty());
+    }
+
+    #[test]
+    fn oil_over_acrylic_is_fine_acrylic_over_oil_is_flagged() {
+        let service = FatOverLeanService::new();
+        let mut fine = piece_with(&[Technique::Layering.label(), Technique::OilWash.label()]);
+        fine.system = PaintSystem::Acrylic;
+        assert!(service.inspect_project(&fine).is_empty());
+
+        let mut wrong = piece_with(&[Technique::OilWash.label(), Technique::EdgeHighlight.label()]);
+        wrong.system = PaintSystem::Acrylic;
+        let risks = service.inspect_project(&wrong);
+        assert_eq!(1, risks.len());
+        assert!(risks[0].explanation.contains("n'accroche pas"));
     }
 
     #[test]

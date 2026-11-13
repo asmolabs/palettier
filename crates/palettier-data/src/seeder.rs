@@ -111,10 +111,8 @@ impl CatalogSeeder {
 
     async fn sync_catalogue(&self, reference: &[Paint]) -> DomainResult<SyncStats> {
         let mut sync = SyncStats::default();
-        let from_files: IndexMap<String, &Paint> = reference
-            .iter()
-            .map(|p| (Self::key(p), p))
-            .collect();
+        let from_files: IndexMap<String, &Paint> =
+            reference.iter().map(|p| (Self::key(p), p)).collect();
         let covered_brands: IndexSet<String> = reference.iter().map(|p| p.brand.clone()).collect();
 
         let stored = self.paints.all().await?;
@@ -154,6 +152,7 @@ impl CatalogSeeder {
         updated.drying_class = reference.drying_class;
         updated.tinting_strength = reference.tinting_strength;
         updated.pigments_verified = reference.pigments_verified;
+        updated.system = reference.system;
 
         if updated.color_derived && !reference.color_derived {
             updated.hex_color = reference.hex_color.clone();
@@ -183,7 +182,10 @@ impl CatalogSeeder {
     }
 
     fn is_calibrated(paint: &Paint) -> bool {
-        paint.tint_hex.as_ref().is_some_and(|s| !s.trim().is_empty())
+        paint
+            .tint_hex
+            .as_ref()
+            .is_some_and(|s| !s.trim().is_empty())
             || !paint.notes.trim().is_empty()
     }
 
@@ -250,7 +252,33 @@ impl CatalogSeeder {
             self.zorn().await?,
             self.flesh().await?,
             self.armour().await?,
+            self.acrylic_armour().await?,
         ])
+    }
+
+    async fn acrylic_armour(&self) -> DomainResult<Palette> {
+        Ok(Palette {
+            id: None,
+            name: "Armure bleue (acrylique)".to_string(),
+            purpose: "Figurine 28-32 mm, peinte entierement a l'acrylique".to_string(),
+            notes: concat!(
+                "Une echelle de bleus du plus sombre au plus clair, un lavis noir-bleu pour les creux ",
+                "et un gris tres clair pour les liseres. A l'acrylique, on ne fond pas : on superpose ",
+                "des couches fines, chacune un peu plus claire et un peu plus petite que la precedente."
+            )
+            .to_string(),
+            paints: self
+                .resolve(&[
+                    ("Citadel", "Kantor Blue"),
+                    ("Citadel", "Macragge Blue"),
+                    ("Citadel", "Altdorf Guard Blue"),
+                    ("Citadel", "Calgar Blue"),
+                    ("Citadel", "Fenrisian Grey"),
+                    ("Citadel", "Abaddon Black"),
+                    ("Citadel", "White Scar"),
+                ])
+                .await?,
+        })
     }
 
     async fn zorn(&self) -> DomainResult<Palette> {
@@ -425,6 +453,59 @@ impl CatalogSeeder {
                         0.85,
                         LayerThickness::Glaze,
                         "Toujours au-dessus de l'ecaillage, jamais en dessous.",
+                    ),
+                ],
+            },
+            Recipe {
+                id: None,
+                name: "Armure bleue en couches acryliques".to_string(),
+                subject: "Figurine 28-32 mm".to_string(),
+                notes: concat!(
+                    "Entierement a l'acrylique, sur sous-couche noire ou grise.
+",
+                    "Chaque etape se reprend apres quelques minutes : la piece se termine en une seance."
+                )
+                .to_string(),
+                steps: vec![
+                    Self::step(
+                        Technique::BaseLayer,
+                        "Macragge Blue",
+                        Medium::Water,
+                        0.30,
+                        LayerThickness::Normal,
+                        "Deux couches fines plutot qu'une epaisse.",
+                    ),
+                    Self::step(
+                        Technique::ShadeWash,
+                        "Kantor Blue + Abaddon Black (1:1)",
+                        Medium::AcrylicGlazeMedium,
+                        0.60,
+                        LayerThickness::Glaze,
+                        "Dans les creux et sous les plaques, sans repasser.",
+                    ),
+                    Self::step(
+                        Technique::Layering,
+                        "Macragge Blue puis Altdorf Guard Blue",
+                        Medium::Water,
+                        0.40,
+                        LayerThickness::Thin,
+                        "Reprendre la base en laissant l'ombre dans les creux, puis remonter sur les volumes.",
+                    ),
+                    Self::step(
+                        Technique::EdgeHighlight,
+                        "Calgar Blue",
+                        Medium::Water,
+                        0.30,
+                        LayerThickness::Thin,
+                        "Sur toutes les aretes, au plat du pinceau.",
+                    ),
+                    Self::step(
+                        Technique::Highlight,
+                        "Fenrisian Grey",
+                        Medium::None,
+                        0.0,
+                        LayerThickness::Thin,
+                        "Points de lumiere aux angles les plus exposes seulement.",
                     ),
                 ],
             },

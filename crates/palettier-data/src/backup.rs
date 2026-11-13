@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use palettier_domain::color::Rgb;
 use palettier_domain::error::{DomainError, DomainResult};
 use palettier_domain::paint::{
-    DryingClass, LayerThickness, Medium, Opacity, Paint, Technique, Ventilation,
+    DryingClass, LayerThickness, Medium, Opacity, Paint, PaintSystem, Technique, Ventilation,
 };
 use palettier_domain::palette::Palette;
 use palettier_domain::port::{
@@ -72,6 +72,9 @@ pub struct BackupPaint {
     pub color_derived: bool,
     #[serde(default)]
     pub notes: String,
+    /// "OIL" or "ACRYLIC"; absent from older backups, which held oil only.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub system: String,
 }
 
 fn default_tinting() -> f64 {
@@ -109,6 +112,9 @@ pub struct BackupProject {
     pub notes: String,
     #[serde(default)]
     pub palette_name: Option<String>,
+    /// "OIL" or "ACRYLIC"; absent from older backups, which held oil only.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub system: String,
     #[serde(default)]
     pub created_at: Option<String>,
     #[serde(default)]
@@ -215,7 +221,10 @@ impl ZipBackupArchive {
 
     pub fn open(path: impl AsRef<Path>) -> DomainResult<Self> {
         let file = File::open(path.as_ref()).map_err(|e| {
-            DomainError::Persistence(format!("Impossible d'ouvrir l'archive {:?}: {e}", path.as_ref()))
+            DomainError::Persistence(format!(
+                "Impossible d'ouvrir l'archive {:?}: {e}",
+                path.as_ref()
+            ))
         })?;
         let zip = ZipArchive::new(file).map_err(|e| {
             DomainError::Persistence(format!("Archive ZIP invalide {:?}: {e}", path.as_ref()))
@@ -223,7 +232,10 @@ impl ZipBackupArchive {
         Ok(Self { zip })
     }
 
-    fn read_bounded(mut entry: zip::read::ZipFile<'_, File>, max_bytes: u64) -> DomainResult<Vec<u8>> {
+    fn read_bounded(
+        mut entry: zip::read::ZipFile<'_, File>,
+        max_bytes: u64,
+    ) -> DomainResult<Vec<u8>> {
         // Zip-Slip protection: reject paths containing `..` or absolute paths
         if entry.enclosed_name().is_none() {
             return Err(DomainError::InvalidArgument(format!(
@@ -265,10 +277,12 @@ impl BackupArchive for ZipBackupArchive {
 
     fn file(&mut self, path: &str) -> DomainResult<Option<Vec<u8>>> {
         // Pre-validate the requested path
-        if Path::new(path)
-            .components()
-            .any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir))
-        {
+        if Path::new(path).components().any(|c| {
+            matches!(
+                c,
+                std::path::Component::ParentDir | std::path::Component::RootDir
+            )
+        }) {
             return Err(DomainError::InvalidArgument(format!(
                 "Chemin d'archive non sécurisé : {path}"
             )));
@@ -314,7 +328,10 @@ impl BackupWriter for ZipBackupWriter {
         };
         if let Some(parent) = self.archive_path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| {
-                DomainError::Persistence(format!("Impossible de créer le dossier {:?}: {e}", parent))
+                DomainError::Persistence(format!(
+                    "Impossible de créer le dossier {:?}: {e}",
+                    parent
+                ))
             })?;
         }
         let file = File::create(&self.archive_path).map_err(|e| {
@@ -324,8 +341,8 @@ impl BackupWriter for ZipBackupWriter {
             ))
         })?;
         let mut zip = zip::ZipWriter::new(file);
-        let options = SimpleFileOptions::default()
-            .compression_method(zip::CompressionMethod::Deflated);
+        let options =
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
         zip.start_file(BackupExporter::DOCUMENT, options)
             .map_err(|e| DomainError::Persistence(format!("Erreur ZIP: {e}")))?;
@@ -414,8 +431,9 @@ impl BackupImporter {
 
         let mut warnings = Vec::new();
         let (paints_updated, paints_created) = self.restore_paints(&document.paints).await?;
-        let (palettes_added, palettes_skipped) =
-            self.restore_palettes(&document.palettes, &mut warnings).await?;
+        let (palettes_added, palettes_skipped) = self
+            .restore_palettes(&document.palettes, &mut warnings)
+            .await?;
         let (recipes_added, recipes_skipped) = self.restore_recipes(&document.recipes).await?;
         let (projects_added, projects_skipped, photos) = self
             .restore_projects(&document.projects, archive, &mut warnings)
@@ -472,6 +490,7 @@ impl BackupImporter {
                     user_added: false,
                     in_stock: entry.owned,
                     notes: entry.notes.clone(),
+                    system: PaintSystem::from_str(&entry.system).unwrap_or_default(),
                 };
                 self.catalog.save(&paint).await?;
                 created += 1;
@@ -610,6 +629,7 @@ impl BackupImporter {
                     subject: entry.subject.clone(),
                     approach: entry.approach.clone(),
                     notes: entry.notes.clone(),
+                    system: PaintSystem::from_str(&entry.system).unwrap_or_default(),
                     palette: entry
                         .palette_name
                         .as_ref()
@@ -802,6 +822,7 @@ impl BackupExporter {
                     owned: p.in_stock,
                     color_derived: p.color_derived,
                     notes: p.notes.clone(),
+                    system: p.system.as_db_str().to_string(),
                 })
                 .collect(),
             palettes: all_palettes
@@ -863,6 +884,7 @@ impl BackupExporter {
             approach: project.approach.clone(),
             notes: project.notes.clone(),
             palette_name: project.palette.as_ref().map(|p| p.name.clone()),
+            system: project.system.as_db_str().to_string(),
             created_at: Some(format_iso_instant(project.created_at)),
             paints: project
                 .paints
@@ -917,13 +939,7 @@ impl BackupExporter {
         let mapped: String = name
             .to_lowercase()
             .chars()
-            .map(|c| {
-                if c.is_ascii_alphanumeric() {
-                    c
-                } else {
-                    '-'
-                }
-            })
+            .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
             .collect();
         let mut collapsed = String::new();
         let mut prev_dash = false;
