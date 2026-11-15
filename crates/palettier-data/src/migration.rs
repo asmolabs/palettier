@@ -8,6 +8,8 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(InitialSchemaMigration),
             Box::new(PaintSystemMigration),
+            Box::new(LayerTechniqueCodeMigration),
+            Box::new(OrphanLayerCleanupMigration),
         ]
     }
 }
@@ -223,6 +225,119 @@ impl MigrationTrait for PaintSystemMigration {
             "#,
         )
         .await?;
+        Ok(())
+    }
+}
+
+/// A coat's technique was stored as its displayed label (French, English, with or
+/// without accents, or anything the assistant made up). It is now stored as its code.
+/// A label that names no known technique becomes the default technique of the piece's
+/// system, and the label is kept, word for word, at the head of the coat's note.
+///
+/// Every row is converted, including coats left behind by a zone deleted while foreign
+/// keys were off (they are read as oil): no row keeps a label the new code would misread.
+pub struct LayerTechniqueCodeMigration;
+
+impl MigrationName for LayerTechniqueCodeMigration {
+    fn name(&self) -> &str {
+        "m0003_layer_technique_code"
+    }
+}
+
+#[async_trait::async_trait]
+impl MigrationTrait for LayerTechniqueCodeMigration {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        use palettier_domain::paint::{PaintSystem, Technique};
+        use palettier_domain::project::ProjectLayer;
+        use sea_orm::{ConnectionTrait, Statement};
+        use std::str::FromStr;
+
+        let db = manager.get_connection();
+        let backend = db.get_database_backend();
+        let rows = db
+            .query_all_raw(Statement::from_string(
+                backend,
+                r#"
+                SELECT l.id, l.technique, l.note, COALESCE(p.paint_system, 'OIL') AS paint_system
+                FROM project_layer l
+                LEFT JOIN project_zone z ON z.id = l.zone_id
+                LEFT JOIN project p ON p.id = z.project_id
+                "#,
+            ))
+            .await?;
+
+        for row in rows {
+            let id: i64 = row.try_get("", "id")?;
+            let label: String = row.try_get("", "technique")?;
+            let note: String = row.try_get("", "note")?;
+            let system: String = row.try_get("", "paint_system")?;
+            let system = PaintSystem::from_str(&system).unwrap_or_default();
+
+            let mut layer = ProjectLayer::new("", "");
+            layer.note = note;
+            if label.trim().is_empty() {
+                layer.technique = Technique::default_for(system);
+            } else {
+                layer.set_technique_label(&label, system);
+            }
+            db.execute_raw(Statement::from_sql_and_values(
+                backend,
+                "UPDATE project_layer SET technique = ?, note = ? WHERE id = ?",
+                [
+                    layer.technique.as_db_str().into(),
+                    layer.note.into(),
+                    id.into(),
+                ],
+            ))
+            .await?;
+        }
+        Ok(())
+    }
+
+    async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        // Codes back to French labels, the form the previous version reads. The labels
+        // kept in notes stay there.
+        use palettier_domain::paint::Technique;
+        use sea_orm::{ConnectionTrait, Statement};
+
+        let db = manager.get_connection();
+        let backend = db.get_database_backend();
+        for t in Technique::ALL {
+            db.execute_raw(Statement::from_sql_and_values(
+                backend,
+                "UPDATE project_layer SET technique = ? WHERE technique = ?",
+                [t.legacy_label().into(), t.as_db_str().into()],
+            ))
+            .await?;
+        }
+        Ok(())
+    }
+}
+
+/// Removes coats whose zone no longer exists. They were left behind when a zone was
+/// deleted while SQLite foreign keys were off; nothing displays or uses them.
+pub struct OrphanLayerCleanupMigration;
+
+impl MigrationName for OrphanLayerCleanupMigration {
+    fn name(&self) -> &str {
+        "m0004_orphan_layer_cleanup"
+    }
+}
+
+#[async_trait::async_trait]
+impl MigrationTrait for OrphanLayerCleanupMigration {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .get_connection()
+            .execute_unprepared(
+                "DELETE FROM project_layer WHERE zone_id NOT IN (SELECT id FROM project_zone);",
+            )
+            .await?;
+        Ok(())
+    }
+
+    async fn down(&self, _manager: &SchemaManager) -> Result<(), DbErr> {
+        // Deleted rows had no zone to come back to.
         Ok(())
     }
 }

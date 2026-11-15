@@ -207,14 +207,14 @@ mod tests {
 
         let posed: DateTime<Utc> = "2026-03-01T18:30:00Z".parse().unwrap();
         let mut layer1 = ProjectLayer::new("Ombre 1", "#8A5F4A");
-        layer1.technique = "Glacis".to_string();
+        layer1.technique = palettier_domain::paint::Technique::Glaze;
         let layer1 = layer1.mark_applied(
             posed,
             Workshop::new(24.0, 40.0, Ventilation::Good).unwrap(),
             DryingClass::VerySlow,
         );
         let mut layer2 = ProjectLayer::new("Base", "#C98F72");
-        layer2.technique = "Glacis".to_string();
+        layer2.technique = palettier_domain::paint::Technique::Glaze;
 
         let zone = ProjectZone {
             id: None,
@@ -296,6 +296,113 @@ mod tests {
         dup.id = None;
         let saved_dup = inst.projects.save(&dup).await.unwrap();
         assert_eq!("Grognard 2", saved_dup.name);
+    }
+
+    #[tokio::test]
+    async fn migration_turns_technique_labels_into_codes_and_keeps_unknown_ones() {
+        use crate::migration::LayerTechniqueCodeMigration;
+        use sea_orm::{ConnectionTrait, Statement};
+        use sea_orm_migration::{MigrationTrait, MigratorTrait, SchemaManager};
+
+        let db = Database::in_memory().await.unwrap();
+        let conn = db.connection();
+        // Rows as the previous version wrote them: labels, not codes, and one coat whose
+        // zone was deleted while foreign keys were off.
+        conn.execute_unprepared(
+            r#"
+            PRAGMA foreign_keys = OFF;
+            INSERT INTO project (id, name, created_at, paint_system) VALUES (1, 'P', 0, 'ACRYLIC');
+            INSERT INTO project_zone (id, project_id, name, position) VALUES (1, 1, 'Z', 0);
+            INSERT INTO project_layer (id, zone_id, role, target_hex, technique, note, position) VALUES
+                (1, 1, 'a', '#000000', 'Jus a l''huile', '', 0),
+                (2, 1, 'b', '#000000', 'Edge highlight', '', 1),
+                (3, 1, 'c', '#000000', 'Pointillé', 'sur le nez', 2),
+                (4, 1, 'd', '#000000', '', '', 3),
+                (5, 99, 'orphan', '#000000', 'Glacis', '', 4);
+            PRAGMA foreign_keys = ON;
+            "#,
+        )
+        .await
+        .unwrap();
+
+        LayerTechniqueCodeMigration
+            .up(&SchemaManager::new(conn))
+            .await
+            .unwrap();
+        assert!(
+            crate::migration::Migrator::migrations()
+                .iter()
+                .any(|m| m.name() == "m0003_layer_technique_code"),
+            "la migration doit etre enregistree, pas seulement ecrite"
+        );
+
+        let rows = conn
+            .query_all_raw(Statement::from_string(
+                conn.get_database_backend(),
+                "SELECT technique, note FROM project_layer ORDER BY id",
+            ))
+            .await
+            .unwrap();
+        let got: Vec<(String, String)> = rows
+            .iter()
+            .map(|r| (r.try_get("", "technique").unwrap(), r.try_get("", "note").unwrap()))
+            .collect();
+        assert_eq!(
+            vec![
+                ("OIL_WASH".to_string(), String::new()),
+                ("EDGE_HIGHLIGHT".to_string(), String::new()),
+                // Unknown: the acrylic piece's default, label kept in the note.
+                ("LAYERING".to_string(), "Technique proposée : Pointillé. sur le nez".to_string()),
+                ("LAYERING".to_string(), String::new()),
+                // A coat whose zone is gone is converted too.
+                ("GLAZE".to_string(), String::new()),
+            ],
+            got
+        );
+    }
+
+    #[tokio::test]
+    async fn cleanup_removes_only_coats_whose_zone_is_gone() {
+        use crate::migration::OrphanLayerCleanupMigration;
+        use sea_orm::{ConnectionTrait, Statement};
+        use sea_orm_migration::{MigrationTrait, MigratorTrait, SchemaManager};
+
+        let db = Database::in_memory().await.unwrap();
+        let conn = db.connection();
+        conn.execute_unprepared(
+            r#"
+            PRAGMA foreign_keys = OFF;
+            INSERT INTO project (id, name, created_at) VALUES (1, 'P', 0);
+            INSERT INTO project_zone (id, project_id, name, position) VALUES (1, 1, 'Z', 0);
+            INSERT INTO project_layer (id, zone_id, role, target_hex, technique, position) VALUES
+                (1, 1, 'kept', '#000000', 'GLAZE', 0),
+                (2, 99, 'orphan', '#000000', 'GLAZE', 0),
+                (3, 98, 'orphan', '#000000', 'GLAZE', 0);
+            PRAGMA foreign_keys = ON;
+            "#,
+        )
+        .await
+        .unwrap();
+
+        OrphanLayerCleanupMigration
+            .up(&SchemaManager::new(conn))
+            .await
+            .unwrap();
+        assert!(
+            crate::migration::Migrator::migrations()
+                .iter()
+                .any(|m| m.name() == "m0004_orphan_layer_cleanup")
+        );
+
+        let rows = conn
+            .query_all_raw(Statement::from_string(
+                conn.get_database_backend(),
+                "SELECT role FROM project_layer",
+            ))
+            .await
+            .unwrap();
+        let roles: Vec<String> = rows.iter().map(|r| r.try_get("", "role").unwrap()).collect();
+        assert_eq!(vec!["kept".to_string()], roles);
     }
 
     #[tokio::test]
@@ -475,3 +582,4 @@ mod tests {
         let _ = std::fs::remove_file(&temp_zip);
     }
 }
+

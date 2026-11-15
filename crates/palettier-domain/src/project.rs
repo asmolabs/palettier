@@ -74,7 +74,9 @@ pub struct ProjectLayer {
     pub id: Option<i64>,
     pub role: String,
     pub target_hex: String,
-    pub technique: String,
+    /// A known technique. A label the application did not recognise (from the assistant
+    /// or an older version) is kept in `note` instead of being silently replaced.
+    pub technique: Technique,
     pub note: String,
     pub kind: LayerKind,
     pub applied: Option<AppliedCoat>,
@@ -86,7 +88,7 @@ impl ProjectLayer {
             id: None,
             role: role.into(),
             target_hex: target_hex.into(),
-            technique: String::new(),
+            technique: Technique::Glaze,
             note: String::new(),
             kind: LayerKind::Ladder,
             applied: None,
@@ -101,14 +103,36 @@ impl ProjectLayer {
         self.applied.is_some()
     }
 
-    /// The technique of this coat, read in the system of the piece.
-    pub fn technique_within(&self, project: PaintSystem) -> Technique {
-        Technique::by_label_in(Some(&self.technique), project)
-    }
-
     /// The system this coat is painted in, within a piece painted in `project`.
     pub fn system_within(&self, project: PaintSystem) -> PaintSystem {
-        self.technique_within(project).system_within(project)
+        self.technique.system_within(project)
+    }
+
+    /// The same coat with another technique.
+    pub fn with_technique(mut self, technique: Technique) -> Self {
+        self.technique = technique;
+        self
+    }
+
+    /// Reads a technique label that may not be one the application knows: a known one
+    /// becomes the technique, an unknown one falls back to the default of `system` and is
+    /// kept, word for word, at the head of the note.
+    pub fn set_technique_label(&mut self, label: &str, system: PaintSystem) {
+        let label = label.trim();
+        match Technique::parse(label) {
+            Some(t) => self.technique = t,
+            None => {
+                self.technique = Technique::default_for(system);
+                if !label.is_empty() {
+                    let kept = format!("Technique proposée : {label}.");
+                    self.note = if self.note.trim().is_empty() {
+                        kept
+                    } else {
+                        format!("{kept} {}", self.note)
+                    };
+                }
+            }
+        }
     }
 
     pub fn mark_applied(
@@ -166,17 +190,13 @@ pub enum PhotoRole {
 impl PhotoRole {
     pub const ALL: [PhotoRole; 3] = [PhotoRole::Piece, PhotoRole::Reference, PhotoRole::Progress];
 
-    pub fn label(&self) -> &'static str {
-        match self {
-            PhotoRole::Piece => "La piece",
-            PhotoRole::Reference => "Reference",
-            PhotoRole::Progress => "Avancement",
-        }
-    }
-
-    pub fn label_i18n(&self, locale: Locale) -> &'static str {
+    pub fn label(&self, locale: Locale) -> &'static str {
         match locale {
-            Locale::Fr => self.label(),
+            Locale::Fr => match self {
+                PhotoRole::Piece => "La pièce",
+                PhotoRole::Reference => "Référence",
+                PhotoRole::Progress => "Avancement",
+            },
             Locale::En => match self {
                 PhotoRole::Piece => "The piece",
                 PhotoRole::Reference => "Reference",
@@ -337,13 +357,13 @@ impl FatOverLeanService {
     }
 
     pub fn inspect_recipe_i18n(&self, recipe: &Recipe, locale: Locale) -> Vec<FatOverLeanRisk> {
-        let step_prefix = locale.tr("Etape", "Step");
+        let step_prefix = locale.tr("Étape", "Step");
         let coats: Vec<Coat> = recipe
             .steps
             .iter()
             .enumerate()
             .map(|(idx, step)| Coat {
-                label: step.technique.label_i18n(locale).to_string(),
+                label: step.technique.label(locale).to_string(),
                 role: format!("{step_prefix} {}", idx + 1),
                 system: step.system(),
                 fatness: step.medium.fatness(step.medium_ratio),
@@ -353,13 +373,12 @@ impl FatOverLeanService {
         Self::inspect(&recipe.name, &coats, locale)
     }
 
-    pub fn fatness_of(&self, technique: Option<&str>) -> f64 {
-        Self::fatness(Technique::by_label(technique, Technique::Glaze))
+    pub fn fatness_of(&self, technique: Technique) -> f64 {
+        Self::fatness(technique)
     }
 
-    pub fn is_veil(&self, technique: Option<&str>) -> bool {
-        Technique::by_label(technique, Technique::Glaze).typical_thickness()
-            == LayerThickness::Glaze
+    pub fn is_veil(&self, technique: Technique) -> bool {
+        technique.typical_thickness() == LayerThickness::Glaze
     }
 
     fn inspect(where_name: &str, coats: &[Coat], locale: Locale) -> Vec<FatOverLeanRisk> {
@@ -412,9 +431,9 @@ impl FatOverLeanService {
     }
 
     fn coat_of(layer: &ProjectLayer, project: PaintSystem, locale: Locale) -> Coat {
-        let technique = layer.technique_within(project);
+        let technique = layer.technique;
         Coat {
-            label: technique.label_i18n(locale).to_string(),
+            label: technique.label(locale).to_string(),
             role: layer.role.clone(),
             system: technique.system_within(project),
             fatness: Self::fatness(technique),
@@ -425,7 +444,7 @@ impl FatOverLeanService {
     fn explain_acrylic_over_oil(below: &str, above: &str, locale: Locale) -> String {
         match locale {
             Locale::Fr => format!(
-                "{above} est a l'acrylique, posee sur {below} a l'huile : l'acrylique n'accroche pas sur un film gras et s'ecaillera. Gardez l'ordre acrylique puis huile, ou faites cette etape a l'huile."
+                "{above} est à l'acrylique, posée sur {below} à l'huile : l'acrylique n'accroche pas sur un film gras et s'écaillera. Gardez l'ordre acrylique puis huile, ou faites cette étape à l'huile."
             ),
             Locale::En => format!(
                 "{above} is acrylic, applied over {below} in oil: acrylic does not grip an oily film and will flake off. Keep the order acrylic then oil, or do this step in oil."
@@ -442,7 +461,7 @@ impl FatOverLeanService {
     fn explain(below: &str, above: &str, locale: Locale) -> String {
         match locale {
             Locale::Fr => format!(
-                "{above} est plus maigre que {below}, et pas plus fine. Posee dessus, elle sechera avant elle et tirera dessus en vieillissant. Faites l'inverse, ou attendez le sechage a coeur de la couche du dessous et allegez la main."
+                "{above} est plus maigre que {below}, et pas plus fine. Posée dessus, elle séchera avant elle et tirera dessus en vieillissant. Faites l'inverse, ou attendez le séchage à cœur de la couche du dessous et allegez la main."
             ),
             Locale::En => format!(
                 "{above} is leaner than {below}, and no thinner. Applied on top, it will dry faster and pull on the underlying coat as it ages. Reverse the order, or wait until the lower coat is through-dry and apply with a lighter touch."
@@ -469,11 +488,7 @@ impl MissingPaint {
         self.nearest.is_some() && self.delta_e < Self::VISIBLE_GAP
     }
 
-    pub fn verdict(&self) -> String {
-        self.verdict_i18n(Locale::Fr)
-    }
-
-    pub fn verdict_i18n(&self, locale: Locale) -> String {
+    pub fn verdict(&self, locale: Locale) -> String {
         let Some(nearest) = &self.nearest else {
             return locale
                 .tr(
@@ -496,7 +511,7 @@ impl MissingPaint {
         } else if self.delta_e < Self::VISIBLE_GAP {
             match locale {
                 Locale::Fr => format!(
-                    "{} en approche : l'ecart ne se verra pas sur la piece.",
+                    "{} en approche : l'écart ne se verra pas sur la pièce.",
                     nearest.display_name()
                 ),
                 Locale::En => format!(
@@ -507,7 +522,7 @@ impl MissingPaint {
         } else if self.delta_e < 12.0 {
             match locale {
                 Locale::Fr => format!(
-                    "{} est ce qui s'en rapproche le plus, mais l'ecart se voit : a rattraper au glacis.",
+                    "{} est ce qui s'en rapproche le plus, mais l'écart se voit : à rattraper au glacis.",
                     nearest.display_name()
                 ),
                 Locale::En => format!(
@@ -595,15 +610,11 @@ impl ObservedColour {
         self.zone.is_some() && self.delta_e < Self::UNPLANNED
     }
 
-    pub fn verdict(&self) -> String {
-        self.verdict_i18n(Locale::Fr)
-    }
-
-    pub fn verdict_i18n(&self, locale: Locale) -> String {
+    pub fn verdict(&self, locale: Locale) -> String {
         if !self.matches_plan() {
             return locale
                 .tr(
-                    "Rien de prevu ne ressemble a cette teinte : appret, socle, ou une couche improvisee.",
+                    "Rien de prévu ne ressemble à cette teinte : apprêt, socle, ou une couche improvisée.",
                     "Nothing in the plan matches this hue: primer, base, or an improvised coat.",
                 )
                 .to_string();
@@ -617,12 +628,12 @@ impl ObservedColour {
             }
         } else if self.delta_e < 5.0 {
             match locale {
-                Locale::Fr => format!("{z} / {r} : l'ecart ne se verra pas sur la piece."),
+                Locale::Fr => format!("{z} / {r} : l'écart ne se verra pas sur la pièce."),
                 Locale::En => format!("{z} / {r}: the gap won't be noticeable on the piece."),
             }
         } else {
             match locale {
-                Locale::Fr => format!("{z} / {r} : l'ecart se voit, un glacis le rattraperait."),
+                Locale::Fr => format!("{z} / {r} : l'écart se voit, un glacis le rattraperait."),
                 Locale::En => format!("{z} / {r}: visible gap, a glaze would bring it back."),
             }
         }
@@ -678,7 +689,7 @@ mod tests {
         let mut z = ProjectZone::new("Visage");
         for (i, t) in techniques.iter().enumerate() {
             let mut l = ProjectLayer::new(format!("Couche {}", i + 1), "#C98F72");
-            l.technique = (*t).to_string();
+            l.technique = Technique::parse(t).expect("technique connue");
             z.layers.push(l);
         }
         p.zones.push(z);
@@ -686,14 +697,28 @@ mod tests {
     }
 
     #[test]
+    fn unknown_technique_label_is_kept_in_the_note() {
+        let mut known = ProjectLayer::new("Base", "#808080");
+        known.set_technique_label("Glacis", PaintSystem::Acrylic);
+        assert_eq!(Technique::Glaze, known.technique);
+        assert!(known.note.is_empty());
+
+        let mut unknown = ProjectLayer::new("Lumière", "#F0E0D0");
+        unknown.note = "sur les pommettes".to_string();
+        unknown.set_technique_label("Pointillé", PaintSystem::Acrylic);
+        assert_eq!(Technique::Layering, unknown.technique);
+        assert_eq!("Technique proposée : Pointillé. sur les pommettes", unknown.note);
+    }
+
+    #[test]
     fn fat_over_lean_is_not_applied_between_acrylic_coats() {
         let service = FatOverLeanService::new();
         // In oil, a lean filter over an opaque highlight would be flagged; in acrylic it is normal.
         let mut p = piece_with(&[
-            Technique::BaseLayer.label(),
-            Technique::Highlight.label(),
-            Technique::Filter.label(),
-            Technique::Layering.label(),
+            Technique::BaseLayer.label(Locale::Fr),
+            Technique::Highlight.label(Locale::Fr),
+            Technique::Filter.label(Locale::Fr),
+            Technique::Layering.label(Locale::Fr),
         ]);
         p.system = PaintSystem::Acrylic;
         assert!(service.inspect_project(&p).is_empty());
@@ -702,11 +727,11 @@ mod tests {
     #[test]
     fn oil_over_acrylic_is_fine_acrylic_over_oil_is_flagged() {
         let service = FatOverLeanService::new();
-        let mut fine = piece_with(&[Technique::Layering.label(), Technique::OilWash.label()]);
+        let mut fine = piece_with(&[Technique::Layering.label(Locale::Fr), Technique::OilWash.label(Locale::Fr)]);
         fine.system = PaintSystem::Acrylic;
         assert!(service.inspect_project(&fine).is_empty());
 
-        let mut wrong = piece_with(&[Technique::OilWash.label(), Technique::EdgeHighlight.label()]);
+        let mut wrong = piece_with(&[Technique::OilWash.label(Locale::Fr), Technique::EdgeHighlight.label(Locale::Fr)]);
         wrong.system = PaintSystem::Acrylic;
         let risks = service.inspect_project(&wrong);
         assert_eq!(1, risks.len());
@@ -717,9 +742,9 @@ mod tests {
     fn all_glaze_plan_triggers_no_risk() {
         let service = FatOverLeanService::new();
         let p = piece_with(&[
-            Technique::Glaze.label(),
-            Technique::Glaze.label(),
-            Technique::Glaze.label(),
+            Technique::Glaze.label(Locale::Fr),
+            Technique::Glaze.label(Locale::Fr),
+            Technique::Glaze.label(Locale::Fr),
         ]);
         assert!(service.inspect_project(&p).is_empty());
     }
@@ -728,11 +753,11 @@ mod tests {
     fn glaze_over_base_layer_triggers_no_risk() {
         let service = FatOverLeanService::new();
         assert!(
-            service.fatness_of(Some(Technique::Glaze.label()))
-                < service.fatness_of(Some(Technique::BaseLayer.label()))
+            service.fatness_of(Technique::Glaze)
+                < service.fatness_of(Technique::BaseLayer)
         );
-        assert!(service.is_veil(Some(Technique::Glaze.label())));
-        let p = piece_with(&[Technique::BaseLayer.label(), Technique::Glaze.label()]);
+        assert!(service.is_veil(Technique::Glaze));
+        let p = piece_with(&[Technique::BaseLayer.label(Locale::Fr), Technique::Glaze.label(Locale::Fr)]);
         assert!(service.inspect_project(&p).is_empty());
     }
 
@@ -740,8 +765,8 @@ mod tests {
     fn lean_streaking_over_fat_blending_at_equal_thickness_is_flagged() {
         let service = FatOverLeanService::new();
         let p = piece_with(&[
-            Technique::Blending.label(),
-            Technique::StreakingGrime.label(),
+            Technique::Blending.label(Locale::Fr),
+            Technique::StreakingGrime.label(Locale::Fr),
         ]);
         let risks = service.inspect_project(&p);
         assert_eq!(1, risks.len());
@@ -778,7 +803,7 @@ mod tests {
         let risks = service.inspect_recipe(&recipe);
         assert_eq!(1, risks.len());
         assert_eq!("Cape rouge", risks[0].where_name);
-        assert_eq!("Etape 1", risks[0].under);
-        assert_eq!("Etape 2", risks[0].over);
+        assert_eq!("Étape 1", risks[0].under);
+        assert_eq!("Étape 2", risks[0].over);
     }
 }

@@ -1,8 +1,11 @@
 #![forbid(unsafe_code)]
 
+mod actions;
 mod snapshot;
 mod state;
 mod theme;
+#[cfg(test)]
+mod ui_tests;
 mod views;
 
 use crate::state::{AppServices, AppState, Section, ThemeMode};
@@ -25,17 +28,61 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 fn default_db_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("PALETTIER_DB_DIR") {
-        return PathBuf::from(dir);
-    }
-    // Prefer workspace .palettier if it exists, otherwise home directory ~/.palettier
-    let local = PathBuf::from(".").join(".palettier");
-    if local.exists() {
-        return local;
-    }
-    dirs::home_dir()
+    let home = dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".palettier")
+        .join(".palettier");
+    let local = PathBuf::from(".").join(".palettier");
+    let dir = choose_db_dir(
+        std::env::var_os("PALETTIER_DB_DIR").map(PathBuf::from),
+        &home,
+        &local,
+    );
+    if dir == local {
+        tracing::warn!(
+            "No database in {:?}: using the one in the current folder, {:?}",
+            home,
+            local
+        );
+    }
+    dir
+}
+
+/// Where the database lives: `PALETTIER_DB_DIR` when set, else `~/.palettier`. A
+/// `.palettier` in the current folder is only used when the home one does not exist
+/// yet, so launching the app from another folder cannot switch databases silently.
+fn choose_db_dir(env: Option<PathBuf>, home: &std::path::Path, local: &std::path::Path) -> PathBuf {
+    if let Some(dir) = env {
+        return dir;
+    }
+    if !home.exists() && local.exists() {
+        return local.to_path_buf();
+    }
+    home.to_path_buf()
+}
+
+#[cfg(test)]
+mod db_dir_tests {
+    use super::choose_db_dir;
+    use std::path::PathBuf;
+
+    #[test]
+    fn the_home_database_wins_over_a_stray_local_one() {
+        let tmp = std::env::temp_dir().join(format!("palettier-dbdir-{}", std::process::id()));
+        let home = tmp.join("home");
+        let local = tmp.join("local");
+        std::fs::create_dir_all(&local).expect("temp dir");
+
+        // Only the local one exists: it is used.
+        assert_eq!(choose_db_dir(None, &home, &local), local);
+        // Both exist: the home one wins.
+        std::fs::create_dir_all(&home).expect("temp dir");
+        assert_eq!(choose_db_dir(None, &home, &local), home);
+        // The environment variable wins over both.
+        let env = PathBuf::from("/elsewhere");
+        assert_eq!(choose_db_dir(Some(env.clone()), &home, &local), env);
+
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
 }
 
 fn main() {
@@ -47,7 +94,7 @@ fn main() {
         .init();
 
     let window = WindowBuilder::new()
-        .with_title("Palettier — Oil Painting Studio")
+        .with_title("Palettier — Atelier de figurines")
         .with_inner_size(dioxus::desktop::LogicalSize::new(1460.0, 930.0))
         .with_min_inner_size(dioxus::desktop::LogicalSize::new(1160.0, 740.0));
 
@@ -88,16 +135,16 @@ fn App() -> Element {
     rsx! {
         style { "{APP_CSS}" }
         if let Some(err) = init_error.read().clone() {
-            div { class: "app-shell theme-dark", style: "align-items: center; justify-content: center; padding: 40px;",
-                div { class: "card", style: "max-width: 560px;",
-                    h2 { class: "card-title", style: "color: var(--danger);", "Studio initialization error / Erreur d'initialisation" }
+            div { class: "app-shell theme-dark u-ai-center u-jc-center u-p-40",
+                div { class: "card u-maxw-560",
+                    h2 { class: "card-title u-c-danger", "Studio initialization error / Erreur d'initialisation" }
                     p { "{err}" }
                 }
             }
         } else if let Some(services) = services_sig.read().clone() {
             StudioShell { services }
         } else {
-            div { class: "app-shell theme-dark", style: "align-items: center; justify-content: center;",
+            div { class: "app-shell theme-dark u-ai-center u-jc-center",
                 div { class: "muted", "Opening Palettier Studio… / Ouverture de l'atelier Palettier…" }
             }
         }
@@ -193,7 +240,7 @@ fn StudioShell(services: AppServices) -> Element {
     let current_locale = *app_state.locale.read();
     let current_theme = *app_state.theme.read();
     let current_system = *app_state.paint_system.read();
-    let system_label = current_system.label_i18n(current_locale).to_lowercase();
+    let system_label = current_system.label(current_locale).to_lowercase();
     let owned_count = app_state
         .paints
         .read()
@@ -286,7 +333,7 @@ fn StudioShell(services: AppServices) -> Element {
                                     let svc = services.clone();
                                     move |_| app_state.set_paint_system(&svc, sys)
                                 },
-                                "{sys.label_i18n(current_locale)}"
+                                "{sys.label(current_locale)}"
                             }
                         }
                     }
@@ -376,15 +423,15 @@ fn StudioShell(services: AppServices) -> Element {
 
                 div { class: "sidebar-footer",
                     NavButton { section: Section::Settings, current: current_section, badge: None }
-                    div { style: "padding: 8px 10px 0 10px; line-height: 1.4;",
+                    div { class: "u-p-8-10-0-10 u-lh-1p4",
                         div {
                             if current_locale.is_fr() {
                                 "Tiroir {system_label} : {owned_count} / {total_paints}"
                             } else {
-                                "{system_label} drawer: {owned_count} / {total_paints}"
+                                "{current_system.label(current_locale)} drawer: {owned_count} / {total_paints}"
                             }
                         }
-                        div { style: "opacity: 0.75; margin-top: 2px;",
+                        div { class: "u-op-0p75 u-mt-2",
                             "{current_theme.status_label(current_locale)} · {current_locale.display_name()}"
                         }
                     }
@@ -440,10 +487,10 @@ fn NavButton(section: Section, current: Section, badge: Option<String>) -> Eleme
             class: "{cls}",
             onclick: move |_| state.section.set(section),
             div { class: "nav-btn-left",
-                span { style: "font-size: 14px; margin-right: 4px; display: inline-block;", "{section.icon()}" }
-                span { "{section.label_i18n(locale)}" }
+                span { class: "u-fs-14 u-mr-4 u-d-inline-block", "{section.icon()}" }
+                span { "{section.label(locale)}" }
                 if let Some(b) = badge {
-                    span { class: "pill pill-ok", style: "padding: 0 6px; font-size: 10px;", "{b}" }
+                    span { class: "pill pill-ok u-p-0-6 u-fs-10", "{b}" }
                 }
             }
             span { class: "nav-shortcut", "{section.shortcut()}" }
@@ -459,6 +506,14 @@ fn CommandPaletteModal() -> Element {
     let term = search.read().to_lowercase().trim().to_string();
 
     let all_paints = state.paints.read().clone();
+    let system = *state.paint_system.read();
+    let system_count = all_paints.iter().filter(|p| p.system == system).count();
+    let catalog_title = match (system, locale) {
+        (PaintSystem::Oil, Locale::Fr) => format!("Catalogue Tubes d'Huile ({system_count} références)"),
+        (PaintSystem::Oil, Locale::En) => format!("Oil Paint Catalog ({system_count} tubes)"),
+        (PaintSystem::Acrylic, Locale::Fr) => format!("Catalogue Acryliques ({system_count} références)"),
+        (PaintSystem::Acrylic, Locale::En) => format!("Acrylic Paint Catalog ({system_count} paints)"),
+    };
 
     // Section and tab matches
     let tools = [
@@ -626,16 +681,16 @@ fn CommandPaletteModal() -> Element {
         ),
         (
             "📚",
-            locale.tr(
-                "Catalogue Tubes d'Huile (680 références)",
-                "Oil Paint Catalog (680 tubes)",
-            ),
+            catalog_title.as_str(),
             Section::Catalog,
             0,
         ),
         (
             "⏳",
-            locale.tr("Temps de Séchage & Siccatifs", "Drying Times & Mediums"),
+            match system {
+                PaintSystem::Oil => locale.tr("Temps de Séchage & Siccatifs", "Drying Times & Mediums"),
+                PaintSystem::Acrylic => locale.tr("Temps de Séchage acrylique", "Acrylic Drying Times"),
+            },
             Section::Drying,
             0,
         ),
@@ -659,47 +714,44 @@ fn CommandPaletteModal() -> Element {
         .take(6)
         .collect();
 
-    let matching_acrylics: Vec<_> = palettier_domain::miniature::MINIATURE_ACRYLICS
-        .iter()
-        .filter(|a| {
-            !term.is_empty()
-                && (a.name.to_lowercase().contains(&term)
-                    || a.category.to_lowercase().contains(&term))
-        })
-        .take(6)
-        .collect();
-
-    let matching_oils: Vec<_> = all_paints
-        .iter()
-        .filter(|p| {
-            !term.is_empty()
-                && (p.name.to_lowercase().contains(&term) || p.brand.to_lowercase().contains(&term))
-        })
-        .take(6)
-        .collect();
+    let matches = |system: PaintSystem| -> Vec<_> {
+        all_paints
+            .iter()
+            .filter(|p| {
+                p.system == system
+                    && !term.is_empty()
+                    && (p.name.to_lowercase().contains(&term)
+                        || p.brand.to_lowercase().contains(&term))
+            })
+            .take(6)
+            .cloned()
+            .collect()
+    };
+    let matching_acrylics = matches(PaintSystem::Acrylic);
+    let matching_oils = matches(PaintSystem::Oil);
 
     rsx! {
         div {
             class: "modal-backdrop",
-            style: "background: rgba(0, 0, 0, 0.65); position: fixed; inset: 0; z-index: 9999; display: flex; align-items: flex-start; justify-content: center; padding-top: 8vh;",
+            class: "u-bg-rgba-0-0-0-0p65 u-pos-fixed u-inset-0 u-z-9999 u-d-flex u-ai-flex-start u-jc-center u-pt-8vh",
             onclick: move |_| state.command_palette_open.set(false),
 
             div {
                 class: "card",
-                style: "width: 640px; max-width: 92vw; max-height: 82vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1.5px solid var(--accent);",
+                class: "u-w-640 u-maxw-92vw u-maxh-82vh u-oy-auto u-sh-0-20-40-rgba-0-0-0-0p4 u-b-1p5-solid-accent",
                 onclick: move |ev| ev.stop_propagation(),
 
-                div { class: "row-between", style: "align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-main); padding-bottom: 8px;",
-                    div { class: "row", style: "gap: 8px; align-items: center;",
-                        span { style: "font-size: 18px;", "🔍" }
-                        strong { style: "font-size: 15px;", {locale.tr("Palette de Commandes & Recherche Globale", "Command Palette & Quick Search")} }
+                div { class: "row-between u-ai-center u-mb-12 u-bb-1-solid-border-main u-pb-8",
+                    div { class: "row u-gap-8 u-ai-center",
+                        span { class: "u-fs-18", "🔍" }
+                        strong { class: "u-fs-15", {locale.tr("Palette de Commandes & Recherche Globale", "Command Palette & Quick Search")} }
                     }
-                    span { class: "pill", "Échap pour fermer" }
+                    span { class: "pill", {locale.tr("Échap pour fermer", "Esc to close")} }
                 }
 
                 input {
                     class: "input",
-                    style: "font-size: 14.5px; padding: 10px 14px; margin-bottom: 14px; width: 100%;",
+                    class: "u-fs-14p5 u-p-10-14 u-mb-14 u-w-100pct",
                     placeholder: locale.tr("Rechercher un outil, acrylique Citadel/Vallejo, tube d'huile, effet...", "Search tool, Citadel/Vallejo paint, oil tube, effect..."),
                     autofocus: true,
                     value: "{search}",
@@ -707,14 +759,14 @@ fn CommandPaletteModal() -> Element {
                 }
 
                 if !matching_tools.is_empty() {
-                    div { style: "font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); margin-bottom: 6px;",
+                    div { class: "u-fw-700 u-fs-11 u-tt-uppercase u-ls-0p5 u-c-text-dim u-mb-6",
                         {locale.tr("Outils & Sections", "Tools & Sections")}
                     }
-                    div { style: "display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;",
+                    div { class: "u-d-flex u-fd-column u-gap-4 u-mb-14",
                         for (icon, title, sec, tab) in matching_tools {
                             button {
                                 class: "card-subtle",
-                                style: "text-align: left; padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: none; width: 100%;",
+                                class: "u-ta-left u-p-8-12 u-cur-pointer u-d-flex u-jc-space-between u-ai-center u-b-none u-w-100pct",
                                 onclick: move |_| {
                                     state.section.set(sec);
                                     if sec == Section::Miniature {
@@ -722,9 +774,9 @@ fn CommandPaletteModal() -> Element {
                                     }
                                     state.command_palette_open.set(false);
                                 },
-                                div { class: "row", style: "gap: 8px; align-items: center;",
-                                    span { style: "font-size: 15px;", "{icon}" }
-                                    span { style: "font-weight: 600; font-size: 13px;", "{title}" }
+                                div { class: "row u-gap-8 u-ai-center",
+                                    span { class: "u-fs-15", "{icon}" }
+                                    span { class: "u-fw-600 u-fs-13", "{title}" }
                                 }
                                 span { class: "nav-shortcut", "{sec.shortcut()}" }
                             }
@@ -733,17 +785,17 @@ fn CommandPaletteModal() -> Element {
                 }
 
                 if !matching_acrylics.is_empty() {
-                    div { style: "font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 6px;",
+                    div { class: "u-fw-700 u-fs-11 u-tt-uppercase u-ls-0p5 u-c-accent u-mb-6",
                         {locale.tr("Acryliques Figurines (Citadel, Vallejo, AK)", "Miniature Acrylics (Citadel, Vallejo, AK)")}
                     }
-                    div { style: "display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;",
+                    div { class: "u-d-flex u-fd-column u-gap-4 u-mb-14",
                         for acr in matching_acrylics {
                             {
-                                let hex = acr.hex.to_string();
+                                let hex = acr.hex_color.clone();
                                 rsx! {
                                     button {
                                         class: "card-subtle",
-                                        style: "text-align: left; padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: none; width: 100%;",
+                                        class: "u-ta-left u-p-8-12 u-cur-pointer u-d-flex u-jc-space-between u-ai-center u-b-none u-w-100pct",
                                         onclick: {
                                             let h = hex.clone();
                                             move |_| {
@@ -753,11 +805,11 @@ fn CommandPaletteModal() -> Element {
                                                 state.command_palette_open.set(false);
                                             }
                                         },
-                                        div { class: "row", style: "gap: 10px; align-items: center;",
+                                        div { class: "row u-gap-10 u-ai-center",
                                             ColorSwatch { hex: hex.clone(), size: 22 }
                                             div {
-                                                strong { style: "font-size: 13px;", "{acr.name}" }
-                                                span { class: "muted", style: "font-size: 11px; margin-left: 8px;", "{acr.brand.display_name()}" }
+                                                strong { class: "u-fs-13", "{acr.name}" }
+                                                span { class: "muted u-fs-11 u-ml-8", "{acr.brand}" }
                                             }
                                         }
                                         span { class: "pill pill-accent", "{hex}" }
@@ -769,17 +821,17 @@ fn CommandPaletteModal() -> Element {
                 }
 
                 if !matching_oils.is_empty() {
-                    div { style: "font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); margin-bottom: 6px;",
+                    div { class: "u-fw-700 u-fs-11 u-tt-uppercase u-ls-0p5 u-c-text-dim u-mb-6",
                         {locale.tr("Tubes d'Huile du Catalogue", "Catalog Oil Paint Tubes")}
                     }
-                    div { style: "display: flex; flex-direction: column; gap: 4px;",
+                    div { class: "u-d-flex u-fd-column u-gap-4",
                         for oil in matching_oils {
                             {
                                 let hex = oil.color().to_hex();
                                 rsx! {
                                     button {
                                         class: "card-subtle",
-                                        style: "text-align: left; padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: none; width: 100%;",
+                                        class: "u-ta-left u-p-8-12 u-cur-pointer u-d-flex u-jc-space-between u-ai-center u-b-none u-w-100pct",
                                         onclick: {
                                             let h = hex.clone();
                                             move |_| {
@@ -788,11 +840,11 @@ fn CommandPaletteModal() -> Element {
                                                 state.command_palette_open.set(false);
                                             }
                                         },
-                                        div { class: "row", style: "gap: 10px; align-items: center;",
+                                        div { class: "row u-gap-10 u-ai-center",
                                             ColorSwatch { hex: hex.clone(), size: 22 }
                                             div {
-                                                strong { style: "font-size: 13px;", "{oil.name}" }
-                                                span { class: "muted", style: "font-size: 11px; margin-left: 8px;", "{oil.brand}" }
+                                                strong { class: "u-fs-13", "{oil.name}" }
+                                                span { class: "muted u-fs-11 u-ml-8", "{oil.brand}" }
                                             }
                                         }
                                         span { class: "pill", "{hex}" }
@@ -808,6 +860,10 @@ fn CommandPaletteModal() -> Element {
 }
 
 fn send_macos_notification(title: &str, body: &str) {
+    // The view tests run the real shell: they must not pop up system notifications.
+    if cfg!(test) {
+        return;
+    }
     let safe_title = title.replace('"', "\\\"");
     let safe_body = body.replace('"', "\\\"");
     let script = format!("display notification \"{safe_body}\" with title \"{safe_title}\"");

@@ -59,7 +59,7 @@ impl PlanZone {
 pub struct PlanLayer {
     pub role: String,
     pub target: Rgb,
-    pub technique: String,
+    pub technique: Technique,
     pub note: String,
     pub recipe: Option<MixSuggestion>,
     pub achieved: Rgb,
@@ -67,23 +67,19 @@ pub struct PlanLayer {
 }
 
 impl PlanLayer {
-    pub fn reachability(&self) -> &'static str {
-        self.reachability_i18n(Locale::Fr)
-    }
-
-    pub fn reachability_i18n(&self, locale: Locale) -> &'static str {
+    pub fn reachability(&self, locale: Locale) -> &'static str {
         if self.recipe.is_none() {
             locale.tr("palette vide", "empty palette")
         } else if self.delta_e < 2.0 {
             locale.tr("atteignable tel quel", "reachable as-is")
         } else if self.delta_e < 5.0 {
             locale.tr(
-                "tres proche, ecart invisible sur la piece",
+                "très proche, écart invisible sur la pièce",
                 "very close, gap invisible on the piece",
             )
         } else if self.delta_e < 12.0 {
             locale.tr(
-                "approche, a rattraper au glacis",
+                "approche, à rattraper au glacis",
                 "approximate, refine with a glaze",
             )
         } else {
@@ -99,7 +95,7 @@ impl PlanLayer {
             id: None,
             role: self.role.clone(),
             target_hex: self.target.to_hex(),
-            technique: self.technique.clone(),
+            technique: self.technique,
             note: self.note.clone(),
             kind,
             applied: None,
@@ -254,7 +250,7 @@ impl PlanDryingService {
         let mut offset = Duration::ZERO;
 
         for (i, layer) in layers.iter().enumerate() {
-            let technique = Technique::by_label_in(Some(&layer.technique), system);
+            let technique = layer.technique;
             let drying = Self::drying_class_of(layer);
 
             let estimate = self
@@ -266,7 +262,7 @@ impl PlanDryingService {
             let wait = if i + 1 == layers.len() {
                 Duration::ZERO
             } else if {
-                let next = Technique::by_label_in(Some(&layers[i + 1].technique), system);
+                let next = layers[i + 1].technique;
                 waits_for_through_dry(
                     technique.system_within(system),
                     next.system_within(system),
@@ -309,7 +305,7 @@ impl PlanDryingService {
         let mut out = Vec::new();
         if sequential > parallel {
             out.push(
-                "Menez les zones de front plutot que l'une apres l'autre : pendant qu'une couche seche, les autres zones avancent. Il n'y a rien a gagner a attendre."
+                "Menez les zones de front plutôt que l'une après l'autre : pendant qu'une couche sèche, les autres zones avancent. Il n'y a rien à gagner a attendre."
                     .to_string(),
             );
         }
@@ -323,9 +319,9 @@ impl PlanDryingService {
         }
         for z in zones.iter().filter(|z| z.slowest() >= DryingClass::Slow) {
             out.push(format!(
-                "{} contient un pigment a sechage {} : c'est lui qui impose les delais de cette zone.",
+                "{} contient un pigment à séchage {} : c'est lui qui impose les délais de cette zone.",
                 z.zone,
-                z.slowest().label().to_lowercase()
+                z.slowest().label(Locale::Fr).to_lowercase()
             ));
         }
         out
@@ -432,7 +428,7 @@ impl ProjectPlanner {
             return PlanLayer {
                 role: layer.role.clone(),
                 target,
-                technique: layer.technique.clone(),
+                technique: layer.technique,
                 note: layer.note.clone(),
                 recipe: None,
                 achieved: target,
@@ -445,7 +441,7 @@ impl ProjectPlanner {
         PlanLayer {
             role: layer.role.clone(),
             target,
-            technique: layer.technique.clone(),
+            technique: layer.technique,
             note: layer.note.clone(),
             recipe: Some(best),
             achieved,
@@ -478,28 +474,39 @@ impl SampledPlanService {
         palette: Option<&Palette>,
         groups: &[ColourGroup],
         max_paints: usize,
+        locale: Locale,
     ) -> DomainResult<PaintingPlan> {
         let usable: Vec<&ColourGroup> = groups.iter().filter(|g| !g.samples.is_empty()).collect();
         if usable.is_empty() {
             return Err(DomainError::InvalidArgument(
-                "Aucun point releve : ajoutez au moins une couleur a un groupe.".to_string(),
+                locale
+                    .tr(
+                        "Aucun point relevé : ajoutez au moins une couleur à un groupe.",
+                        "No sampled point: add at least one colour to a group.",
+                    )
+                    .to_string(),
             ));
         }
 
         let total_samples: usize = usable.iter().map(|g| g.samples.len()).sum();
         let zones = usable
             .into_iter()
-            .map(|g| self.build_zone(g, palette, max_paints))
+            .map(|g| self.build_zone(g, palette, max_paints, locale))
             .collect();
 
         Ok(PaintingPlan {
             subject: subject.to_string(),
             palette_name: palette
                 .map(|p| p.name.clone())
-                .unwrap_or_else(|| "sans palette".to_string()),
-            approach: format!(
-                "Plan etabli a partir de {total_samples} points releves sur la reference."
-            ),
+                .unwrap_or_else(|| locale.tr("sans palette", "no palette").to_string()),
+            approach: match locale {
+                Locale::Fr => format!(
+                    "Plan établi à partir de {total_samples} points relevés sur la référence."
+                ),
+                Locale::En => format!(
+                    "Plan built from {total_samples} points sampled on the reference."
+                ),
+            },
             system: palette.map(|p| p.system()).unwrap_or_default(),
             zones,
         })
@@ -510,7 +517,9 @@ impl SampledPlanService {
         group: &ColourGroup,
         palette: Option<&Palette>,
         max_paints: usize,
+        locale: Locale,
     ) -> PlanZone {
+        let (shadow_word, light_word) = (locale.tr("Ombre", "Shadow"), locale.tr("Lumière", "Highlight"));
         let mut ordered = group.samples.clone();
         ordered.sort_by(|a, b| a.relative_luminance().total_cmp(&b.relative_luminance()));
 
@@ -525,7 +534,7 @@ impl SampledPlanService {
             .enumerate()
             .map(|(rank, idx)| {
                 self.make_layer(
-                    format!("Ombre {}", rank + 1),
+                    format!("{shadow_word} {}", rank + 1),
                     ordered[idx],
                     shadow_technique,
                     palette,
@@ -538,7 +547,7 @@ impl SampledPlanService {
             .enumerate()
             .map(|(rank, idx)| {
                 self.make_layer(
-                    format!("Lumiere {}", rank + 1),
+                    format!("{light_word} {}", rank + 1),
                     ordered[idx],
                     light_technique,
                     palette,
@@ -550,7 +559,7 @@ impl SampledPlanService {
         PlanZone {
             name: group.name.clone(),
             material: group.material.clone(),
-            note: Self::note_for(ordered.len()),
+            note: Self::note_for(ordered.len(), locale),
             base: Some(self.make_layer(
                 "Base".to_string(),
                 ordered[base_index],
@@ -564,11 +573,18 @@ impl SampledPlanService {
         }
     }
 
-    fn note_for(sample_count: usize) -> String {
-        match sample_count {
-            1 => "Un seul point releve : la valeur locale, sans modele. Relevez une ombre et une lumiere pour obtenir un degrade.".to_string(),
-            2 => "Deux points : une base et un ecart. Un troisieme de l'autre cote donnerait un vrai degrade.".to_string(),
-            n => format!("{n} points releves sur la reference."),
+    fn note_for(sample_count: usize, locale: Locale) -> String {
+        match (sample_count, locale) {
+            (1, _) => locale.tr(
+                "Un seul point relevé : la valeur locale, sans modèle. Relevez une ombre et une lumière pour obtenir un dégradé.",
+                "A single sampled point: the local value, without modelling. Sample a shadow and a highlight to get a gradient.",
+            ).to_string(),
+            (2, _) => locale.tr(
+                "Deux points : une base et un écart. Un troisième de l'autre côté donnerait un vrai dégradé.",
+                "Two points: a base and one step. A third on the other side would give a true gradient.",
+            ).to_string(),
+            (n, Locale::Fr) => format!("{n} points relevés sur la référence."),
+            (n, Locale::En) => format!("{n} points sampled on the reference."),
         }
     }
 
@@ -594,7 +610,7 @@ impl SampledPlanService {
             None => PlanLayer {
                 role,
                 target,
-                technique: technique.label().to_string(),
+                technique,
                 note: String::new(),
                 recipe: None,
                 achieved: target,
@@ -606,7 +622,7 @@ impl SampledPlanService {
                 PlanLayer {
                     role,
                     target,
-                    technique: technique.label().to_string(),
+                    technique,
                     note: String::new(),
                     recipe: Some(sugg),
                     achieved,
@@ -614,5 +630,52 @@ impl SampledPlanService {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn group() -> ColourGroup {
+        ColourGroup {
+            name: "Cape".into(),
+            material: "Drap".into(),
+            samples: ["#4A2E24", "#8C6248", "#D9A68B"]
+                .iter()
+                .filter_map(|h| Rgb::of_hex(h).ok())
+                .collect(),
+        }
+    }
+
+    fn roles(plan: &PaintingPlan) -> Vec<String> {
+        let zone = &plan.zones[0];
+        zone.shadows
+            .iter()
+            .chain(zone.base.iter())
+            .chain(zone.highlights.iter())
+            .map(|l| l.role.clone())
+            .collect()
+    }
+
+    #[test]
+    fn a_sampled_plan_is_written_in_the_chosen_language() {
+        let service = SampledPlanService::default();
+        let fr = service.plan("Hussard", None, &[group()], 3, Locale::Fr).expect("plan");
+        let en = service.plan("Hussard", None, &[group()], 3, Locale::En).expect("plan");
+        assert_eq!(roles(&fr), ["Ombre 1", "Base", "Lumière 1"]);
+        assert_eq!(roles(&en), ["Shadow 1", "Base", "Highlight 1"]);
+        assert_eq!(fr.zones[0].note, "3 points relevés sur la référence.");
+        assert_eq!(en.zones[0].note, "3 points sampled on the reference.");
+        assert_eq!(en.palette_name, "no palette");
+    }
+
+    #[test]
+    fn a_plan_without_samples_says_so_in_the_chosen_language() {
+        let empty = ColourGroup { samples: Vec::new(), ..group() };
+        let err = SampledPlanService::default()
+            .plan("Hussard", None, &[empty], 3, Locale::En)
+            .expect_err("nothing to plan");
+        assert!(err.to_string().contains("No sampled point"), "{err}");
     }
 }

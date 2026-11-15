@@ -603,6 +603,7 @@ impl BackupImporter {
             let paints = self
                 .resolve(&entry.paints, &format!("projet {}", entry.name), warnings)
                 .await?;
+            let system = PaintSystem::from_str(&entry.system).unwrap_or_default();
             let zones = entry
                 .zones
                 .iter()
@@ -611,7 +612,7 @@ impl BackupImporter {
                     name: z.name.clone(),
                     material: z.material.clone(),
                     note: z.note.clone(),
-                    layers: z.layers.iter().map(Self::to_layer).collect(),
+                    layers: z.layers.iter().map(|l| Self::to_layer(l, system)).collect(),
                 })
                 .collect();
 
@@ -676,7 +677,7 @@ impl BackupImporter {
         Ok((added, skipped, photos_count))
     }
 
-    fn to_layer(layer: &BackupLayer) -> ProjectLayer {
+    fn to_layer(layer: &BackupLayer, system: PaintSystem) -> ProjectLayer {
         let applied = layer
             .applied_at
             .as_deref()
@@ -699,15 +700,17 @@ impl BackupImporter {
                 )
             });
 
-        ProjectLayer {
+        let mut out = ProjectLayer {
             id: None,
             role: layer.role.clone(),
             target_hex: layer.target_hex.clone(),
-            technique: layer.technique.clone(),
+            technique: Technique::default_for(system),
             note: layer.note.clone(),
             kind: LayerKind::from_str(&layer.kind).unwrap_or(LayerKind::Ladder),
             applied,
-        }
+        };
+        out.set_technique_label(&layer.technique, system);
+        out
     }
 
     async fn resolve(
@@ -907,7 +910,8 @@ impl BackupExporter {
                         .map(|l| BackupLayer {
                             role: l.role.clone(),
                             target_hex: l.target_hex.clone(),
-                            technique: l.technique.clone(),
+                            // The unaccented French label: the form the Java version reads.
+                            technique: l.technique.legacy_label(),
                             note: l.note.clone(),
                             kind: l.kind.as_db_str().to_string(),
                             applied_at: l.applied.as_ref().map(|a| format_iso_instant(a.at)),
