@@ -335,7 +335,13 @@ fn PaintRow(
                     }
                 }
             }
-            td { class: "mono muted", "{pig_str}" }
+            td { class: "mono muted",
+                if paint.is_effect() {
+                    span { class: "pill", "✨ {pig_str}" }
+                } else {
+                    "{pig_str}"
+                }
+            }
             td {
                 span { class: "pill", "{paint.opacity.label(locale)}" }
                 " "

@@ -62,9 +62,9 @@ async fn painting_system_drives_the_screens_outside_a_project() {
     ui.assert_shows("Tiroir huile : 680 / 680").await;
 
     ui.click_in("system-segment", "Acrylique").await;
-    ui.assert_shows("Tiroir acrylique : 1351 / 1351").await;
+    ui.assert_shows("Tiroir acrylique : 1349 / 1349").await;
     ui.click_in("sidebar", "Catalogue").await;
-    ui.assert_shows("1351 références").await;
+    ui.assert_shows("1349 références").await;
     ui.assert_hides("Catalogue des peintures à l'huile").await;
     ui.click_in("sidebar", "Séchage").await;
     ui.assert_hides("Calculateur de séchage à l'huile").await;
@@ -122,7 +122,7 @@ async fn command_palette_follows_the_system_and_the_language() {
     ui.click_in("system-segment", "Acrylique").await;
     ui.press_cmd("k").await;
     ui.type_into("Rechercher un outil", "catalogue").await;
-    ui.assert_shows("Catalogue Acryliques (1351 références)")
+    ui.assert_shows("Catalogue Acryliques (1349 références)")
         .await;
     ui.type_into("Rechercher un outil", "séchage").await;
     ui.assert_shows("Temps de Séchage acrylique").await;

@@ -17,7 +17,7 @@ Scale75 Scalecolor;Artic Blue;;;;#9FB3BC;ACRYLIC
 Scale75 Scalecolor;Basic Flesh;;;;#D0B393;ACRYLIC
 Scale75 Scalecolor;Bering Blue;;;;#6C8997;ACRYLIC
 Scale75 Scalecolor;Birch;;;;#EFD2B0;ACRYLIC
-Scale75 Scalecolor;Black;;;;#2C2C2C;ACRYLIC
+Scale75 Scalecolor;Black;;;OPAQUE;#2C2C2C;ACRYLIC
 Scale75 Scalecolor;Black Forest Green;;;;#004834;ACRYLIC
 Scale75 Scalecolor;Black Leather;;;;#422A2A;ACRYLIC
 Scale75 Scalecolor;Blood Red;;;;#912727;ACRYLIC
@@ -66,5 +66,5 @@ Scale75 Scalecolor;Tesla Blue;;;;#414D97;ACRYLIC
 Scale75 Scalecolor;Thar Brown;;;;#B09F81;ACRYLIC
 Scale75 Scalecolor;Violet Blue;;;;#604673;ACRYLIC
 Scale75 Scalecolor;Walnut;;;;#7D6450;ACRYLIC
-Scale75 Scalecolor;White;;;;#FFFFFF;ACRYLIC
+Scale75 Scalecolor;White;;;OPAQUE;#FFFFFF;ACRYLIC
 Scale75 Scalecolor;White Sands;;;;#F6E1C6;ACRYLIC

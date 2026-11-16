@@ -60,7 +60,14 @@ pub(super) fn PaintSheet(
             }
 
             div { class: "row u-mb-14 u-fwrap-wrap u-gap-6",
-                span { class: "pill pill-accent", "Pigments: {pig_str}" }
+                if pig_str.is_empty() {
+                    span { class: "pill", {locale.tr("Pigments : non publiés", "Pigments: undisclosed")} }
+                } else {
+                    span { class: "pill pill-accent", "Pigments: {pig_str}" }
+                }
+                if paint.is_effect() {
+                    span { class: "pill pill-warn", {locale.tr("✨ Métallique / Effet", "✨ Metallic / Effect")} }
+                }
                 span { class: "pill", {locale.tr("Opacité : ", "Opacity: ")}, "{paint.opacity.label(locale)}" }
                 span { class: "pill", {locale.tr("Séchage : ", "Drying: ")}, "{paint.drying_class.label(locale)}" }
                 span { class: "pill", "{paint.lightfastness().label(locale)}" }

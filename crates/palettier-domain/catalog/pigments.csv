@@ -57,6 +57,9 @@ PR102;Oxyde de fer rouge naturel;#8E4128;SEMI_OPAQUE;FAST;0.70;#D0A496
 PG23;Terre verte;#6B7A5A;TRANSPARENT;MEDIUM;0.30
 # Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
 PBr25;Brun de benzimidazolone;#5E2418;TRANSPARENT;MEDIUM;0.85;#C79A8E
+# Pigments additionnels (Kimera Kolors Pure Pigments).
+PBr11;Oxyde de fer et magnesium;#5A3E32;OPAQUE;FAST;0.85
+PBr48;Oxyde de fer brun synthetique;#8C6228;SEMI_OPAQUE;FAST;0.70
 
 # --- Jaunes ---
 PY3;Jaune arylide clair (Hansa);#F5DC2A;SEMI_TRANSPARENT;SLOW;0.80
@@ -88,9 +91,11 @@ PY75;Jaune arylide fonce;#F5B914;SEMI_TRANSPARENT;SLOW;0.80
 PY73;Jaune arylide citron;#F7DC3A;SEMI_TRANSPARENT;SLOW;0.75
 PY138;Jaune de quinophtalone (nuance verte);#E8D318;TRANSPARENT;MEDIUM;0.90
 PY164;Brun jaune de manganese-antimoine-titane;#9A6B33;OPAQUE;FAST;0.45
+PY170;Jaune diarylide (PY170);#EAA339;SEMI_TRANSPARENT;MEDIUM;0.85
 
 # --- Oranges ---
 PO20;Orange de cadmium;#EE7318;OPAQUE;VERY_SLOW;0.80
+PO34;Orange de pyrazolone;#E85A14;SEMI_TRANSPARENT;MEDIUM;0.90
 PO36;Orange benzimidazolone fonce;#E06A12;SEMI_OPAQUE;MEDIUM;0.85
 PO43;Orange perinone;#E85A14;TRANSPARENT;MEDIUM;0.90
 PO62;Orange benzimidazolone;#F0821A;SEMI_OPAQUE;MEDIUM;0.85
@@ -103,6 +108,7 @@ PO48;Quinacridone or;#A8501E;TRANSPARENT;MEDIUM;0.85;#E0B49E
 
 # --- Rouges ---
 NR9;Garance naturelle (laque);#C44A62;TRANSPARENT;SLOW;0.55;#EEC0C8
+PR3;Rouge toluidine;#D53424;SEMI_OPAQUE;MEDIUM;0.85
 PR83;Alizarine (garance de synthese);#8E1B2E;TRANSPARENT;SLOW;0.85;#D4A8B4
 PR106;Vermillon (sulfure de mercure);#E03A20;OPAQUE;SLOW;0.80
 PR108;Rouge de cadmium;#D9341F;OPAQUE;VERY_SLOW;0.85;#EFB8AC
@@ -139,7 +145,9 @@ PV49;Violet de cobalt clair;#7A4A86;TRANSPARENT;MEDIUM;0.40
 
 # --- Bleus ---
 PB15;Bleu de phtalocyanine;#0E3F73;TRANSPARENT;MEDIUM;1.00;#8FAED2
+PB15:2;Bleu de phtalocyanine nuance rouge;#14357A;TRANSPARENT;MEDIUM;1.00;#92B0D8
 PB15:3;Bleu de phtalocyanine nuance verte;#0D4A80;TRANSPARENT;MEDIUM;1.00;#8CB4D6
+PB15:4;Bleu de phtalocyanine nuance verte (PB15:4);#0D4A80;TRANSPARENT;MEDIUM;1.00;#8CB4D6
 PB15:6;Bleu de phtalocyanine forme epsilon;#0C2F63;TRANSPARENT;MEDIUM;1.00
 PB16;Turquoise de phtalocyanine (sans metal);#0E7A86;TRANSPARENT;MEDIUM;0.95
 PB27;Bleu de Prusse;#16323C;TRANSPARENT;FAST;0.98;#A2B8C4

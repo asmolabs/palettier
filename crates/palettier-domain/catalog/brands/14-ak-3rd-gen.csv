@@ -49,7 +49,7 @@ AK Interactive 3rd Gen;Yellow;AK11044;;;#FAB711;ACRYLIC
 AK Interactive 3rd Gen;Radiant Yellow;AK11046;;;#FFD409;ACRYLIC
 AK Interactive 3rd Gen;Lemon Yellow;AK11047;;;#FFE121;ACRYLIC
 AK Interactive 3rd Gen;Laser Yellow;AK11048;;;#F5EF2B;ACRYLIC
-AK Interactive 3rd Gen;Fluorescent Yellow;AK11049;;;#F6F101;ACRYLIC
+AK Interactive 3rd Gen;Fluorescent Yellow;AK11049;;TRANSPARENT;#F6F101;ACRYLIC
 AK Interactive 3rd Gen;Light Flesh;AK11050;;;#FFDFB6;ACRYLIC
 AK Interactive 3rd Gen;Luminous Flesh;AK11051;;;#EDC180;ACRYLIC
 AK Interactive 3rd Gen;Basic Skin Tone;AK11052;;;#F7B57B;ACRYLIC
@@ -66,14 +66,14 @@ AK Interactive 3rd Gen;Brown Rose;AK11063;;;#D78464;ACRYLIC
 AK Interactive 3rd Gen;Beige Red;AK11064;;;#DE935A;ACRYLIC
 AK Interactive 3rd Gen;Laser Magenta;AK11066;;;#6B102F;ACRYLIC
 AK Interactive 3rd Gen;Magenta;AK11067;;;#B1325F;ACRYLIC
-AK Interactive 3rd Gen;Fluorescent Magenta;AK11068;;;#FF4C69;ACRYLIC
+AK Interactive 3rd Gen;Fluorescent Magenta;AK11068;;TRANSPARENT;#FF4C69;ACRYLIC
 AK Interactive 3rd Gen;Blue Violet;AK11070;;;#886DA4;ACRYLIC
 AK Interactive 3rd Gen;Lilac;AK11071;;;#656074;ACRYLIC
 AK Interactive 3rd Gen;Violet Red;AK11075;;;#573536;ACRYLIC
 AK Interactive 3rd Gen;Light Orange;AK11077;;;#F07A3C;ACRYLIC
 AK Interactive 3rd Gen;Medium Orange;AK11078;;;#FA682C;ACRYLIC
 AK Interactive 3rd Gen;Burn Orange;AK11079;;;#DB5E30;ACRYLIC
-AK Interactive 3rd Gen;Fluorescent Orange;AK11081;;;#FE5102;ACRYLIC
+AK Interactive 3rd Gen;Fluorescent Orange;AK11081;;TRANSPARENT;#FE5102;ACRYLIC
 AK Interactive 3rd Gen;Luminous Orange;AK11082;;;#F18700;ACRYLIC
 AK Interactive 3rd Gen;Dead Red;AK11083;;;#F54949;ACRYLIC
 AK Interactive 3rd Gen;Ruby;AK11084;;;#CF4747;ACRYLIC
@@ -118,7 +118,7 @@ AK Interactive 3rd Gen;Grey-brown;AK11125;;;#705B3C;ACRYLIC
 AK Interactive 3rd Gen;Green-brown;AK11126;;;#705923;ACRYLIC
 AK Interactive 3rd Gen;British Khaki;AK11127;;;#654D1F;ACRYLIC
 AK Interactive 3rd Gen;Luminous Green;AK11128;;;#CDD742;ACRYLIC
-AK Interactive 3rd Gen;Fluorescent Green;AK11129;;;#98C31E;ACRYLIC
+AK Interactive 3rd Gen;Fluorescent Green;AK11129;;TRANSPARENT;#98C31E;ACRYLIC
 AK Interactive 3rd Gen;Pistachio;AK11130;;;#DCD225;ACRYLIC
 AK Interactive 3rd Gen;Green-grey;AK11132;;;#DFE4BC;ACRYLIC
 AK Interactive 3rd Gen;Dark Green-grey;AK11133;;;#3B4D3D;ACRYLIC
@@ -164,7 +164,7 @@ AK Interactive 3rd Gen;Snow Blue;AK11174;;;#CAE4E1;ACRYLIC
 AK Interactive 3rd Gen;Sky Blue;AK11175;;;#88C2CD;ACRYLIC
 AK Interactive 3rd Gen;Deep Sky Blue;AK11176;;;#69B4C7;ACRYLIC
 AK Interactive 3rd Gen;Ducat Blue;AK11177;;;#3A889F;ACRYLIC
-AK Interactive 3rd Gen;Fluorescent Blue;AK11178;;;#004064;ACRYLIC
+AK Interactive 3rd Gen;Fluorescent Blue;AK11178;;TRANSPARENT;#004064;ACRYLIC
 AK Interactive 3rd Gen;Ultramarine;AK11179;;;#1E357B;ACRYLIC
 AK Interactive 3rd Gen;Imperial Blue;AK11180;;;#192152;ACRYLIC
 AK Interactive 3rd Gen;Dark Blue;AK11181;;;#1E2D4C;ACRYLIC
@@ -178,7 +178,7 @@ AK Interactive 3rd Gen;Dark Prussian Blue;AK11189;;;#0A0C1B;ACRYLIC
 AK Interactive 3rd Gen;Dark Sea Blue;AK11190;;;#0D1814;ACRYLIC
 AK Interactive 3rd Gen;Clear Red;AK11213;;;#C61215;ACRYLIC
 AK Interactive 3rd Gen;Clear Blue;AK11214;;;#0D265C;ACRYLIC
-AK Interactive 3rd Gen;Clear Smoke;AK11215;;;#734C21;ACRYLIC
+AK Interactive 3rd Gen;Clear Smoke;AK11215;;TRANSPARENT;#734C21;ACRYLIC
 AK Interactive 3rd Gen;Clear Green;AK11216;;;#029837;ACRYLIC
 AK Interactive 3rd Gen;Clear Yellow;AK11217;;;#F49401;ACRYLIC
 AK Interactive 3rd Gen;Clear Orange;AK11218;;;#EB5D0B;ACRYLIC
@@ -298,8 +298,8 @@ AK Interactive 3rd Gen;S.c.c. No.1a Very Dark Brown;AK11384;;;#371E17;ACRYLIC
 AK Interactive 3rd Gen;S.c.c. No.2 Brown;AK11385;;;#855F2E;ACRYLIC
 AK Interactive 3rd Gen;S.c.c. No.15 Olive Drab;AK11386;;;#4D4B32;ACRYLIC
 AK Interactive 3rd Gen;3b Au/zb Au;AK11387;;;#1F2211;ACRYLIC
-AK Interactive 3rd Gen;White;AK11001;;;#FFFFFF;ACRYLIC
-AK Interactive 3rd Gen;Black;AK11029;;;#101207;ACRYLIC
+AK Interactive 3rd Gen;White;AK11001;;OPAQUE;#FFFFFF;ACRYLIC
+AK Interactive 3rd Gen;Black;AK11029;;OPAQUE;#101207;ACRYLIC
 AK Interactive 3rd Gen;Deep Yellow;AK11045;;;#FDC500;ACRYLIC
 AK Interactive 3rd Gen;Intense Pink;AK11065;;;#E9748F;ACRYLIC
 AK Interactive 3rd Gen;Deep Violet;AK11072;;;#74536E;ACRYLIC
@@ -315,24 +315,24 @@ AK Interactive 3rd Gen;Pastel Violet;AK11069;;;#FEE6F4;ACRYLIC
 AK Interactive 3rd Gen;Pastel Peach;AK11076;;;#F59A54;ACRYLIC
 AK Interactive 3rd Gen;Pastel Green;AK11131;;;#A9D099;ACRYLIC
 AK Interactive 3rd Gen;Pastel Blue;AK11168;;;#BDDDB8;ACRYLIC
-AK Interactive 3rd Gen;Gold;AK11191;;;#9E6806;ACRYLIC
-AK Interactive 3rd Gen;Old Gold;AK11192;;;#B89402;ACRYLIC
-AK Interactive 3rd Gen;Rusty Gold;AK11193;;;#734B03;ACRYLIC
-AK Interactive 3rd Gen;Brass;AK11194;;;#A55D09;ACRYLIC
-AK Interactive 3rd Gen;Rusty Brass;AK11195;;;#A04D0B;ACRYLIC
-AK Interactive 3rd Gen;Bronze;AK11196;;;#7F5405;ACRYLIC
-AK Interactive 3rd Gen;Copper;AK11197;;;#BD500B;ACRYLIC
-AK Interactive 3rd Gen;Burnt Tin;AK11198;;;#331702;ACRYLIC
-AK Interactive 3rd Gen;Metallic Blue;AK11199;;;#829C99;ACRYLIC
-AK Interactive 3rd Gen;Astral Beryllium;AK11200;;;#799E8D;ACRYLIC
-AK Interactive 3rd Gen;Cobalt Blue;AK11201;;;#012136;ACRYLIC
-AK Interactive 3rd Gen;Anodized Violet;AK11202;;;#9D8696;ACRYLIC
-AK Interactive 3rd Gen;Foundry Red;AK11203;;;#C53733;ACRYLIC
-AK Interactive 3rd Gen;Emerald Metallic Green;AK11204;;;#21753A;ACRYLIC
-AK Interactive 3rd Gen;Pearl;AK11206;;;#F5EFD5;ACRYLIC
-AK Interactive 3rd Gen;Aluminium;AK11207;;;#AFAFAF;ACRYLIC
-AK Interactive 3rd Gen;Dark Aluminium;AK11208;;;#787878;ACRYLIC
-AK Interactive 3rd Gen;Silver;AK11209;;;#A0AAAC;ACRYLIC
-AK Interactive 3rd Gen;Natural Steel;AK11210;;;#A7A6A1;ACRYLIC
-AK Interactive 3rd Gen;Oily Steel;AK11211;;;#A7A491;ACRYLIC
-AK Interactive 3rd Gen;Gun Metal;AK11212;;;#4E4E4C;ACRYLIC
+AK Interactive 3rd Gen;Gold;AK11191;EFFEKT;OPAQUE;#9E6806;ACRYLIC
+AK Interactive 3rd Gen;Old Gold;AK11192;EFFEKT;OPAQUE;#B89402;ACRYLIC
+AK Interactive 3rd Gen;Rusty Gold;AK11193;EFFEKT;OPAQUE;#734B03;ACRYLIC
+AK Interactive 3rd Gen;Brass;AK11194;EFFEKT;OPAQUE;#A55D09;ACRYLIC
+AK Interactive 3rd Gen;Rusty Brass;AK11195;EFFEKT;OPAQUE;#A04D0B;ACRYLIC
+AK Interactive 3rd Gen;Bronze;AK11196;EFFEKT;OPAQUE;#7F5405;ACRYLIC
+AK Interactive 3rd Gen;Copper;AK11197;EFFEKT;OPAQUE;#BD500B;ACRYLIC
+AK Interactive 3rd Gen;Burnt Tin;AK11198;EFFEKT;OPAQUE;#331702;ACRYLIC
+AK Interactive 3rd Gen;Metallic Blue;AK11199;EFFEKT;OPAQUE;#829C99;ACRYLIC
+AK Interactive 3rd Gen;Astral Beryllium;AK11200;EFFEKT;OPAQUE;#799E8D;ACRYLIC
+AK Interactive 3rd Gen;Cobalt Blue;AK11201;EFFEKT;OPAQUE;#012136;ACRYLIC
+AK Interactive 3rd Gen;Anodized Violet;AK11202;EFFEKT;OPAQUE;#9D8696;ACRYLIC
+AK Interactive 3rd Gen;Foundry Red;AK11203;EFFEKT;OPAQUE;#C53733;ACRYLIC
+AK Interactive 3rd Gen;Emerald Metallic Green;AK11204;EFFEKT;OPAQUE;#21753A;ACRYLIC
+AK Interactive 3rd Gen;Pearl;AK11206;EFFEKT;SEMI_OPAQUE;#F5EFD5;ACRYLIC
+AK Interactive 3rd Gen;Aluminium;AK11207;ALU;OPAQUE;#AFAFAF;ACRYLIC
+AK Interactive 3rd Gen;Dark Aluminium;AK11208;ALU;OPAQUE;#787878;ACRYLIC
+AK Interactive 3rd Gen;Silver;AK11209;ALU;OPAQUE;#A0AAAC;ACRYLIC
+AK Interactive 3rd Gen;Natural Steel;AK11210;ALU;OPAQUE;#A7A6A1;ACRYLIC
+AK Interactive 3rd Gen;Oily Steel;AK11211;ALU;OPAQUE;#A7A491;ACRYLIC
+AK Interactive 3rd Gen;Gun Metal;AK11212;ALU;OPAQUE;#4E4E4C;ACRYLIC

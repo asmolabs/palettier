@@ -451,10 +451,10 @@ mod tests {
     }
 
     #[test]
-    fn eight_acrylic_brands_yield_1351_unique_pots() {
+    fn eight_acrylic_brands_yield_1349_unique_pots() {
         let mut loaded = CatalogLoader::default().load_detailed();
         loaded.paints.retain(|p| p.system == PaintSystem::Acrylic);
-        assert_eq!(1351, loaded.paints.len());
+        assert_eq!(1349, loaded.paints.len());
 
         let mut seen = IndexSet::new();
         for p in &loaded.paints {
@@ -465,6 +465,44 @@ mod tests {
                 p.name
             );
         }
+    }
+
+    #[test]
+    fn acrylic_metadata_marks_kimera_pigments_citadel_opacities_and_metallics() {
+        let loaded = CatalogLoader::default().load();
+        let find = |brand: &str, name: &str| -> &Paint {
+            loaded
+                .iter()
+                .find(|p| p.brand == brand && p.name == name)
+                .unwrap_or_else(|| panic!("peinture manquante: {brand} - {name}"))
+        };
+
+        let kimera_orange = find("Kimera Kolors", "Orange");
+        assert_eq!(IndexSet::from(["PO34".to_string()]), kimera_orange.pigments);
+        assert!(kimera_orange.pigments_verified);
+        assert_eq!(Opacity::SemiTransparent, kimera_orange.opacity);
+
+        let kimera_phthalo = find("Kimera Kolors", "Phthalo Blu (Green Shade)");
+        assert_eq!(
+            IndexSet::from(["PB15:4".to_string()]),
+            kimera_phthalo.pigments
+        );
+        assert_eq!(Opacity::Transparent, kimera_phthalo.opacity);
+
+        let mephiston = find("Citadel", "Mephiston Red");
+        assert_eq!(Opacity::Opaque, mephiston.opacity);
+        assert!(!mephiston.is_effect());
+
+        let evil_sunz = find("Citadel", "Evil Sunz Scarlet");
+        assert_eq!(Opacity::SemiOpaque, evil_sunz.opacity);
+
+        let leadbelcher = find("Citadel", "Leadbelcher");
+        assert!(leadbelcher.is_effect());
+        assert_eq!(Opacity::Opaque, leadbelcher.opacity);
+
+        let pro_acryl_tr_blue = find("Pro Acryl", "Transparent Blue");
+        assert_eq!(Opacity::Transparent, pro_acryl_tr_blue.opacity);
+        assert!(!pro_acryl_tr_blue.is_effect());
     }
 
     #[test]

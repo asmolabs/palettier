@@ -261,6 +261,15 @@ impl ColorMixService {
             );
         }
 
+        let mixes_effect_and_flat = components.iter().any(|c| c.paint.is_effect())
+            && components.iter().any(|c| !c.paint.is_effect());
+        if mixes_effect_and_flat {
+            out.push(
+                "Mélange d'une peinture métallique/à effet avec une teinte mate : le rendu métallique et la couverture peuvent différer."
+                    .to_string(),
+            );
+        }
+
         if drying >= DryingClass::Slow {
             out.push(format!(
                 "Séchage {} imposé par le pigment le plus lent : prévoyez la couche suivante en conséquence.",
@@ -312,10 +321,18 @@ impl ColorMixService {
             merged.truncate(max_results);
             return merged;
         }
+        // Flat-colour mixes exclude metallic/pearl/effect paints unless every candidate is an effect paint.
+        let flat: Vec<Paint> = candidates
+            .iter()
+            .filter(|p| !p.is_effect())
+            .cloned()
+            .collect();
+        let pool: &[Paint] = if flat.is_empty() { candidates } else { &flat };
+
         let limit_paints = max_paints
-            .unwrap_or_else(|| Self::recommended_max_paints(candidates.len()))
+            .unwrap_or_else(|| Self::recommended_max_paints(pool.len()))
             .clamp(1, Self::MAX_PAINTS);
-        MixSearch::new(target, candidates).search(limit_paints, max_results)
+        MixSearch::new(target, pool).search(limit_paints, max_results)
     }
 }
 
@@ -982,8 +999,51 @@ mod tests {
         );
         assert!(millis < 1000, "{millis} ms par cible");
         assert!(
-            (worst - 0.8537644933880194).abs() < 1e-12,
-            "pire écart attendu 0.8537644933880194, obtenu {worst}"
+            (worst - 0.5879680822937304).abs() < 1e-12,
+            "pire écart attendu 0.5879680822937304, obtenu {worst}"
+        );
+    }
+
+    #[test]
+    fn solver_excludes_metallic_paints_when_flat_paints_are_available() {
+        let service = ColorMixService::new();
+        let all = CatalogLoader::default().load();
+        let acrylics: Vec<Paint> = all
+            .into_iter()
+            .filter(|p| p.system == PaintSystem::Acrylic)
+            .collect();
+        let gold = acrylics
+            .iter()
+            .find(|p| p.brand == "Citadel" && p.name == "Auric Armour Gold")
+            .expect("Auric Armour Gold présente")
+            .clone();
+        assert!(gold.is_effect());
+
+        let suggestions = service.suggest_mixes(gold.color(), &acrylics, 6, Some(2));
+        assert!(!suggestions.is_empty());
+        for s in &suggestions {
+            assert!(
+                s.parts.iter().all(|part| !part.paint.is_effect()),
+                "le solveur a proposé une peinture métallique : {}",
+                s.describe()
+            );
+        }
+
+        let flat = acrylics
+            .iter()
+            .find(|p| !p.is_effect())
+            .expect("acrylique mate présente")
+            .clone();
+        let mixed = service
+            .mix(&[PaintPart::of(gold, 1.0), PaintPart::of(flat, 1.0)])
+            .unwrap();
+        assert!(
+            mixed
+                .warnings
+                .iter()
+                .any(|w| w.contains("métallique")),
+            "avertissement attendu : {:?}",
+            mixed.warnings
         );
     }
 }

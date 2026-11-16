@@ -5,8 +5,8 @@
 # par une mesure d'ecouvillon dans le Catalogue.
 # Gammes Pro Acryl standard et Signature Series.
 brand;name;code;pigments;opacity;hex;system
-Pro Acryl;Bold Titanium White;001;;;#E7E9E4;ACRYLIC
-Pro Acryl;Coal Black;002;;;#18191B;ACRYLIC
+Pro Acryl;Bold Titanium White;001;;OPAQUE;#E7E9E4;ACRYLIC
+Pro Acryl;Coal Black;002;;OPAQUE;#18191B;ACRYLIC
 Pro Acryl;Bold Pyrrole Red;003;;;#A90F0F;ACRYLIC
 Pro Acryl;Green;004;;;#16864E;ACRYLIC
 Pro Acryl;Blue;005;;;#0855A3;ACRYLIC
@@ -29,15 +29,15 @@ Pro Acryl;Jade;021;;;#03535A;ACRYLIC
 Pro Acryl;Bright Ivory;022;;;#E7E8C8;ACRYLIC
 Pro Acryl;Ivory;023;;;#D5D0B3;ACRYLIC
 Pro Acryl;Tan Flesh;024;;;#C39F85;ACRYLIC
-Pro Acryl;Silver;025;;;#9A9E9D;ACRYLIC
-Pro Acryl;Light Bronze;026;;;#9C8D64;ACRYLIC
-Pro Acryl;Copper;027;;;#AE7849;ACRYLIC
-Pro Acryl;Rich Gold;028;;;#B47A30;ACRYLIC
-Pro Acryl;White Gold;029;;;#9E9B8A;ACRYLIC
-Pro Acryl;Dark Silver;030;;;#25292C;ACRYLIC
-Pro Acryl;Bright Gold;031;;;#BC9866;ACRYLIC
-Pro Acryl;Bronze;032;;;#78685B;ACRYLIC
-Pro Acryl;Metallic Medium;033;;;#D3D4CC;ACRYLIC
+Pro Acryl;Silver;025;ALU;OPAQUE;#9A9E9D;ACRYLIC
+Pro Acryl;Light Bronze;026;EFFEKT;OPAQUE;#9C8D64;ACRYLIC
+Pro Acryl;Copper;027;EFFEKT;OPAQUE;#AE7849;ACRYLIC
+Pro Acryl;Rich Gold;028;EFFEKT;OPAQUE;#B47A30;ACRYLIC
+Pro Acryl;White Gold;029;EFFEKT;OPAQUE;#9E9B8A;ACRYLIC
+Pro Acryl;Dark Silver;030;ALU;OPAQUE;#25292C;ACRYLIC
+Pro Acryl;Bright Gold;031;EFFEKT;OPAQUE;#BC9866;ACRYLIC
+Pro Acryl;Bronze;032;EFFEKT;OPAQUE;#78685B;ACRYLIC
+Pro Acryl;Metallic Medium;033;EFFEKT;SEMI_TRANSPARENT;#D3D4CC;ACRYLIC
 Pro Acryl;Dark Blue;034;;;#142038;ACRYLIC
 Pro Acryl;Dark Purple;035;;;#1D2347;ACRYLIC
 Pro Acryl;Dark Camo Green;036;;;#313C2C;ACRYLIC
@@ -50,14 +50,14 @@ Pro Acryl;Shadow Flesh;042;;;#8D5345;ACRYLIC
 Pro Acryl;Pale Pink;043;;;#E0CABF;ACRYLIC
 Pro Acryl;Dark Neutral Grey;044;;;#2A3235;ACRYLIC
 Pro Acryl;Bright Neutral Grey;045;;;#ABAEA7;ACRYLIC
-Pro Acryl;Transparent Blue;046;;;#09125D;ACRYLIC
-Pro Acryl;Transparent Red;047;;;#90111C;ACRYLIC
-Pro Acryl;Transparent Green;048;;;#082930;ACRYLIC
-Pro Acryl;Transparent Yellow;049;;;#E6B802;ACRYLIC
-Pro Acryl;Transparent Orange;050;;;#A22207;ACRYLIC
-Pro Acryl;Transparent Purple;051;;;#16172B;ACRYLIC
-Pro Acryl;Transparent Brown;052;;;#372525;ACRYLIC
-Pro Acryl;Transparent Black;053;;;#1D1E22;ACRYLIC
+Pro Acryl;Transparent Blue;046;;TRANSPARENT;#09125D;ACRYLIC
+Pro Acryl;Transparent Red;047;;TRANSPARENT;#90111C;ACRYLIC
+Pro Acryl;Transparent Green;048;;TRANSPARENT;#082930;ACRYLIC
+Pro Acryl;Transparent Yellow;049;;TRANSPARENT;#E6B802;ACRYLIC
+Pro Acryl;Transparent Orange;050;;TRANSPARENT;#A22207;ACRYLIC
+Pro Acryl;Transparent Purple;051;;TRANSPARENT;#16172B;ACRYLIC
+Pro Acryl;Transparent Brown;052;;TRANSPARENT;#372525;ACRYLIC
+Pro Acryl;Transparent Black;053;;TRANSPARENT;#1D1E22;ACRYLIC
 Pro Acryl;Turquoise;054;;;#75F1F1;ACRYLIC
 Pro Acryl;Grey Blue;055;;;#BCE3F2;ACRYLIC
 Pro Acryl;Blue Black;056;;;#517283;ACRYLIC
@@ -68,7 +68,7 @@ Pro Acryl;Pale Yellow;060;;;#E8E7D2;ACRYLIC
 Pro Acryl;Khaki;061;;;#AC9E6B;ACRYLIC
 Pro Acryl;Dark Golden Brown;062;;;#A58F56;ACRYLIC
 Pro Acryl;Faded Plum;063;;;#C8B5D5;ACRYLIC
-Pro Acryl;Transparent White;064;;;#F5F5F5;ACRYLIC
+Pro Acryl;Transparent White;064;;TRANSPARENT;#F5F5F5;ACRYLIC
 Pro Acryl;Yellow Green;065;;;#879245;ACRYLIC
 Pro Acryl;Faded Green;066;;;#9AA37F;ACRYLIC
 Pro Acryl;Bright Jade;067;;;#408C8E;ACRYLIC
@@ -80,12 +80,12 @@ Pro Acryl;Warm Yellow;072;;;#F6C847;ACRYLIC
 Pro Acryl;Warm Flesh;073;;;#F6C67C;ACRYLIC
 Pro Acryl;Warm Grey;074;;;#54544A;ACRYLIC
 Pro Acryl;Neutral Grey;075;;;#5E5E5E;ACRYLIC
-Pro Acryl;Fluorescent Red;F01;;;#EF3A37;ACRYLIC
-Pro Acryl;Fluorescent Orange;F02;;;#F04D26;ACRYLIC
-Pro Acryl;Fluorescent Yellow;F03;;;#F2DD26;ACRYLIC
-Pro Acryl;Fluorescent Green;F04;;;#3FB549;ACRYLIC
-Pro Acryl;Fluorescent Purple;F05;;;#A32388;ACRYLIC
-Pro Acryl;Fluorescent Pink;F06;;;#EE387C;ACRYLIC
+Pro Acryl;Fluorescent Red;F01;;TRANSPARENT;#EF3A37;ACRYLIC
+Pro Acryl;Fluorescent Orange;F02;;TRANSPARENT;#F04D26;ACRYLIC
+Pro Acryl;Fluorescent Yellow;F03;;TRANSPARENT;#F2DD26;ACRYLIC
+Pro Acryl;Fluorescent Green;F04;;TRANSPARENT;#3FB549;ACRYLIC
+Pro Acryl;Fluorescent Purple;F05;;TRANSPARENT;#A32388;ACRYLIC
+Pro Acryl;Fluorescent Pink;F06;;TRANSPARENT;#EE387C;ACRYLIC
 Pro Acryl;Vince Venturella Dark Jade;S01;;;#2C4855;ACRYLIC
 Pro Acryl;Vince Venturella Payne's Grey;S02;;;#2D3844;ACRYLIC
 Pro Acryl;Vince Venturella Royal Purple;S03;;;#3B3053;ACRYLIC
@@ -103,13 +103,13 @@ Pro Acryl;Ben Komets Petroleum Brown;S14;;;#3B2313;ACRYLIC
 Pro Acryl;Ben Komets Dark Burgundy;S15;;;#2E1B1B;ACRYLIC
 Pro Acryl;Ben Komets Green Oxide;S16;;;#296155;ACRYLIC
 Pro Acryl;Ben Komets Advanced Flesh Tone;S17;;;#8F5D4C;ACRYLIC
-Pro Acryl;Ben Komets Heavy Warm White;S18;;;#F1D0A1;ACRYLIC
+Pro Acryl;Ben Komets Heavy Warm White;S18;;OPAQUE;#F1D0A1;ACRYLIC
 Pro Acryl;Matt Cexwish Dark Crimson;S19;;;#3E1714;ACRYLIC
 Pro Acryl;Matt Cexwish Dark Emerald;S20;;;#194245;ACRYLIC
-Pro Acryl;Matt Cexwish Heavy Titanium White;S21;;;#E6E6E6;ACRYLIC
+Pro Acryl;Matt Cexwish Heavy Titanium White;S21;;OPAQUE;#E6E6E6;ACRYLIC
 Pro Acryl;Matt Cexwish Brown Grey;S22;;;#4B4945;ACRYLIC
 Pro Acryl;Matt Cexwish Bone;S23;;;#8D857E;ACRYLIC
-Pro Acryl;Matt Cexwish Dark Bronze;S24;;;#3F311F;ACRYLIC
+Pro Acryl;Matt Cexwish Dark Bronze;S24;EFFEKT;OPAQUE;#3F311F;ACRYLIC
 Pro Acryl;Flameon Dark Green Brown;S25;;;#614529;ACRYLIC
 Pro Acryl;Flameon Dark Orange Brown;S26;;;#8D5C25;ACRYLIC
 Pro Acryl;Flameon Orange Brown;S27;;;#805F3E;ACRYLIC

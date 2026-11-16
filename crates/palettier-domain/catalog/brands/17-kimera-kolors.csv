@@ -1,46 +1,47 @@
 # Kimera Kolors (acryliques mono-pigmentaires et sets Signature)
 #
 # Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Nuancier issu des references
-# communautaires (Arcturus5404/miniature-paints) ; la teinte peut etre affinee
-# par une mesure d'ecouvillon dans le Catalogue.
-# Gamme Kimera Kolors (Pure Pigments, Expansion Set 1, Signature Sets).
-brand;name;code;pigments;opacity;hex;system
-Kimera Kolors;Cartacci Red;KK-01;;;#D02C2A;ACRYLIC
-Kimera Kolors;Caucasian Skintone;KK-02;;;#C2835C;ACRYLIC
-Kimera Kolors;Golden Brown;KK-03;;;#885A1E;ACRYLIC
-Kimera Kolors;Kiwi Brown;KK-04;;;#665B28;ACRYLIC
-Kimera Kolors;Samurai Green;KK-05;;;#306E64;ACRYLIC
-Kimera Kolors;Silver Grey;KK-06;;;#788388;ACRYLIC
-Kimera Kolors;Alizarin Crimson;KK-07;PR179;;#62192F;ACRYLIC
-Kimera Kolors;Cobalt Bluegreen;KK-08;PB36;;#285E68;ACRYLIC
-Kimera Kolors;Dark Ochre;KK-09;;;#956B23;ACRYLIC
-Kimera Kolors;Diarylide Yellow;KK-10;;;#EAA339;ACRYLIC
-Kimera Kolors;Honey Moon Yellow;KK-11;;;#C79131;ACRYLIC
-Kimera Kolors;Mars Orange;KK-12;PR101;;#9A5622;ACRYLIC
-Kimera Kolors;Oxide Brown Dark;KK-13;;;#4B3229;ACRYLIC
-Kimera Kolors;Oxide Brown Light;KK-14;;;#7D5B44;ACRYLIC
-Kimera Kolors;Oxide Brown Medium;KK-15;;;#6B4842;ACRYLIC
-Kimera Kolors;Oxide Green;KK-16;PG17;;#506C48;ACRYLIC
-Kimera Kolors;Purple;KK-17;PV19;;#87217A;ACRYLIC
-Kimera Kolors;Royal Brown;KK-18;;;#65271D;ACRYLIC
-Kimera Kolors;Toluidine Red;KK-19;;;#D5502B;ACRYLIC
-Kimera Kolors;Ultramarine Blue;KK-20;PB29;;#2E4993;ACRYLIC
-Kimera Kolors;Cloudy Sky;KK-21;;;#A99E85;ACRYLIC
-Kimera Kolors;Fallen Grass;KK-22;;;#6F7C63;ACRYLIC
-Kimera Kolors;Ground Brown;KK-23;;;#54483C;ACRYLIC
-Kimera Kolors;Iron Hue;KK-24;;;#757973;ACRYLIC
-Kimera Kolors;Morning Sky;KK-25;;;#5D8499;ACRYLIC
-Kimera Kolors;Sun Ray;KK-26;;;#FDF6AD;ACRYLIC
-Kimera Kolors;Carbon Black;KK-27;;;#2D2A2D;ACRYLIC
-Kimera Kolors;Cold Yellow;KK-28;PY151;;#E5D828;ACRYLIC
-Kimera Kolors;Magenta;KK-29;PR122;;#A1195B;ACRYLIC
-Kimera Kolors;Orange;KK-30;;;#CB552E;ACRYLIC
-Kimera Kolors;Phtalo Green;KK-31;PG7;;#344C50;ACRYLIC
-Kimera Kolors;Phthalo Blu (Green Shade);KK-32;;;#203479;ACRYLIC
-Kimera Kolors;Phthalo Blu (Red Shade);KK-33;;;#44307B;ACRYLIC
-Kimera Kolors;Red Oxide;KK-34;PR101;;#6B2F0C;ACRYLIC
-Kimera Kolors;The Red;KK-35;PR170;;#A82135;ACRYLIC
-Kimera Kolors;The White;KK-36;PW6;;#E4E4E4;ACRYLIC
-Kimera Kolors;Violet;KK-37;PV23;;#3E0F7F;ACRYLIC
-Kimera Kolors;Warm Yellow;KK-38;PY83;;#E6A91D;ACRYLIC
-Kimera Kolors;Yellow Oxide;KK-39;PY42;;#C69825;ACRYLIC
+# communautaires (Arcturus5404/miniature-paints) ; codes C.I. des gammes Pure
+# Pigments & Expansion Set 1 issus de l'etiquetage officiel Kimera Kolors.
+# Les sets Signature (KK-01..06 Cartacci, KK-21..26 Pisarski) sont des melanges
+# multi-pigments sans formule C.I. publiee.
+brand;name;code;pigments;opacity;hex;system;verified
+Kimera Kolors;Cartacci Red;KK-01;;;#D02C2A;ACRYLIC;false
+Kimera Kolors;Caucasian Skintone;KK-02;;;#C2835C;ACRYLIC;false
+Kimera Kolors;Golden Brown;KK-03;;;#885A1E;ACRYLIC;false
+Kimera Kolors;Kiwi Brown;KK-04;;;#665B28;ACRYLIC;false
+Kimera Kolors;Samurai Green;KK-05;;;#306E64;ACRYLIC;false
+Kimera Kolors;Silver Grey;KK-06;;;#788388;ACRYLIC;false
+Kimera Kolors;Alizarin Crimson;KK-07;PR179;SEMI_TRANSPARENT;#62192F;ACRYLIC;true
+Kimera Kolors;Cobalt Bluegreen;KK-08;PB36;OPAQUE;#285E68;ACRYLIC;true
+Kimera Kolors;Dark Ochre;KK-09;PBr48;SEMI_OPAQUE;#956B23;ACRYLIC;true
+Kimera Kolors;Diarylide Yellow;KK-10;PY170;SEMI_TRANSPARENT;#EAA339;ACRYLIC;true
+Kimera Kolors;Honey Moon Yellow;KK-11;PBr24;OPAQUE;#C79131;ACRYLIC;true
+Kimera Kolors;Mars Orange;KK-12;PR101;OPAQUE;#9A5622;ACRYLIC;true
+Kimera Kolors;Oxide Brown Dark;KK-13;PBr11;OPAQUE;#4B3229;ACRYLIC;true
+Kimera Kolors;Oxide Brown Light;KK-14;PBr11;OPAQUE;#7D5B44;ACRYLIC;true
+Kimera Kolors;Oxide Brown Medium;KK-15;PBr11;OPAQUE;#6B4842;ACRYLIC;true
+Kimera Kolors;Oxide Green;KK-16;PG17;OPAQUE;#506C48;ACRYLIC;true
+Kimera Kolors;Purple;KK-17;PV19;TRANSPARENT;#87217A;ACRYLIC;true
+Kimera Kolors;Royal Brown;KK-18;PBr25;TRANSPARENT;#65271D;ACRYLIC;true
+Kimera Kolors;Toluidine Red;KK-19;PR3;SEMI_OPAQUE;#D5502B;ACRYLIC;true
+Kimera Kolors;Ultramarine Blue;KK-20;PB29;TRANSPARENT;#2E4993;ACRYLIC;true
+Kimera Kolors;Cloudy Sky;KK-21;;;#A99E85;ACRYLIC;false
+Kimera Kolors;Fallen Grass;KK-22;;;#6F7C63;ACRYLIC;false
+Kimera Kolors;Ground Brown;KK-23;;;#54483C;ACRYLIC;false
+Kimera Kolors;Iron Hue;KK-24;;;#757973;ACRYLIC;false
+Kimera Kolors;Morning Sky;KK-25;;;#5D8499;ACRYLIC;false
+Kimera Kolors;Sun Ray;KK-26;;;#FDF6AD;ACRYLIC;false
+Kimera Kolors;Carbon Black;KK-27;PBk7;SEMI_OPAQUE;#2D2A2D;ACRYLIC;true
+Kimera Kolors;Cold Yellow;KK-28;PY151;TRANSPARENT;#E5D828;ACRYLIC;true
+Kimera Kolors;Magenta;KK-29;PR122;TRANSPARENT;#A1195B;ACRYLIC;true
+Kimera Kolors;Orange;KK-30;PO34;SEMI_TRANSPARENT;#CB552E;ACRYLIC;true
+Kimera Kolors;Phtalo Green;KK-31;PG7;TRANSPARENT;#344C50;ACRYLIC;true
+Kimera Kolors;Phthalo Blu (Green Shade);KK-32;PB15:4;TRANSPARENT;#203479;ACRYLIC;true
+Kimera Kolors;Phthalo Blu (Red Shade);KK-33;PB15:2;TRANSPARENT;#44307B;ACRYLIC;true
+Kimera Kolors;Red Oxide;KK-34;PR101;OPAQUE;#6B2F0C;ACRYLIC;true
+Kimera Kolors;The Red;KK-35;PR170;SEMI_OPAQUE;#A82135;ACRYLIC;true
+Kimera Kolors;The White;KK-36;PW6;OPAQUE;#E4E4E4;ACRYLIC;true
+Kimera Kolors;Violet;KK-37;PV23;TRANSPARENT;#3E0F7F;ACRYLIC;true
+Kimera Kolors;Warm Yellow;KK-38;PY83;TRANSPARENT;#E6A91D;ACRYLIC;true
+Kimera Kolors;Yellow Oxide;KK-39;PY42;SEMI_OPAQUE;#C69825;ACRYLIC;true

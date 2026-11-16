@@ -5,7 +5,7 @@
 # par une mesure d'ecouvillon dans le Catalogue.
 # Gamme complete Vallejo Game Color.
 brand;name;code;pigments;opacity;hex;system
-Vallejo Game Color;Dead White;72.001;;;#FFFFFF;ACRYLIC
+Vallejo Game Color;Dead White;72.001;;OPAQUE;#FFFFFF;ACRYLIC
 Vallejo Game Color;Arctic White;72.002;;;#FFFFFF;ACRYLIC
 Vallejo Game Color;Pale Flesh;72.003;;;#CBA37F;ACRYLIC
 Vallejo Game Color;Elf Skin Tone;72.004;;;#CA8854;ACRYLIC
@@ -55,16 +55,16 @@ Vallejo Game Color;Wolf Grey;72.047;;;#C3D1D1;ACRYLIC
 Vallejo Game Color;Sombre Grey;72.048;;;#535D69;ACRYLIC
 Vallejo Game Color;Stonewall Grey;72.049;;;#9C9384;ACRYLIC
 Vallejo Game Color;Neutral Grey;72.050;;;#6F6D61;ACRYLIC
-Vallejo Game Color;Black;72.051;;;#000000;ACRYLIC
-Vallejo Game Color;Silver;72.052;;;#EBEDEC;ACRYLIC
-Vallejo Game Color;Chainmail;72.053;;;#E4E5E9;ACRYLIC
-Vallejo Game Color;Dark Gunmetal;72.054;;;#DADADA;ACRYLIC
-Vallejo Game Color;Polished Gold;72.055;;;#F8ECC2;ACRYLIC
-Vallejo Game Color;Glorious Gold;72.056;;;#F4E3C5;ACRYLIC
-Vallejo Game Color;Bright Bronze;72.057;;;#E7D5BF;ACRYLIC
-Vallejo Game Color;Brassy Brass;72.058;;;#E9D7CB;ACRYLIC
-Vallejo Game Color;Hammered Copper;72.059;;;#DCCFC7;ACRYLIC
-Vallejo Game Color;Tinny Tin;72.060;;;#D5C7C6;ACRYLIC
+Vallejo Game Color;Black;72.051;;OPAQUE;#000000;ACRYLIC
+Vallejo Game Color;Silver;72.052;ALU;OPAQUE;#EBEDEC;ACRYLIC
+Vallejo Game Color;Chainmail;72.053;ALU;OPAQUE;#E4E5E9;ACRYLIC
+Vallejo Game Color;Dark Gunmetal;72.054;ALU;OPAQUE;#DADADA;ACRYLIC
+Vallejo Game Color;Polished Gold;72.055;EFFEKT;OPAQUE;#F8ECC2;ACRYLIC
+Vallejo Game Color;Glorious Gold;72.056;EFFEKT;OPAQUE;#F4E3C5;ACRYLIC
+Vallejo Game Color;Bright Bronze;72.057;EFFEKT;OPAQUE;#E7D5BF;ACRYLIC
+Vallejo Game Color;Brassy Brass;72.058;EFFEKT;OPAQUE;#E9D7CB;ACRYLIC
+Vallejo Game Color;Hammered Copper;72.059;EFFEKT;OPAQUE;#DCCFC7;ACRYLIC
+Vallejo Game Color;Tinny Tin;72.060;EFFEKT;OPAQUE;#D5C7C6;ACRYLIC
 Vallejo Game Color;Khaki;72.061;;;#9A7B4C;ACRYLIC
 Vallejo Game Color;Earth;72.062;;;#775730;ACRYLIC
 Vallejo Game Color;Desert Yellow;72.063;;;#996732;ACRYLIC
@@ -72,7 +72,7 @@ Vallejo Game Color;Yellow Olive;72.064;;;#1E4F39;ACRYLIC
 Vallejo Game Color;Terracotta;72.065;;;#693E38;ACRYLIC
 Vallejo Game Color;Tan;72.066;;;#95604E;ACRYLIC
 Vallejo Game Color;Cayman Green;72.067;;;#59542A;ACRYLIC
-Vallejo Game Color;Smokey Ink;72.068;;;#493632;ACRYLIC
+Vallejo Game Color;Smokey Ink;72.068;;TRANSPARENT;#493632;ACRYLIC
 Vallejo Game Color;Barbarian Skin;72.071;;;#926641;ACRYLIC
 Vallejo Game Color;Alien Purple;72.076;;;#7161A8;ACRYLIC
 Vallejo Game Color;White;72.082;;;#FFFFFF;ACRYLIC
@@ -95,8 +95,8 @@ Vallejo Game Color;Skin Tone;72.099;;;#E5AB85;ACRYLIC
 Vallejo Game Color;Rosy Flesh;72.100;;;#E58A6B;ACRYLIC
 Vallejo Game Color;Off-White;72.101;;;#FEF3DD;ACRYLIC
 Vallejo Game Color;Steel Grey;72.102;;;#7B92A2;ACRYLIC
-Vallejo Game Color;Fluorescent Yellow;72.103;;;#F0E639;ACRYLIC
-Vallejo Game Color;Fluorescent Green;72.104;;;#74B72C;ACRYLIC
+Vallejo Game Color;Fluorescent Yellow;72.103;;TRANSPARENT;#F0E639;ACRYLIC
+Vallejo Game Color;Fluorescent Green;72.104;;TRANSPARENT;#74B72C;ACRYLIC
 Vallejo Game Color;Mutation Green;72.105;;;#4C7650;ACRYLIC
 Vallejo Game Color;Scarlet Blood;72.106;;;#C22222;ACRYLIC
 Vallejo Game Color;Athena Skin;72.107;;;#C85B54;ACRYLIC
@@ -139,11 +139,11 @@ Vallejo Game Color;Heavy Orange;72.152;;;#EA5E0F;ACRYLIC
 Vallejo Game Color;Heavy Brown;72.153;;;#7B674E;ACRYLIC
 Vallejo Game Color;Heavy Siena;72.154;;;#5E483B;ACRYLIC
 Vallejo Game Color;Charcoal;72.155;;;#363638;ACRYLIC
-Vallejo Game Color;Fluorescent Orange;72.156;;;#E84E10;ACRYLIC
-Vallejo Game Color;Fluorescent Red;72.157;;;#DD2F52;ACRYLIC
-Vallejo Game Color;Fluorescent Magenta;72.158;;;#E8348D;ACRYLIC
-Vallejo Game Color;Fluorescent Violet;72.159;;;#6F257A;ACRYLIC
-Vallejo Game Color;Fluorescent Blue;72.160;;;#0082CD;ACRYLIC
-Vallejo Game Color;Fluorescent Cold Green;72.161;;;#007074;ACRYLIC
-Vallejo Game Color;Yellow Wash;73.208;;;#E9E85C;ACRYLIC
-Vallejo Game Color;Violeta Wash;73.209;;;#886CA7;ACRYLIC
+Vallejo Game Color;Fluorescent Orange;72.156;;TRANSPARENT;#E84E10;ACRYLIC
+Vallejo Game Color;Fluorescent Red;72.157;;TRANSPARENT;#DD2F52;ACRYLIC
+Vallejo Game Color;Fluorescent Magenta;72.158;;TRANSPARENT;#E8348D;ACRYLIC
+Vallejo Game Color;Fluorescent Violet;72.159;;TRANSPARENT;#6F257A;ACRYLIC
+Vallejo Game Color;Fluorescent Blue;72.160;;TRANSPARENT;#0082CD;ACRYLIC
+Vallejo Game Color;Fluorescent Cold Green;72.161;;TRANSPARENT;#007074;ACRYLIC
+Vallejo Game Color;Yellow Wash;73.208;;TRANSPARENT;#E9E85C;ACRYLIC
+Vallejo Game Color;Violeta Wash;73.209;;TRANSPARENT;#886CA7;ACRYLIC

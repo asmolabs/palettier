@@ -1350,6 +1350,14 @@ impl Paint {
         }
     }
 
+    /// True for metallic, pearl or effect paints (`ALU` or `EFFEKT` pigment tag) whose
+    /// reflective flakes do not mix linearly like flat matte pigments.
+    pub fn is_effect(&self) -> bool {
+        self.pigments
+            .iter()
+            .any(|p| p.eq_ignore_ascii_case("ALU") || p.eq_ignore_ascii_case("EFFEKT"))
+    }
+
     /// Evaluates ASTM D4302 lightfastness permanence.
     pub fn lightfastness(&self) -> Lightfastness {
         for pig in &self.pigments {

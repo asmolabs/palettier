@@ -5,179 +5,179 @@
 # par une mesure d'ecouvillon dans le Catalogue.
 # Gamme pinceau Citadel (Base, Layer, Dry).
 brand;name;code;pigments;opacity;hex;system
-Citadel;Abaddon Black;;;;#000000;ACRYLIC
-Citadel;Averland Sunset;;;;#FBB81C;ACRYLIC
-Citadel;Balthasar Gold;;;;#A77353;ACRYLIC
-Citadel;Barak-Nar Burgundy;;;;#451636;ACRYLIC
-Citadel;Bugman Glow;;;;#804C43;ACRYLIC
-Citadel;Caledor Sky;;;;#366699;ACRYLIC
-Citadel;Caliban Green;;;;#003D15;ACRYLIC
-Citadel;Castellan Green;;;;#264715;ACRYLIC
-Citadel;Catachan Fleshtone;;;;#442B25;ACRYLIC
-Citadel;Celestra Grey;;;;#8BA3A3;ACRYLIC
-Citadel;Corax White;;;;#FFFFFF;ACRYLIC
-Citadel;Corvus Black;;;;#171314;ACRYLIC
-Citadel;Daemonette Hide;;;;#655F81;ACRYLIC
-Citadel;Death Guard Green;;;;#6D774D;ACRYLIC
-Citadel;Death Korps Drab;;;;#3D4539;ACRYLIC
-Citadel;Deathworld Forest;;;;#556229;ACRYLIC
-Citadel;Dryad Bark;;;;#2B2A24;ACRYLIC
-Citadel;Gal Vorbak Red;;;;#4B213C;ACRYLIC
-Citadel;Grey Knights Steel;;;;#B0BDC6;ACRYLIC
-Citadel;Grey Seer;;;;#A2A5A7;ACRYLIC
-Citadel;Hobgrot Hide;;;;#9C823B;ACRYLIC
-Citadel;Incubi Darkness;;;;#082E32;ACRYLIC
-Citadel;Ionrach Skin;;;;#97A384;ACRYLIC
-Citadel;Iron Hands Steel;;;;#B2A79F;ACRYLIC
-Citadel;Iron Warriors;;;;#706E6B;ACRYLIC
-Citadel;Jokaero Orange;;;;#ED3814;ACRYLIC
-Citadel;Kantor Blue;;;;#02134E;ACRYLIC
-Citadel;Khorne Red;;;;#650001;ACRYLIC
-Citadel;Leadbelcher;;;;#969696;ACRYLIC
-Citadel;Lupercal Green;;;;#002C2B;ACRYLIC
-Citadel;Macragge Blue;;;;#0F3D7C;ACRYLIC
-Citadel;Mechanicus Standard Grey;;;;#39484A;ACRYLIC
-Citadel;Mephiston Red;;;;#960C09;ACRYLIC
-Citadel;Morghast Bone;;;;#C0A973;ACRYLIC
-Citadel;Mournfang Brown;;;;#490F06;ACRYLIC
-Citadel;Naggaroth Night;;;;#3B2B50;ACRYLIC
-Citadel;Night Lords Blue;;;;#002B5C;ACRYLIC
-Citadel;Nocturne Green;;;;#162A29;ACRYLIC
-Citadel;Orruk Flesh;;;;#97C17E;ACRYLIC
-Citadel;Phoenician Purple;;;;#440052;ACRYLIC
-Citadel;Rakarth Flesh;;;;#9C998D;ACRYLIC
-Citadel;Ratskin Flesh;;;;#A86648;ACRYLIC
-Citadel;Retributor Armour;;;;#EDC169;ACRYLIC
-Citadel;Rhinox Hide;;;;#462F30;ACRYLIC
-Citadel;Runelord Brass;;;;#8D806F;ACRYLIC
-Citadel;Screamer Pink;;;;#7A0E44;ACRYLIC
-Citadel;Screaming Bell;;;;#D18A5E;ACRYLIC
-Citadel;Steel Legion Drab;;;;#584E2D;ACRYLIC
-Citadel;Stegadon Scale Green;;;;#06455D;ACRYLIC
-Citadel;The Fang;;;;#405B71;ACRYLIC
-Citadel;Thondia Brown;;;;#4F322C;ACRYLIC
-Citadel;Thousand Sons Blue;;;;#00506F;ACRYLIC
-Citadel;Waaagh! Flesh;;;;#0B3B36;ACRYLIC
-Citadel;Warplock Bronze;;;;#B36E4F;ACRYLIC
-Citadel;Wraithbone;;;;#DBD1B2;ACRYLIC
-Citadel;XV-88;;;;#6C4811;ACRYLIC
-Citadel;Zandri Dust;;;;#988E56;ACRYLIC
-Citadel;Administratum Grey;;;;#989C94;ACRYLIC
-Citadel;Ahriman Blue;;;;#00708A;ACRYLIC
-Citadel;Alaitoc Blue;;;;#2F4F85;ACRYLIC
-Citadel;Altdorf Guard Blue;;;;#2D4696;ACRYLIC
-Citadel;Auric Armour Gold;;;;#FFC451;ACRYLIC
-Citadel;Baharroth Blue;;;;#54BDCA;ACRYLIC
-Citadel;Balor Brown;;;;#875408;ACRYLIC
-Citadel;Baneblade Brown;;;;#8F7C68;ACRYLIC
-Citadel;Bestigor Flesh;;;;#D08951;ACRYLIC
-Citadel;Bloodreaver Flesh;;;;#6A4848;ACRYLIC
-Citadel;Blue Horror;;;;#9EB5CE;ACRYLIC
-Citadel;Brass Scorpion;;;;#A65D2C;ACRYLIC
-Citadel;Cadian Fleshtone;;;;#C47652;ACRYLIC
-Citadel;Calgar Blue;;;;#2A497F;ACRYLIC
-Citadel;Canoptek Alloy;;;;#C3B2AC;ACRYLIC
-Citadel;Castellax Bronze;;;;#C68351;ACRYLIC
-Citadel;Dark Reaper;;;;#354D4C;ACRYLIC
-Citadel;Dawnstone;;;;#697068;ACRYLIC
-Citadel;Deathclaw Brown;;;;#AF634F;ACRYLIC
-Citadel;Dechala Lilac;;;;#B598C9;ACRYLIC
-Citadel;Deepkin Flesh;;;;#A9B79F;ACRYLIC
-Citadel;Doombull Brown;;;;#570003;ACRYLIC
-Citadel;Dorn Yellow;;;;#FFF55A;ACRYLIC
-Citadel;Elysian Green;;;;#6B8C37;ACRYLIC
-Citadel;Emperor Children;;;;#B74073;ACRYLIC
-Citadel;Eshin Grey;;;;#484B4E;ACRYLIC
-Citadel;Evil Sunz Scarlet;;;;#C01411;ACRYLIC
-Citadel;Fenrisian Grey;;;;#6D94B3;ACRYLIC
-Citadel;Fire Dragon Bright;;;;#F4874E;ACRYLIC
-Citadel;Flash Gitz Yellow;;;;#FFF300;ACRYLIC
-Citadel;Flayed One Flesh;;;;#EEC483;ACRYLIC
-Citadel;Fulgrim Pink;;;;#F3ABCA;ACRYLIC
-Citadel;Fulgurite Copper;;;;#CE8D51;ACRYLIC
-Citadel;Gauss Blaster Green;;;;#7FC1A5;ACRYLIC
-Citadel;Gehenna Gold;;;;#C96B18;ACRYLIC
-Citadel;Genestealer Purple;;;;#7658A5;ACRYLIC
-Citadel;Gorthor Brown;;;;#5F463F;ACRYLIC
-Citadel;Hashut Copper;;;;#BA885F;ACRYLIC
-Citadel;Hoeth Blue;;;;#4C78AF;ACRYLIC
-Citadel;Ironbreaker;;;;#899092;ACRYLIC
-Citadel;Kabalite Green;;;;#008962;ACRYLIC
-Citadel;Kakophoni Purple;;;;#8869AE;ACRYLIC
-Citadel;Karak Stone;;;;#B7945C;ACRYLIC
-Citadel;Kislev Flesh;;;;#D1A570;ACRYLIC
-Citadel;Knight-Questor Flesh;;;;#996563;ACRYLIC
-Citadel;Krieg Khaki;;;;#BCBB7E;ACRYLIC
-Citadel;Liberator Gold;;;;#E1BA7F;ACRYLIC
-Citadel;Loren Forest;;;;#486C25;ACRYLIC
-Citadel;Lothern Blue;;;;#2C9BCC;ACRYLIC
-Citadel;Lugganath Orange;;;;#F69B82;ACRYLIC
-Citadel;Moot Green;;;;#3DAF44;ACRYLIC
-Citadel;Nurgling Green;;;;#7E975E;ACRYLIC
-Citadel;Ogryn Camo;;;;#96A648;ACRYLIC
-Citadel;Pallid Wych Flesh;;;;#CACCBB;ACRYLIC
-Citadel;Phalanx Yellow;;;;#FFE200;ACRYLIC
-Citadel;Pink Horror;;;;#8E2757;ACRYLIC
-Citadel;Runefang Steel;;;;#C2C8CC;ACRYLIC
-Citadel;Russ Grey;;;;#507085;ACRYLIC
-Citadel;Screaming Skull;;;;#B9C099;ACRYLIC
-Citadel;Skarsnik Green;;;;#588F6B;ACRYLIC
-Citadel;Skavenblight Dinge;;;;#45413B;ACRYLIC
-Citadel;Skrag Brown;;;;#8B4806;ACRYLIC
-Citadel;Skullcrusher Brass;;;;#F4CB7A;ACRYLIC
-Citadel;Slaanesh Grey;;;;#8B8893;ACRYLIC
-Citadel;Sons of Horus Green;;;;#00545E;ACRYLIC
-Citadel;Sotek Green;;;;#0B6371;ACRYLIC
-Citadel;Squig Orange;;;;#A74D42;ACRYLIC
-Citadel;Stormhost Silver;;;;#DADDDF;ACRYLIC
-Citadel;Stormvermin Fur;;;;#6D655F;ACRYLIC
-Citadel;Straken Green;;;;#597F1C;ACRYLIC
-Citadel;Sybarite Green;;;;#17A166;ACRYLIC
-Citadel;Sycorax Bronze;;;;#BB9F84;ACRYLIC
-Citadel;Tallarn Sand;;;;#A07409;ACRYLIC
-Citadel;Tau Light Ochre;;;;#BC6B10;ACRYLIC
-Citadel;Teclis Blue;;;;#3877BF;ACRYLIC
-Citadel;Temple Guard Blue;;;;#239489;ACRYLIC
-Citadel;Thunderhawk Blue;;;;#396A70;ACRYLIC
-Citadel;Troll Slayer Orange;;;;#F16C23;ACRYLIC
-Citadel;Tuskgor Fur;;;;#863231;ACRYLIC
-Citadel;Ulthuan Grey;;;;#C4DDD5;ACRYLIC
-Citadel;Ungor Flesh;;;;#D1A560;ACRYLIC
-Citadel;Ushabti Bone;;;;#ABA173;ACRYLIC
-Citadel;Vulkan Green;;;;#223C2E;ACRYLIC
-Citadel;Warboss Green;;;;#317E57;ACRYLIC
-Citadel;Warpfiend Grey;;;;#66656E;ACRYLIC
-Citadel;Warpstone Glow;;;;#0F702A;ACRYLIC
-Citadel;Wazdakka Red;;;;#880804;ACRYLIC
-Citadel;White Scar;;;;#FFFFFF;ACRYLIC
-Citadel;Wild Rider Red;;;;#E82E1B;ACRYLIC
-Citadel;Word Bearers Red;;;;#620104;ACRYLIC
-Citadel;Xereus Purple;;;;#47125A;ACRYLIC
-Citadel;Yriel Yellow;;;;#FFD900;ACRYLIC
-Citadel;Zamesi Desert;;;;#D89D1B;ACRYLIC
-Citadel;Astorath Red;;;;#A9311E;ACRYLIC
-Citadel;Changeling Pink;;;;#F3ABCA;ACRYLIC
-Citadel;Chronus Blue;;;;#4B90CF;ACRYLIC
-Citadel;Eldar Flesh;;;;#E8C07F;ACRYLIC
-Citadel;Etherium Blue;;;;#9EB5CE;ACRYLIC
-Citadel;Golden Griffon;;;;#E1BA7F;ACRYLIC
-Citadel;Golgfag Brown;;;;#8F502A;ACRYLIC
-Citadel;Hellion Green;;;;#7FC1A5;ACRYLIC
-Citadel;Hexos Palesun;;;;#FFF55A;ACRYLIC
-Citadel;Imrik Blue;;;;#208ABF;ACRYLIC
-Citadel;Kindleflame;;;;#F69C82;ACRYLIC
-Citadel;Longbeard Grey;;;;#DBDCC6;ACRYLIC
-Citadel;Lucius Lilac;;;;#B598C9;ACRYLIC
-Citadel;Necron Compound;;;;#DADDDF;ACRYLIC
-Citadel;Niblet Green;;;;#378C35;ACRYLIC
-Citadel;Praxeti White;;;;#FFFFFF;ACRYLIC
-Citadel;Ryza Rust;;;;#F16C23;ACRYLIC
-Citadel;Sigmarite;;;;#D6AC57;ACRYLIC
-Citadel;Skink Blue;;;;#54BDCA;ACRYLIC
-Citadel;Stormfang;;;;#5A7FA3;ACRYLIC
-Citadel;Sylvaneth Bark;;;;#4E483B;ACRYLIC
-Citadel;Terminatus Stone;;;;#C8B79D;ACRYLIC
-Citadel;Tyrant Skull;;;;#C8C483;ACRYLIC
-Citadel;Underhive Ash;;;;#BCBB7E;ACRYLIC
-Citadel;Verminlord Hide;;;;#7E3331;ACRYLIC
-Citadel;Wrack White;;;;#D3D0CF;ACRYLIC
+Citadel;Abaddon Black;;;OPAQUE;#000000;ACRYLIC
+Citadel;Averland Sunset;;;OPAQUE;#FBB81C;ACRYLIC
+Citadel;Balthasar Gold;;EFFEKT;OPAQUE;#A77353;ACRYLIC
+Citadel;Barak-Nar Burgundy;;;OPAQUE;#451636;ACRYLIC
+Citadel;Bugman Glow;;;OPAQUE;#804C43;ACRYLIC
+Citadel;Caledor Sky;;;OPAQUE;#366699;ACRYLIC
+Citadel;Caliban Green;;;OPAQUE;#003D15;ACRYLIC
+Citadel;Castellan Green;;;OPAQUE;#264715;ACRYLIC
+Citadel;Catachan Fleshtone;;;OPAQUE;#442B25;ACRYLIC
+Citadel;Celestra Grey;;;OPAQUE;#8BA3A3;ACRYLIC
+Citadel;Corax White;;;OPAQUE;#FFFFFF;ACRYLIC
+Citadel;Corvus Black;;;OPAQUE;#171314;ACRYLIC
+Citadel;Daemonette Hide;;;OPAQUE;#655F81;ACRYLIC
+Citadel;Death Guard Green;;;OPAQUE;#6D774D;ACRYLIC
+Citadel;Death Korps Drab;;;OPAQUE;#3D4539;ACRYLIC
+Citadel;Deathworld Forest;;;OPAQUE;#556229;ACRYLIC
+Citadel;Dryad Bark;;;OPAQUE;#2B2A24;ACRYLIC
+Citadel;Gal Vorbak Red;;;OPAQUE;#4B213C;ACRYLIC
+Citadel;Grey Knights Steel;;ALU;OPAQUE;#B0BDC6;ACRYLIC
+Citadel;Grey Seer;;;OPAQUE;#A2A5A7;ACRYLIC
+Citadel;Hobgrot Hide;;;OPAQUE;#9C823B;ACRYLIC
+Citadel;Incubi Darkness;;;OPAQUE;#082E32;ACRYLIC
+Citadel;Ionrach Skin;;;OPAQUE;#97A384;ACRYLIC
+Citadel;Iron Hands Steel;;ALU;OPAQUE;#B2A79F;ACRYLIC
+Citadel;Iron Warriors;;ALU;OPAQUE;#706E6B;ACRYLIC
+Citadel;Jokaero Orange;;;OPAQUE;#ED3814;ACRYLIC
+Citadel;Kantor Blue;;;OPAQUE;#02134E;ACRYLIC
+Citadel;Khorne Red;;;OPAQUE;#650001;ACRYLIC
+Citadel;Leadbelcher;;ALU;OPAQUE;#969696;ACRYLIC
+Citadel;Lupercal Green;;;OPAQUE;#002C2B;ACRYLIC
+Citadel;Macragge Blue;;;OPAQUE;#0F3D7C;ACRYLIC
+Citadel;Mechanicus Standard Grey;;;OPAQUE;#39484A;ACRYLIC
+Citadel;Mephiston Red;;;OPAQUE;#960C09;ACRYLIC
+Citadel;Morghast Bone;;;OPAQUE;#C0A973;ACRYLIC
+Citadel;Mournfang Brown;;;OPAQUE;#490F06;ACRYLIC
+Citadel;Naggaroth Night;;;OPAQUE;#3B2B50;ACRYLIC
+Citadel;Night Lords Blue;;;OPAQUE;#002B5C;ACRYLIC
+Citadel;Nocturne Green;;;OPAQUE;#162A29;ACRYLIC
+Citadel;Orruk Flesh;;;OPAQUE;#97C17E;ACRYLIC
+Citadel;Phoenician Purple;;;OPAQUE;#440052;ACRYLIC
+Citadel;Rakarth Flesh;;;OPAQUE;#9C998D;ACRYLIC
+Citadel;Ratskin Flesh;;;OPAQUE;#A86648;ACRYLIC
+Citadel;Retributor Armour;;EFFEKT;OPAQUE;#EDC169;ACRYLIC
+Citadel;Rhinox Hide;;;OPAQUE;#462F30;ACRYLIC
+Citadel;Runelord Brass;;EFFEKT;OPAQUE;#8D806F;ACRYLIC
+Citadel;Screamer Pink;;;OPAQUE;#7A0E44;ACRYLIC
+Citadel;Screaming Bell;;EFFEKT;OPAQUE;#D18A5E;ACRYLIC
+Citadel;Steel Legion Drab;;;OPAQUE;#584E2D;ACRYLIC
+Citadel;Stegadon Scale Green;;;OPAQUE;#06455D;ACRYLIC
+Citadel;The Fang;;;OPAQUE;#405B71;ACRYLIC
+Citadel;Thondia Brown;;;OPAQUE;#4F322C;ACRYLIC
+Citadel;Thousand Sons Blue;;;OPAQUE;#00506F;ACRYLIC
+Citadel;Waaagh! Flesh;;;OPAQUE;#0B3B36;ACRYLIC
+Citadel;Warplock Bronze;;EFFEKT;OPAQUE;#B36E4F;ACRYLIC
+Citadel;Wraithbone;;;OPAQUE;#DBD1B2;ACRYLIC
+Citadel;XV-88;;;OPAQUE;#6C4811;ACRYLIC
+Citadel;Zandri Dust;;;OPAQUE;#988E56;ACRYLIC
+Citadel;Administratum Grey;;;SEMI_OPAQUE;#989C94;ACRYLIC
+Citadel;Ahriman Blue;;;SEMI_OPAQUE;#00708A;ACRYLIC
+Citadel;Alaitoc Blue;;;SEMI_OPAQUE;#2F4F85;ACRYLIC
+Citadel;Altdorf Guard Blue;;;SEMI_OPAQUE;#2D4696;ACRYLIC
+Citadel;Auric Armour Gold;;EFFEKT;SEMI_OPAQUE;#FFC451;ACRYLIC
+Citadel;Baharroth Blue;;;SEMI_OPAQUE;#54BDCA;ACRYLIC
+Citadel;Balor Brown;;;SEMI_OPAQUE;#875408;ACRYLIC
+Citadel;Baneblade Brown;;;SEMI_OPAQUE;#8F7C68;ACRYLIC
+Citadel;Bestigor Flesh;;;SEMI_OPAQUE;#D08951;ACRYLIC
+Citadel;Bloodreaver Flesh;;;SEMI_OPAQUE;#6A4848;ACRYLIC
+Citadel;Blue Horror;;;SEMI_OPAQUE;#9EB5CE;ACRYLIC
+Citadel;Brass Scorpion;;EFFEKT;SEMI_OPAQUE;#A65D2C;ACRYLIC
+Citadel;Cadian Fleshtone;;;SEMI_OPAQUE;#C47652;ACRYLIC
+Citadel;Calgar Blue;;;SEMI_OPAQUE;#2A497F;ACRYLIC
+Citadel;Canoptek Alloy;;ALU;SEMI_OPAQUE;#C3B2AC;ACRYLIC
+Citadel;Castellax Bronze;;EFFEKT;SEMI_OPAQUE;#C68351;ACRYLIC
+Citadel;Dark Reaper;;;SEMI_OPAQUE;#354D4C;ACRYLIC
+Citadel;Dawnstone;;;SEMI_OPAQUE;#697068;ACRYLIC
+Citadel;Deathclaw Brown;;;SEMI_OPAQUE;#AF634F;ACRYLIC
+Citadel;Dechala Lilac;;;SEMI_OPAQUE;#B598C9;ACRYLIC
+Citadel;Deepkin Flesh;;;SEMI_OPAQUE;#A9B79F;ACRYLIC
+Citadel;Doombull Brown;;;SEMI_OPAQUE;#570003;ACRYLIC
+Citadel;Dorn Yellow;;;SEMI_OPAQUE;#FFF55A;ACRYLIC
+Citadel;Elysian Green;;;SEMI_OPAQUE;#6B8C37;ACRYLIC
+Citadel;Emperor Children;;;SEMI_OPAQUE;#B74073;ACRYLIC
+Citadel;Eshin Grey;;;SEMI_OPAQUE;#484B4E;ACRYLIC
+Citadel;Evil Sunz Scarlet;;;SEMI_OPAQUE;#C01411;ACRYLIC
+Citadel;Fenrisian Grey;;;SEMI_OPAQUE;#6D94B3;ACRYLIC
+Citadel;Fire Dragon Bright;;;SEMI_OPAQUE;#F4874E;ACRYLIC
+Citadel;Flash Gitz Yellow;;;SEMI_OPAQUE;#FFF300;ACRYLIC
+Citadel;Flayed One Flesh;;;SEMI_OPAQUE;#EEC483;ACRYLIC
+Citadel;Fulgrim Pink;;;SEMI_OPAQUE;#F3ABCA;ACRYLIC
+Citadel;Fulgurite Copper;;EFFEKT;SEMI_OPAQUE;#CE8D51;ACRYLIC
+Citadel;Gauss Blaster Green;;;SEMI_OPAQUE;#7FC1A5;ACRYLIC
+Citadel;Gehenna Gold;;EFFEKT;SEMI_OPAQUE;#C96B18;ACRYLIC
+Citadel;Genestealer Purple;;;SEMI_OPAQUE;#7658A5;ACRYLIC
+Citadel;Gorthor Brown;;;SEMI_OPAQUE;#5F463F;ACRYLIC
+Citadel;Hashut Copper;;EFFEKT;SEMI_OPAQUE;#BA885F;ACRYLIC
+Citadel;Hoeth Blue;;;SEMI_OPAQUE;#4C78AF;ACRYLIC
+Citadel;Ironbreaker;;ALU;SEMI_OPAQUE;#899092;ACRYLIC
+Citadel;Kabalite Green;;;SEMI_OPAQUE;#008962;ACRYLIC
+Citadel;Kakophoni Purple;;;SEMI_OPAQUE;#8869AE;ACRYLIC
+Citadel;Karak Stone;;;SEMI_OPAQUE;#B7945C;ACRYLIC
+Citadel;Kislev Flesh;;;SEMI_OPAQUE;#D1A570;ACRYLIC
+Citadel;Knight-Questor Flesh;;;SEMI_OPAQUE;#996563;ACRYLIC
+Citadel;Krieg Khaki;;;SEMI_OPAQUE;#BCBB7E;ACRYLIC
+Citadel;Liberator Gold;;EFFEKT;SEMI_OPAQUE;#E1BA7F;ACRYLIC
+Citadel;Loren Forest;;;SEMI_OPAQUE;#486C25;ACRYLIC
+Citadel;Lothern Blue;;;SEMI_OPAQUE;#2C9BCC;ACRYLIC
+Citadel;Lugganath Orange;;;SEMI_OPAQUE;#F69B82;ACRYLIC
+Citadel;Moot Green;;;SEMI_OPAQUE;#3DAF44;ACRYLIC
+Citadel;Nurgling Green;;;SEMI_OPAQUE;#7E975E;ACRYLIC
+Citadel;Ogryn Camo;;;SEMI_OPAQUE;#96A648;ACRYLIC
+Citadel;Pallid Wych Flesh;;;SEMI_OPAQUE;#CACCBB;ACRYLIC
+Citadel;Phalanx Yellow;;;SEMI_OPAQUE;#FFE200;ACRYLIC
+Citadel;Pink Horror;;;SEMI_OPAQUE;#8E2757;ACRYLIC
+Citadel;Runefang Steel;;ALU;SEMI_OPAQUE;#C2C8CC;ACRYLIC
+Citadel;Russ Grey;;;SEMI_OPAQUE;#507085;ACRYLIC
+Citadel;Screaming Skull;;;SEMI_OPAQUE;#B9C099;ACRYLIC
+Citadel;Skarsnik Green;;;SEMI_OPAQUE;#588F6B;ACRYLIC
+Citadel;Skavenblight Dinge;;;SEMI_OPAQUE;#45413B;ACRYLIC
+Citadel;Skrag Brown;;;SEMI_OPAQUE;#8B4806;ACRYLIC
+Citadel;Skullcrusher Brass;;EFFEKT;SEMI_OPAQUE;#F4CB7A;ACRYLIC
+Citadel;Slaanesh Grey;;;SEMI_OPAQUE;#8B8893;ACRYLIC
+Citadel;Sons of Horus Green;;;SEMI_OPAQUE;#00545E;ACRYLIC
+Citadel;Sotek Green;;;SEMI_OPAQUE;#0B6371;ACRYLIC
+Citadel;Squig Orange;;;SEMI_OPAQUE;#A74D42;ACRYLIC
+Citadel;Stormhost Silver;;ALU;SEMI_OPAQUE;#DADDDF;ACRYLIC
+Citadel;Stormvermin Fur;;;SEMI_OPAQUE;#6D655F;ACRYLIC
+Citadel;Straken Green;;;SEMI_OPAQUE;#597F1C;ACRYLIC
+Citadel;Sybarite Green;;;SEMI_OPAQUE;#17A166;ACRYLIC
+Citadel;Sycorax Bronze;;EFFEKT;SEMI_OPAQUE;#BB9F84;ACRYLIC
+Citadel;Tallarn Sand;;;SEMI_OPAQUE;#A07409;ACRYLIC
+Citadel;Tau Light Ochre;;;SEMI_OPAQUE;#BC6B10;ACRYLIC
+Citadel;Teclis Blue;;;SEMI_OPAQUE;#3877BF;ACRYLIC
+Citadel;Temple Guard Blue;;;SEMI_OPAQUE;#239489;ACRYLIC
+Citadel;Thunderhawk Blue;;;SEMI_OPAQUE;#396A70;ACRYLIC
+Citadel;Troll Slayer Orange;;;SEMI_OPAQUE;#F16C23;ACRYLIC
+Citadel;Tuskgor Fur;;;SEMI_OPAQUE;#863231;ACRYLIC
+Citadel;Ulthuan Grey;;;SEMI_OPAQUE;#C4DDD5;ACRYLIC
+Citadel;Ungor Flesh;;;SEMI_OPAQUE;#D1A560;ACRYLIC
+Citadel;Ushabti Bone;;;SEMI_OPAQUE;#ABA173;ACRYLIC
+Citadel;Vulkan Green;;;SEMI_OPAQUE;#223C2E;ACRYLIC
+Citadel;Warboss Green;;;SEMI_OPAQUE;#317E57;ACRYLIC
+Citadel;Warpfiend Grey;;;SEMI_OPAQUE;#66656E;ACRYLIC
+Citadel;Warpstone Glow;;;SEMI_OPAQUE;#0F702A;ACRYLIC
+Citadel;Wazdakka Red;;;SEMI_OPAQUE;#880804;ACRYLIC
+Citadel;White Scar;;;SEMI_OPAQUE;#FFFFFF;ACRYLIC
+Citadel;Wild Rider Red;;;SEMI_OPAQUE;#E82E1B;ACRYLIC
+Citadel;Word Bearers Red;;;SEMI_OPAQUE;#620104;ACRYLIC
+Citadel;Xereus Purple;;;SEMI_OPAQUE;#47125A;ACRYLIC
+Citadel;Yriel Yellow;;;SEMI_OPAQUE;#FFD900;ACRYLIC
+Citadel;Zamesi Desert;;;SEMI_OPAQUE;#D89D1B;ACRYLIC
+Citadel;Astorath Red;;;OPAQUE;#A9311E;ACRYLIC
+Citadel;Changeling Pink;;;OPAQUE;#F3ABCA;ACRYLIC
+Citadel;Chronus Blue;;;OPAQUE;#4B90CF;ACRYLIC
+Citadel;Eldar Flesh;;;OPAQUE;#E8C07F;ACRYLIC
+Citadel;Etherium Blue;;;OPAQUE;#9EB5CE;ACRYLIC
+Citadel;Golden Griffon;;EFFEKT;OPAQUE;#E1BA7F;ACRYLIC
+Citadel;Golgfag Brown;;;OPAQUE;#8F502A;ACRYLIC
+Citadel;Hellion Green;;;OPAQUE;#7FC1A5;ACRYLIC
+Citadel;Hexos Palesun;;;OPAQUE;#FFF55A;ACRYLIC
+Citadel;Imrik Blue;;;OPAQUE;#208ABF;ACRYLIC
+Citadel;Kindleflame;;;OPAQUE;#F69C82;ACRYLIC
+Citadel;Longbeard Grey;;;OPAQUE;#DBDCC6;ACRYLIC
+Citadel;Lucius Lilac;;;OPAQUE;#B598C9;ACRYLIC
+Citadel;Necron Compound;;ALU;OPAQUE;#DADDDF;ACRYLIC
+Citadel;Niblet Green;;;OPAQUE;#378C35;ACRYLIC
+Citadel;Praxeti White;;;OPAQUE;#FFFFFF;ACRYLIC
+Citadel;Ryza Rust;;;OPAQUE;#F16C23;ACRYLIC
+Citadel;Sigmarite;;EFFEKT;OPAQUE;#D6AC57;ACRYLIC
+Citadel;Skink Blue;;;OPAQUE;#54BDCA;ACRYLIC
+Citadel;Stormfang;;;OPAQUE;#5A7FA3;ACRYLIC
+Citadel;Sylvaneth Bark;;;OPAQUE;#4E483B;ACRYLIC
+Citadel;Terminatus Stone;;;OPAQUE;#C8B79D;ACRYLIC
+Citadel;Tyrant Skull;;;OPAQUE;#C8C483;ACRYLIC
+Citadel;Underhive Ash;;;OPAQUE;#BCBB7E;ACRYLIC
+Citadel;Verminlord Hide;;;OPAQUE;#7E3331;ACRYLIC
+Citadel;Wrack White;;;OPAQUE;#D3D0CF;ACRYLIC
