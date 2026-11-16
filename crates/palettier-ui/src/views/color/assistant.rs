@@ -33,6 +33,13 @@ pub fn AssistantView() -> Element {
     let error_msg = use_signal(|| None::<String>);
     let show_guide_mode = use_signal(|| true);
 
+    let raw_pal_idx = palette_idx();
+    let effective_palette_idx = if raw_pal_idx == 9999 || palettes.is_empty() {
+        9999
+    } else {
+        raw_pal_idx.min(palettes.len() - 1)
+    };
+
     let subtitle_str = match locale {
         Locale::Fr => format!(
             "Moteur actif : {} ({}) · L'IA propose les échelles de valeurs à 5 marches et le solveur Kubelka-Munk calcule les dosages.",
@@ -64,6 +71,7 @@ pub fn AssistantView() -> Element {
                 palettes: palettes.clone(),
                 all_paints: all_paints.clone(),
                 description,
+                effective_palette_idx,
                 palette_idx,
                 image_bytes,
                 image_label,
@@ -73,7 +81,14 @@ pub fn AssistantView() -> Element {
             }
 
             if let Some(plan) = generated_plan() {
-                AssistantPlanCard { plan, palettes, all_paints, palette_idx, image_bytes, show_guide_mode }
+                AssistantPlanCard {
+                    plan,
+                    palettes,
+                    all_paints,
+                    effective_palette_idx,
+                    image_bytes,
+                    show_guide_mode,
+                }
             }
         }
     }
@@ -85,6 +100,7 @@ fn AssistantRequestCard(
     palettes: Vec<Palette>,
     all_paints: Vec<Paint>,
     description: Signal<String>,
+    effective_palette_idx: usize,
     palette_idx: Signal<usize>,
     image_bytes: Signal<Option<Vec<u8>>>,
     image_label: Signal<String>,
@@ -135,15 +151,24 @@ fn AssistantRequestCard(
                         }
                         select {
                             class: "u-w-100pct",
+                            value: "{effective_palette_idx}",
                             onchange: move |ev| {
                                 if let Ok(idx) = ev.value().parse::<usize>() {
                                     palette_idx.set(idx);
                                 }
                             },
                             for (idx, pal) in palettes.iter().enumerate() {
-                                option { value: "{idx}", "{pal.name} ({pal.paints.len()} tubes)" }
+                                option {
+                                    value: "{idx}",
+                                    selected: effective_palette_idx == idx,
+                                    "{pal.name} ({pal.paints.len()} tubes)"
+                                }
                             }
-                            option { value: "9999", {locale.tr("Tous mes tubes en stock", "All my in-stock tubes")} }
+                            option {
+                                value: "9999",
+                                selected: effective_palette_idx == 9999,
+                                {locale.tr("Tous mes tubes en stock", "All my in-stock tubes")}
+                            }
                         }
                     }
                     div { class: "row",
@@ -179,7 +204,7 @@ fn AssistantRequestCard(
                             let loc = *state.locale.read();
                             busy.set(true);
                             error_msg.set(None);
-                            let (palette_name, paints) = plan_actions::plan_paints(&pals, palette_idx(), &pts, loc);
+                            let (palette_name, paints) = plan_actions::plan_paints(&pals, effective_palette_idx, &pts, loc);
                             let request = PlanRequest {
                                 image: image_bytes(),
                                 description: description(),
@@ -220,7 +245,7 @@ fn AssistantPlanCard(
     plan: PaintingPlan,
     palettes: Vec<Palette>,
     all_paints: Vec<Paint>,
-    palette_idx: Signal<usize>,
+    effective_palette_idx: usize,
     image_bytes: Signal<Option<Vec<u8>>>,
     show_guide_mode: Signal<bool>,
 ) -> Element {
@@ -229,7 +254,7 @@ fn AssistantPlanCard(
     let locale = *state.locale.read();
 
     let active_paints = palettes
-        .get(palette_idx())
+        .get(effective_palette_idx)
         .map(|p| p.paints.clone())
         .unwrap_or_else(|| plan_actions::stock_or_all(&all_paints));
     let guide = services.guide_builder.from_plan_i18n(&plan, &active_paints, locale);
@@ -242,7 +267,7 @@ fn AssistantPlanCard(
         let plan = plan.clone();
         move |_: Event<MouseData>| {
             let loc = *state.locale.read();
-            let chosen_pal = pals.get(palette_idx()).cloned();
+            let chosen_pal = pals.get(effective_palette_idx).cloned();
             let taken: Vec<String> = state.projects.read().iter().map(|p| p.name.clone()).collect();
             let attached_img = image_bytes();
             let svc = svc.clone();

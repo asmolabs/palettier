@@ -319,11 +319,18 @@ pub fn MiniatureView() -> Element {
     let mut tool_filter = use_signal(String::new);
 
     // Global Palette Selector for ALL Miniature Tools
+    const ALL_IN_STOCK: usize = 9999;
     let mut selected_palette_idx = use_signal(|| 0usize);
     provide_tool_states();
 
-    // Active candidate paints from selected palette (or full in-stock drawer)
-    let palette_idx = *selected_palette_idx.read();
+    // Clamp to an actual palette when switching systems (e.g. 3 oil palettes -> 2 acrylic
+    // palettes) unless the user explicitly selected the full in-stock drawer.
+    let raw_palette_idx = *selected_palette_idx.read();
+    let palette_idx = if raw_palette_idx == ALL_IN_STOCK || palettes.is_empty() {
+        ALL_IN_STOCK
+    } else {
+        raw_palette_idx.min(palettes.len() - 1)
+    };
     let candidates = active_candidates(&palettes, palette_idx, &state.paints_of_system());
     let palette_name_display = match palettes.get(palette_idx) {
         Some(palette) => palette.name.clone(),
@@ -353,16 +360,25 @@ pub fn MiniatureView() -> Element {
                         }
                         select {
                             class: "u-bg-bg-input u-c-text-main u-b-1-solid-border-main u-r-6 u-p-5-12 u-fs-13 u-fw-650",
-                            value: "{selected_palette_idx}",
+                            aria_label: locale.tr("Palette active pour le calcul des mélanges", "Active palette for mix calculations"),
+                            value: "{palette_idx}",
                             onchange: move |ev| {
                                 if let Ok(idx) = ev.value().parse::<usize>() {
                                     selected_palette_idx.set(idx);
                                 }
                             },
                             for (idx, pal) in palettes.iter().enumerate() {
-                                option { value: "{idx}", "{pal.name} ({pal.paints.len()} tubes)" }
+                                option {
+                                    value: "{idx}",
+                                    selected: palette_idx == idx,
+                                    "{pal.name} ({pal.paints.len()} tubes)"
+                                }
                             }
-                            option { value: "{palettes.len()}", {locale.tr("Tout mon stock en tiroir", "All in-stock drawer tubes")} }
+                            option {
+                                value: "{ALL_IN_STOCK}",
+                                selected: palette_idx == ALL_IN_STOCK,
+                                {locale.tr("Tout mon stock en tiroir", "All in-stock drawer tubes")}
+                            }
                         }
                     }
                     div { class: "row u-gap-8 u-ai-center",

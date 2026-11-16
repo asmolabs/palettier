@@ -70,12 +70,13 @@ pub fn SampledGroupsCard(
         &state.palettes.read(),
         *state.paint_system.read(),
     );
+    let effective_pal_idx = group_palette_idx().min(palettes.len().saturating_sub(1));
 
     let create_project = {
         let pals = palettes.clone();
         move |_: Event<MouseData>| {
             let loc = *state.locale.read();
-            let chosen_pal = pals.get(group_palette_idx()).cloned();
+            let chosen_pal = pals.get(effective_pal_idx).cloned();
             let grp_list = groups.read().clone();
             let name = group_project_name();
             let taken: Vec<String> = state.projects.read().iter().map(|p| p.name.clone()).collect();
@@ -150,13 +151,18 @@ pub fn SampledGroupsCard(
                     oninput: move |e| group_project_name.set(e.value())
                 }
                 select {
+                    value: "{effective_pal_idx}",
                     onchange: move |e| {
                         if let Ok(idx) = e.value().parse::<usize>() {
                             group_palette_idx.set(idx);
                         }
                     },
                     for (idx, pal) in palettes.iter().enumerate() {
-                        option { value: "{idx}", "{pal.name} ({pal.paints.len()} tubes)" }
+                        option {
+                            value: "{idx}",
+                            selected: effective_pal_idx == idx,
+                            "{pal.name} ({pal.paints.len()} tubes)"
+                        }
                     }
                 }
                 button {

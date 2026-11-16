@@ -145,6 +145,7 @@ impl CatalogSeeder {
 
     fn refresh_identity(stored: &Paint, reference: &Paint) -> Paint {
         let mut updated = stored.clone();
+        let pigments_changed = stored.pigments != reference.pigments;
         updated.code = reference.code.clone();
         updated.legacy_code = reference.legacy_code.clone();
         updated.pigments = reference.pigments.clone();
@@ -157,6 +158,14 @@ impl CatalogSeeder {
         if updated.color_derived && !reference.color_derived {
             updated.hex_color = reference.hex_color.clone();
             updated.color_derived = false;
+        }
+        // When catalog pigments change (e.g. an unverified paint gains C.I. codes),
+        // refresh derived tint_hex unless the user recorded studio notes/calibration.
+        if (pigments_changed || updated.tint_hex.is_none())
+            && stored.notes.trim().is_empty()
+            && reference.tint_hex.is_some()
+        {
+            updated.tint_hex = reference.tint_hex.clone();
         }
         updated
     }

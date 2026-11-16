@@ -509,6 +509,54 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn seeder_refreshes_tint_when_pigments_change_and_keeps_manual_calibration() {
+        let inst = Installation::in_memory().await;
+        inst.seeder.seed().await.unwrap();
+
+        let carbon = inst
+            .catalog
+            .find_by_natural_key("Kimera Kolors", "Carbon Black")
+            .await
+            .unwrap()
+            .unwrap();
+        let carbon_id = carbon.id.unwrap();
+        let expected_tint = carbon.tint_hex.clone().expect("tint dérivée de PBk7");
+
+        // Simulate an older DB entry before PBk7 was added to Kimera Carbon Black,
+        // holding an outdated tint_hex and an empty pigment list.
+        inst.catalog
+            .record_tint(carbon_id, palettier_domain::color::Rgb::of_hex("#112233").unwrap())
+            .await
+            .unwrap();
+        let mut stale = carbon.clone();
+        stale.pigments.clear();
+        stale.pigments_verified = false;
+        inst.catalog.refresh_identity(&stale).await.unwrap();
+
+        // User-calibrated tint on an unchanged tube must NOT be overwritten.
+        let ochre = inst
+            .catalog
+            .find_by_natural_key("Winsor & Newton", "Yellow Ochre")
+            .await
+            .unwrap()
+            .unwrap();
+        inst.catalog
+            .record_tint(ochre.id.unwrap(), palettier_domain::color::Rgb::of_hex("#ABCDEF").unwrap())
+            .await
+            .unwrap();
+
+        let report = inst.seeder.seed().await.unwrap();
+        assert_eq!(1, report.paints_refreshed);
+
+        let updated_carbon = inst.catalog.find_by_id(carbon_id).await.unwrap().unwrap();
+        assert_eq!(Some(expected_tint), updated_carbon.tint_hex);
+        assert!(updated_carbon.pigments_verified);
+
+        let kept_ochre = inst.catalog.find_by_id(ochre.id.unwrap()).await.unwrap().unwrap();
+        assert_eq!(Some("#ABCDEF".to_string()), kept_ochre.tint_hex);
+    }
+
+    #[tokio::test]
     async fn real_java_backup_imports_and_roundtrips_intact() {
         let inst1 = Installation::in_memory().await;
         let mut archive = ZipBackupArchive::open(real_backup_path()).unwrap();

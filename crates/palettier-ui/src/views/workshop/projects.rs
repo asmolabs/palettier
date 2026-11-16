@@ -171,6 +171,7 @@ fn NewProjectCard() -> Element {
     let mut new_proj_name = use_signal(String::new);
     let mut new_proj_subject = use_signal(String::new);
     let mut new_proj_palette_idx = use_signal(|| 0usize);
+    let effective_pal_idx = new_proj_palette_idx().min(palettes.len().saturating_sub(1));
 
     let create = {
         let pals = palettes.clone();
@@ -180,7 +181,7 @@ fn NewProjectCard() -> Element {
                 name: new_proj_name(),
                 subject: new_proj_subject(),
                 system: new_proj_system(),
-                palette: pals.get(new_proj_palette_idx()).cloned(),
+                palette: pals.get(effective_pal_idx).cloned(),
             };
             if draft.name.trim().is_empty() {
                 return;
@@ -242,13 +243,18 @@ fn NewProjectCard() -> Element {
                 label { class: "field-label", {locale.tr("Palette associée", "Linked Palette")} }
                 select {
                     class: "u-w-100pct",
+                    value: "{effective_pal_idx}",
                     onchange: move |ev| {
                         if let Ok(idx) = ev.value().parse::<usize>() {
                             new_proj_palette_idx.set(idx);
                         }
                     },
                     for (idx, pal) in palettes.iter().enumerate() {
-                        option { value: "{idx}", "{pal.name} ({pal.paints.len()} tubes)" }
+                        option {
+                            value: "{idx}",
+                            selected: effective_pal_idx == idx,
+                            "{pal.name} ({pal.paints.len()} tubes)"
+                        }
                     }
                 }
             }

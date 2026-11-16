@@ -64,3 +64,17 @@ async fn tool_filter_keeps_matching_tools() {
         .collect();
     assert_eq!(items, vec!["🪞 Vernis".to_string()]);
 }
+
+#[tokio::test(flavor = "current_thread")]
+async fn switching_to_acrylic_keeps_a_valid_palette_when_oil_had_more_palettes() {
+    let mut ui = Ui::studio().await;
+    ui.click_in("sidebar", "Figurine & Weathering").await;
+    // Choose the 3rd oil palette (index 2: Palette Zorn -> 4 tubes), then switch
+    // to Acrylic (2 palettes): must clamp to a palette instead of falling back to all 1,427 pots.
+    ui.type_into("Palette active pour le calcul des mélanges", "2")
+        .await;
+    ui.assert_shows("4 tubes disponibles").await;
+    ui.click_in("system-segment", "Acrylique").await;
+    ui.assert_hides("1427 tubes disponibles").await;
+    ui.assert_shows("13 tubes disponibles").await;
+}

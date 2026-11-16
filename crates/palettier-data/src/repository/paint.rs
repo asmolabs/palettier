@@ -313,6 +313,7 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
         active.pigments_verified = Set(i64::from(p.pigments_verified));
         active.paint_system = Set(p.system.as_db_str().to_string());
         active.hex_color = Set(p.hex_color.clone());
+        active.tint_hex = Set(p.tint_hex.clone());
         active.colour_derived = Set(i64::from(p.color_derived));
         active.update(&txn).await.map_err(map_db_err)?;
 
