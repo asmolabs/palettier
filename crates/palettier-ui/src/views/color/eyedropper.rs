@@ -56,22 +56,26 @@ pub fn EyedropperView() -> Element {
                 .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
                 .pick_file()
                 .await
-                && let Ok(bytes) = std::fs::read(file.path())
             {
-                if let Some(photo) = eye::open_reference(&svc, &bytes) {
-                    image_data_url.set(Some(photo.data_uri.clone()));
-                    study_data_url.set(Some(photo.data_uri));
-                    study_mode.set(StudyMode::Color);
-                    decoded_image.set(Some(photo.pixels));
-                }
-                if let Some(doms) = eye::dominants(&svc, &bytes) {
-                    image_name.set(file.file_name());
-                    if let Some(first) = doms.first() {
-                        let h = first.color.to_hex();
-                        picked_hex.set(h.clone());
-                        state.last_sampled_hex.set(Some(h));
+                match crate::theme::read_image_file_bounded(file.path()) {
+                    Ok(bytes) => {
+                        if let Some(photo) = eye::open_reference(&svc, &bytes) {
+                            image_data_url.set(Some(photo.data_uri.clone()));
+                            study_data_url.set(Some(photo.data_uri));
+                            study_mode.set(StudyMode::Color);
+                            decoded_image.set(Some(photo.pixels));
+                        }
+                        if let Some(doms) = eye::dominants(&svc, &bytes) {
+                            image_name.set(file.file_name());
+                            if let Some(first) = doms.first() {
+                                let h = first.color.to_hex();
+                                picked_hex.set(h.clone());
+                                state.last_sampled_hex.set(Some(h));
+                            }
+                            dominants.set(doms);
+                        }
                     }
-                    dominants.set(doms);
+                    Err(err) => state.notify(err),
                 }
             }
         });

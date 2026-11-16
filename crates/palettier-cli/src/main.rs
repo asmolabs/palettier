@@ -72,6 +72,10 @@ async fn main() -> Result<()> {
         .init();
 
     let cli = Cli::parse();
+    run_cli(cli).await
+}
+
+async fn run_cli(cli: Cli) -> Result<()> {
     let db_path = cli.db.unwrap_or_else(default_db_dir);
     let database = Database::open(&db_path)
         .await
@@ -157,4 +161,68 @@ async fn main() -> Result<()> {
 
     database.close().await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cli_parses_all_subcommands() {
+        let seed = Cli::try_parse_from(["palettier-cli", "--db", "/tmp/p", "seed"]).unwrap();
+        assert!(matches!(seed.command, Commands::Seed));
+        assert_eq!(Some(PathBuf::from("/tmp/p")), seed.db);
+
+        let stats = Cli::try_parse_from(["palettier-cli", "stats"]).unwrap();
+        assert!(matches!(stats.command, Commands::Stats));
+
+        let exp = Cli::try_parse_from(["palettier-cli", "export-backup", "out.zip"]).unwrap();
+        assert!(matches!(exp.command, Commands::ExportBackup { .. }));
+
+        let imp = Cli::try_parse_from(["palettier-cli", "import-backup", "in.zip"]).unwrap();
+        assert!(matches!(imp.command, Commands::ImportBackup { .. }));
+    }
+
+    #[tokio::test]
+    async fn cli_seed_export_import_and_stats_roundtrip() {
+        let dir = std::env::temp_dir().join(format!(
+            "palettier-cli-test-{}",
+            Utc::now().timestamp_nanos_opt().unwrap_or(0)
+        ));
+        let zip_path = dir.join("backup.zip");
+
+        run_cli(Cli {
+            db: Some(dir.clone()),
+            command: Commands::Seed,
+        })
+        .await
+        .unwrap();
+
+        run_cli(Cli {
+            db: Some(dir.clone()),
+            command: Commands::Stats,
+        })
+        .await
+        .unwrap();
+
+        run_cli(Cli {
+            db: Some(dir.clone()),
+            command: Commands::ExportBackup {
+                output: zip_path.clone(),
+            },
+        })
+        .await
+        .unwrap();
+        assert!(zip_path.exists());
+
+        let dir2 = dir.join("restored");
+        run_cli(Cli {
+            db: Some(dir2),
+            command: Commands::ImportBackup { archive: zip_path },
+        })
+        .await
+        .unwrap();
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

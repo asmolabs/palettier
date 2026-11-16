@@ -92,7 +92,7 @@ fn AssistantRequestCard(
     generated_plan: Signal<Option<PaintingPlan>>,
     error_msg: Signal<Option<String>>,
 ) -> Element {
-    let state = use_context::<AppState>();
+    let mut state = use_context::<AppState>();
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
     let sampled = state.sampled_zones.read().clone();
@@ -103,10 +103,14 @@ fn AssistantRequestCard(
                 .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
                 .pick_file()
                 .await
-                && let Ok(bytes) = std::fs::read(file.path())
             {
-                image_label.set(file.file_name());
-                image_bytes.set(Some(bytes));
+                match crate::theme::read_image_file_bounded(file.path()) {
+                    Ok(bytes) => {
+                        image_label.set(file.file_name());
+                        image_bytes.set(Some(bytes));
+                    }
+                    Err(err) => state.notify(err),
+                }
             }
         });
     };

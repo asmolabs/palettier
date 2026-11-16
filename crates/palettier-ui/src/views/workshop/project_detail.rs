@@ -115,7 +115,13 @@ fn ProjectToolbar(proj: Project) -> Element {
                 else {
                     return;
                 };
-                let Ok(bytes) = std::fs::read(file.path()) else { return };
+                let bytes = match crate::theme::read_image_file_bounded(file.path()) {
+                    Ok(b) => b,
+                    Err(err) => {
+                        state.notify(err);
+                        return;
+                    }
+                };
                 if role == PhotoRole::Progress
                     && let Ok(obs) = projects::compare_to_plan(&svc, &p_for_check, &bytes)
                 {

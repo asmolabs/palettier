@@ -194,6 +194,30 @@ mod tests {
         let bad_url = AiSettings::new(AiProvider::Ollama, "file:///etc/passwd", "gemma4:e4b", "");
         assert!(bad_url.validated_base_url().is_err());
 
+        let remote_http_keyed = AiSettings::new(
+            AiProvider::OpenAi,
+            "http://api.example.com",
+            "gpt-5.4-mini",
+            "sk-secret",
+        );
+        assert!(remote_http_keyed.validated_base_url().is_err());
+
+        let local_http_keyed = AiSettings::new(
+            AiProvider::OpenAi,
+            "http://127.0.0.1:8080",
+            "gpt-5.4-mini",
+            "sk-secret",
+        );
+        assert!(local_http_keyed.validated_base_url().is_ok());
+
+        let userinfo_url = AiSettings::new(
+            AiProvider::OpenAi,
+            "https://user:pass@api.openai.com",
+            "gpt-5.4-mini",
+            "sk-secret",
+        );
+        assert!(userinfo_url.validated_base_url().is_err());
+
         let store = AiSettingsStore::new(Arc::new(MemSettings::default()));
         store.save(&settings).await.unwrap();
         let loaded = store.load().await.unwrap();

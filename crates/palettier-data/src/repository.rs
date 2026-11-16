@@ -1176,15 +1176,27 @@ impl SettingsRepository for SeaOrmSettingsRepository {
             .one(&self.db)
             .await
             .map_err(map_db_err)?;
+        if self.use_keyring && Self::is_secret_key(key) && row.is_some() {
+            tracing::warn!(
+                key = key,
+                "Clé secrète lue depuis la table SQLite héritée ; ré-enregistrez-la pour la migrer vers le trousseau système."
+            );
+        }
         Ok(row.map(|r| r.value))
     }
 
     async fn put(&self, key: &str, value: &str) -> DomainResult<()> {
-        if self.use_keyring
-            && Self::is_secret_key(key)
-            && let Ok(entry) = keyring::Entry::new(Self::KEYRING_SERVICE, key)
-            && entry.set_password(value).is_ok()
-        {
+        if self.use_keyring && Self::is_secret_key(key) {
+            let entry = keyring::Entry::new(Self::KEYRING_SERVICE, key).map_err(|e| {
+                DomainError::Persistence(format!(
+                    "Impossible d'accéder au trousseau système pour {key}: {e}"
+                ))
+            })?;
+            entry.set_password(value).map_err(|e| {
+                DomainError::Persistence(format!(
+                    "Impossible d'enregistrer la clé secrète dans le trousseau système : {e}"
+                ))
+            })?;
             // Remove any plaintext key from the SQLite table
             let _ = setting::Entity::delete_by_id(key.to_string())
                 .exec(&self.db)

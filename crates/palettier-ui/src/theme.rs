@@ -1669,6 +1669,22 @@ pub fn GamutMapSvg(
     }
 }
 
+/// Maximum image file size accepted from the file picker (50 MiB).
+const MAX_UI_IMAGE_FILE_BYTES: u64 = 50 * 1024 * 1024;
+
+/// Reads an image file selected by the user after verifying its size does not exceed 50 MiB.
+pub fn read_image_file_bounded(path: &std::path::Path) -> Result<Vec<u8>, String> {
+    let meta = std::fs::metadata(path)
+        .map_err(|e| format!("Impossible de lire les métadonnées du fichier : {e}"))?;
+    if meta.len() > MAX_UI_IMAGE_FILE_BYTES {
+        return Err(format!(
+            "Fichier image trop volumineux ({} Mo > limite 50 Mo).",
+            meta.len() / (1024 * 1024)
+        ));
+    }
+    std::fs::read(path).map_err(|e| format!("Impossible de lire le fichier image : {e}"))
+}
+
 /// Exports a `MixingGuide` as a standalone A4 HTML sheet and opens it in the default browser.
 pub fn export_and_open_guide_html(
     guide: &palettier_domain::guide::MixingGuide,
@@ -1702,8 +1718,31 @@ pub fn export_and_open_guide_html(
         .unwrap_or_else(std::env::temp_dir);
     let out_path = out_dir.join(filename);
     std::fs::write(&out_path, html).map_err(|e| format!("Failed to write file: {e}"))?;
-    let _ = std::process::Command::new("open").arg(&out_path).spawn();
+    open_path_in_default_app(&out_path);
     Ok(out_path)
+}
+
+fn open_path_in_default_app(path: &std::path::Path) {
+    if cfg!(test) {
+        return;
+    }
+    #[cfg(target_os = "macos")]
+    let res = std::process::Command::new("open").arg(path).spawn();
+    #[cfg(target_os = "linux")]
+    let res = std::process::Command::new("xdg-open").arg(path).spawn();
+    #[cfg(target_os = "windows")]
+    let res = std::process::Command::new("cmd")
+        .args(["/C", "start", ""])
+        .arg(path)
+        .spawn();
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    let res: std::io::Result<std::process::Child> = Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "unsupported platform",
+    ));
+    if let Err(e) = res {
+        tracing::warn!("Failed to open exported file {:?}: {e}", path);
+    }
 }
 
 /// Component rendering the full workbench "Mixing Guide" (inspired by the Norma Blue sheets in `references/`)
@@ -1885,5 +1924,30 @@ pub fn MixingGuideCard(
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::read_image_file_bounded;
+
+    #[test]
+    fn read_image_file_bounded_accepts_small_and_rejects_oversized_files() {
+        let dir = std::env::temp_dir().join(format!(
+            "palettier-ui-img-test-{}",
+            chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0)
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let small = dir.join("small.bin");
+        std::fs::write(&small, b"hello").unwrap();
+        assert_eq!(b"hello", read_image_file_bounded(&small).unwrap().as_slice());
+
+        let oversized = dir.join("oversized.bin");
+        let f = std::fs::File::create(&oversized).unwrap();
+        f.set_len(51 * 1024 * 1024).unwrap();
+        assert!(read_image_file_bounded(&oversized).is_err());
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

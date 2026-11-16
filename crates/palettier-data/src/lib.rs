@@ -581,5 +581,57 @@ mod tests {
 
         let _ = std::fs::remove_file(&temp_zip);
     }
+
+    #[tokio::test]
+    async fn zip_backup_rejects_path_traversal_and_enforces_total_budget_and_sanitizes_hex() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let temp_zip = std::env::temp_dir().join(format!(
+            "palettier-sec-test-{}.zip",
+            Utc::now().timestamp_nanos_opt().unwrap_or(0)
+        ));
+        {
+            let file = std::fs::File::create(&temp_zip).unwrap();
+            let mut zip = zip::ZipWriter::new(file);
+            let opts = SimpleFileOptions::default();
+            zip.start_file("../escape.txt", opts).unwrap();
+            zip.write_all(b"bad").unwrap();
+            zip.start_file("palettier.json", opts).unwrap();
+            let doc = serde_json::json!({
+                "formatVersion": 1,
+                "paints": [{
+                    "brand": "TestBrand",
+                    "name": "BadHexPaint",
+                    "code": "T1",
+                    "pigments": ["PW6"],
+                    "hex": "not-a-hex;injection",
+                    "opacity": "OPAQUE",
+                    "dryingClass": "MEDIUM",
+                    "tintingStrength": 99.0,
+                    "owned": true
+                }]
+            });
+            zip.write_all(doc.to_string().as_bytes()).unwrap();
+            zip.finish().unwrap();
+        }
+
+        let inst = Installation::in_memory().await;
+        let mut archive = ZipBackupArchive::open(&temp_zip).unwrap();
+        assert!(archive.file("../escape.txt").is_err());
+
+        let report = inst.importer.import(&mut archive).await.unwrap();
+        assert_eq!(1, report.paints_created);
+        let paint = inst
+            .catalog
+            .find_by_natural_key("TestBrand", "BadHexPaint")
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!("#808080", paint.hex_color);
+        assert!((paint.tinting_strength - 1.0).abs() < 1e-9);
+
+        let _ = std::fs::remove_file(&temp_zip);
+    }
 }
 

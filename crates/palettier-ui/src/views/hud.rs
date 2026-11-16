@@ -201,7 +201,7 @@ fn HudReferencePane(
                     .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
                     .pick_file()
                     .await
-                    && let Ok(bytes) = std::fs::read(file.path())
+                    && let Ok(bytes) = crate::theme::read_image_file_bounded(file.path())
                     && let Some(photo) = eye::open_reference(&svc, &bytes)
                 {
                     image_data_url.set(Some(photo.data_uri.clone()));

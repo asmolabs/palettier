@@ -261,17 +261,17 @@ impl PlanDryingService {
 
             let wait = if i + 1 == layers.len() {
                 Duration::ZERO
-            } else if {
+            } else {
                 let next = layers[i + 1].technique;
-                waits_for_through_dry(
+                if waits_for_through_dry(
                     technique.system_within(system),
                     next.system_within(system),
                     next,
-                )
-            } {
-                estimate.through_dry
-            } else {
-                estimate.recoat
+                ) {
+                    estimate.through_dry
+                } else {
+                    estimate.recoat
+                }
             };
 
             scheduled.push(LayerSchedule {

@@ -26,6 +26,8 @@ use zip::write::SimpleFileOptions;
 const MAX_JSON_BYTES: u64 = 32 * 1024 * 1024;
 /// Maximum accepted size per image in an archive (50 MB).
 const MAX_ENTRY_BYTES: u64 = 50 * 1024 * 1024;
+/// Maximum cumulative decompressed bytes read from a single archive (256 MB).
+const MAX_TOTAL_ARCHIVE_BYTES: u64 = 256 * 1024 * 1024;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -214,6 +216,7 @@ pub trait BackupWriter {
 
 pub struct ZipBackupArchive {
     zip: ZipArchive<File>,
+    total_read_bytes: u64,
 }
 
 impl ZipBackupArchive {
@@ -229,12 +232,16 @@ impl ZipBackupArchive {
         let zip = ZipArchive::new(file).map_err(|e| {
             DomainError::Persistence(format!("Archive ZIP invalide {:?}: {e}", path.as_ref()))
         })?;
-        Ok(Self { zip })
+        Ok(Self {
+            zip,
+            total_read_bytes: 0,
+        })
     }
 
     fn read_bounded(
         mut entry: zip::read::ZipFile<'_, File>,
         max_bytes: u64,
+        total_read_bytes: &mut u64,
     ) -> DomainResult<Vec<u8>> {
         // Zip-Slip protection: reject paths containing `..` or absolute paths
         if entry.enclosed_name().is_none() {
@@ -243,36 +250,44 @@ impl ZipBackupArchive {
                 entry.name()
             )));
         }
-        if entry.size() > max_bytes {
+        let remaining_budget = MAX_TOTAL_ARCHIVE_BYTES.saturating_sub(*total_read_bytes);
+        let effective_limit = max_bytes.min(remaining_budget);
+        if entry.size() > effective_limit {
             return Err(DomainError::InvalidArgument(format!(
-                "Entrée ZIP trop volumineuse ({} octets > limite {})",
+                "Entrée ZIP trop volumineuse ou budget d'archive dépassé ({} octets > limite {})",
                 entry.size(),
-                max_bytes
+                effective_limit
             )));
         }
         let mut buf = Vec::with_capacity(entry.size().min(1024 * 1024) as usize);
-        let mut limited = (&mut entry).take(max_bytes + 1);
+        let mut limited = (&mut entry).take(effective_limit + 1);
         limited
             .read_to_end(&mut buf)
             .map_err(|e| DomainError::Persistence(format!("Erreur de lecture ZIP: {e}")))?;
-        if (buf.len() as u64) > max_bytes {
+        if (buf.len() as u64) > effective_limit {
             return Err(DomainError::InvalidArgument(format!(
-                "Entrée ZIP dépassant la taille maximale autorisée ({max_bytes} octets)"
+                "Entrée ZIP dépassant la taille maximale autorisée ({effective_limit} octets)"
             )));
         }
+        *total_read_bytes = total_read_bytes.saturating_add(buf.len() as u64);
         Ok(buf)
     }
 }
 
 impl BackupArchive for ZipBackupArchive {
     fn document(&mut self) -> DomainResult<Vec<u8>> {
-        let entry = self.zip.by_name(Self::DOCUMENT).map_err(|_| {
-            DomainError::InvalidArgument(format!(
-                "Cette archive ne contient pas de {} : ce n'est pas une sauvegarde Palettier.",
-                Self::DOCUMENT
-            ))
-        })?;
-        Self::read_bounded(entry, MAX_JSON_BYTES)
+        let mut total = self.total_read_bytes;
+        let res = {
+            let entry = self.zip.by_name(Self::DOCUMENT).map_err(|_| {
+                DomainError::InvalidArgument(format!(
+                    "Cette archive ne contient pas de {} : ce n'est pas une sauvegarde Palettier.",
+                    Self::DOCUMENT
+                ))
+            })?;
+            Self::read_bounded(entry, MAX_JSON_BYTES, &mut total)
+        };
+        self.total_read_bytes = total;
+        res
     }
 
     fn file(&mut self, path: &str) -> DomainResult<Option<Vec<u8>>> {
@@ -287,13 +302,16 @@ impl BackupArchive for ZipBackupArchive {
                 "Chemin d'archive non sécurisé : {path}"
             )));
         }
-        match self.zip.by_name(path) {
-            Ok(entry) => Ok(Some(Self::read_bounded(entry, MAX_ENTRY_BYTES)?)),
+        let mut total = self.total_read_bytes;
+        let res = match self.zip.by_name(path) {
+            Ok(entry) => Ok(Some(Self::read_bounded(entry, MAX_ENTRY_BYTES, &mut total)?)),
             Err(zip::result::ZipError::FileNotFound) => Ok(None),
             Err(e) => Err(DomainError::Persistence(format!(
                 "Erreur d'accès à l'entrée ZIP {path}: {e}"
             ))),
-        }
+        };
+        self.total_read_bytes = total;
+        res
     }
 }
 
@@ -472,6 +490,19 @@ impl BackupImporter {
                     updated += 1;
                 }
             } else {
+                let hex_color = Rgb::of_hex(&entry.hex)
+                    .map(|c| c.to_hex())
+                    .unwrap_or_else(|_| "#808080".to_string());
+                let tint_hex = entry
+                    .tint_hex
+                    .as_deref()
+                    .and_then(|t| Rgb::of_hex(t).ok())
+                    .map(|c| c.to_hex());
+                let tinting_strength = if entry.tinting_strength.is_finite() {
+                    entry.tinting_strength.clamp(0.01, 1.0)
+                } else {
+                    0.5
+                };
                 let paint = Paint {
                     id: None,
                     brand: entry.brand.clone(),
@@ -479,12 +510,12 @@ impl BackupImporter {
                     code: entry.code.clone(),
                     legacy_code: String::new(),
                     pigments: entry.pigments.iter().cloned().collect(),
-                    hex_color: entry.hex.clone(),
-                    tint_hex: entry.tint_hex.clone(),
+                    hex_color,
+                    tint_hex,
                     opacity: Opacity::from_str(&entry.opacity).unwrap_or(Opacity::SemiOpaque),
                     drying_class: DryingClass::from_str(&entry.drying_class)
                         .unwrap_or(DryingClass::Medium),
-                    tinting_strength: entry.tinting_strength,
+                    tinting_strength,
                     color_derived: entry.color_derived,
                     pigments_verified: false,
                     user_added: false,
@@ -700,10 +731,13 @@ impl BackupImporter {
                 )
             });
 
+        let target_hex = Rgb::of_hex(&layer.target_hex)
+            .map(|c| c.to_hex())
+            .unwrap_or_else(|_| "#808080".to_string());
         let mut out = ProjectLayer {
             id: None,
             role: layer.role.clone(),
-            target_hex: layer.target_hex.clone(),
+            target_hex,
             technique: Technique::default_for(system),
             note: layer.note.clone(),
             kind: LayerKind::from_str(&layer.kind).unwrap_or(LayerKind::Ladder),

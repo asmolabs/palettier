@@ -165,6 +165,14 @@ mod tests {
         assert!(sheet.to_printable_html(Locale::En).contains("lang=\"en\""));
         assert!(html.contains("<!DOCTYPE html>"));
         assert!(html.contains("Escouade A"));
+
+        let mut xss_sheet = sheet;
+        xss_sheet.army_name = "<script>alert('xss')</script>".to_string();
+        xss_sheet.base_hex = "#FF0000; background-image: url(javascript:alert(1))".to_string();
+        let xss_html = xss_sheet.to_printable_html(Locale::Fr);
+        assert!(!xss_html.contains("<script>"));
+        assert!(xss_html.contains("&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;"));
+        assert!(!xss_html.contains("javascript:alert"));
     }
 
     #[test]

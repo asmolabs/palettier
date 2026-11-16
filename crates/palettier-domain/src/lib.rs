@@ -6,6 +6,7 @@ pub mod color;
 pub mod drying;
 pub mod error;
 pub mod guide;
+pub mod html;
 pub mod i18n;
 pub mod image;
 pub mod miniature;

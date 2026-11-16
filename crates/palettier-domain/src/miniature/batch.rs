@@ -1,6 +1,7 @@
 //! Painting in series: squads, army recipe sheets, mother mixes.
 
 use super::*;
+use crate::html::{escape_html, sanitize_hex_css};
 
 /// Batch painting tracker for an army squad / platoon.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -193,18 +194,18 @@ impl ArmyRecipeSheet {
   </div>
 </body>
 </html>"#,
-            army = self.army_name,
-            unit = self.unit_name,
-            faction = self.faction,
-            primer = self.primer,
-            base_acrylic = self.base_acrylic,
-            base_hex = self.base_hex,
-            oil_mix_formula = self.oil_mix_formula,
-            mixed_hex = self.mixed_hex,
-            wash_technique = self.wash_technique,
-            weathering = self.weathering,
-            varnish = self.varnish,
-            notes = self.notes,
+            army = escape_html(&self.army_name),
+            unit = escape_html(&self.unit_name),
+            faction = escape_html(&self.faction),
+            primer = escape_html(&self.primer),
+            base_acrylic = escape_html(&self.base_acrylic),
+            base_hex = sanitize_hex_css(&self.base_hex),
+            oil_mix_formula = escape_html(&self.oil_mix_formula),
+            mixed_hex = sanitize_hex_css(&self.mixed_hex),
+            wash_technique = escape_html(&self.wash_technique),
+            weathering = escape_html(&self.weathering),
+            varnish = escape_html(&self.varnish),
+            notes = escape_html(&self.notes),
             lang = t.lang,
             t_primer = t.primer,
             t_base = t.base,

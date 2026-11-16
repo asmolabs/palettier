@@ -34,12 +34,14 @@ impl Database {
         let db_file = if path.is_dir() || path.extension().is_none() {
             std::fs::create_dir_all(path)
                 .map_err(|e| DomainError::Persistence(format!("Failed to create directory {:?}: {e}", path)))?;
+            restrict_dir_permissions(path);
             path.join("palettier.db")
         } else {
             if let Some(parent) = path.parent() {
                 std::fs::create_dir_all(parent).map_err(|e| {
                     DomainError::Persistence(format!("Failed to create directory {:?}: {e}", parent))
                 })?;
+                restrict_dir_permissions(parent);
             }
             path.to_path_buf()
         };
@@ -52,7 +54,13 @@ impl Database {
                 .unwrap_or(db_file)
         };
 
-        let url = format!("sqlite://{}?mode=rwc", abs_path.display());
+        let escaped_path = abs_path
+            .display()
+            .to_string()
+            .replace('%', "%25")
+            .replace('?', "%3F")
+            .replace('#', "%23");
+        let url = format!("sqlite://{escaped_path}?mode=rwc");
         let mut opt = ConnectOptions::new(url);
         opt.max_connections(5)
             .min_connections(1)
@@ -71,6 +79,7 @@ impl Database {
         .await
         .map_err(map_db_err)?;
         Migrator::up(&conn, None).await.map_err(map_db_err)?;
+        restrict_file_permissions(&abs_path);
         Ok(Self { conn })
     }
 
@@ -82,6 +91,26 @@ impl Database {
         self.conn.close().await.map_err(map_db_err)
     }
 }
+
+#[cfg(unix)]
+fn restrict_dir_permissions(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700));
+}
+
+#[cfg(not(unix))]
+fn restrict_dir_permissions(_path: &Path) {}
+
+#[cfg(unix)]
+fn restrict_file_permissions(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    if path.exists() {
+        let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600));
+    }
+}
+
+#[cfg(not(unix))]
+fn restrict_file_permissions(_path: &Path) {}
 
 pub(crate) fn map_db_err(err: DbErr) -> DomainError {
     DomainError::Persistence(err.to_string())

@@ -149,14 +149,33 @@ impl AiSettings {
             && (!self.provider.needs_api_key() || !self.api_key_str().trim().is_empty())
     }
 
-    /// Validates the base URL (http/https schemes only).
+    /// Validates the base URL (http/https only, no embedded credentials, HTTPS enforced for remote API-keyed providers).
     pub fn validated_base_url(&self) -> DomainResult<String> {
         let trimmed = self.base_url.trim().trim_end_matches('/');
         let parsed = Url::parse(trimmed).map_err(|e| {
             DomainError::InvalidArgument(format!("URL du service IA invalide ({trimmed}): {e}"))
         })?;
+        if !parsed.username().is_empty() || parsed.password().is_some() {
+            return Err(DomainError::InvalidArgument(
+                "Les identifiants intégrés dans l'URL du service IA ne sont pas autorisés."
+                    .to_string(),
+            ));
+        }
+        let host = parsed.host_str().ok_or_else(|| {
+            DomainError::InvalidArgument("L'URL du service IA doit contenir un hôte.".to_string())
+        })?;
         match parsed.scheme() {
-            "http" | "https" => Ok(trimmed.to_string()),
+            "https" => Ok(trimmed.to_string()),
+            "http" => {
+                let is_loopback = matches!(host, "localhost" | "127.0.0.1" | "::1" | "[::1]");
+                if self.provider.needs_api_key() && !is_loopback {
+                    return Err(DomainError::InvalidArgument(
+                        "HTTPS est obligatoire pour les fournisseurs IA distants utilisant une clé API."
+                            .to_string(),
+                    ));
+                }
+                Ok(trimmed.to_string())
+            }
             scheme => Err(DomainError::InvalidArgument(format!(
                 "Schéma d'URL non autorisé pour le service IA: {scheme}"
             ))),

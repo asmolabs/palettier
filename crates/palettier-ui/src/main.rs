@@ -859,16 +859,30 @@ fn CommandPaletteModal() -> Element {
     }
 }
 
+#[cfg(target_os = "macos")]
 fn send_macos_notification(title: &str, body: &str) {
     // The view tests run the real shell: they must not pop up system notifications.
     if cfg!(test) {
         return;
     }
-    let safe_title = title.replace('"', "\\\"");
-    let safe_body = body.replace('"', "\\\"");
-    let script = format!("display notification \"{safe_body}\" with title \"{safe_title}\"");
-    let _ = std::process::Command::new("osascript")
-        .arg("-e")
-        .arg(script)
-        .spawn();
+    // Pass notification title and body via argv so arbitrary text can never break AppleScript quoting.
+    if let Err(e) = std::process::Command::new("osascript")
+        .args([
+            "-e",
+            "on run argv",
+            "-e",
+            "display notification (item 1 of argv) with title (item 2 of argv)",
+            "-e",
+            "end run",
+            "--",
+            body,
+            title,
+        ])
+        .spawn()
+    {
+        tracing::warn!("Failed to spawn osascript notification: {e}");
+    }
 }
+
+#[cfg(not(target_os = "macos"))]
+fn send_macos_notification(_title: &str, _body: &str) {}

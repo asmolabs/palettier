@@ -111,15 +111,29 @@ pub(super) fn swatch_option<T: Copy + PartialEq + 'static>(
 
 pub(super) fn copy_to_clipboard(text: &str) {
     use std::io::Write;
-    if let Ok(mut child) = std::process::Command::new("pbcopy")
-        .stdin(std::process::Stdio::piped())
-        .spawn()
-    {
-        if let Some(mut stdin) = child.stdin.take() {
-            let _ = stdin.write_all(text.as_bytes());
+    #[cfg(target_os = "macos")]
+    let candidates: &[(&str, &[&str])] = &[("pbcopy", &[])];
+    #[cfg(target_os = "linux")]
+    let candidates: &[(&str, &[&str])] = &[("wl-copy", &[]), ("xclip", &["-selection", "clipboard"])];
+    #[cfg(target_os = "windows")]
+    let candidates: &[(&str, &[&str])] = &[("clip", &[])];
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    let candidates: &[(&str, &[&str])] = &[];
+
+    for (cmd, args) in candidates {
+        if let Ok(mut child) = std::process::Command::new(cmd)
+            .args(*args)
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+        {
+            if let Some(mut stdin) = child.stdin.take() {
+                let _ = stdin.write_all(text.as_bytes());
+            }
+            let _ = child.wait();
+            return;
         }
-        let _ = child.wait();
     }
+    tracing::warn!("No system clipboard command available on this platform");
 }
 
 #[cfg(test)]

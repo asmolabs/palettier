@@ -13,6 +13,7 @@
 //! 5. **Conseils numérotés** adaptés à la palette et au sujet, et export A4 imprimable (HTML/PDF).
 
 use crate::color::{Rgb, delta_e_2000};
+use crate::html::{escape_html, sanitize_hex_css, sanitize_image_data_uri};
 use crate::i18n::Locale;
 use crate::mix::{ColorMixService, MixSuggestion, PaintPart};
 use crate::paint::{DryingClass, Opacity, Paint};
@@ -805,6 +806,7 @@ impl MixingGuideBuilder {
     /// - Codes courts (`B`, `Oc`, `Rc`, `Ga`, `Pr`, `Vi`, `JC`, `N`)
     /// - Petites parts transformées en « une pointe de X » (5–14 %) ou « une trace de X » (< 5 % ou pigment très puissant)
     /// - Réutilisation de `Base`, `Si`, `BF`, `NC` pour les ombres et lumières lorsque c'est pertinent.
+    #[allow(clippy::too_many_arguments)]
     pub fn format_painter_recipe(
         role: &str,
         target: Rgb,
@@ -1269,8 +1271,8 @@ impl MixingGuide {
 "#,
         );
 
-        if let Some(uri) = photo_data_uri {
-            let alt_txt = locale.tr("Pièce de référence", "Reference Piece");
+        if let Some(uri) = photo_data_uri.and_then(sanitize_image_data_uri) {
+            let alt_txt = escape_html(locale.tr("Pièce de référence", "Reference Piece"));
             html.push_str(&format!(
                 r#"  <img class="piece-photo" src="{uri}" alt="{alt_txt}"/>"#
             ));
@@ -1301,7 +1303,7 @@ impl MixingGuide {
                 };
                 html.push_str(&format!(
                     "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"code-cell\">{}</td><td>{}{code_suffix}</td><td class=\"behavior-cell\">{}</td></tr>\n",
-                    Self::escape_html(&entry.paint.hex_color),
+                    sanitize_hex_css(&entry.paint.hex_color),
                     Self::escape_html(&entry.short_code),
                     Self::escape_html(&entry.paint.name),
                     Self::escape_html(&entry.behavior),
@@ -1323,7 +1325,7 @@ impl MixingGuide {
             for mm in &self.mother_mixes {
                 html.push_str(&format!(
                     "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"role-cell\"><strong>{}</strong> — {}</td><td>{}</td></tr>\n",
-                    Self::escape_html(&mm.hex_color),
+                    sanitize_hex_css(&mm.hex_color),
                     Self::escape_html(&mm.code),
                     Self::escape_html(&mm.name),
                     Self::escape_html(&mm.recipe_text),
@@ -1348,7 +1350,7 @@ impl MixingGuide {
             for w in &self.washes {
                 html.push_str(&format!(
                     "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"role-cell\">{}</td><td>{}</td></tr>\n",
-                    Self::escape_html(&w.hex_color),
+                    sanitize_hex_css(&w.hex_color),
                     Self::escape_html(&w.name),
                     Self::escape_html(&w.recipe_text),
                 ));
@@ -1380,7 +1382,7 @@ impl MixingGuide {
             for row in &zone.rows {
                 html.push_str(&format!(
                     "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"role-cell\">{}</td><td>{}</td></tr>\n",
-                    Self::escape_html(&row.swatch_hex),
+                    sanitize_hex_css(&row.swatch_hex),
                     Self::escape_html(&row.role),
                     Self::escape_html(&row.painter_recipe),
                 ));
@@ -1415,10 +1417,7 @@ impl MixingGuide {
     }
 
     fn escape_html(s: &str) -> String {
-        s.replace('&', "&amp;")
-            .replace('<', "&lt;")
-            .replace('>', "&gt;")
-            .replace('"', "&quot;")
+        escape_html(s)
     }
 }
 
@@ -1491,5 +1490,13 @@ mod tests {
         assert!(html.contains("Mélanges intermédiaires"));
         assert!(html.contains("Lavis sur sous-couche blanche"));
         assert!(html.contains("Buste de samouraï"));
+
+        let unsafe_html = guide.to_printable_html(Some("javascript:alert(1)\" onerror=\"alert(1)"));
+        assert!(!unsafe_html.contains("javascript:alert"));
+        assert!(!unsafe_html.contains("<img class=\"piece-photo\""));
+
+        let safe_uri = "data:image/png;base64,iVBORw0KGgo=";
+        let safe_html = guide.to_printable_html(Some(safe_uri));
+        assert!(safe_html.contains(safe_uri));
     }
 }

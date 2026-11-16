@@ -47,7 +47,9 @@ fn AppearanceCard() -> Element {
             state.locale.set(l);
             let svc = svc.clone();
             spawn(async move {
-                let _ = actions::save_locale(&svc, l).await;
+                if let Err(e) = actions::save_locale(&svc, l).await {
+                    tracing::warn!("Failed to persist locale setting: {e}");
+                }
             });
         }
     };
@@ -70,7 +72,9 @@ fn AppearanceCard() -> Element {
                                     state.theme.set(ThemeMode::Dark);
                                     let svc = svc.clone();
                                     spawn(async move {
-                                        let _ = actions::save_theme(&svc, ThemeMode::Dark).await;
+                                        if let Err(e) = actions::save_theme(&svc, ThemeMode::Dark).await {
+                                            tracing::warn!("Failed to persist dark theme setting: {e}");
+                                        }
                                     });
                                 }
                             }, {locale.tr("🌙 Mode Nuit", "🌙 Night Mode")} }
@@ -82,7 +86,9 @@ fn AppearanceCard() -> Element {
                                     state.theme.set(ThemeMode::Light);
                                     let svc = svc.clone();
                                     spawn(async move {
-                                        let _ = actions::save_theme(&svc, ThemeMode::Light).await;
+                                        if let Err(e) = actions::save_theme(&svc, ThemeMode::Light).await {
+                                            tracing::warn!("Failed to persist light theme setting: {e}");
+                                        }
                                     });
                                 }
                             }, {locale.tr("☀️ Mode Jour", "☀️ Day Mode")} }
