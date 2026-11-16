@@ -14,7 +14,7 @@ Scale75 Artist;Burgundy Wine Red;;;;#5A2212;ACRYLIC;false
 Scale75 Artist;Burnt Sienna;SART-42;PBr7;;#7C2D06;ACRYLIC;true
 Scale75 Artist;Burnt Sienna Umber;SART-06;PBr7 PY42 PR101;OPAQUE;#4C2A20;ACRYLIC;true
 Scale75 Artist;Burnt Skin;SART-12;PY42;OPAQUE;#654023;ACRYLIC;true
-Scale75 Artist;Burnt Umber;SART-38;PBr7 PR101;;#51402C;ACRYLIC;true
+Scale75 Artist;Burnt Umber;SART-38;PBr7 PR101;OPAQUE;#51402C;ACRYLIC;true
 Scale75 Artist;Chestnut Ink;;;TRANSPARENT;#40362D;ACRYLIC;false
 Scale75 Artist;Cobalt Blue;SART-27;PB15:1;;#005E91;ACRYLIC;true
 Scale75 Artist;Cobalt Violet Grey;;;;#73768B;ACRYLIC;false
@@ -29,7 +29,7 @@ Scale75 Artist;Dark Violet;SART-25;PR122 PB15:3;;#481A3F;ACRYLIC;true
 Scale75 Artist;Earth Green;SART-36;PBr7;;#4A3C2F;ACRYLIC;true
 Scale75 Artist;Emerald Green;SART-33;PG7 PB15:1;;#165341;ACRYLIC;true
 Scale75 Artist;Golden Flesh;SART-08;PO5 PW6;OPAQUE;#E2A76D;ACRYLIC;true
-Scale75 Artist;Green Grey;SART-16;PV15 PY53;;#2C3033;ACRYLIC;true
+Scale75 Artist;Green Grey;SART-16;PV15 PY53;SEMI_OPAQUE;#2C3033;ACRYLIC;true
 Scale75 Artist;Intense Yellow;SART-19;PY83 PY42;;#F2CB02;ACRYLIC;true
 Scale75 Artist;Jade Green;;;;#2FBEAF;ACRYLIC;false
 Scale75 Artist;Lemon Yellow;;;;#EBEA52;ACRYLIC;false
@@ -64,10 +64,10 @@ Scale75 Artist;Primary Red;SART-05;PR112;SEMI_OPAQUE;#D53036;ACRYLIC;true
 Scale75 Artist;Primary Yellow;SART-04;PY14;SEMI_TRANSPARENT;#F4E915;ACRYLIC;true
 Scale75 Artist;Prussian Blue;SART-30;PBk7 PY42;;#06293D;ACRYLIC;true
 Scale75 Artist;Purple;SART-24;PR122 PR146;;#912360;ACRYLIC;true
-Scale75 Artist;Raw Sienna;SART-21;PBr7;;#654226;ACRYLIC;true
-Scale75 Artist;Raw Umber;SART-40;PBr7;;#765F33;ACRYLIC;true
+Scale75 Artist;Raw Sienna;SART-21;PBr7;SEMI_TRANSPARENT;#654226;ACRYLIC;true
+Scale75 Artist;Raw Umber;SART-40;PBr7;OPAQUE;#765F33;ACRYLIC;true
 Scale75 Artist;Red Ochre;SART-37;PR101 PY42;OPAQUE;#80362D;ACRYLIC;true
-Scale75 Artist;Sap Green;SART-34;PG7 PY42;;#033417;ACRYLIC;true
+Scale75 Artist;Sap Green;SART-34;PG7 PY42;SEMI_TRANSPARENT;#033417;ACRYLIC;true
 Scale75 Artist;Sky Blue;;;;#C0E4ED;ACRYLIC;false
 Scale75 Artist;Spring Green;SART-32;PG7;;#5D9F35;ACRYLIC;true
 Scale75 Artist;Titanium Grey;;;;#404445;ACRYLIC;false
@@ -77,7 +77,7 @@ Scale75 Artist;Turquoise Ink;;;TRANSPARENT;#204C50;ACRYLIC;false
 Scale75 Artist;Vanilla White;SART-43;;OPAQUE;#EDE8D4;ACRYLIC;false
 Scale75 Artist;Vanilla Yellow;SART-17;;;#D8CC68;ACRYLIC;false
 Scale75 Artist;Violet;;;;#2A1C51;ACRYLIC;false
-Scale75 Artist;Violet Grey;SART-15;PV15 PB29;;#72727C;ACRYLIC;true
+Scale75 Artist;Violet Grey;SART-15;PV15 PB29;SEMI_OPAQUE;#72727C;ACRYLIC;true
 Scale75 Artist;White Ink;;;TRANSPARENT;#F7F7F7;ACRYLIC;false
 Scale75 Artist;Wood;SART-39;PBk11 PY42;;#60483E;ACRYLIC;true
 Scale75 Artist;Yellow Ochre;SART-20;PBr7 PY42;;#A0702E;ACRYLIC;true

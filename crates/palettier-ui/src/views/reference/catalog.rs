@@ -3,14 +3,16 @@
 use super::catalog_sheet::PaintSheet;
 use super::catalog_tubes::{CustomTubeForm, RecognizedTubesCard, use_tube_form};
 use crate::actions::catalog::{
-    brands_of, closest_substitutes, filter_paints, pigment_codes, recognize_tubes, set_in_stock,
+    FinishFilter, brands_of, closest_substitutes, filter_paints_with, pigment_codes,
+    recognize_tubes, set_in_stock,
 };
 use crate::state::{AppServices, AppState};
 use crate::theme::{PaintSwatch, SectionHeader};
 use dioxus::prelude::*;
 use palettier_ai::RecognizedTube;
 use palettier_domain::i18n::Locale;
-use palettier_domain::paint::{Paint, PaintSystem};
+use palettier_domain::paint::{Opacity, Paint, PaintSystem};
+use std::str::FromStr;
 
 #[component]
 pub fn CatalogView() -> Element {
@@ -21,6 +23,8 @@ pub fn CatalogView() -> Element {
     let search = use_signal(String::new);
     let brand_filter = use_signal(|| "ALL".to_string());
     let stock_only = use_signal(|| false);
+    let finish_filter = use_signal(|| FinishFilter::All);
+    let opacity_filter = use_signal(|| None::<Opacity>);
     let display_limit = use_signal(|| 250usize);
     let selected_paint_id = use_signal(|| None::<i64>);
     let calibrate_masstone_hex = use_signal(String::new);
@@ -37,11 +41,13 @@ pub fn CatalogView() -> Element {
     let pipette_hex = state.last_sampled_hex.read().clone();
 
     let brands = brands_of(&all_paints);
-    let filtered = filter_paints(
+    let filtered = filter_paints_with(
         &all_paints,
         &search.read(),
         &brand_filter.read(),
         *stock_only.read(),
+        *finish_filter.read(),
+        *opacity_filter.read(),
     );
 
     let selected_paint = selected_paint_id
@@ -94,6 +100,8 @@ pub fn CatalogView() -> Element {
                 search,
                 brand_filter,
                 stock_only,
+                finish_filter,
+                opacity_filter,
                 display_limit,
                 brands,
                 owned_count,
@@ -197,12 +205,14 @@ fn CatalogActions(
     }
 }
 
-/// The search bar: text, brand and drawer filters.
+/// The search bar: text, brand, finish, opacity and drawer filters.
 #[component]
 fn CatalogSearch(
     search: Signal<String>,
     brand_filter: Signal<String>,
     stock_only: Signal<bool>,
+    mut finish_filter: Signal<FinishFilter>,
+    mut opacity_filter: Signal<Option<Opacity>>,
     mut display_limit: Signal<usize>,
     brands: Vec<String>,
     owned_count: usize,
@@ -210,6 +220,9 @@ fn CatalogSearch(
 ) -> Element {
     let state = use_context::<AppState>();
     let locale = *state.locale.read();
+    let opacity_val = (*opacity_filter.read())
+        .map(|o| o.as_db_str())
+        .unwrap_or("ALL");
 
     rsx! {
         div { class: "card",
@@ -234,6 +247,32 @@ fn CatalogSearch(
                         option { value: "ALL", {locale.tr("Toutes les marques", "All brands")}, " ({brands.len()})" }
                         for b in &brands {
                             option { value: "{b}", "{b}" }
+                        }
+                    }
+                    select {
+                        value: "{finish_filter.read().as_str()}",
+                        onchange: move |e| {
+                            finish_filter.set(FinishFilter::from_value(&e.value()));
+                            display_limit.set(250);
+                        },
+                        option { value: "ALL", {locale.tr("Toutes finitions", "All finishes")} }
+                        option { value: "MATTE", {locale.tr("Mats / Standards", "Matte / Standard")} }
+                        option { value: "EFFECT", {locale.tr("Métalliques & effets", "Metallic & FX")} }
+                    }
+                    select {
+                        value: "{opacity_val}",
+                        onchange: move |e| {
+                            let val = e.value();
+                            opacity_filter.set(if val == "ALL" {
+                                None
+                            } else {
+                                Opacity::from_str(&val).ok()
+                            });
+                            display_limit.set(250);
+                        },
+                        option { value: "ALL", {locale.tr("Toutes opacités", "All opacities")} }
+                        for op in [Opacity::Opaque, Opacity::SemiOpaque, Opacity::SemiTransparent, Opacity::Transparent] {
+                            option { value: "{op.as_db_str()}", "{op.label(locale)}" }
                         }
                     }
                     label { class: "row u-cur-pointer",

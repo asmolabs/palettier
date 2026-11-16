@@ -277,6 +277,7 @@ impl AppServices {
             self.projects.clone(),
             self.recipes.clone(),
         )
+        .with_settings(self.settings.clone())
     }
 
     pub fn exporter(&self) -> BackupExporter {
@@ -286,6 +287,7 @@ impl AppServices {
             self.projects.clone(),
             self.recipes.clone(),
         )
+        .with_settings(self.settings.clone())
     }
 }
 

@@ -8,7 +8,11 @@ use palettier_domain::paint::{
 use palettier_domain::palette::Palette;
 use palettier_domain::port::{
     PaintCatalogRepository, PaletteRepository, ProjectRepository, RecipeRepository,
+    SettingsRepository,
 };
+
+/// Studio UI preference keys safely included in backup archives (never AI secrets/keys).
+const STUDIO_SETTING_KEYS: [&str; 4] = ["ui.locale", "ui.theme", "ui.paint_system", "ui.workshop"];
 use palettier_domain::project::{
     AppliedCoat, LayerKind, PhotoRole, Project, ProjectLayer, ProjectPhoto, ProjectZone,
 };
@@ -46,6 +50,8 @@ pub struct BackupDocument {
     pub projects: Vec<BackupProject>,
     #[serde(default)]
     pub recipes: Vec<BackupRecipe>,
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    pub settings: IndexMap<String, String>,
 }
 
 fn default_format_version() -> i32 {
@@ -414,6 +420,7 @@ pub struct BackupImporter {
     palettes: Arc<dyn PaletteRepository>,
     projects: Arc<dyn ProjectRepository>,
     recipes: Arc<dyn RecipeRepository>,
+    settings: Option<Arc<dyn SettingsRepository>>,
 }
 
 impl BackupImporter {
@@ -430,7 +437,13 @@ impl BackupImporter {
             palettes,
             projects,
             recipes,
+            settings: None,
         }
+    }
+
+    pub fn with_settings(mut self, settings: Arc<dyn SettingsRepository>) -> Self {
+        self.settings = Some(settings);
+        self
     }
 
     pub async fn import<A: BackupArchive>(&self, archive: &mut A) -> DomainResult<ImportReport> {
@@ -456,6 +469,13 @@ impl BackupImporter {
         let (projects_added, projects_skipped, photos) = self
             .restore_projects(&document.projects, archive, &mut warnings)
             .await?;
+        if let Some(ref settings_repo) = self.settings {
+            for key in STUDIO_SETTING_KEYS {
+                if let Some(val) = document.settings.get(key) {
+                    settings_repo.put(key, val).await?;
+                }
+            }
+        }
 
         Ok(ImportReport {
             paints_updated,
@@ -782,6 +802,7 @@ pub struct BackupExporter {
     palettes: Arc<dyn PaletteRepository>,
     projects: Arc<dyn ProjectRepository>,
     recipes: Arc<dyn RecipeRepository>,
+    settings: Option<Arc<dyn SettingsRepository>>,
 }
 
 impl BackupExporter {
@@ -800,13 +821,27 @@ impl BackupExporter {
             palettes,
             projects,
             recipes,
+            settings: None,
         }
+    }
+
+    pub fn with_settings(mut self, settings: Arc<dyn SettingsRepository>) -> Self {
+        self.settings = Some(settings);
+        self
     }
 
     pub async fn export<W: BackupWriter>(&self, writer: &mut W) -> DomainResult<ExportReport> {
         let paints = self.catalog.all().await?;
         let all_palettes = self.palettes.all().await?;
         let all_recipes = self.recipes.all().await?;
+        let mut settings = IndexMap::new();
+        if let Some(ref settings_repo) = self.settings {
+            for key in STUDIO_SETTING_KEYS {
+                if let Some(val) = settings_repo.get(key).await? {
+                    settings.insert(key.to_string(), val);
+                }
+            }
+        }
 
         let mut pieces = Vec::new();
         for p in self.projects.all().await? {
@@ -899,6 +934,7 @@ impl BackupExporter {
                         .collect(),
                 })
                 .collect(),
+            settings,
         };
 
         let json = serde_json::to_string_pretty(&document)

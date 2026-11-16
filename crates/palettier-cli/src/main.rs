@@ -6,7 +6,8 @@ use clap::{Parser, Subcommand};
 use palettier_data::{
     BackupExporter, BackupImporter, BackupWriter, CatalogSeeder, Database,
     SeaOrmPaintCatalogRepository, SeaOrmPaletteMixRepository, SeaOrmPaletteRepository,
-    SeaOrmProjectRepository, SeaOrmRecipeRepository, ZipBackupArchive, ZipBackupWriter,
+    SeaOrmProjectRepository, SeaOrmRecipeRepository, SeaOrmSettingsRepository, ZipBackupArchive,
+    ZipBackupWriter,
 };
 use palettier_domain::port::{
     PaintCatalogRepository, PaletteMixRepository, PaletteRepository, ProjectRepository,
@@ -90,6 +91,7 @@ async fn run_cli(cli: Cli) -> Result<()> {
     ));
     let recipes = Arc::new(SeaOrmRecipeRepository::new(&database));
     let mixes = Arc::new(SeaOrmPaletteMixRepository::new(&database));
+    let settings = Arc::new(SeaOrmSettingsRepository::new(&database));
 
     match cli.command {
         Commands::Seed => {
@@ -107,7 +109,8 @@ async fn run_cli(cli: Cli) -> Result<()> {
             );
         }
         Commands::ImportBackup { archive } => {
-            let importer = BackupImporter::new(catalog, palettes, projects, recipes);
+            let importer =
+                BackupImporter::new(catalog, palettes, projects, recipes).with_settings(settings);
             let mut zip = ZipBackupArchive::open(&archive)?;
             let report = importer.import(&mut zip).await?;
             println!(
@@ -127,7 +130,8 @@ async fn run_cli(cli: Cli) -> Result<()> {
             }
         }
         Commands::ExportBackup { output } => {
-            let exporter = BackupExporter::new(catalog, palettes, projects, recipes);
+            let exporter =
+                BackupExporter::new(catalog, palettes, projects, recipes).with_settings(settings);
             let mut writer = ZipBackupWriter::new(&output);
             let report = exporter.export(&mut writer).await?;
             writer.finish()?;

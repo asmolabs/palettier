@@ -41,9 +41,48 @@ pub fn brands_of(paints: &[Paint]) -> Vec<String> {
         .collect()
 }
 
+/// Finish filter used by the Catalog view.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FinishFilter {
+    #[default]
+    All,
+    Matte,
+    Effect,
+}
+
+impl FinishFilter {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            FinishFilter::All => "ALL",
+            FinishFilter::Matte => "MATTE",
+            FinishFilter::Effect => "EFFECT",
+        }
+    }
+
+    pub fn from_value(s: &str) -> Self {
+        match s {
+            "MATTE" => FinishFilter::Matte,
+            "EFFECT" => FinishFilter::Effect,
+            _ => FinishFilter::All,
+        }
+    }
+}
+
 /// The tubes matching the search: the drawer only if asked, one brand (or
 /// [`ALL_BRANDS`]), and a query looked up in brand, name, code and pigments.
 pub fn filter_paints(paints: &[Paint], query: &str, brand: &str, stock_only: bool) -> Vec<Paint> {
+    filter_paints_with(paints, query, brand, stock_only, FinishFilter::All, None)
+}
+
+/// Filters tubes by drawer membership, brand, finish (`Matte`/`Effect`), opacity, and search query.
+pub fn filter_paints_with(
+    paints: &[Paint],
+    query: &str,
+    brand: &str,
+    stock_only: bool,
+    finish: FinishFilter,
+    opacity: Option<Opacity>,
+) -> Vec<Paint> {
     let q = query.trim().to_lowercase();
     paints
         .iter()
@@ -52,6 +91,18 @@ pub fn filter_paints(paints: &[Paint], query: &str, brand: &str, stock_only: boo
                 return false;
             }
             if brand != ALL_BRANDS && p.brand != brand {
+                return false;
+            }
+            match finish {
+                FinishFilter::All => {}
+                FinishFilter::Matte if p.is_effect() => return false,
+                FinishFilter::Matte => {}
+                FinishFilter::Effect if !p.is_effect() => return false,
+                FinishFilter::Effect => {}
+            }
+            if let Some(op) = opacity
+                && p.opacity != op
+            {
                 return false;
             }
             if !q.is_empty() {
@@ -285,5 +336,46 @@ mod tests {
 
         let metal_subs = closest_substitutes(&pool, &metal, 5);
         assert!(metal_subs.is_empty());
+    }
+
+    #[test]
+    fn filter_paints_with_separates_finish_and_opacity() {
+        let mut matte_opaque = Paint::new("Vallejo", "Flat White", "#FFFFFF");
+        matte_opaque.opacity = Opacity::Opaque;
+
+        let mut matte_transp = Paint::new("Kimera", "Phthalo Blue", "#0E3F73");
+        matte_transp.opacity = Opacity::Transparent;
+
+        let mut metallic = Paint::new("Scale75", "Thrash Metal", "#B8BABC");
+        metallic.opacity = Opacity::Opaque;
+        metallic.pigments.insert("ALU".to_string());
+
+        let all = vec![matte_opaque, matte_transp, metallic];
+
+        assert_eq!(
+            filter_paints_with(&all, "", ALL_BRANDS, false, FinishFilter::Matte, None).len(),
+            2
+        );
+        assert_eq!(
+            filter_paints_with(&all, "", ALL_BRANDS, false, FinishFilter::Effect, None)
+                .iter()
+                .map(|p| p.name.as_str())
+                .collect::<Vec<_>>(),
+            vec!["Thrash Metal"]
+        );
+        assert_eq!(
+            filter_paints_with(
+                &all,
+                "",
+                ALL_BRANDS,
+                false,
+                FinishFilter::Matte,
+                Some(Opacity::Transparent),
+            )
+            .iter()
+            .map(|p| p.name.as_str())
+            .collect::<Vec<_>>(),
+            vec!["Phthalo Blue"]
+        );
     }
 }

@@ -134,6 +134,11 @@ mod tests {
             palette: None,
         };
         create_project(&svc, draft, Locale::Fr).await.unwrap();
+        save_theme(&svc, ThemeMode::Light).await.unwrap();
+        save_locale(&svc, Locale::En).await.unwrap();
+        svc.settings.put(AppState::KEY_PAINT_SYSTEM, PaintSystem::Acrylic.as_db_str()).await.unwrap();
+        save_workshop(&svc, Workshop::new(23.5, 62.0, Ventilation::Good).unwrap()).await.unwrap();
+        svc.settings.put("ai.openai.api_key", "sk-never-export").await.unwrap();
         let dir = std::env::temp_dir().join(format!("palettier-backup-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let zip = dir.join("sauvegarde.zip");
@@ -145,6 +150,13 @@ mod tests {
         let imported = import_backup(&fresh, &zip).await.unwrap();
         assert!(imported.projects_added >= 1);
         assert!(fresh.projects.all().await.unwrap().iter().any(|p| p.name == "Sauvegardé"));
+        assert_eq!(fresh.settings.get(AppState::KEY_THEME).await.unwrap().as_deref(), Some(ThemeMode::Light.as_str()));
+        assert_eq!(fresh.settings.get(AppState::KEY_LOCALE).await.unwrap().as_deref(), Some(Locale::En.code()));
+        assert_eq!(fresh.settings.get(AppState::KEY_PAINT_SYSTEM).await.unwrap().as_deref(), Some("ACRYLIC"));
+        let restored_w = load_workshop(&fresh).await.unwrap();
+        assert!((restored_w.temperature_celsius - 23.5).abs() < f64::EPSILON);
+        assert_eq!(restored_w.ventilation, Ventilation::Good);
+        assert!(fresh.settings.get("ai.openai.api_key").await.unwrap().is_none());
 
         let junk = dir.join("pas-une-archive.zip");
         std::fs::write(&junk, b"pas un zip").unwrap();

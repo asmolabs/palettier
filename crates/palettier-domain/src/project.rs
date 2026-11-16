@@ -533,7 +533,7 @@ impl MissingPaint {
         } else {
             locale
                 .tr(
-                    "Rien d'approchant sur l'etagere : celui-la, il faut l'acheter.",
+                    "Rien d'approchant sur l'étagère : celui-là, il faut l'acheter.",
                     "Nothing close on the shelf: you'll need to buy this one.",
                 )
                 .to_string()

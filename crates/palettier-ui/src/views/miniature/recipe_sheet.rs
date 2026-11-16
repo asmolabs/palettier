@@ -1,7 +1,7 @@
 //! Army recipe sheet: a printable card to paint a whole army the same way. The oil mix of
 //! the base acrylic is computed on the palette.
 
-use super::shared::{acrylic_catalog, copy_to_clipboard, paint_key};
+use super::shared::{acrylic_catalog, best_mix, copy_to_clipboard, paint_key};
 use crate::state::{AppServices, AppState};
 use crate::theme::ColorSwatch;
 use dioxus::prelude::*;
@@ -35,6 +35,8 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
     let mut state = use_context::<AppState>();
     let services = use_context::<AppServices>();
     let mut recipe_sheet = use_context::<RecipeSheetState>().sheet;
+    let mut computing_mix = use_signal(|| false);
+    let mut mix_seq = use_signal(|| 0u64);
     let locale = *state.locale.read();
     let acrylic_paints = acrylic_catalog(&state.paints.read());
 
@@ -80,17 +82,38 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
 
                     div {
                         label { class: "u-fs-11p5 u-fw-600", {locale.tr("Acrylique de base :", "Base Acrylic Paint:")} }
-                        // Picked from the catalog; the oil mix below follows from it.
+                        // Picked from the catalog; the oil mix below is computed off-thread.
                         select {
                             class: "input",
                             onchange: {
                                 let acrylics = acrylic_paints.clone();
                                 let oils = oil_candidates.clone();
-                                let mixer = services.mix_service.clone();
+                                let services = services.clone();
                                 move |ev: FormEvent| {
-                                    let Some(p) = acrylics.iter().find(|p| paint_key(p) == ev.value()) else { return };
-                                    let mix = mixer.suggest_mixes(p.color(), &oils, 1, Some(3)).into_iter().next();
-                                    set_base_acrylic(&mut recipe_sheet.write(), p, mix.as_ref(), locale);
+                                    let Some(p) = acrylics.iter().find(|p| paint_key(p) == ev.value()).cloned() else { return };
+                                    let seq = *mix_seq.peek() + 1;
+                                    mix_seq.set(seq);
+                                    {
+                                        let mut sheet = recipe_sheet.write();
+                                        sheet.base_acrylic = format!("{} ({})", p.name, p.brand);
+                                        sheet.base_hex = p.hex_color.clone();
+                                        sheet.oil_mix_formula.clear();
+                                        sheet.mixed_hex.clear();
+                                    }
+                                    computing_mix.set(true);
+                                    let svc = services.clone();
+                                    let oils = oils.clone();
+                                    let color = p.color();
+                                    spawn(async move {
+                                        let mix = tokio::task::spawn_blocking(move || best_mix(&svc, color, &oils))
+                                            .await
+                                            .ok()
+                                            .flatten();
+                                        if *mix_seq.peek() == seq {
+                                            set_base_acrylic(&mut recipe_sheet.write(), &p, mix.as_ref(), locale);
+                                            computing_mix.set(false);
+                                        }
+                                    });
                                 }
                             },
                             option { value: "", {locale.tr("— Choisir une acrylique du catalogue —", "— Pick an acrylic from the catalog —")} }
@@ -107,7 +130,9 @@ pub(super) fn RecipeSheet(oil_candidates: Vec<Paint>) -> Element {
                     div {
                         label { class: "u-fs-11p5 u-fw-600", {locale.tr("Mélange d'huiles calculé sur la palette :", "Oil mix computed from the palette:")} }
                         div { class: "card-subtle u-p-8-10 u-fs-12p5",
-                            if recipe_sheet.read().oil_mix_formula.is_empty() {
+                            if *computing_mix.read() {
+                                span { class: "muted", {locale.tr("Calcul du mélange d'huiles…", "Computing oil mix…")} }
+                            } else if recipe_sheet.read().oil_mix_formula.is_empty() {
                                 span { class: "muted", {locale.tr("Choisissez une acrylique de base.", "Pick a base acrylic.")} }
                             } else {
                                 div { class: "row u-gap-8",

@@ -5,7 +5,7 @@ use crate::actions::palettes;
 use crate::state::{AppServices, AppState};
 use crate::theme::{ColorSwatch, DeltaEBadge, GamutMapSvg, PaintSwatch, SectionHeader};
 use dioxus::prelude::*;
-use palettier_domain::guide::MixingGuideBuilder;
+use palettier_domain::guide::{MixingGuideBuilder, MotherMix};
 use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{Paint, PaintSystem};
 use palettier_domain::palette::Palette;
@@ -552,8 +552,8 @@ fn PaletteSubstituteRow(pal: Palette, m: MissingPaint) -> Element {
             div { class: "row",
                 ColorSwatch { hex: m.paint.hex_color.clone(), size: 20 }
                 strong { "{m.paint.display_name()}" }
-                span { class: "muted", "→" }
                 if let Some(ref near) = m.nearest {
+                    span { class: "muted", "→" }
                     ColorSwatch { hex: near.hex_color.clone(), size: 20 }
                     DeltaEBadge { delta_e: m.delta_e }
                 }
@@ -571,20 +571,61 @@ fn PaletteSubstituteRow(pal: Palette, m: MissingPaint) -> Element {
     }
 }
 
+fn gamut_cache_key(pal: &Palette, locale: Locale) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    pal.id.hash(&mut h);
+    pal.name.hash(&mut h);
+    locale.code().hash(&mut h);
+    pal.paints.len().hash(&mut h);
+    for p in &pal.paints {
+        p.id.hash(&mut h);
+        p.hex_color.hash(&mut h);
+        p.tint_hex.hash(&mut h);
+    }
+    h.finish()
+}
+
 /// The CIELAB gamut of the palette and its session-start mother mixes.
 #[component]
 fn PaletteGamut(pal: Palette) -> Element {
     let state = use_context::<AppState>();
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
-    let dummy_plan = palettier_domain::plan::PaintingPlan {
-        subject: pal.name.clone(),
-        palette_name: pal.name.clone(),
-        approach: String::new(),
-        system: pal.system(),
-        zones: Vec::new(),
-    };
-    let guide = services.guide_builder.from_plan_i18n(&dummy_plan, &pal.paints, locale);
+
+    let key = gamut_cache_key(&pal, locale);
+    let mut computed_key = use_signal(|| 0u64);
+    let mut mother_mixes = use_signal(|| None::<Vec<MotherMix>>);
+
+    if *computed_key.read() != key {
+        computed_key.set(key);
+        if pal.paints.is_empty() {
+            mother_mixes.set(Some(Vec::new()));
+        } else {
+            mother_mixes.set(None);
+            let builder = services.guide_builder.clone();
+            let dummy_plan = palettier_domain::plan::PaintingPlan {
+                subject: pal.name.clone(),
+                palette_name: pal.name.clone(),
+                approach: String::new(),
+                system: pal.system(),
+                zones: Vec::new(),
+            };
+            let paints = pal.paints.clone();
+            spawn(async move {
+                let Ok(mixes) = tokio::task::spawn_blocking(move || {
+                    builder.from_plan_i18n(&dummy_plan, &paints, locale).mother_mixes
+                })
+                .await
+                else {
+                    return;
+                };
+                if *computed_key.peek() == key {
+                    mother_mixes.set(Some(mixes));
+                }
+            });
+        }
+    }
 
     rsx! {
         div { class: "grid-2",
@@ -609,15 +650,22 @@ fn PaletteGamut(pal: Palette) -> Element {
                 p { class: "muted u-fs-11p5 u-mb-10",
                     {locale.tr("Mélanges-mères (Sienne, Brun foncé, Noir coloré) calculés à partir de cette palette pour harmoniser les ombres.", "Mother mixes (Burnt Sienna, Dark Brown, Chromatic Black) computed from this palette to harmonize shadows.")}
                 }
-                for mm in &guide.mother_mixes {
-                    div { class: "card-subtle u-mb-8",
-                        div { class: "row u-mb-4",
-                            ColorSwatch { hex: mm.hex_color.clone(), size: 24 }
-                            span { class: "pill pill-accent mono u-fw-800", "{mm.code}" }
-                            strong { "{mm.name}" }
+                match mother_mixes.read().as_ref() {
+                    None => rsx! {
+                        p { class: "muted u-fs-12", {locale.tr("Calcul des mélanges-mères…", "Computing mother mixes…")} }
+                    },
+                    Some(mixes) => rsx! {
+                        for mm in mixes {
+                            div { class: "card-subtle u-mb-8",
+                                div { class: "row u-mb-4",
+                                    ColorSwatch { hex: mm.hex_color.clone(), size: 24 }
+                                    span { class: "pill pill-accent mono u-fw-800", "{mm.code}" }
+                                    strong { "{mm.name}" }
+                                }
+                                div { class: "muted u-fs-12", "{mm.recipe_text}" }
+                            }
                         }
-                        div { class: "muted u-fs-12", "{mm.recipe_text}" }
-                    }
+                    },
                 }
             }
         }
