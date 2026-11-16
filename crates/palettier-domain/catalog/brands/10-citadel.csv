@@ -4,44 +4,96 @@
 # leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
 # une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
 #
-# Selection partielle des teintes courantes, pas la gamme complete.
+# Selection etendue des teintes courantes (Base & Layer), pas la gamme complete.
 brand;name;code;pigments;opacity;hex;system
 Citadel;Khorne Red;;;;#6A0001;ACRYLIC
 Citadel;Mephiston Red;;;;#9A1115;ACRYLIC
 Citadel;Evil Sunz Scarlet;;;;#C21814;ACRYLIC
 Citadel;Wild Rider Red;;;;#EA2F28;ACRYLIC
+Citadel;Word Bearers Red;;;;#64231F;ACRYLIC
+Citadel;Wazdakka Red;;;;#8C1D1B;ACRYLIC
+Citadel;Jokaero Orange;;;;#EE3823;ACRYLIC
+Citadel;Troll Slayer Orange;;;;#F46C2E;ACRYLIC
+Citadel;Fire Dragon Bright;;;;#F88E40;ACRYLIC
 Citadel;Averland Sunset;;;;#FBB813;ACRYLIC
 Citadel;Yriel Yellow;;;;#FFDC00;ACRYLIC
 Citadel;Flash Gitz Yellow;;;;#FFF300;ACRYLIC
+Citadel;Dorn Yellow;;;;#FFF67A;ACRYLIC
+Citadel;Screamer Pink;;;;#7C1642;ACRYLIC
+Citadel;Pink Horror;;;;#902B58;ACRYLIC
+Citadel;Emperor's Children;;;;#B94375;ACRYLIC
+Citadel;Barak-Nar Burgundy;;;;#471636;ACRYLIC
+Citadel;Phoenician Purple;;;;#441A55;ACRYLIC
+Citadel;Naggaroth Night;;;;#3B2B4F;ACRYLIC
+Citadel;Xereus Purple;;;;#471F5E;ACRYLIC
+Citadel;Genestealer Purple;;;;#7658A5;ACRYLIC
+Citadel;Dechala Lilac;;;;#B79DCA;ACRYLIC
+Citadel;Daemonette Hide;;;;#6B6881;ACRYLIC
+Citadel;Slaanesh Grey;;;;#9B97A6;ACRYLIC
 Citadel;Kantor Blue;;;;#002040;ACRYLIC
 Citadel;Macragge Blue;;;;#0E3E7C;ACRYLIC
 Citadel;Altdorf Guard Blue;;;;#265DB0;ACRYLIC
 Citadel;Calgar Blue;;;;#427EC1;ACRYLIC
+Citadel;Lothern Blue;;;;#2C93C4;ACRYLIC
+Citadel;Baharroth Blue;;;;#6EC6DB;ACRYLIC
+Citadel;The Fang;;;;#415C72;ACRYLIC
+Citadel;Russ Grey;;;;#547184;ACRYLIC
 Citadel;Fenrisian Grey;;;;#6D94B3;ACRYLIC
-Citadel;Naggaroth Night;;;;#3B2B4F;ACRYLIC
-Citadel;Xereus Purple;;;;#471F5E;ACRYLIC
-Citadel;Genestealer Purple;;;;#7658A5;ACRYLIC
+Citadel;Incubi Darkness;;;;#0B3B40;ACRYLIC
+Citadel;Stegadon Scale Green;;;;#074358;ACRYLIC
+Citadel;Sotek Green;;;;#0B6578;ACRYLIC
+Citadel;Thousand Sons Blue;;;;#005B7F;ACRYLIC
+Citadel;Ahriman Blue;;;;#007996;ACRYLIC
+Citadel;Temple Guard Blue;;;;#2494A3;ACRYLIC
+Citadel;Kabalite Green;;;;#007960;ACRYLIC
+Citadel;Sybarite Green;;;;#33A57E;ACRYLIC
 Citadel;Caliban Green;;;;#00401F;ACRYLIC
 Citadel;Warpstone Glow;;;;#1E7332;ACRYLIC
 Citadel;Moot Green;;;;#52B734;ACRYLIC
+Citadel;Waaagh! Flesh;;;;#264C2C;ACRYLIC
+Citadel;Loren Forest;;;;#496E3D;ACRYLIC
+Citadel;Castellan Green;;;;#314222;ACRYLIC
 Citadel;Death Guard Green;;;;#6D774D;ACRYLIC
+Citadel;Elysian Green;;;;#6E8B3D;ACRYLIC
+Citadel;Ogryn Camo;;;;#9AA958;ACRYLIC
 Citadel;Nurgling Green;;;;#849B63;ACRYLIC
 Citadel;Orruk Flesh;;;;#81A75B;ACRYLIC
 Citadel;Bugman's Glow;;;;#804C43;ACRYLIC
 Citadel;Cadian Fleshtone;;;;#C48A6F;ACRYLIC
 Citadel;Kislev Flesh;;;;#D1A582;ACRYLIC
 Citadel;Flayed One Flesh;;;;#E4D1AC;ACRYLIC
+Citadel;Ratskin Flesh;;;;#AC6F52;ACRYLIC
+Citadel;Bestigor Flesh;;;;#CE8B63;ACRYLIC
+Citadel;Ungor Flesh;;;;#D5A776;ACRYLIC
+Citadel;Catachan Flesh;;;;#5A3B31;ACRYLIC
+Citadel;Rakarth Flesh;;;;#9E9887;ACRYLIC
+Citadel;Pallid Wych Flesh;;;;#CFCBB9;ACRYLIC
+Citadel;Ionrach Skin;;;;#A3A389;ACRYLIC
+Citadel;Deepkin Flesh;;;;#BAC2A8;ACRYLIC
 Citadel;Rhinox Hide;;;;#463836;ACRYLIC
+Citadel;Dryad Bark;;;;#3B3027;ACRYLIC
+Citadel;Gorthor Brown;;;;#604A3F;ACRYLIC
+Citadel;Baneblade Brown;;;;#8C7868;ACRYLIC
 Citadel;Mournfang Brown;;;;#62391F;ACRYLIC
 Citadel;Skrag Brown;;;;#8B4E1A;ACRYLIC
+Citadel;Doombull Brown;;;;#5D271E;ACRYLIC
+Citadel;Tuskgor Fur;;;;#883F36;ACRYLIC
+Citadel;Steel Legion Drab;;;;#63563D;ACRYLIC
+Citadel;Tallarn Sand;;;;#9F7A48;ACRYLIC
+Citadel;Karak Stone;;;;#B3A07C;ACRYLIC
 Citadel;Zandri Dust;;;;#9E9162;ACRYLIC
 Citadel;Ushabti Bone;;;;#BBAD7A;ACRYLIC
 Citadel;Screaming Skull;;;;#D4CE9E;ACRYLIC
 Citadel;Abaddon Black;;;;#1C1C1C;ACRYLIC
 Citadel;Corvus Black;;;;#272A2E;ACRYLIC
+Citadel;Eshin Grey;;;;#4B4F51;ACRYLIC
+Citadel;Skavenblight Dinge;;;;#48453E;ACRYLIC
+Citadel;Stormvermin Fur;;;;#6D675E;ACRYLIC
 Citadel;Mechanicus Standard Grey;;;;#3D4447;ACRYLIC
 Citadel;Dawnstone;;;;#6E7474;ACRYLIC
+Citadel;Administratum Grey;;;;#949999;ACRYLIC
 Citadel;Celestra Grey;;;;#8FA3A3;ACRYLIC
 Citadel;Grey Seer;;;;#A2A5A7;ACRYLIC
+Citadel;Ulthuan Grey;;;;#D4DBDB;ACRYLIC
 Citadel;Corax White;;;;#D6D8D5;ACRYLIC
 Citadel;White Scar;;;;#FFFFFF;ACRYLIC

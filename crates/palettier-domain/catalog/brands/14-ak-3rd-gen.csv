@@ -4,12 +4,35 @@
 # leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
 # une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
 #
-# Selection partielle des teintes courantes, pas la gamme complete.
+# Selection etendue des teintes courantes, pas la gamme complete.
 brand;name;code;pigments;opacity;hex;system
 AK Interactive 3rd Gen;White;AK11001;;;#FAFAFA;ACRYLIC
+AK Interactive 3rd Gen;Offwhite;AK11002;;;#EEEDE4;ACRYLIC
+AK Interactive 3rd Gen;Ivory;AK11005;;;#EDE5CB;ACRYLIC
+AK Interactive 3rd Gen;Silver Grey;AK11011;;;#ADB4B7;ACRYLIC
+AK Interactive 3rd Gen;Graphite;AK11019;;;#4C5155;ACRYLIC
+AK Interactive 3rd Gen;Tenebrous Grey;AK11026;;;#2B2D30;ACRYLIC
 AK Interactive 3rd Gen;Black;AK11029;;;#191919;ACRYLIC
+AK Interactive 3rd Gen;Volcanic Yellow;AK11044;;;#F3D524;ACRYLIC
+AK Interactive 3rd Gen;Deep Yellow;AK11045;;;#F0B816;ACRYLIC
+AK Interactive 3rd Gen;Deep Orange;AK11082;;;#DF5E1A;ACRYLIC
+AK Interactive 3rd Gen;Scarlet Red;AK11088;;;#BF2022;ACRYLIC
+AK Interactive 3rd Gen;Carmine;AK11092;;;#961B2A;ACRYLIC
 AK Interactive 3rd Gen;Dirty Red;AK11097;;;#7E2325;ACRYLIC
+AK Interactive 3rd Gen;Wine Red;AK11099;;;#5C1B24;ACRYLIC
+AK Interactive 3rd Gen;Deep Purple;AK11070;;;#43255B;ACRYLIC
+AK Interactive 3rd Gen;Purple;AK11071;;;#6E3E8C;ACRYLIC
+AK Interactive 3rd Gen;Imperial Blue;AK11191;;;#172952;ACRYLIC
+AK Interactive 3rd Gen;Dark Prussian Blue;AK11188;;;#163046;ACRYLIC
 AK Interactive 3rd Gen;Medium Blue;AK11184;;;#224F88;ACRYLIC
+AK Interactive 3rd Gen;Ducat Blue;AK11177;;;#387EC2;ACRYLIC
+AK Interactive 3rd Gen;Emerald;AK11168;;;#117A63;ACRYLIC
 AK Interactive 3rd Gen;Deep Green;AK11142;;;#1B4729;ACRYLIC
+AK Interactive 3rd Gen;Frog Green;AK11146;;;#458A3D;ACRYLIC
+AK Interactive 3rd Gen;Olive Green;AK11157;;;#576038;ACRYLIC
 AK Interactive 3rd Gen;Deep Brown;AK11075;;;#3B2C24;ACRYLIC
+AK Interactive 3rd Gen;Saddle Brown;AK11074;;;#623C27;ACRYLIC
+AK Interactive 3rd Gen;Leather Brown;AK11109;;;#7C5435;ACRYLIC
+AK Interactive 3rd Gen;Basic Skin Tone;AK11056;;;#BF8268;ACRYLIC
+AK Interactive 3rd Gen;Sunny Skin Tone;AK11058;;;#D99E7C;ACRYLIC
 AK Interactive 3rd Gen;Pale Flesh;AK11055;;;#E1BCA6;ACRYLIC

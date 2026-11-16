@@ -1,0 +1,28 @@
+# Scale75 - Scalecolor (acryliques ultra-mates pour figurines)
+#
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
+# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
+# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
+#
+# Selection des teintes courantes Scalecolor, pas la gamme complete.
+brand;name;code;pigments;opacity;hex;system
+Scale75 Scalecolor;Black;SC-00;;;#141414;ACRYLIC
+Scale75 Scalecolor;White;SC-01;;;#FAFAFA;ACRYLIC
+Scale75 Scalecolor;Birch;SC-04;;;#D4BFA4;ACRYLIC
+Scale75 Scalecolor;Petroleum Grey;SC-09;;;#354248;ACRYLIC
+Scale75 Scalecolor;Pale Skin;SC-18;;;#E3C2AC;ACRYLIC
+Scale75 Scalecolor;Pink Flesh;SC-19;;;#D8A18D;ACRYLIC
+Scale75 Scalecolor;Basic Flesh;SC-20;;;#C48A6D;ACRYLIC
+Scale75 Scalecolor;Arabic Shadow;SC-23;;;#6F4B3D;ACRYLIC
+Scale75 Scalecolor;Dubai Brown;SC-24;;;#412616;ACRYLIC
+Scale75 Scalecolor;Iroko;SC-29;;;#7C5430;ACRYLIC
+Scale75 Scalecolor;Deep Red;SC-35;;;#6B161A;ACRYLIC
+Scale75 Scalecolor;Antares Red;SC-36;;;#8E161A;ACRYLIC
+Scale75 Scalecolor;Mars Orange;SC-39;;;#AA3815;ACRYLIC
+Scale75 Scalecolor;Sol Yellow;SC-40;;;#E9B91A;ACRYLIC
+Scale75 Scalecolor;Black Forest Green;SC-47;;;#182B1E;ACRYLIC
+Scale75 Scalecolor;Irati Green;SC-46;;;#2E6B3E;ACRYLIC
+Scale75 Scalecolor;Abyssal Blue;SC-52;;;#111C28;ACRYLIC
+Scale75 Scalecolor;Caspian Blue;SC-54;;;#16344B;ACRYLIC
+Scale75 Scalecolor;Mediterranean Blue;SC-55;;;#235B8C;ACRYLIC
+Scale75 Scalecolor;Sunset Purple;SC-61;;;#542B63;ACRYLIC

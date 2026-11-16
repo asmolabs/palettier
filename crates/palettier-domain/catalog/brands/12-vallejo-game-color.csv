@@ -4,11 +4,40 @@
 # leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
 # une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
 #
-# Selection partielle des teintes courantes, pas la gamme complete.
+# Selection etendue des teintes courantes, pas la gamme complete.
 brand;name;code;pigments;opacity;hex;system
+Vallejo Game Color;Black;72.051;;;#141414;ACRYLIC
+Vallejo Game Color;Cold Grey;72.050;;;#555C60;ACRYLIC
+Vallejo Game Color;Stonewall Grey;72.049;;;#838A8E;ACRYLIC
+Vallejo Game Color;Wolf Grey;72.047;;;#8CA3B5;ACRYLIC
+Vallejo Game Color;Ghost Grey;72.046;;;#BDC7CC;ACRYLIC
+Vallejo Game Color;Dead White;72.001;;;#FAFAFA;ACRYLIC
+Vallejo Game Color;Moon Yellow;72.005;;;#F6E235;ACRYLIC
+Vallejo Game Color;Sun Yellow;72.006;;;#F6C515;ACRYLIC
+Vallejo Game Color;Gold Yellow;72.007;;;#F39A1E;ACRYLIC
 Vallejo Game Color;Orange Fire;72.008;;;#EC631E;ACRYLIC
+Vallejo Game Color;Bloody Red;72.010;;;#C82222;ACRYLIC
 Vallejo Game Color;Scarlet Blood;72.012;;;#A81D23;ACRYLIC
+Vallejo Game Color;Gory Red;72.011;;;#76181E;ACRYLIC
+Vallejo Game Color;Squid Pink;72.013;;;#CE648A;ACRYLIC
+Vallejo Game Color;Warlord Purple;72.014;;;#7B2158;ACRYLIC
+Vallejo Game Color;Hexed Lichen;72.015;;;#4A2663;ACRYLIC
+Vallejo Game Color;Royal Purple;72.016;;;#332459;ACRYLIC
+Vallejo Game Color;Night Blue;72.019;;;#152344;ACRYLIC
+Vallejo Game Color;Imperial Blue;72.020;;;#18316A;ACRYLIC
 Vallejo Game Color;Magic Blue;72.021;;;#0067A3;ACRYLIC
+Vallejo Game Color;Ultramarine Blue;72.022;;;#244E9C;ACRYLIC
+Vallejo Game Color;Electric Blue;72.023;;;#459ED4;ACRYLIC
+Vallejo Game Color;Turquoise;72.024;;;#0D7C86;ACRYLIC
+Vallejo Game Color;Dark Green;72.028;;;#0C4426;ACRYLIC
 Vallejo Game Color;Sick Green;72.029;;;#2F6E3B;ACRYLIC
+Vallejo Game Color;Goblin Green;72.030;;;#4B8C3B;ACRYLIC
+Vallejo Game Color;Scorpy Green;72.032;;;#6AB635;ACRYLIC
+Vallejo Game Color;Dead Flesh;72.035;;;#9BA56D;ACRYLIC
+Vallejo Game Color;Bonewhite;72.034;;;#D4C69B;ACRYLIC
+Vallejo Game Color;Charred Brown;72.045;;;#3C2B24;ACRYLIC
 Vallejo Game Color;Beasty Brown;72.043;;;#5C3E28;ACRYLIC
+Vallejo Game Color;Leather Brown;72.040;;;#855732;ACRYLIC
+Vallejo Game Color;Dwarf Skin;72.041;;;#BD7E5E;ACRYLIC
 Vallejo Game Color;Cadmium Skin;72.099;;;#D99371;ACRYLIC
+Vallejo Game Color;Elf Skintone;72.004;;;#E4B490;ACRYLIC

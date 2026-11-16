@@ -1,0 +1,19 @@
+# Kimera Kolors (acryliques mono-pigmentaires pour figurines)
+#
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Chaque flacon repose sur un
+# pigment unique du Colour Index documente par le fabricant.
+brand;name;code;pigments;opacity;hex;system
+Kimera Kolors;Pure White;KK-01;PW6;;#FCFCFC;ACRYLIC
+Kimera Kolors;Carbon Black;KK-02;PBk7;;#0D0D0D;ACRYLIC
+Kimera Kolors;The Red;KK-03;PR254;;#BE1616;ACRYLIC
+Kimera Kolors;Cold Yellow;KK-04;PY138;;#F3E300;ACRYLIC
+Kimera Kolors;Warm Yellow;KK-05;PY83;;#E7A008;ACRYLIC
+Kimera Kolors;Phthalo Blue (Red Shade);KK-06;PB15:3;;#0E346B;ACRYLIC
+Kimera Kolors;Phthalo Green;KK-07;PG7;;#0A543E;ACRYLIC
+Kimera Kolors;Magenta;KK-08;PR122;;#A21450;ACRYLIC
+Kimera Kolors;Orange;KK-09;PO73;;#EE5A1A;ACRYLIC
+Kimera Kolors;Violet;KK-10;PV23;;#3A1B52;ACRYLIC
+Kimera Kolors;Cobalt Blue;KK-11;PB28;;#2255A4;ACRYLIC
+Kimera Kolors;Yellow Oxide;KK-12;PY42;;#B8792A;ACRYLIC
+Kimera Kolors;Red Oxide;KK-13;PR101;;#8C3A22;ACRYLIC
+Kimera Kolors;Burnt Umber;KK-14;PBr7;;#5A3C26;ACRYLIC

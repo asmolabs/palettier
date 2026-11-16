@@ -462,11 +462,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn catalog_seeder_populates_680_oils_71_acrylics_and_is_idempotent() {
+    async fn catalog_seeder_populates_680_oils_301_acrylics_and_is_idempotent() {
         let inst = Installation::in_memory().await;
         let report = inst.seeder.seed().await.unwrap();
 
-        assert_eq!(680 + 71, report.paints_created);
+        assert_eq!(680 + 301, report.paints_created);
         assert_eq!(4, report.palettes_added);
         assert_eq!(3, report.recipes_added);
 
@@ -475,7 +475,7 @@ mod tests {
             .iter()
             .filter(|p| p.system == PaintSystem::Acrylic)
             .count();
-        assert_eq!(71, acrylics, "les acryliques relues gardent leur systeme");
+        assert_eq!(301, acrylics, "les acryliques relues gardent leur systeme");
         assert!(report.unknown_pigments.is_empty());
 
         let second = inst.seeder.seed().await.unwrap();

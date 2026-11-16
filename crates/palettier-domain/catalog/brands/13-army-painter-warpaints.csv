@@ -4,13 +4,37 @@
 # leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
 # une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
 #
-# Selection partielle des teintes courantes, pas la gamme complete.
+# Selection etendue des teintes courantes, pas la gamme complete.
 brand;name;code;pigments;opacity;hex;system
 The Army Painter Warpaints;Matt Black;;;;#181818;ACRYLIC
+The Army Painter Warpaints;Uniform Grey;;;;#4B5156;ACRYLIC
+The Army Painter Warpaints;Ash Grey;;;;#8B9194;ACRYLIC
+The Army Painter Warpaints;Spaceship Exterior;;;;#CBD1D3;ACRYLIC
 The Army Painter Warpaints;Matt White;;;;#F7F7F7;ACRYLIC
+The Army Painter Warpaints;Daemonic Yellow;;;;#F5D826;ACRYLIC
+The Army Painter Warpaints;Lava Orange;;;;#E85F1E;ACRYLIC
 The Army Painter Warpaints;Pure Red;;;;#B81D1E;ACRYLIC
+The Army Painter Warpaints;Dragon Red;;;;#8A171C;ACRYLIC
+The Army Painter Warpaints;Vampire Red;;;;#68141A;ACRYLIC
+The Army Painter Warpaints;Alien Purple;;;;#53326D;ACRYLIC
+The Army Painter Warpaints;Oozing Purple;;;;#8965A5;ACRYLIC
+The Army Painter Warpaints;Deep Blue;;;;#162C5B;ACRYLIC
 The Army Painter Warpaints;Ultramarine Blue;;;;#1C3B7A;ACRYLIC
+The Army Painter Warpaints;Crystal Blue;;;;#2876BA;ACRYLIC
+The Army Painter Warpaints;Electric Blue;;;;#54A8DC;ACRYLIC
+The Army Painter Warpaints;Hydra Turquoise;;;;#1A7E86;ACRYLIC
 The Army Painter Warpaints;Angel Green;;;;#1B3B2B;ACRYLIC
-The Army Painter Warpaints;Barbarian Flesh;;;;#C78C73;ACRYLIC
+The Army Painter Warpaints;Greenskin;;;;#2D6E3A;ACRYLIC
+The Army Painter Warpaints;Goblin Green;;;;#5D9840;ACRYLIC
+The Army Painter Warpaints;Army Green;;;;#6A7746;ACRYLIC
+The Army Painter Warpaints;Necrotic Flesh;;;;#A3AE79;ACRYLIC
+The Army Painter Warpaints;Oak Brown;;;;#463022;ACRYLIC
 The Army Painter Warpaints;Leather Brown;;;;#543823;ACRYLIC
+The Army Painter Warpaints;Fur Brown;;;;#7A4F2F;ACRYLIC
+The Army Painter Warpaints;Desert Yellow;;;;#B39458;ACRYLIC
 The Army Painter Warpaints;Skeleton Bone;;;;#C8B991;ACRYLIC
+The Army Painter Warpaints;Mummy Robes;;;;#E1DBC8;ACRYLIC
+The Army Painter Warpaints;Tanned Flesh;;;;#A86F59;ACRYLIC
+The Army Painter Warpaints;Barbarian Flesh;;;;#C78C73;ACRYLIC
+The Army Painter Warpaints;Kobold Skin;;;;#DFB094;ACRYLIC
+The Army Painter Warpaints;Elven Flesh;;;;#EAC4AB;ACRYLIC

@@ -451,6 +451,23 @@ mod tests {
     }
 
     #[test]
+    fn eight_acrylic_brands_yield_301_unique_pots() {
+        let mut loaded = CatalogLoader::default().load_detailed();
+        loaded.paints.retain(|p| p.system == PaintSystem::Acrylic);
+        assert_eq!(301, loaded.paints.len());
+
+        let mut seen = IndexSet::new();
+        for p in &loaded.paints {
+            assert!(
+                seen.insert((p.brand.clone(), p.name.clone())),
+                "doublon acrylique : {} - {}",
+                p.brand,
+                p.name
+            );
+        }
+    }
+
+    #[test]
     fn no_cited_pigment_is_missing_from_table() {
         let loaded = CatalogLoader::default().load_detailed();
         assert!(loaded.unknown_pigments.is_empty());

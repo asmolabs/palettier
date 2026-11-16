@@ -1,0 +1,35 @@
+# Pro Acryl - Monument Hobbies (acryliques pour figurines)
+#
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
+# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
+# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
+#
+# Selection des teintes courantes Pro Acryl, pas la gamme complete.
+brand;name;code;pigments;opacity;hex;system
+Pro Acryl;Bold Titanium White;PA-001;;;#FFFFFF;ACRYLIC
+Pro Acryl;Coal Black;PA-002;;;#141414;ACRYLIC
+Pro Acryl;Bright Warm Grey;PA-028;;;#B8B5AA;ACRYLIC
+Pro Acryl;Dark Neutral Grey;PA-023;;;#45484B;ACRYLIC
+Pro Acryl;Neutral Grey;PA-024;;;#73777A;ACRYLIC
+Pro Acryl;Bright Neutral Grey;PA-025;;;#B2B5B7;ACRYLIC
+Pro Acryl;Ivory;PA-032;;;#ECE4CC;ACRYLIC
+Pro Acryl;Golden Yellow;PA-007;;;#F2B81A;ACRYLIC
+Pro Acryl;Orange;PA-006;;;#EB5C1B;ACRYLIC
+Pro Acryl;Bold Pyrrole Red;PA-005;;;#BD171B;ACRYLIC
+Pro Acryl;Burnt Red;PA-004;;;#5C1714;ACRYLIC
+Pro Acryl;Magenta;PA-034;;;#A61E5C;ACRYLIC
+Pro Acryl;Purple;PA-012;;;#4C2A6B;ACRYLIC
+Pro Acryl;Dark Blue;PA-009;;;#0E2442;ACRYLIC
+Pro Acryl;Blue;PA-008;;;#1E4D8C;ACRYLIC
+Pro Acryl;Sky Blue;PA-010;;;#63A4D8;ACRYLIC
+Pro Acryl;Jade;PA-042;;;#1C857A;ACRYLIC
+Pro Acryl;Dark Green;PA-003;;;#143A24;ACRYLIC
+Pro Acryl;Green;PA-011;;;#2D6E3B;ACRYLIC
+Pro Acryl;Camo Green;PA-014;;;#556241;ACRYLIC
+Pro Acryl;Mahogany;PA-016;;;#46211C;ACRYLIC
+Pro Acryl;Burnt Sienna;PA-017;;;#7A3C24;ACRYLIC
+Pro Acryl;Golden Brown;PA-019;;;#8A5424;ACRYLIC
+Pro Acryl;Yellow Ochre;PA-020;;;#C48E32;ACRYLIC
+Pro Acryl;Shadow Flesh;PA-021;;;#8B5F54;ACRYLIC
+Pro Acryl;Warm Flesh;PA-036;;;#C98E72;ACRYLIC
+Pro Acryl;Pale Flesh;PA-038;;;#E5BEA4;ACRYLIC
