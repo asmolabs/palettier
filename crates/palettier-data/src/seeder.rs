@@ -253,7 +253,40 @@ impl CatalogSeeder {
             self.flesh().await?,
             self.armour().await?,
             self.acrylic_armour().await?,
+            self.kimera_base().await?,
         ])
+    }
+
+    async fn kimera_base(&self) -> DomainResult<Palette> {
+        Ok(Palette {
+            id: None,
+            name: "Kimera Kolors — Base Set (13 pigments purs)".to_string(),
+            purpose: "Mélanges purs et saturés à l'acrylique".to_string(),
+            notes: concat!(
+                "Les treize acryliques mono-pigmentaires du coffret de base Kimera Kolors : ",
+                "aucun mélange de pigments en usine, ce qui permet des mélanges nets en ",
+                "Kubelka-Munk sans ternir la saturation (ajoutez The White ou Carbon Black ",
+                "pour opacifier les pigments organiques transparents)."
+            )
+            .to_string(),
+            paints: self
+                .resolve(&[
+                    ("Kimera Kolors", "The White"),
+                    ("Kimera Kolors", "Carbon Black"),
+                    ("Kimera Kolors", "Cold Yellow"),
+                    ("Kimera Kolors", "Warm Yellow"),
+                    ("Kimera Kolors", "Yellow Oxide"),
+                    ("Kimera Kolors", "Orange"),
+                    ("Kimera Kolors", "The Red"),
+                    ("Kimera Kolors", "Red Oxide"),
+                    ("Kimera Kolors", "Magenta"),
+                    ("Kimera Kolors", "Violet"),
+                    ("Kimera Kolors", "Phthalo Blu (Green Shade)"),
+                    ("Kimera Kolors", "Phthalo Blu (Red Shade)"),
+                    ("Kimera Kolors", "Phtalo Green"),
+                ])
+                .await?,
+        })
     }
 
     async fn acrylic_armour(&self) -> DomainResult<Palette> {
@@ -262,7 +295,7 @@ impl CatalogSeeder {
             name: "Armure bleue (acrylique)".to_string(),
             purpose: "Figurine 28-32 mm, peinte entièrement à l'acrylique".to_string(),
             notes: concat!(
-                "Une echelle de bleus du plus sombre au plus clair, un lavis noir-bleu pour les creux ",
+                "Une échelle de bleus du plus sombre au plus clair, un lavis noir-bleu pour les creux ",
                 "et un gris très clair pour les liserés. À l'acrylique, on ne fond pas : on superpose ",
                 "des couches fines, chacune un peu plus claire et un peu plus petite que la précédente."
             )
@@ -287,10 +320,10 @@ impl CatalogSeeder {
             name: "Palette Zorn (Winsor & Newton)".to_string(),
             purpose: "Carnations et portraits".to_string(),
             notes: concat!(
-                "Quatre tubes : blanc de titane, ocre jaune, cadmium ecarlate, noir d'ivoire.\n\n",
-                "Le noir ne sert pas a noircir, il tient le role du bleu. Sorti du tube il est chaud ; coupe de blanc il donne des gris franchement bleutes, et mele à l'ocre des verts sourds. Les ombres d'une carnation se font donc au noir, sans jamais ajouter de bleu.\n\n",
-                "Cette divergence entre le tube et le mélange est réelle, et c'est ce que le modèle a deux constantes de l'application sait reproduire.\n\n",
-                "Zorn peignait au vermillon ; le cadmium ecarlate le remplace. C'est le pigment le plus lent de la palette, il commande le planning de la seance."
+                "Quatre tubes : blanc de titane, ocre jaune, cadmium écarlate, noir d'ivoire.\n\n",
+                "Le noir ne sert pas à noircir, il tient le rôle du bleu. Sorti du tube il est chaud ; coupé de blanc il donne des gris franchement bleutés, et mêlé à l'ocre des verts sourds. Les ombres d'une carnation se font donc au noir, sans jamais ajouter de bleu.\n\n",
+                "Cette divergence entre le tube et le mélange est réelle, et c'est ce que le modèle à deux constantes de l'application sait reproduire.\n\n",
+                "Zorn peignait au vermillon ; le cadmium écarlate le remplace. C'est le pigment le plus lent de la palette, il commande le planning de la séance."
             )
             .to_string(),
             paints: self
@@ -310,9 +343,9 @@ impl CatalogSeeder {
             name: "Carnations 1/10".to_string(),
             purpose: "Visages et mains de buste".to_string(),
             notes: concat!(
-                "Le blanc et le rouge portent les lumieres, la terre d'ombre et le bleu de ",
-                "Prusse portent les ombres. Tout le reste se trouve en melangeant ces deux ",
-                "extremites : une palette courte donne des carnations plus coherentes qu'une ",
+                "Le blanc et le rouge portent les lumières, la terre d'ombre et le bleu de ",
+                "Prusse portent les ombres. Tout le reste se trouve en mélangeant ces deux ",
+                "extrémités : une palette courte donne des carnations plus cohérentes qu'une ",
                 "palette fournie."
             )
             .to_string(),
@@ -335,8 +368,8 @@ impl CatalogSeeder {
         Ok(Palette {
             id: None,
             name: "Blindage vert olive".to_string(),
-            purpose: "Vehicule 1/35".to_string(),
-            notes: "Filtres, jus et salissures. Le blanc ne sert qu'à casser le vert, jamais a éclaircir.".to_string(),
+            purpose: "Véhicule 1/35".to_string(),
+            notes: "Filtres, jus et salissures. Le blanc ne sert qu'à casser le vert, jamais à éclaircir.".to_string(),
             paints: self
                 .resolve(&[
                     ("Winsor & Newton", "Olive Green"),
@@ -365,7 +398,7 @@ impl CatalogSeeder {
         vec![
             Recipe {
                 id: None,
-                name: "Carnation 1/10 a l'huile".to_string(),
+                name: "Carnation 1/10 à l'huile".to_string(),
                 subject: "Visage de buste".to_string(),
                 notes: concat!(
                     "Base acrylique poncée et vernie brillante, sèche depuis 24 h.\n",
@@ -419,8 +452,8 @@ impl CatalogSeeder {
             Recipe {
                 id: None,
                 name: "Usure d'un blindage vert olive".to_string(),
-                subject: "Vehicule 1/35".to_string(),
-                notes: "Enchainement classique : filtre, jus, coulures, puis poussieres.".to_string(),
+                subject: "Véhicule 1/35".to_string(),
+                notes: "Enchaînement classique : filtre, jus, coulures, puis poussières.".to_string(),
                 steps: vec![
                     Self::step(
                         Technique::Filter,
@@ -448,11 +481,11 @@ impl CatalogSeeder {
                     ),
                     Self::step(
                         Technique::Glaze,
-                        "Rust dans les zones d'ecaillage",
+                        "Rust dans les zones d'écaillage",
                         Medium::OdorlessThinner,
                         0.85,
                         LayerThickness::Glaze,
-                        "Toujours au-dessus de l'ecaillage, jamais en dessous.",
+                        "Toujours au-dessus de l'écaillage, jamais en dessous.",
                     ),
                 ],
             },

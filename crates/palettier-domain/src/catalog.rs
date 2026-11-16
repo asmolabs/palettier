@@ -451,10 +451,10 @@ mod tests {
     }
 
     #[test]
-    fn eight_acrylic_brands_yield_1349_unique_pots() {
+    fn nine_acrylic_brands_yield_1427_unique_pots() {
         let mut loaded = CatalogLoader::default().load_detailed();
         loaded.paints.retain(|p| p.system == PaintSystem::Acrylic);
-        assert_eq!(1349, loaded.paints.len());
+        assert_eq!(1427, loaded.paints.len());
 
         let mut seen = IndexSet::new();
         for p in &loaded.paints {
@@ -503,6 +503,11 @@ mod tests {
         let pro_acryl_tr_blue = find("Pro Acryl", "Transparent Blue");
         assert_eq!(Opacity::Transparent, pro_acryl_tr_blue.opacity);
         assert!(!pro_acryl_tr_blue.is_effect());
+
+        let s75_primary_blue = find("Scale75 Artist", "Primary Blue");
+        assert_eq!(IndexSet::from(["PB15:3".to_string()]), s75_primary_blue.pigments);
+        assert!(s75_primary_blue.pigments_verified);
+        assert_eq!(Opacity::Transparent, s75_primary_blue.opacity);
     }
 
     #[test]

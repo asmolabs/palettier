@@ -1013,7 +1013,7 @@ mod tests {
             .into_iter()
             .filter(|p| p.system == PaintSystem::Acrylic)
             .collect();
-        assert_eq!(1349, acrylics.len());
+        assert_eq!(1427, acrylics.len());
         let mut worst: f64 = 0.0;
         for hex in TARGETS {
             let target = Rgb::of_hex(hex).unwrap();

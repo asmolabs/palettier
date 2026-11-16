@@ -430,9 +430,17 @@ fn tool_view(state: AppState, tab: MiniatureTab, candidates: Vec<Paint>, palette
     let oil = |candidates: &[Paint]| {
         oil_candidates(*state.paint_system.read(), candidates, &state.paints.read())
     };
+    let locale = *state.locale.read();
+    let oil_palette_name = if *state.paint_system.read() == PaintSystem::Acrylic {
+        locale
+            .tr("Stock d'huiles en tiroir", "In-stock oil drawer")
+            .to_string()
+    } else {
+        palette_name.clone()
+    };
     match tab {
         MiniatureTab::Converter => rsx! {
-            converter::Converter { oil_candidates: oil(&candidates), palette_name }
+            converter::Converter { oil_candidates: oil(&candidates), palette_name: oil_palette_name }
         },
         MiniatureTab::NmmStudio => rsx! { nmm::NmmStudio { candidates, palette_name } },
         MiniatureTab::Weathering => rsx! { weathering::Weathering { candidates, palette_name } },

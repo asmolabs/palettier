@@ -144,7 +144,7 @@ fn AddStepForm(recipe: Recipe, draft: StepDraft) -> Element {
             if let Ok(Some(_)) = add_recipe_step(&services, recipe, step).await {
                 mix.set(String::new());
                 notes.set(String::new());
-                state.reload_all(&services).await;
+                state.refresh_recipes(&services).await;
                 state.notify(loc.tr("Étape ajoutée à la recette.", "Step added to recipe."));
             }
         });

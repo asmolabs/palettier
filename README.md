@@ -17,7 +17,7 @@ Every project is painted in one **paint system** — `Oil` or `Acrylic` — chos
 | Shared techniques | pin wash, filter, glaze, base coat, highlights — with system-specific thinner, ratios and tips | |
 | Drying model | oxidation, driven by the pigment, in hours and days | evaporation, driven by thickness, humidity and air flow, in minutes |
 | Rules | fat over lean | none between acrylic coats |
-| Catalog | 680 tubes, 8 oil ranges | 1,349 reference pots across 8 ranges (Citadel Base/Layer/Dry, Vallejo Model / Game Color, Army Painter Warpaints / Fanatic, AK 3rd Gen, Pro Acryl, Scale75 Scalecolor, Kimera Kolors) |
+| Catalog | 680 tubes, 8 oil ranges | 1,427 reference pots across 9 ranges (Citadel Base/Layer/Dry, Vallejo Model / Game Color, Army Painter Warpaints / Fanatic, AK 3rd Gen, Pro Acryl, Scale75 Scalecolor / Artist, Kimera Kolors) |
 
 **Mixed work** (acrylic base, oil weathering on top) is supported layer by layer: a technique that belongs to one system keeps it, so an *oil wash* on an acrylic piece is still timed and checked as oil. Oil over dry acrylic is the classic workflow; **acrylic over oil is flagged**, since acrylic does not grip an oily film.
 
@@ -30,7 +30,7 @@ Existing databases are migrated in place: every tube, project and palette mix cr
 ## Key Features
 
 - **Workshop & Today Planning**: Real-time tracking of miniature pieces, active coats, open blending windows, and recoat readiness.
-- **Subtractive Color Mixer**: Kubelka-Munk optical modeling, delta-E 2000 matching against 680 oil tubes across 8 ranges (Winsor & Newton Artists' and Winton, Schmincke Norma Professional and Norma Blue, Gamblin, Williamsburg, Scale75 Floww, Abteilung 502) and 1,349 miniature acrylics across 8 ranges.
+- **Subtractive Color Mixer**: Kubelka-Munk optical modeling, delta-E 2000 matching against 680 oil tubes across 8 ranges (Winsor & Newton Artists' and Winton, Schmincke Norma Professional and Norma Blue, Gamblin, Williamsburg, Scale75 Floww, Abteilung 502) and 1,427 miniature acrylics across 9 ranges.
 - **Fat-Over-Lean Inspector**: Detection of lean-over-fat oil coats, and of acrylic laid over oil.
 - **Multimodal AI Assistant**: Zone plan generation from reference photos and AI-powered tube recognition from workshop shelf photos.
 - **1-Click Day / Night Mode**: Instant UI theme switching (`Light` / `Dark`) persisted in SQLite.

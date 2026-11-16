@@ -85,7 +85,7 @@ pub fn SampledGroupsCard(
                     eye::create_project_from_groups(&svc, &name, chosen_pal.as_ref(), &grp_list, &taken, loc).await;
                 match created {
                     Ok(Some(saved)) => {
-                        state.reload_all(&svc).await;
+                        state.refresh_projects(&svc).await;
                         let msg = match loc {
                             Locale::Fr => format!("Projet « {} » créé à partir de vos relevés.", saved.name),
                             Locale::En => format!("Project '{}' created from your sampled groups.", saved.name),

@@ -8,6 +8,9 @@ use palettier_domain::color::Rgb;
 use palettier_domain::mix::MixSuggestion;
 use palettier_domain::paint::{Paint, PaintSystem};
 use palettier_domain::palette::Palette;
+use std::collections::{HashMap, VecDeque};
+use std::hash::{Hash, Hasher};
+use std::sync::{LazyLock, Mutex};
 
 /// The palettes the mixes are computed from: those of the working system (and the empty
 /// ones, which belong to no system yet).
@@ -69,13 +72,77 @@ pub(super) fn rgb_or_grey(hex: &str, grey: f64) -> Rgb {
     Rgb::of_hex(hex).unwrap_or_else(|_| Rgb::new(grey, grey, grey))
 }
 
-/// The closest mix of `target` from `candidates`, with at most three tubes.
+type MixCacheKey = ((u64, u64, u64), u64);
+
+const MIX_CACHE_CAP: usize = 512;
+
+#[derive(Default)]
+struct MixCache {
+    map: HashMap<MixCacheKey, Option<MixSuggestion>>,
+    order: VecDeque<MixCacheKey>,
+}
+
+static MIX_CACHE: LazyLock<Mutex<MixCache>> = LazyLock::new(|| Mutex::new(MixCache::default()));
+
+/// Stable fingerprint of a candidate pool, sensitive to tube edits and calibration changes.
+pub(super) fn pool_fingerprint(candidates: &[Paint]) -> u64 {
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    candidates.len().hash(&mut h);
+    for p in candidates {
+        p.brand.hash(&mut h);
+        p.name.hash(&mut h);
+        p.hex_color.hash(&mut h);
+        p.tint_hex.hash(&mut h);
+        (p.opacity as u8).hash(&mut h);
+        p.tinting_strength.to_bits().hash(&mut h);
+        (p.system as u8).hash(&mut h);
+    }
+    h.finish()
+}
+
+fn cache_key(target: Rgb, pool_fp: u64) -> MixCacheKey {
+    (
+        (target.r().to_bits(), target.g().to_bits(), target.b().to_bits()),
+        pool_fp,
+    )
+}
+
+/// Returns `Some(cached)` if `(target, candidates)` was already solved, or `None` on a miss.
+pub(super) fn cached_best_mix(target: Rgb, candidates: &[Paint]) -> Option<Option<MixSuggestion>> {
+    let key = cache_key(target, pool_fingerprint(candidates));
+    MIX_CACHE.lock().ok()?.map.get(&key).cloned()
+}
+
+fn store_best_mix(key: MixCacheKey, value: Option<MixSuggestion>) {
+    let Ok(mut guard) = MIX_CACHE.lock() else {
+        return;
+    };
+    if !guard.map.contains_key(&key) {
+        if guard.order.len() >= MIX_CACHE_CAP
+            && let Some(oldest) = guard.order.pop_front()
+        {
+            guard.map.remove(&oldest);
+        }
+        guard.order.push_back(key);
+    }
+    guard.map.insert(key, value);
+}
+
+/// The closest mix of `target` from `candidates`, with at most three tubes, cached in memory.
 pub(super) fn best_mix(services: &AppServices, target: Rgb, candidates: &[Paint]) -> Option<MixSuggestion> {
-    services
+    let key = cache_key(target, pool_fingerprint(candidates));
+    if let Ok(guard) = MIX_CACHE.lock()
+        && let Some(hit) = guard.map.get(&key)
+    {
+        return hit.clone();
+    }
+    let found = services
         .mix_service
         .suggest_mixes(target, candidates, 1, Some(3))
         .into_iter()
-        .next()
+        .next();
+    store_best_mix(key, found.clone());
+    found
 }
 
 /// Opens the Mixer on `hex`.

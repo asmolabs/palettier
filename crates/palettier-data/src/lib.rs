@@ -462,12 +462,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn catalog_seeder_populates_680_oils_1349_acrylics_and_is_idempotent() {
+    async fn catalog_seeder_populates_680_oils_1427_acrylics_and_is_idempotent() {
         let inst = Installation::in_memory().await;
         let report = inst.seeder.seed().await.unwrap();
 
-        assert_eq!(680 + 1349, report.paints_created);
-        assert_eq!(4, report.palettes_added);
+        assert_eq!(680 + 1427, report.paints_created);
+        assert_eq!(5, report.palettes_added);
         assert_eq!(3, report.recipes_added);
 
         let all = inst.catalog.all().await.unwrap();
@@ -475,7 +475,7 @@ mod tests {
             .iter()
             .filter(|p| p.system == PaintSystem::Acrylic)
             .count();
-        assert_eq!(1349, acrylics, "les acryliques relues gardent leur systeme");
+        assert_eq!(1427, acrylics, "les acryliques relues gardent leur systeme");
         assert!(report.unknown_pigments.is_empty());
 
         let second = inst.seeder.seed().await.unwrap();
@@ -499,6 +499,13 @@ mod tests {
             .unwrap();
         assert_eq!(7, blue.paints.len());
         assert_eq!(PaintSystem::Acrylic, blue.system());
+
+        let kimera = palettes
+            .iter()
+            .find(|p| p.name.starts_with("Kimera Kolors"))
+            .unwrap();
+        assert_eq!(13, kimera.paints.len());
+        assert_eq!(PaintSystem::Acrylic, kimera.system());
     }
 
     #[tokio::test]

@@ -1,7 +1,10 @@
 //! Acrylic → oil converter: a reference acrylic, its 5-tone ladder and the oil mix of
 //! each tone.
 
-use super::shared::{acrylic_catalog, best_mix, open_in_mixer, paint_key, pick, rgb_or_grey};
+use super::shared::{
+    acrylic_catalog, best_mix, cached_best_mix, open_in_mixer, paint_key, pick, pool_fingerprint,
+    rgb_or_grey,
+};
 use crate::state::{AppServices, AppState};
 use crate::theme::{ColorSwatch, DeltaEBadge};
 use dioxus::prelude::*;
@@ -203,10 +206,40 @@ fn ladder_card(
     oil_candidates: &[Paint],
     palette_name: &str,
 ) -> Element {
+    let mut mix_tick = use_signal(|| 0u64);
+    let mut pending_key = use_signal(|| None::<(String, u64)>);
+
     let ladder = current.map(|p| MiniatureLadder::of_basecoat(p.color()));
     let name = current.map(|p| p.name.clone()).unwrap_or_default();
     let hex = current.map(|p| p.hex_color.clone()).unwrap_or_default();
     let steps = ladder.as_ref().map(|l| l.steps_hex().to_vec()).unwrap_or_default();
+    let _ = *mix_tick.read();
+
+    let fp = pool_fingerprint(oil_candidates);
+    let request_key = (hex.clone(), fp);
+    let all_cached = steps
+        .iter()
+        .all(|h| cached_best_mix(rgb_or_grey(h, 0.5), oil_candidates).is_some());
+    if !steps.is_empty() && !all_cached && pending_key.peek().as_ref() != Some(&request_key) {
+        pending_key.set(Some(request_key.clone()));
+        let svc = services.clone();
+        let pool = oil_candidates.to_vec();
+        let steps_bg = steps.clone();
+        spawn(async move {
+            let _ = tokio::task::spawn_blocking(move || {
+                for step_hex in steps_bg {
+                    let _ = best_mix(&svc, rgb_or_grey(&step_hex, 0.5), &pool);
+                }
+            })
+            .await;
+            if pending_key.peek().as_ref() == Some(&request_key) {
+                pending_key.set(None);
+            }
+            let next = *mix_tick.peek() + 1;
+            mix_tick.set(next);
+        });
+    }
+
     rsx! {
         div { class: "card",
             div { class: "row-between u-mb-12",
@@ -237,7 +270,7 @@ fn ladder_card(
             // 5-Stage Computed Rows
             div { class: "u-d-flex u-fd-column u-gap-8",
                 for (idx, step_hex) in steps.iter().enumerate() {
-                    {ladder_row(state, services, locale, idx, step_hex, oil_candidates)}
+                    {ladder_row(state, locale, idx, step_hex, oil_candidates)}
                 }
             }
         }
@@ -246,14 +279,13 @@ fn ladder_card(
 
 fn ladder_row(
     state: AppState,
-    services: &AppServices,
     locale: Locale,
     idx: usize,
     step_hex: &str,
     oil_candidates: &[Paint],
 ) -> Element {
     let short_label = step_label(locale, idx);
-    let sugg = best_mix(services, rgb_or_grey(step_hex, 0.5), oil_candidates);
+    let cached = cached_best_mix(rgb_or_grey(step_hex, 0.5), oil_candidates);
     rsx! {
         div { class: "card-subtle u-p-10-12",
             div { class: "row-between u-ai-center",
@@ -265,30 +297,38 @@ fn ladder_row(
                     }
                 }
 
-                if let Some(ref s) = sugg {
-                    div { class: "row u-gap-10 u-ai-center",
-                        ColorSwatch { hex: s.color.to_hex(), size: 30 }
-                        div { class: "u-ta-right u-lh-1p3",
-                            div { class: "u-fw-650 u-fs-12 u-c-accent", "{s.describe_i18n(locale)}" }
-                            div { class: "u-d-flex u-gap-4 u-jc-flex-end u-ai-center u-mt-2",
-                                DeltaEBadge { delta_e: s.delta_e }
+                match cached {
+                    Some(Some(ref s)) => rsx! {
+                        div { class: "row u-gap-10 u-ai-center",
+                            ColorSwatch { hex: s.color.to_hex(), size: 30 }
+                            div { class: "u-ta-right u-lh-1p3",
+                                div { class: "u-fw-650 u-fs-12 u-c-accent", "{s.describe_i18n(locale)}" }
+                                div { class: "u-d-flex u-gap-4 u-jc-flex-end u-ai-center u-mt-2",
+                                    DeltaEBadge { delta_e: s.delta_e }
+                                }
+                            }
+                            button {
+                                class: "btn",
+                                class: "u-p-4-8 u-fs-11",
+                                title: locale.tr("Ouvrir cette teinte dans le Mélangeur", "Open target in Mixer"),
+                                onclick: {
+                                    let h = step_hex.to_string();
+                                    move |_| open_in_mixer(state, h.clone())
+                                },
+                                "🧪"
                             }
                         }
-                        button {
-                            class: "btn",
-                            class: "u-p-4-8 u-fs-11",
-                            title: locale.tr("Ouvrir cette teinte dans le Mélangeur", "Open target in Mixer"),
-                            onclick: {
-                                let h = step_hex.to_string();
-                                move |_| open_in_mixer(state, h.clone())
-                            },
-                            "🧪"
+                    },
+                    Some(None) => rsx! {
+                        span { class: "muted u-fs-11p5",
+                            {locale.tr("Aucun tube disponible dans la palette", "No tubes available in palette")}
                         }
-                    }
-                } else {
-                    span { class: "muted u-fs-11p5",
-                        {locale.tr("Aucun tube disponible dans la palette", "No tubes available in palette")}
-                    }
+                    },
+                    None => rsx! {
+                        span { class: "muted u-fs-11p5",
+                            {locale.tr("Calcul du mélange…", "Computing mix…")}
+                        }
+                    },
                 }
             }
         }

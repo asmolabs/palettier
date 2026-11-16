@@ -63,6 +63,7 @@ PBr48;Oxyde de fer brun synthetique;#8C6228;SEMI_OPAQUE;FAST;0.70
 
 # --- Jaunes ---
 PY3;Jaune arylide clair (Hansa);#F5DC2A;SEMI_TRANSPARENT;SLOW;0.80
+PY14;Jaune diarylide moyen (PY14);#F4E915;SEMI_TRANSPARENT;MEDIUM;0.85
 PY35;Jaune de cadmium;#F6C500;OPAQUE;VERY_SLOW;0.80;#F7E4A8
 PY37;Jaune de cadmium (sulfure);#F5C000;OPAQUE;VERY_SLOW;0.80
 PY40;Aureoline (jaune de cobalt);#F2C51F;TRANSPARENT;FAST;0.50
@@ -94,6 +95,7 @@ PY164;Brun jaune de manganese-antimoine-titane;#9A6B33;OPAQUE;FAST;0.45
 PY170;Jaune diarylide (PY170);#EAA339;SEMI_TRANSPARENT;MEDIUM;0.85
 
 # --- Oranges ---
+PO5;Orange dinitraniline;#E2A76D;SEMI_OPAQUE;MEDIUM;0.80
 PO20;Orange de cadmium;#EE7318;OPAQUE;VERY_SLOW;0.80
 PO34;Orange de pyrazolone;#E85A14;SEMI_TRANSPARENT;MEDIUM;0.90
 PO36;Orange benzimidazolone fonce;#E06A12;SEMI_OPAQUE;MEDIUM;0.85

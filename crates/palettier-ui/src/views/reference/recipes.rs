@@ -87,7 +87,7 @@ fn RecipeItem(idx: usize, recipe: Recipe, selected_idx: Signal<usize>) -> Elemen
             let loc = *state.locale.read();
             if delete_recipe(&services, id).await.is_ok() {
                 selected_idx.set(0);
-                state.reload_all(&services).await;
+                state.refresh_recipes(&services).await;
                 state.notify(loc.tr("Recette supprimée.", "Recipe deleted."));
             }
         });
@@ -132,7 +132,7 @@ fn NewRecipeCard(
             if let Ok(Some(saved)) = create_recipe(&services, &name, &subject).await {
                 new_name.set(String::new());
                 new_subject.set(String::new());
-                state.reload_all(&services).await;
+                state.refresh_recipes(&services).await;
                 // Open the new recipe, so the next step lands in it.
                 let position = state.recipes.peek().iter().position(|r| r.id == saved.id);
                 if let Some(idx) = position {

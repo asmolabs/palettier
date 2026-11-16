@@ -391,6 +391,20 @@ impl AppState {
         }
     }
 
+    /// Reloads only the saved recipes list after creating, deleting or editing a recipe.
+    pub async fn refresh_recipes(&mut self, services: &AppServices) {
+        if let Ok(rec) = services.recipes.all().await {
+            self.recipes.set(rec);
+        }
+    }
+
+    /// Reloads only the projects list after creating a measured project.
+    pub async fn refresh_projects(&mut self, services: &AppServices) {
+        if let Ok(proj) = services.projects.all().await {
+            self.projects.set(proj);
+        }
+    }
+
     /// Updates a single paint's drawer status in memory without re-querying all 2,000+ paints.
     pub fn set_paint_in_stock_local(&mut self, id: i64, in_stock: bool) {
         for p in self.paints.write().iter_mut() {
