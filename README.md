@@ -47,9 +47,10 @@ All crates enforce `#![forbid(unsafe_code)]`:
 │   ├── palettier-domain/   # Core domain entities, Kubelka-Munk physics, drying models, fat-over-lean rules, i18n
 │   ├── palettier-image/    # Pixel decoding, linear light downsampling, k-means color extraction, grisaille/notan
 │   ├── palettier-data/     # SeaORM & SQLite persistence, catalog seeder, ZIP backup import/export
-│   ├── palettier-ai/       # Multimodal vision (Gemini/OpenAI/Claude/Ollama), plan generation & tube recognition
+│   ├── palettier-ai/       # Multimodal vision (Gemini/OpenAI/Ollama), plan generation & tube recognition
 │   ├── palettier-ui/       # Native desktop application built with Dioxus 0.6 Desktop
 │   └── palettier-cli/      # Command-line interface for batch tasks, catalog queries, and CLI workflows
+├── packaging/              # Desktop bundle icon (`palettier.icns`)
 ├── Cargo.toml              # Cargo workspace configuration
 ├── Dioxus.toml             # Dioxus desktop bundle configuration
 └── references/             # Test photos and studio calibration images
@@ -75,9 +76,10 @@ cargo run -p palettier-ui
 cargo run -p palettier-cli -- help
 ```
 
-### Running Tests
+### Running Tests & Lints
 
 ```bash
+cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 

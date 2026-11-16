@@ -8,7 +8,7 @@ title = "Palettier — Atelier de figurines"
 [bundle]
 identifier = "be.asmolabs.palettier"
 publisher = "Asmolabs"
-icon = ["../packaging/palettier.icns"]
+icon = ["packaging/palettier.icns"]
 copyright = "Copyright © 2026 Asmolabs"
 category = "Graphics and Design"
 short_description = "Atelier de peinture pour figurines, bustes et maquettes, à l'huile ou à l'acrylique"
