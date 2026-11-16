@@ -1,60 +1,227 @@
 # Vallejo Model Color (acryliques pour figurines)
 #
-# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
-# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
-# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
-#
-# Selection etendue des teintes courantes, pas la gamme complete.
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Nuancier issu des references
+# communautaires (Arcturus5404/miniature-paints) ; la teinte peut etre affinee
+# par une mesure d'ecouvillon dans le Catalogue.
+# Gamme complete Vallejo Model Color.
 brand;name;code;pigments;opacity;hex;system
-Vallejo Model Color;Black;70.950;;;#121212;ACRYLIC
-Vallejo Model Color;German Grey;70.995;;;#34393C;ACRYLIC
-Vallejo Model Color;Dark Grey;70.994;;;#4D5357;ACRYLIC
-Vallejo Model Color;Neutral Grey;70.992;;;#757B7D;ACRYLIC
-Vallejo Model Color;Sky Grey;70.989;;;#A5ACAF;ACRYLIC
-Vallejo Model Color;Light Grey;70.990;;;#B9BFC1;ACRYLIC
-Vallejo Model Color;Deck Tan;70.986;;;#CFCBB9;ACRYLIC
-Vallejo Model Color;Offwhite;70.820;;;#F1EFE4;ACRYLIC
-Vallejo Model Color;Ivory;70.918;;;#F2EBD3;ACRYLIC
-Vallejo Model Color;White;70.951;;;#FDFDFD;ACRYLIC
-Vallejo Model Color;Ice Yellow;70.858;;;#F2E8A0;ACRYLIC
-Vallejo Model Color;Lemon Yellow;70.952;;;#F8E524;ACRYLIC
-Vallejo Model Color;Flat Yellow;70.953;;;#F4C81B;ACRYLIC
-Vallejo Model Color;Yellow Ochre;70.913;;;#C78E2E;ACRYLIC
-Vallejo Model Color;Bright Orange;70.851;;;#EB621F;ACRYLIC
-Vallejo Model Color;Vermilion;70.909;;;#D83825;ACRYLIC
-Vallejo Model Color;Flat Red;70.957;;;#BC2426;ACRYLIC
-Vallejo Model Color;Red;70.926;;;#C72527;ACRYLIC
-Vallejo Model Color;Carmine Red;70.908;;;#9E1E2C;ACRYLIC
-Vallejo Model Color;Burnt Red;70.814;;;#6C2224;ACRYLIC
-Vallejo Model Color;Hull Red;70.985;;;#5A2722;ACRYLIC
-Vallejo Model Color;Magenta;70.945;;;#A62458;ACRYLIC
-Vallejo Model Color;Royal Purple;70.810;;;#4E2C66;ACRYLIC
-Vallejo Model Color;Dark Prussian Blue;70.899;;;#18283A;ACRYLIC
-Vallejo Model Color;Prussian Blue;70.965;;;#1C2E46;ACRYLIC
-Vallejo Model Color;Oxford Blue;70.807;;;#213864;ACRYLIC
-Vallejo Model Color;Medium Blue;70.963;;;#194A80;ACRYLIC
-Vallejo Model Color;French Mirage Blue;70.900;;;#56738E;ACRYLIC
-Vallejo Model Color;Sky Blue;70.961;;;#5997C8;ACRYLIC
-Vallejo Model Color;Turquoise;70.966;;;#0E7B86;ACRYLIC
-Vallejo Model Color;Dark Green;70.970;;;#14422B;ACRYLIC
-Vallejo Model Color;Park Green Flat;70.969;;;#29693E;ACRYLIC
-Vallejo Model Color;Refractive Green;70.890;;;#4C563D;ACRYLIC
-Vallejo Model Color;Olive Green;70.967;;;#5A6438;ACRYLIC
-Vallejo Model Color;German Fieldgrey WWII;70.830;;;#4A5342;ACRYLIC
-Vallejo Model Color;Russian Uniform WWII;70.924;;;#646B47;ACRYLIC
-Vallejo Model Color;German Camo Black Brown;70.822;;;#322A26;ACRYLIC
-Vallejo Model Color;Chocolate Brown;70.872;;;#4B352A;ACRYLIC
-Vallejo Model Color;Flat Brown;70.984;;;#6B422E;ACRYLIC
-Vallejo Model Color;Leather Brown;70.871;;;#5E4530;ACRYLIC
-Vallejo Model Color;English Uniform;70.921;;;#7E6746;ACRYLIC
-Vallejo Model Color;Japanese Uniform WWII;70.923;;;#9C7E48;ACRYLIC
-Vallejo Model Color;Khaki;70.988;;;#8F835B;ACRYLIC
-Vallejo Model Color;Dark Sand;70.847;;;#C3AD7A;ACRYLIC
-Vallejo Model Color;Buff;70.976;;;#CBB991;ACRYLIC
-Vallejo Model Color;Pale Sand;70.837;;;#D9CAA3;ACRYLIC
-Vallejo Model Color;Iraqi Sand;70.819;;;#AA946D;ACRYLIC
-Vallejo Model Color;Brown Rose;70.803;;;#8E5A54;ACRYLIC
-Vallejo Model Color;Basic Skin Tone;70.815;;;#C88E72;ACRYLIC
-Vallejo Model Color;Flat Flesh;70.955;;;#D7A081;ACRYLIC
-Vallejo Model Color;Sunny Skin Tone;70.845;;;#E9B78D;ACRYLIC
-Vallejo Model Color;Light Flesh;70.928;;;#EED0BA;ACRYLIC
+Vallejo Model Color;Yellow Fluorescent;70.730;;;#EFE641;ACRYLIC
+Vallejo Model Color;Orange Fluorescent;70.733;;;#E86016;ACRYLIC
+Vallejo Model Color;Magenta Fluorescent;70.735;;;#E6418D;ACRYLIC
+Vallejo Model Color;Blue Fluorescent;70.736;;;#0370B1;ACRYLIC
+Vallejo Model Color;Green Fluorescent;70.737;;;#A8C958;ACRYLIC
+Vallejo Model Color;Camouflage Middle Brown;70.740;;;#513E20;ACRYLIC
+Vallejo Model Color;Camouflage Black Green;70.741;;;#313129;ACRYLIC
+Vallejo Model Color;Dark Rose;70.745;;;#805252;ACRYLIC
+Vallejo Model Color;Chestnut Brown;70.746;;;#603F36;ACRYLIC
+Vallejo Model Color;Dark Purple;70.749;;;#452733;ACRYLIC
+Vallejo Model Color;Light Violet;70.750;;;#A893BC;ACRYLIC
+Vallejo Model Color;Black Violet;70.751;;;#392A31;ACRYLIC
+Vallejo Model Color;Infantry Blue;70.752;;;#25212F;ACRYLIC
+Vallejo Model Color;Continental Blue;70.754;;;#25242A;ACRYLIC
+Vallejo Model Color;Splinter Green;70.756;;;#456341;ACRYLIC
+Vallejo Model Color;German Tank Crew;70.759;;;#544A3E;ACRYLIC
+Vallejo Model Color;Light Mud;70.760;;;#7C745D;ACRYLIC
+Vallejo Model Color;Grey Brown;70.762;;;#5B4923;ACRYLIC
+Vallejo Model Color;Canvas;70.763;;;#4D3E1F;ACRYLIC
+Vallejo Model Color;Military Yellow;70.764;;;#937626;ACRYLIC
+Vallejo Model Color;Cream White;70.766;;;#E3D1C3;ACRYLIC
+Vallejo Model Color;Desert Brown;70.767;;;#AB8556;ACRYLIC
+Vallejo Model Color;BC Dark Brown;70.768;;;#76563D;ACRYLIC
+Vallejo Model Color;Mustard Brown;70.769;;;#9D714A;ACRYLIC
+Vallejo Model Color;New Wood;70.770;;;#8A633C;ACRYLIC
+Vallejo Model Color;Dark Rust;70.771;;;#3B2625;ACRYLIC
+Vallejo Model Color;Medium Grey Blue;70.772;;;#779D92;ACRYLIC
+Vallejo Model Color;Violet Grey;70.773;;;#5A5957;ACRYLIC
+Vallejo Model Color;Lavender Grey;70.774;;;#7F6F6F;ACRYLIC
+Vallejo Model Color;Gunmetal Blue;70.800;;;#282834;ACRYLIC
+Vallejo Model Color;Brass;70.801;;;#643B1D;ACRYLIC
+Vallejo Model Color;Sunset Red;70.802;;;#C02B49;ACRYLIC
+Vallejo Model Color;Brown Rose;70.803;;;#9C6560;ACRYLIC
+Vallejo Model Color;Beige Red;70.804;;;#B06E4B;ACRYLIC
+Vallejo Model Color;German Orange;70.805;;;#BA6254;ACRYLIC
+Vallejo Model Color;German Yellow;70.806;;;#CEB65E;ACRYLIC
+Vallejo Model Color;Oxford Blue;70.807;;;#3E3A53;ACRYLIC
+Vallejo Model Color;Blue Green;70.808;;;#007A89;ACRYLIC
+Vallejo Model Color;Royal Blue;70.809;;;#1A427D;ACRYLIC
+Vallejo Model Color;Royal Purple;70.810;;;#4D2740;ACRYLIC
+Vallejo Model Color;Blue Violet;70.811;;;#59467E;ACRYLIC
+Vallejo Model Color;Violet Red;70.812;;;#64353F;ACRYLIC
+Vallejo Model Color;Burnt Red;70.814;;;#763C3A;ACRYLIC
+Vallejo Model Color;Basic Skin Tone;70.815;;;#E9AC8D;ACRYLIC
+Vallejo Model Color;Luftwaffe Uniform WWII;70.816;;;#44404E;ACRYLIC
+Vallejo Model Color;Scarlet;70.817;;;#C23D2E;ACRYLIC
+Vallejo Model Color;Red Leather;70.818;;;#95543E;ACRYLIC
+Vallejo Model Color;Iraqi Sand;70.819;;;#B49360;ACRYLIC
+Vallejo Model Color;Off-White;70.820;;;#F5ECE7;ACRYLIC
+Vallejo Model Color;German Beige WWII;70.821;;;#796950;ACRYLIC
+Vallejo Model Color;Camouflage Black Brown;70.822;;;#403436;ACRYLIC
+Vallejo Model Color;Luftwaffe Green;70.823;;;#393F25;ACRYLIC
+Vallejo Model Color;Orange Ochre;70.824;;;#AC8035;ACRYLIC
+Vallejo Model Color;Pale Brown;70.825;;;#9F8375;ACRYLIC
+Vallejo Model Color;Medium Brown;70.826;;;#5B483A;ACRYLIC
+Vallejo Model Color;Lime Green;70.827;;;#7F9435;ACRYLIC
+Vallejo Model Color;Mahogany Ink;70.828;;;#674641;ACRYLIC
+Vallejo Model Color;Amaranth Red;70.829;;;#D14E30;ACRYLIC
+Vallejo Model Color;German Fieldgrey WWII;70.830;;;#58523C;ACRYLIC
+Vallejo Model Color;Tan Glaze;70.831;;;#D59335;ACRYLIC
+Vallejo Model Color;Verdigris Glaze;70.832;;;#99D0CA;ACRYLIC
+Vallejo Model Color;Fern Green;70.833;;;#475436;ACRYLIC
+Vallejo Model Color;Natural Wood Grain;70.834;;;#EAA432;ACRYLIC
+Vallejo Model Color;Salmon Rose;70.835;;;#E28F7F;ACRYLIC
+Vallejo Model Color;London Grey;70.836;;;#696363;ACRYLIC
+Vallejo Model Color;Pale Sand;70.837;;;#E3C28F;ACRYLIC
+Vallejo Model Color;Emerald;70.838;;;#00624B;ACRYLIC
+Vallejo Model Color;Ultramarine;70.839;;;#2D559D;ACRYLIC
+Vallejo Model Color;Light Turquoise;70.840;;;#006989;ACRYLIC
+Vallejo Model Color;Andrea Blue;70.841;;;#0270AF;ACRYLIC
+Vallejo Model Color;Gloss White;70.842;;;#F5F3F4;ACRYLIC
+Vallejo Model Color;Cork Brown;70.843;;;#A16F4E;ACRYLIC
+Vallejo Model Color;Deep Sky Blue;70.844;;;#4D95C5;ACRYLIC
+Vallejo Model Color;Sunny Skin Tone;70.845;;;#ED9646;ACRYLIC
+Vallejo Model Color;Mahogany Brown;70.846;;;#79504A;ACRYLIC
+Vallejo Model Color;Dark Sand;70.847;;;#CBA868;ACRYLIC
+Vallejo Model Color;Medium Olive;70.850;;;#414E32;ACRYLIC
+Vallejo Model Color;Bright Orange;70.851;;;#E05921;ACRYLIC
+Vallejo Model Color;White Glaze;70.853;;;#F4F4F6;ACRYLIC
+Vallejo Model Color;Brown Glaze;70.854;;;#4E403D;ACRYLIC
+Vallejo Model Color;Black Glaze;70.855;;;#383838;ACRYLIC
+Vallejo Model Color;Ochre Brown;70.856;;;#AA793E;ACRYLIC
+Vallejo Model Color;Golden Olive;70.857;;;#808145;ACRYLIC
+Vallejo Model Color;Ice Yellow;70.858;;;#EECF72;ACRYLIC
+Vallejo Model Color;Black Red;70.859;;;#552F2C;ACRYLIC
+Vallejo Model Color;Medium Fleshtone;70.860;;;#B07940;ACRYLIC
+Vallejo Model Color;Glossy Black;70.861;;;#241E1E;ACRYLIC
+Vallejo Model Color;Black Grey;70.862;;;#302722;ACRYLIC
+Vallejo Model Color;Gunmetal;70.863;;;#352A2E;ACRYLIC
+Vallejo Model Color;Natural Steel;70.864;;;#535258;ACRYLIC
+Vallejo Model Color;Oily Steel;70.865;;;#484246;ACRYLIC
+Vallejo Model Color;Grey Green;70.866;;;#41403E;ACRYLIC
+Vallejo Model Color;Dark Blue Grey;70.867;;;#424345;ACRYLIC
+Vallejo Model Color;Dark Sea Green;70.868;;;#4B4545;ACRYLIC
+Vallejo Model Color;Basalt Grey;70.869;;;#5C5A5D;ACRYLIC
+Vallejo Model Color;Medium Sea Grey;70.870;;;#7D7B7C;ACRYLIC
+Vallejo Model Color;Leather Brown;70.871;;;#594335;ACRYLIC
+Vallejo Model Color;Chocolate Brown;70.872;;;#58443D;ACRYLIC
+Vallejo Model Color;US Field Drab;70.873;;;#826545;ACRYLIC
+Vallejo Model Color;Tan Earth;70.874;;;#997457;ACRYLIC
+Vallejo Model Color;Beige Brown;70.875;;;#816041;ACRYLIC
+Vallejo Model Color;Brown Sand;70.876;;;#906145;ACRYLIC
+Vallejo Model Color;Gold Brown;70.877;;;#BF873C;ACRYLIC
+Vallejo Model Color;Old Gold;70.878;;;#55371D;ACRYLIC
+Vallejo Model Color;Green Brown;70.879;;;#816D32;ACRYLIC
+Vallejo Model Color;Khaki Grey;70.880;;;#7E6338;ACRYLIC
+Vallejo Model Color;Green Yellow;70.881;;;#6E653C;ACRYLIC
+Vallejo Model Color;Middle Stone;70.882;;;#937F42;ACRYLIC
+Vallejo Model Color;Silver Grey;70.883;;;#D8CDC9;ACRYLIC
+Vallejo Model Color;Stone Grey;70.884;;;#8C7C63;ACRYLIC
+Vallejo Model Color;Pastel Green;70.885;;;#939870;ACRYLIC
+Vallejo Model Color;Green Grey;70.886;;;#65624F;ACRYLIC
+Vallejo Model Color;US Olive Drab;70.887;;;#59513C;ACRYLIC
+Vallejo Model Color;Olive Grey;70.888;;;#40422D;ACRYLIC
+Vallejo Model Color;Olive Brown;70.889;;;#3F3126;ACRYLIC
+Vallejo Model Color;Refractive Green;70.890;;;#474A35;ACRYLIC
+Vallejo Model Color;Intermediate Green;70.891;;;#506544;ACRYLIC
+Vallejo Model Color;Yellow Olive;70.892;;;#383B32;ACRYLIC
+Vallejo Model Color;US Dark Green;70.893;;;#494B36;ACRYLIC
+Vallejo Model Color;Camouflage Olive Green;70.894;;;#3C3D2F;ACRYLIC
+Vallejo Model Color;Gunship Green;70.895;;;#4C5840;ACRYLIC
+Vallejo Model Color;Extra Dark Green;70.896;;;#282A14;ACRYLIC
+Vallejo Model Color;Bronze Green;70.897;;;#313A29;ACRYLIC
+Vallejo Model Color;Dark Sea Blue;70.898;;;#262C38;ACRYLIC
+Vallejo Model Color;Dark Prussian Blue;70.899;;;#372741;ACRYLIC
+Vallejo Model Color;French Mirage Blue;70.900;;;#5F6772;ACRYLIC
+Vallejo Model Color;Pastel Blue;70.901;;;#607A93;ACRYLIC
+Vallejo Model Color;Azure;70.902;;;#5B6B9E;ACRYLIC
+Vallejo Model Color;Intermediate Blue;70.903;;;#646D76;ACRYLIC
+Vallejo Model Color;Blue Grey Pale;70.905;;;#808686;ACRYLIC
+Vallejo Model Color;Pale Blue;70.906;;;#90A3A9;ACRYLIC
+Vallejo Model Color;Pale Grey Blue;70.907;;;#A7B6B3;ACRYLIC
+Vallejo Model Color;Carmine Red;70.908;;;#97211F;ACRYLIC
+Vallejo Model Color;Vermilion;70.909;;;#C42A28;ACRYLIC
+Vallejo Model Color;Orange Red;70.910;;;#DC4319;ACRYLIC
+Vallejo Model Color;Light Orange;70.911;;;#EE7228;ACRYLIC
+Vallejo Model Color;Tan Yellow;70.912;;;#C19B6E;ACRYLIC
+Vallejo Model Color;Yellow Ochre;70.913;;;#DEAA47;ACRYLIC
+Vallejo Model Color;Green Ochre;70.914;;;#A17F35;ACRYLIC
+Vallejo Model Color;Deep Yellow;70.915;;;#F1C701;ACRYLIC
+Vallejo Model Color;Sand Yellow;70.916;;;#EABF56;ACRYLIC
+Vallejo Model Color;Beige;70.917;;;#DFBE6F;ACRYLIC
+Vallejo Model Color;Ivory;70.918;;;#EBE2D1;ACRYLIC
+Vallejo Model Color;Cold White;70.919;;;#F6F6F8;ACRYLIC
+Vallejo Model Color;German Uniform;70.920;;;#434D42;ACRYLIC
+Vallejo Model Color;English Uniform;70.921;;;#6F532B;ACRYLIC
+Vallejo Model Color;Uniform Green;70.922;;;#4B5230;ACRYLIC
+Vallejo Model Color;Japanese Uniform WWII;70.923;;;#9F7F2A;ACRYLIC
+Vallejo Model Color;Russian Uniform WWII;70.924;;;#585336;ACRYLIC
+Vallejo Model Color;Blue;70.925;;;#372C4C;ACRYLIC
+Vallejo Model Color;Red;70.926;;;#792825;ACRYLIC
+Vallejo Model Color;Dark Flesh;70.927;;;#D3933B;ACRYLIC
+Vallejo Model Color;Light Flesh;70.928;;;#F3D4B8;ACRYLIC
+Vallejo Model Color;Light Brown;70.929;;;#A25B31;ACRYLIC
+Vallejo Model Color;Dark Blue;70.930;;;#273461;ACRYLIC
+Vallejo Model Color;Transparent Red;70.934;;;#B62336;ACRYLIC
+Vallejo Model Color;Transparent Orange;70.935;;;#EA651A;ACRYLIC
+Vallejo Model Color;Transparent Green;70.936;;;#007943;ACRYLIC
+Vallejo Model Color;Transparent Yellow;70.937;;;#F7A501;ACRYLIC
+Vallejo Model Color;Transparent Blue;70.938;;;#323D5D;ACRYLIC
+Vallejo Model Color;Smoke Ink;70.939;;;#5C4847;ACRYLIC
+Vallejo Model Color;Saddle Brown;70.940;;;#8C645C;ACRYLIC
+Vallejo Model Color;Burnt Umber;70.941;;;#513B2E;ACRYLIC
+Vallejo Model Color;Light Green;70.942;;;#007943;ACRYLIC
+Vallejo Model Color;Grey Blue;70.943;;;#596D85;ACRYLIC
+Vallejo Model Color;Old Rose;70.944;;;#BC6D70;ACRYLIC
+Vallejo Model Color;Magenta;70.945;;;#903153;ACRYLIC
+Vallejo Model Color;Dark Red;70.946;;;#692F24;ACRYLIC
+Vallejo Model Color;Dark Vermilion;70.947;;;#B52A27;ACRYLIC
+Vallejo Model Color;Golden Yellow;70.948;;;#F8A734;ACRYLIC
+Vallejo Model Color;Light Yellow;70.949;;;#F8D347;ACRYLIC
+Vallejo Model Color;Black;70.950;;;#231D1D;ACRYLIC
+Vallejo Model Color;White;70.951;;;#FFFFFF;ACRYLIC
+Vallejo Model Color;Lemon Yellow;70.952;;;#E4D202;ACRYLIC
+Vallejo Model Color;Flat Yellow;70.953;;;#F6BA36;ACRYLIC
+Vallejo Model Color;Yellow Green;70.954;;;#DEDE26;ACRYLIC
+Vallejo Model Color;Flat Flesh;70.955;;;#E09959;ACRYLIC
+Vallejo Model Color;Clear Orange;70.956;;;#CC4527;ACRYLIC
+Vallejo Model Color;Flat Red;70.957;;;#A12B29;ACRYLIC
+Vallejo Model Color;Pink;70.958;;;#B04F7C;ACRYLIC
+Vallejo Model Color;Purple;70.959;;;#533152;ACRYLIC
+Vallejo Model Color;Violet;70.960;;;#3C2C49;ACRYLIC
+Vallejo Model Color;Sky Blue;70.961;;;#74B8CF;ACRYLIC
+Vallejo Model Color;Flat Blue;70.962;;;#3F4873;ACRYLIC
+Vallejo Model Color;Medium Blue;70.963;;;#16416C;ACRYLIC
+Vallejo Model Color;Field Blue;70.964;;;#4D5256;ACRYLIC
+Vallejo Model Color;Prussian Blue;70.965;;;#3C405D;ACRYLIC
+Vallejo Model Color;Turquoise;70.966;;;#0C425A;ACRYLIC
+Vallejo Model Color;Olive Green;70.967;;;#526138;ACRYLIC
+Vallejo Model Color;Flat Green;70.968;;;#374B2F;ACRYLIC
+Vallejo Model Color;Park Green Flat;70.969;;;#21624A;ACRYLIC
+Vallejo Model Color;Deep Green;70.970;;;#1B4B33;ACRYLIC
+Vallejo Model Color;Light Green Blue;70.972;;;#86958E;ACRYLIC
+Vallejo Model Color;Light Sea Grey;70.973;;;#A1B1B1;ACRYLIC
+Vallejo Model Color;Green Sky;70.974;;;#7A9165;ACRYLIC
+Vallejo Model Color;Military Green;70.975;;;#434434;ACRYLIC
+Vallejo Model Color;Buff;70.976;;;#D7AF4D;ACRYLIC
+Vallejo Model Color;Desert Yellow;70.977;;;#B6854A;ACRYLIC
+Vallejo Model Color;Dark Yellow;70.978;;;#90873A;ACRYLIC
+Vallejo Model Color;Camouflage Dark Green;70.979;;;#263025;ACRYLIC
+Vallejo Model Color;Black Green;70.980;;;#2A342B;ACRYLIC
+Vallejo Model Color;Orange Brown;70.981;;;#AD623A;ACRYLIC
+Vallejo Model Color;Cavalry Brown;70.982;;;#84443A;ACRYLIC
+Vallejo Model Color;Flat Earth;70.983;;;#69442A;ACRYLIC
+Vallejo Model Color;Flat Brown;70.984;;;#703F38;ACRYLIC
+Vallejo Model Color;Hull Red;70.985;;;#5C383C;ACRYLIC
+Vallejo Model Color;Deck Tan;70.986;;;#ABA390;ACRYLIC
+Vallejo Model Color;Medium Grey;70.987;;;#867259;ACRYLIC
+Vallejo Model Color;Khaki;70.988;;;#6F5F3B;ACRYLIC
+Vallejo Model Color;Sky Grey;70.989;;;#AAABAD;ACRYLIC
+Vallejo Model Color;Light Grey;70.990;;;#919294;ACRYLIC
+Vallejo Model Color;Dark Sea Grey;70.991;;;#6C6B69;ACRYLIC
+Vallejo Model Color;Neutral Grey;70.992;;;#61615F;ACRYLIC
+Vallejo Model Color;White Grey;70.993;;;#E3E2E0;ACRYLIC
+Vallejo Model Color;Dark Grey;70.994;;;#312F32;ACRYLIC
+Vallejo Model Color;German Grey;70.995;;;#2E2E2C;ACRYLIC
+Vallejo Model Color;Gold;70.996;;;#996728;ACRYLIC
+Vallejo Model Color;Silver;70.997;;;#939290;ACRYLIC
+Vallejo Model Color;Bronze;70.998;;;#533C1D;ACRYLIC
+Vallejo Model Color;Copper;70.999;;;#803427;ACRYLIC

@@ -311,6 +311,8 @@ pub struct AppState {
     /// Oil or acrylic for the screens not tied to a project (catalog, mixer, drying,
     /// recipes, miniature tools). Opening a project switches it to the project's system.
     pub paint_system: Signal<PaintSystem>,
+    /// True once the initial `reload_all` pass has populated state from the store.
+    pub loaded: Signal<bool>,
 }
 
 impl AppState {
@@ -379,6 +381,7 @@ impl AppState {
             services.chat_engines.configure(ai.clone());
             self.ai_settings.set(ai);
         }
+        self.loaded.set(true);
     }
 
     pub fn notify(&mut self, msg: impl Into<String>) {

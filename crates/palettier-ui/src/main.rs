@@ -172,6 +172,7 @@ fn StudioShell(services: AppServices) -> Element {
     let command_palette_open = use_signal(|| false);
     let miniature_tab = use_signal(|| 0usize);
     let paint_system = use_signal(PaintSystem::default);
+    let loaded = use_signal(|| false);
     let mut is_hud = use_signal(|| false);
 
     let mut app_state = use_context_provider(|| AppState {
@@ -192,6 +193,7 @@ fn StudioShell(services: AppServices) -> Element {
         command_palette_open,
         miniature_tab,
         paint_system,
+        loaded,
     });
 
     // Design review: walk every screen and save its HTML, then quit (dev only).

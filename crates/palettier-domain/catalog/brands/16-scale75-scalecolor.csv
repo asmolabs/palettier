@@ -1,28 +1,70 @@
 # Scale75 - Scalecolor (acryliques ultra-mates pour figurines)
 #
-# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
-# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
-# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
-#
-# Selection des teintes courantes Scalecolor, pas la gamme complete.
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Nuancier issu des references
+# communautaires (Arcturus5404/miniature-paints) ; la teinte peut etre affinee
+# par une mesure d'ecouvillon dans le Catalogue.
+# Gamme complete Scale75 Scalecolor (63 teintes).
 brand;name;code;pigments;opacity;hex;system
-Scale75 Scalecolor;Black;SC-00;;;#141414;ACRYLIC
-Scale75 Scalecolor;White;SC-01;;;#FAFAFA;ACRYLIC
-Scale75 Scalecolor;Birch;SC-04;;;#D4BFA4;ACRYLIC
-Scale75 Scalecolor;Petroleum Grey;SC-09;;;#354248;ACRYLIC
-Scale75 Scalecolor;Pale Skin;SC-18;;;#E3C2AC;ACRYLIC
-Scale75 Scalecolor;Pink Flesh;SC-19;;;#D8A18D;ACRYLIC
-Scale75 Scalecolor;Basic Flesh;SC-20;;;#C48A6D;ACRYLIC
-Scale75 Scalecolor;Arabic Shadow;SC-23;;;#6F4B3D;ACRYLIC
-Scale75 Scalecolor;Dubai Brown;SC-24;;;#412616;ACRYLIC
-Scale75 Scalecolor;Iroko;SC-29;;;#7C5430;ACRYLIC
-Scale75 Scalecolor;Deep Red;SC-35;;;#6B161A;ACRYLIC
-Scale75 Scalecolor;Antares Red;SC-36;;;#8E161A;ACRYLIC
-Scale75 Scalecolor;Mars Orange;SC-39;;;#AA3815;ACRYLIC
-Scale75 Scalecolor;Sol Yellow;SC-40;;;#E9B91A;ACRYLIC
-Scale75 Scalecolor;Black Forest Green;SC-47;;;#182B1E;ACRYLIC
-Scale75 Scalecolor;Irati Green;SC-46;;;#2E6B3E;ACRYLIC
-Scale75 Scalecolor;Abyssal Blue;SC-52;;;#111C28;ACRYLIC
-Scale75 Scalecolor;Caspian Blue;SC-54;;;#16344B;ACRYLIC
-Scale75 Scalecolor;Mediterranean Blue;SC-55;;;#235B8C;ACRYLIC
-Scale75 Scalecolor;Sunset Purple;SC-61;;;#542B63;ACRYLIC
+Scale75 Scalecolor;Abyssal Blue;;;;#292A2F;ACRYLIC
+Scale75 Scalecolor;Adriatic Blue;;;;#128A9B;ACRYLIC
+Scale75 Scalecolor;African Shadow;;;;#56424B;ACRYLIC
+Scale75 Scalecolor;Aldebaran Red;;;;#BE331E;ACRYLIC
+Scale75 Scalecolor;Antares Red;;;;#C11E21;ACRYLIC
+Scale75 Scalecolor;Anthartic Grey;;;;#42424C;ACRYLIC
+Scale75 Scalecolor;Arabic Shadow;;;;#7C6833;ACRYLIC
+Scale75 Scalecolor;Ardenes Green;;;;#566345;ACRYLIC
+Scale75 Scalecolor;Artic Blue;;;;#9FB3BC;ACRYLIC
+Scale75 Scalecolor;Basic Flesh;;;;#D0B393;ACRYLIC
+Scale75 Scalecolor;Bering Blue;;;;#6C8997;ACRYLIC
+Scale75 Scalecolor;Birch;;;;#EFD2B0;ACRYLIC
+Scale75 Scalecolor;Black;;;;#2C2C2C;ACRYLIC
+Scale75 Scalecolor;Black Forest Green;;;;#004834;ACRYLIC
+Scale75 Scalecolor;Black Leather;;;;#422A2A;ACRYLIC
+Scale75 Scalecolor;Blood Red;;;;#912727;ACRYLIC
+Scale75 Scalecolor;Boreal Green;;;;#00563E;ACRYLIC
+Scale75 Scalecolor;Brown Gray;;;;#7B7170;ACRYLIC
+Scale75 Scalecolor;Brown Leather;;;;#4D2C1D;ACRYLIC
+Scale75 Scalecolor;Cantabric Blue;;;;#164765;ACRYLIC
+Scale75 Scalecolor;Caribbean Blue;;;;#75B6B0;ACRYLIC
+Scale75 Scalecolor;Caspian Blue;;;;#2A4F58;ACRYLIC
+Scale75 Scalecolor;Deep Blue;;;;#383B4A;ACRYLIC
+Scale75 Scalecolor;Deep Red;;;;#701B20;ACRYLIC
+Scale75 Scalecolor;Dubai Brown;;;;#583D22;ACRYLIC
+Scale75 Scalecolor;Eclipse Grey;;;;#363636;ACRYLIC
+Scale75 Scalecolor;Fall Green;;;;#C9D161;ACRYLIC
+Scale75 Scalecolor;Field Gray;;;;#66736C;ACRYLIC
+Scale75 Scalecolor;Fuchsia;;;;#AA336B;ACRYLIC
+Scale75 Scalecolor;Gobi Brown;;;;#6E5A3F;ACRYLIC
+Scale75 Scalecolor;Golden Skin;;;;#EDC89C;ACRYLIC
+Scale75 Scalecolor;Graphene Gray;;;;#4A515B;ACRYLIC
+Scale75 Scalecolor;Graphite;;;;#8B8C87;ACRYLIC
+Scale75 Scalecolor;Indian Shadow;;;;#673D3F;ACRYLIC
+Scale75 Scalecolor;Irati Green;;;;#008721;ACRYLIC
+Scale75 Scalecolor;Iroko;;;;#B28F4D;ACRYLIC
+Scale75 Scalecolor;Kalahari Orange;;;;#A3563C;ACRYLIC
+Scale75 Scalecolor;Light Skin;;;;#E2B890;ACRYLIC
+Scale75 Scalecolor;Mars Orange;;;;#AF6631;ACRYLIC
+Scale75 Scalecolor;Mediterranean Blue;;;;#4D73B2;ACRYLIC
+Scale75 Scalecolor;Mojave White;;;;#D2CEB5;ACRYLIC
+Scale75 Scalecolor;Nacar;;;;#9B9F90;ACRYLIC
+Scale75 Scalecolor;Navy Blue;;;;#253B6D;ACRYLIC
+Scale75 Scalecolor;Orange Leather;;;;#A06337;ACRYLIC
+Scale75 Scalecolor;Pale Skin;;;;#F1D9CF;ACRYLIC
+Scale75 Scalecolor;Petroleum Gray;;;;#554D4B;ACRYLIC
+Scale75 Scalecolor;Pink Flesh;;;;#D1928D;ACRYLIC
+Scale75 Scalecolor;Rainy Gray;;;;#8B8683;ACRYLIC
+Scale75 Scalecolor;Red Leather;;;;#5F3634;ACRYLIC
+Scale75 Scalecolor;Sahara Yellow;;;;#AA852D;ACRYLIC
+Scale75 Scalecolor;Sandalwood;;;;#B89086;ACRYLIC
+Scale75 Scalecolor;Sherwood Green;;;;#7D853A;ACRYLIC
+Scale75 Scalecolor;Sky Blue;;;;#2496C8;ACRYLIC
+Scale75 Scalecolor;Sol Yellow;;;;#ECCB00;ACRYLIC
+Scale75 Scalecolor;Spring Green;;;;#7FB953;ACRYLIC
+Scale75 Scalecolor;Sunset Purple;;;;#622E54;ACRYLIC
+Scale75 Scalecolor;Tenere Yellow;;;;#E5C76F;ACRYLIC
+Scale75 Scalecolor;Tesla Blue;;;;#414D97;ACRYLIC
+Scale75 Scalecolor;Thar Brown;;;;#B09F81;ACRYLIC
+Scale75 Scalecolor;Violet Blue;;;;#604673;ACRYLIC
+Scale75 Scalecolor;Walnut;;;;#7D6450;ACRYLIC
+Scale75 Scalecolor;White;;;;#FFFFFF;ACRYLIC
+Scale75 Scalecolor;White Sands;;;;#F6E1C6;ACRYLIC

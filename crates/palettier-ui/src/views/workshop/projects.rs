@@ -85,17 +85,24 @@ pub fn ProjectsView() -> Element {
     let current_id = (ui.selected_id)();
     let svc_for_effect = services.clone();
     use_effect(use_reactive!(|current_id| {
+        let already_open = current_id.is_some()
+            && ui.full_project.peek().as_ref().and_then(|p| p.id) == current_id;
+        ui.progress_observations.set(Vec::new());
+        ui.editing_layer.set(None);
+        if already_open {
+            return;
+        }
         let svc = svc_for_effect.clone();
         spawn(async move {
             if let Some(id) = current_id {
-                if let Ok(p) = projects::load_project(&svc, id).await {
+                if let Ok(p) = projects::load_project(&svc, id).await
+                    && *ui.selected_id.peek() == Some(id)
+                {
                     ui.full_project.set(p);
                 }
             } else {
                 ui.full_project.set(None);
             }
-            ui.progress_observations.set(Vec::new());
-            ui.editing_layer.set(None);
         });
     }));
 

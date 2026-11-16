@@ -451,10 +451,10 @@ mod tests {
     }
 
     #[test]
-    fn eight_acrylic_brands_yield_301_unique_pots() {
+    fn eight_acrylic_brands_yield_1351_unique_pots() {
         let mut loaded = CatalogLoader::default().load_detailed();
         loaded.paints.retain(|p| p.system == PaintSystem::Acrylic);
-        assert_eq!(301, loaded.paints.len());
+        assert_eq!(1351, loaded.paints.len());
 
         let mut seen = IndexSet::new();
         for p in &loaded.paints {

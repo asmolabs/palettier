@@ -1,40 +1,270 @@
-# The Army Painter Warpaints (acryliques pour figurines)
+# The Army Painter Warpaints & Warpaints Fanatic (acryliques pour figurines)
 #
-# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Les fabricants ne publient pas
-# leurs pigments ; la teinte est une valeur de reference approchee, a remplacer par
-# une mesure d'ecouvillon dans le Catalogue pour plus de justesse.
-#
-# Selection etendue des teintes courantes, pas la gamme complete.
+# Gamme ACRYLIQUE : la colonne system vaut ACRYLIC. Nuancier issu des references
+# communautaires (Arcturus5404/miniature-paints) ; la teinte peut etre affinee
+# par une mesure d'ecouvillon dans le Catalogue.
+# Gammes Warpaints Fanatic et Warpaints classiques.
 brand;name;code;pigments;opacity;hex;system
-The Army Painter Warpaints;Matt Black;;;;#181818;ACRYLIC
-The Army Painter Warpaints;Uniform Grey;;;;#4B5156;ACRYLIC
-The Army Painter Warpaints;Ash Grey;;;;#8B9194;ACRYLIC
-The Army Painter Warpaints;Spaceship Exterior;;;;#CBD1D3;ACRYLIC
-The Army Painter Warpaints;Matt White;;;;#F7F7F7;ACRYLIC
-The Army Painter Warpaints;Daemonic Yellow;;;;#F5D826;ACRYLIC
-The Army Painter Warpaints;Lava Orange;;;;#E85F1E;ACRYLIC
-The Army Painter Warpaints;Pure Red;;;;#B81D1E;ACRYLIC
-The Army Painter Warpaints;Dragon Red;;;;#8A171C;ACRYLIC
-The Army Painter Warpaints;Vampire Red;;;;#68141A;ACRYLIC
-The Army Painter Warpaints;Alien Purple;;;;#53326D;ACRYLIC
-The Army Painter Warpaints;Oozing Purple;;;;#8965A5;ACRYLIC
-The Army Painter Warpaints;Deep Blue;;;;#162C5B;ACRYLIC
-The Army Painter Warpaints;Ultramarine Blue;;;;#1C3B7A;ACRYLIC
-The Army Painter Warpaints;Crystal Blue;;;;#2876BA;ACRYLIC
-The Army Painter Warpaints;Electric Blue;;;;#54A8DC;ACRYLIC
-The Army Painter Warpaints;Hydra Turquoise;;;;#1A7E86;ACRYLIC
-The Army Painter Warpaints;Angel Green;;;;#1B3B2B;ACRYLIC
-The Army Painter Warpaints;Greenskin;;;;#2D6E3A;ACRYLIC
-The Army Painter Warpaints;Goblin Green;;;;#5D9840;ACRYLIC
-The Army Painter Warpaints;Army Green;;;;#6A7746;ACRYLIC
-The Army Painter Warpaints;Necrotic Flesh;;;;#A3AE79;ACRYLIC
-The Army Painter Warpaints;Oak Brown;;;;#463022;ACRYLIC
-The Army Painter Warpaints;Leather Brown;;;;#543823;ACRYLIC
-The Army Painter Warpaints;Fur Brown;;;;#7A4F2F;ACRYLIC
-The Army Painter Warpaints;Desert Yellow;;;;#B39458;ACRYLIC
-The Army Painter Warpaints;Skeleton Bone;;;;#C8B991;ACRYLIC
-The Army Painter Warpaints;Mummy Robes;;;;#E1DBC8;ACRYLIC
-The Army Painter Warpaints;Tanned Flesh;;;;#A86F59;ACRYLIC
-The Army Painter Warpaints;Barbarian Flesh;;;;#C78C73;ACRYLIC
-The Army Painter Warpaints;Kobold Skin;;;;#DFB094;ACRYLIC
-The Army Painter Warpaints;Elven Flesh;;;;#EAC4AB;ACRYLIC
+The Army Painter Warpaints;Abyssal Blue;;;;#00506C;ACRYLIC
+The Army Painter Warpaints;Aegis Aqua;;;;#32B3D5;ACRYLIC
+The Army Painter Warpaints;Afterglow;;;;#E4EA8D;ACRYLIC
+The Army Painter Warpaints;Agate Skin;;;;#D7877B;ACRYLIC
+The Army Painter Warpaints;Alien Purple;;;;#6154A3;ACRYLIC
+The Army Painter Warpaints;Alpha Blue;;;;#667DC0;ACRYLIC
+The Army Painter Warpaints;Amber Skin;;;;#C4A083;ACRYLIC
+The Army Painter Warpaints;Amulet Aqua;;;;#68C5B6;ACRYLIC
+The Army Painter Warpaints;Ancient Stone;;;;#D0C3A3;ACRYLIC
+The Army Painter Warpaints;Angel Green;;;;#173E31;ACRYLIC
+The Army Painter Warpaints;Angelic Red;;;;#D42C39;ACRYLIC
+The Army Painter Warpaints;Aqua Alchemy;;;;#24BBA6;ACRYLIC
+The Army Painter Warpaints;Aquamarine;;;;#56C4CD;ACRYLIC
+The Army Painter Warpaints;Arctic Gem;;;;#1995D4;ACRYLIC
+The Army Painter Warpaints;Army Green;;;;#5D7554;ACRYLIC
+The Army Painter Warpaints;Ash Grey;;;;#84878F;ACRYLIC
+The Army Painter Warpaints;Augur Blue;;;;#ACBCE2;ACRYLIC
+The Army Painter Warpaints;Autumn Sage;;;;#75AD98;ACRYLIC
+The Army Painter Warpaints;Barbarian Flesh;;;;#F69B7F;ACRYLIC
+The Army Painter Warpaints;Baron Blue;;;;#7C95CC;ACRYLIC
+The Army Painter Warpaints;Barren Dune;;;;#DEBB72;ACRYLIC
+The Army Painter Warpaints;Basilisk Red;;;;#6C2539;ACRYLIC
+The Army Painter Warpaints;Blood Chalice;;;;#DB4B50;ACRYLIC
+The Army Painter Warpaints;Boney Spikes;;;;#E6D4C1;ACRYLIC
+The Army Painter Warpaints;Bootstrap Brown;;;;#5D4D4D;ACRYLIC
+The Army Painter Warpaints;Brainmatter Beige;;;;#DEDBD3;ACRYLIC
+The Army Painter Warpaints;Brigade Grey;;;;#D0D0D2;ACRYLIC
+The Army Painter Warpaints;Brigadine Brown;;;;#443A40;ACRYLIC
+The Army Painter Warpaints;Bright Gold;;;;#987B1A;ACRYLIC
+The Army Painter Warpaints;Bright Sapphire;;;;#84CEF0;ACRYLIC
+The Army Painter Warpaints;Buffed Hide;;;;#B3756A;ACRYLIC
+The Army Painter Warpaints;Burning Ore;;;;#F2653E;ACRYLIC
+The Army Painter Warpaints;Burnt Turf;;;;#BE9859;ACRYLIC
+The Army Painter Warpaints;Camouflage Green;;;;#6E8358;ACRYLIC
+The Army Painter Warpaints;Carnelian Skin;;;;#5D3E46;ACRYLIC
+The Army Painter Warpaints;Cobalt Metal;;;;#2E4249;ACRYLIC
+The Army Painter Warpaints;Command Khaki;;;;#B49488;ACRYLIC
+The Army Painter Warpaints;Company Grey;;;;#BCBEC2;ACRYLIC
+The Army Painter Warpaints;Crystal Blue;;;;#0273BC;ACRYLIC
+The Army Painter Warpaints;Cultist Purple;;;;#6962AB;ACRYLIC
+The Army Painter Warpaints;Daemonic Yellow;;;;#FECE2A;ACRYLIC
+The Army Painter Warpaints;Dark Emerald;;;;#3B4A25;ACRYLIC
+The Army Painter Warpaints;Death Metal;;;;#2B2B2B;ACRYLIC
+The Army Painter Warpaints;Deep Azure;;;;#006B79;ACRYLIC
+The Army Painter Warpaints;Deep Grey;;;;#4B5164;ACRYLIC
+The Army Painter Warpaints;Deep Ocean Blue;;;;#1B3044;ACRYLIC
+The Army Painter Warpaints;Demigod Flames;;;;#D17B41;ACRYLIC
+The Army Painter Warpaints;Desert Yellow;;;;#856D45;ACRYLIC
+The Army Painter Warpaints;Diabolic Plum;;;;#562D74;ACRYLIC
+The Army Painter Warpaints;Diviner Light;;;;#D59FC5;ACRYLIC
+The Army Painter Warpaints;Doomfire Drab;;;;#F9D9E6;ACRYLIC
+The Army Painter Warpaints;Dorado Skin;;;;#EEC79E;ACRYLIC
+The Army Painter Warpaints;Dragon Red;;;;#BF283B;ACRYLIC
+The Army Painter Warpaints;Dryad Brown;;;;#613630;ACRYLIC
+The Army Painter Warpaints;Dusty Skull;;;;#8B7C68;ACRYLIC
+The Army Painter Warpaints;Elder Flower;;;;#A8577B;ACRYLIC
+The Army Painter Warpaints;Electric Lime;;;;#BDD532;ACRYLIC
+The Army Painter Warpaints;Emerald Forest;;;;#5BBB4D;ACRYLIC
+The Army Painter Warpaints;Enchanted Pink;;;;#B66CAE;ACRYLIC
+The Army Painter Warpaints;Eternal Hunt;;;;#279A4C;ACRYLIC
+The Army Painter Warpaints;Evergreen Fog;;;;#396360;ACRYLIC
+The Army Painter Warpaints;Evil Chrome;;;;#5B3B2F;ACRYLIC
+The Army Painter Warpaints;Ferocious Green;;;;#75C377;ACRYLIC
+The Army Painter Warpaints;Fiendish Yellow;;;;#EC9A44;ACRYLIC
+The Army Painter Warpaints;Figgy Pink;;;;#E3AFC9;ACRYLIC
+The Army Painter Warpaints;Flickering Flame;;;;#F58B3D;ACRYLIC
+The Army Painter Warpaints;Forbidden Fruit;;;;#CD88A9;ACRYLIC
+The Army Painter Warpaints;Forest Faun;;;;#A1C7AF;ACRYLIC
+The Army Painter Warpaints;Frost Blue;;;;#9ABEDE;ACRYLIC
+The Army Painter Warpaints;Fur Brown;;;;#774544;ACRYLIC
+The Army Painter Warpaints;Gargoyle Grey;;;;#A8A292;ACRYLIC
+The Army Painter Warpaints;Gemstone Red;;;;#821D23;ACRYLIC
+The Army Painter Warpaints;Glittering Green;;;;#2E794A;ACRYLIC
+The Army Painter Warpaints;Glowing Inferno;;;;#F79D42;ACRYLIC
+The Army Painter Warpaints;Gothic Blue;;;;#2E3E79;ACRYLIC
+The Army Painter Warpaints;Great Hall Grey;;;;#BBB4A6;ACRYLIC
+The Army Painter Warpaints;Greedy Gold;;;;#745218;ACRYLIC
+The Army Painter Warpaints;Greenskin;;;;#1F7843;ACRYLIC
+The Army Painter Warpaints;Grey Castle;;;;#929286;ACRYLIC
+The Army Painter Warpaints;Grotesque Green;;;;#B3C29D;ACRYLIC
+The Army Painter Warpaints;Guardian Green;;;;#226248;ACRYLIC
+The Army Painter Warpaints;Gun Metal;;;;#4F5053;ACRYLIC
+The Army Painter Warpaints;Hexed Violet;;;;#8D81BE;ACRYLIC
+The Army Painter Warpaints;Hydra Turquoise;;;;#149398;ACRYLIC
+The Army Painter Warpaints;Ice Yellow;;;;#FFEDAD;ACRYLIC
+The Army Painter Warpaints;Imperial Navy;;;;#063565;ACRYLIC
+The Army Painter Warpaints;Impish Rouge;;;;#D957A0;ACRYLIC
+The Army Painter Warpaints;Inner Light;;;;#FDCB5F;ACRYLIC
+The Army Painter Warpaints;Jasper Skin;;;;#BA7372;ACRYLIC
+The Army Painter Warpaints;Kraken Lavender;;;;#D5CAE5;ACRYLIC
+The Army Painter Warpaints;Lava Orange;;;;#F5792C;ACRYLIC
+The Army Painter Warpaints;Leafy Green;;;;#76C045;ACRYLIC
+The Army Painter Warpaints;Leather Brown;;;;#7C5B54;ACRYLIC
+The Army Painter Warpaints;Legendary Red;;;;#EF4B3E;ACRYLIC
+The Army Painter Warpaints;Leopard Stone Skin;;;;#E7B4B1;ACRYLIC
+The Army Painter Warpaints;Magecast Magenta;;;;#704099;ACRYLIC
+The Army Painter Warpaints;Marine Mist;;;;#94D6D7;ACRYLIC
+The Army Painter Warpaints;Matt Black;;;;#000000;ACRYLIC
+The Army Painter Warpaints;Matt White;;;;#FFFFFF;ACRYLIC
+The Army Painter Warpaints;Medieval Forest;;;;#437C6D;ACRYLIC
+The Army Painter Warpaints;Mithril;;;;#9E9FA3;ACRYLIC
+The Army Painter Warpaints;Mocca Skin;;;;#81655A;ACRYLIC
+The Army Painter Warpaints;Moldy Wine;;;;#7D3451;ACRYLIC
+The Army Painter Warpaints;Molten Lava;;;;#F05A3E;ACRYLIC
+The Army Painter Warpaints;Moonstone Skin;;;;#C57B74;ACRYLIC
+The Army Painter Warpaints;Mossy Green;;;;#B1DCC0;ACRYLIC
+The Army Painter Warpaints;Mulled Berry;;;;#623348;ACRYLIC
+The Army Painter Warpaints;Necrotic Flesh;;;;#9AA984;ACRYLIC
+The Army Painter Warpaints;Neptune Glow;;;;#75CED4;ACRYLIC
+The Army Painter Warpaints;Night Sky;;;;#304358;ACRYLIC
+The Army Painter Warpaints;Oak Brown;;;;#39262A;ACRYLIC
+The Army Painter Warpaints;Obsidian Skin;;;;#4A4046;ACRYLIC
+The Army Painter Warpaints;Olive Drab;;;;#7A905F;ACRYLIC
+The Army Painter Warpaints;Onyx Skin;;;;#664A4D;ACRYLIC
+The Army Painter Warpaints;Opal Skin;;;;#FFD2C8;ACRYLIC
+The Army Painter Warpaints;Pale Sand;;;;#EFEAD3;ACRYLIC
+The Army Painter Warpaints;Paratrooper Tan;;;;#9A776C;ACRYLIC
+The Army Painter Warpaints;Patagon Pine;;;;#63917F;ACRYLIC
+The Army Painter Warpaints;Pearl Skin;;;;#FFE3D8;ACRYLIC
+The Army Painter Warpaints;Phalanx Blue;;;;#048BAE;ACRYLIC
+The Army Painter Warpaints;Pharaoh Guard;;;;#0C7C61;ACRYLIC
+The Army Painter Warpaints;Pink Potion;;;;#F4B9D4;ACRYLIC
+The Army Painter Warpaints;Pixie Pink;;;;#D96FAE;ACRYLIC
+The Army Painter Warpaints;Plate Mail Metal;;;;#686A6E;ACRYLIC
+The Army Painter Warpaints;Prairie Ochre;;;;#696242;ACRYLIC
+The Army Painter Warpaints;Pure Red;;;;#CD151C;ACRYLIC
+The Army Painter Warpaints;Quartz Skin;;;;#F0D0B4;ACRYLIC
+The Army Painter Warpaints;Raging Rose;;;;#E96663;ACRYLIC
+The Army Painter Warpaints;Raging Rouge;;;;#F68F82;ACRYLIC
+The Army Painter Warpaints;Rainforest;;;;#8BC63E;ACRYLIC
+The Army Painter Warpaints;Red Copper;;;;#4D2C30;ACRYLIC
+The Army Painter Warpaints;Regal Blue;;;;#004F88;ACRYLIC
+The Army Painter Warpaints;Resplendent Red;;;;#96272F;ACRYLIC
+The Army Painter Warpaints;Rough Iron;;;;#352D25;ACRYLIC
+The Army Painter Warpaints;Royal Blue;;;;#0162AF;ACRYLIC
+The Army Painter Warpaints;Ruby Skin;;;;#FBB99D;ACRYLIC
+The Army Painter Warpaints;Ruddy Umber;;;;#985951;ACRYLIC
+The Army Painter Warpaints;Runic Cobalt;;;;#7496B4;ACRYLIC
+The Army Painter Warpaints;Sacred Scarlet;;;;#F1634C;ACRYLIC
+The Army Painter Warpaints;Scarab Green;;;;#193C44;ACRYLIC
+The Army Painter Warpaints;Shieldwall Blue;;;;#08A1CC;ACRYLIC
+The Army Painter Warpaints;Shining Silver;;;;#86888C;ACRYLIC
+The Army Painter Warpaints;Skeleton Bone;;;;#C2B293;ACRYLIC
+The Army Painter Warpaints;Space Dust;;;;#FFE388;ACRYLIC
+The Army Painter Warpaints;Spellbound Fuchsia;;;;#AD4DA0;ACRYLIC
+The Army Painter Warpaints;Stratos Blue;;;;#33658F;ACRYLIC
+The Army Painter Warpaints;Tainted Gold;;;;#575235;ACRYLIC
+The Army Painter Warpaints;Talisman Teal;;;;#1FAE91;ACRYLIC
+The Army Painter Warpaints;Temple Gate Teal;;;;#046154;ACRYLIC
+The Army Painter Warpaints;Terrestial Titan;;;;#303149;ACRYLIC
+The Army Painter Warpaints;Thunderous Blue;;;;#34577B;ACRYLIC
+The Army Painter Warpaints;Tidal Blue;;;;#026B93;ACRYLIC
+The Army Painter Warpaints;Tiger’s Eye Skin;;;;#904D52;ACRYLIC
+The Army Painter Warpaints;Tomb King Tan;;;;#A29278;ACRYLIC
+The Army Painter Warpaints;Topaz Skin;;;;#B25A53;ACRYLIC
+The Army Painter Warpaints;Tourmaline Skin;;;;#E3988B;ACRYLIC
+The Army Painter Warpaints;Tree Ancient;;;;#513430;ACRYLIC
+The Army Painter Warpaints;Triumphant Navy;;;;#1A2C53;ACRYLIC
+The Army Painter Warpaints;True Brass;;;;#635D58;ACRYLIC
+The Army Painter Warpaints;True Copper;;;;#6B4731;ACRYLIC
+The Army Painter Warpaints;Tundra Taupe;;;;#4B4D3E;ACRYLIC
+The Army Painter Warpaints;Turquoise Siren;;;;#29B3B9;ACRYLIC
+The Army Painter Warpaints;Ultramarine Blue;;;;#284D8E;ACRYLIC
+The Army Painter Warpaints;Uniform Grey;;;;#6B707C;ACRYLIC
+The Army Painter Warpaints;Urban Buff;;;;#DBB9AB;ACRYLIC
+The Army Painter Warpaints;Violent Vermillion;;;;#F37964;ACRYLIC
+The Army Painter Warpaints;Violet Coven;;;;#A999C7;ACRYLIC
+The Army Painter Warpaints;Vivid Volt;;;;#CFDC51;ACRYLIC
+The Army Painter Warpaints;Warlock Magenta;;;;#834D9F;ACRYLIC
+The Army Painter Warpaints;Warped Yellow;;;;#FED548;ACRYLIC
+The Army Painter Warpaints;Wasteland Clay;;;;#A38755;ACRYLIC
+The Army Painter Warpaints;Weapon Bronze;;;;#955610;ACRYLIC
+The Army Painter Warpaints;Weird Elixir;;;;#E092BF;ACRYLIC
+The Army Painter Warpaints;Wicked Pink;;;;#CE0886;ACRYLIC
+The Army Painter Warpaints;Wild Green;;;;#46B758;ACRYLIC
+The Army Painter Warpaints;Wilted Rose;;;;#ECC5D7;ACRYLIC
+The Army Painter Warpaints;Wolf Grey;;;;#4F78A3;ACRYLIC
+The Army Painter Warpaints;Woodland Camo;;;;#4B6149;ACRYLIC
+The Army Painter Warpaints;Worn Stone;;;;#C4BFB1;ACRYLIC
+The Army Painter Warpaints;Wyvern Fury;;;;#993243;ACRYLIC
+The Army Painter Warpaints;Abomination Gore;WP1401;;;#A32F26;ACRYLIC
+The Army Painter Warpaints;Arid Earth;WP1402;;;#FDEDC7;ACRYLIC
+The Army Painter Warpaints;Babe Blonde;WP1403;;;#FBDC04;ACRYLIC
+The Army Painter Warpaints;Banshee Brown;WP1404;;;#BFA59B;ACRYLIC
+The Army Painter Warpaints;Basilisk Brown;WP1405;;;#CF8100;ACRYLIC
+The Army Painter Warpaints;Castle Grey;WP1407;;;#8D887F;ACRYLIC
+The Army Painter Warpaints;Centaur Skin;WP1408;;;#E3B1A5;ACRYLIC
+The Army Painter Warpaints;Chaotic Red;WP1142;;;#6F1D06;ACRYLIC
+The Army Painter Warpaints;Combat Fatigues;WP1409;;;#868E59;ACRYLIC
+The Army Painter Warpaints;Commando Green;WP1410;;;#847F37;ACRYLIC
+The Army Painter Warpaints;Corpse Pale;WP1411;;;#EFD0AF;ACRYLIC
+The Army Painter Warpaints;Crusted Sore;WP1412;;;#843046;ACRYLIC
+The Army Painter Warpaints;Crypt Wraith;WP1413;;;#5D5F4D;ACRYLIC
+The Army Painter Warpaints;Cultist Robe;WP1414;;;#787164;ACRYLIC
+The Army Painter Warpaints;Dark Sky;WP1415;;;#314F5E;ACRYLIC
+The Army Painter Warpaints;Dark Stone;WP1425;;;#49383C;ACRYLIC
+The Army Painter Warpaints;Deep Blue;WP1116;;;#0E4E76;ACRYLIC
+The Army Painter Warpaints;Dirt Spatter;WP1416;;;#603920;ACRYLIC
+The Army Painter Warpaints;Disgusting Slime;WP1477;;;#CBB503;ACRYLIC
+The Army Painter Warpaints;Drake Tooth;WP1417;;;#D5D2BD;ACRYLIC
+The Army Painter Warpaints;Dry Rust;WP1479;;;#E74F35;ACRYLIC
+The Army Painter Warpaints;Dungeon Grey;WP1418;;;#676B70;ACRYLIC
+The Army Painter Warpaints;Electric Blue;WP1113;;;#5288B8;ACRYLIC
+The Army Painter Warpaints;Elemental Bolt;WP1419;;;#158E76;ACRYLIC
+The Army Painter Warpaints;Elf Green;WP1420;;;#4B5212;ACRYLIC
+The Army Painter Warpaints;Elven Flesh;WP1421;;;#F9BE94;ACRYLIC
+The Army Painter Warpaints;Field Grey;WP1481;;;#7D807B;ACRYLIC
+The Army Painter Warpaints;Filthy Cape;WP1424;;;#7D785A;ACRYLIC
+The Army Painter Warpaints;Fire Lizard;WP1426;;;#F07000;ACRYLIC
+The Army Painter Warpaints;Fog Grey;WP1427;;;#7A97B1;ACRYLIC
+The Army Painter Warpaints;Glistening Blood;WP1476;;;#B3082D;ACRYLIC
+The Army Painter Warpaints;Gloss Varnish;WP1473;;;#F7F7F7;ACRYLIC
+The Army Painter Warpaints;Goblin Green;WP1109;;;#338E46;ACRYLIC
+The Army Painter Warpaints;Gorgon Hide;WP1428;;;#CFD7E7;ACRYLIC
+The Army Painter Warpaints;Griffon Blue;WP1429;;;#20477A;ACRYLIC
+The Army Painter Warpaints;Grimoire Purple;WP1444;;;#724860;ACRYLIC
+The Army Painter Warpaints;Hardened Carapace;WP1430;;;#44453B;ACRYLIC
+The Army Painter Warpaints;Hemp Rope;WP1431;;;#977C3A;ACRYLIC
+The Army Painter Warpaints;Hydra Turqoise;WP1141;;;#1E939C;ACRYLIC
+The Army Painter Warpaints;Ice Storm;WP1432;;;#3BA0CB;ACRYLIC
+The Army Painter Warpaints;Jungle Green;WP1433;;;#8EA901;ACRYLIC
+The Army Painter Warpaints;Kobold Skin;WP1434;;;#D89D8F;ACRYLIC
+The Army Painter Warpaints;Kraken Skin;WP1435;;;#71BF87;ACRYLIC
+The Army Painter Warpaints;Mars Red;WP1436;;;#D33830;ACRYLIC
+The Army Painter Warpaints;Mid Brown;WP1469;;;#925A11;ACRYLIC
+The Army Painter Warpaints;Monster Brown;WP1120;;;#9D6A5F;ACRYLIC
+The Army Painter Warpaints;Moon Dust;WP1438;;;#F0D45F;ACRYLIC
+The Army Painter Warpaints;Mouldy Clothes;WP1439;;;#3A7529;ACRYLIC
+The Army Painter Warpaints;Mummy Robes;WP1440;;;#EFDED6;ACRYLIC
+The Army Painter Warpaints;Mutant Hue;WP1441;;;#AC8A8D;ACRYLIC
+The Army Painter Warpaints;Mythical Orange;WP1442;;;#E22E0D;ACRYLIC
+The Army Painter Warpaints;Necromancer Cloak;WP1443;;;#413C47;ACRYLIC
+The Army Painter Warpaints;Oozing Purple;WP1445;;;#B29DB7;ACRYLIC
+The Army Painter Warpaints;Orc Blood;WP1422;;;#904B7A;ACRYLIC
+The Army Painter Warpaints;Phoenix Flames;WP1446;;;#F7A103;ACRYLIC
+The Army Painter Warpaints;Poisonous Cloud;WP1448;;;#CFDA2F;ACRYLIC
+The Army Painter Warpaints;Royal Cloak;WP1449;;;#1C9095;ACRYLIC
+The Army Painter Warpaints;Scaly Hide;WP1450;;;#939F8C;ACRYLIC
+The Army Painter Warpaints;Scar Tissue;WP1480;;;#CF8C73;ACRYLIC
+The Army Painter Warpaints;Snake Scales;WP1453;;;#8EAE11;ACRYLIC
+The Army Painter Warpaints;Spaceship Exterior;WP1454;;;#D6D6D6;ACRYLIC
+The Army Painter Warpaints;Stone Golem;WP1455;;;#C3C5BE;ACRYLIC
+The Army Painter Warpaints;Sulfide Ochre;WP1456;;;#C78600;ACRYLIC
+The Army Painter Warpaints;Tanned Flesh;WP1127;;;#BB6F51;ACRYLIC
+The Army Painter Warpaints;Toxic Boils;WP1457;;;#A66E7D;ACRYLIC
+The Army Painter Warpaints;Toxic Mist;WP1437;;;#40BAC0;ACRYLIC
+The Army Painter Warpaints;Troglodyte Blue;WP1458;;;#2588B9;ACRYLIC
+The Army Painter Warpaints;Troll Claws;WP1459;;;#CB883E;ACRYLIC
+The Army Painter Warpaints;Vampire Red;WP1460;;;#98172A;ACRYLIC
+The Army Painter Warpaints;Venom Wyrm;WP1461;;;#6A653E;ACRYLIC
+The Army Painter Warpaints;Viking Blue;WP1462;;;#1C5B98;ACRYLIC
+The Army Painter Warpaints;Voidshield Blue;WP1452;;;#5BBCD7;ACRYLIC
+The Army Painter Warpaints;Warlock Purple;WP1451;;;#C34D81;ACRYLIC
+The Army Painter Warpaints;Warpaints Mixing Medium;WP1475;;;#EFEFEF;ACRYLIC
+The Army Painter Warpaints;Wasteland Soil;WP1463;;;#844857;ACRYLIC
+The Army Painter Warpaints;Werewolf Fur;WP1464;;;#796352;ACRYLIC
+The Army Painter Warpaints;Wet Mud;WP1478;;;#9E3E35;ACRYLIC
+The Army Painter Warpaints;Witch Brew;WP1465;;;#919634;ACRYLIC
+The Army Painter Warpaints;Wizards Orb;WP1466;;;#0F7260;ACRYLIC
+The Army Painter Warpaints;Garment Pigment Toner;;;;#752330;ACRYLIC
+The Army Painter Warpaints;Obsidian Pigment Toner;;;;#1F2224;ACRYLIC
+The Army Painter Warpaints;Pearl Pigment Toner;;;;#EBE4E1;ACRYLIC
+The Army Painter Warpaints;Tiger's Eye Skin;;;;#7F4841;ACRYLIC

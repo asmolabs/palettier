@@ -13,7 +13,7 @@ use dioxus::html::{
     PlatformEventData, SerializedFormData, SerializedHtmlEventConverter, SerializedKeyboardData,
     SerializedMouseData,
 };
-use dioxus::prelude::{Code, Key, Location, Modifiers};
+use dioxus::prelude::{Code, Key, Location, Modifiers, Readable};
 use std::any::Any;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -125,7 +125,18 @@ impl Ui {
         );
         dom.rebuild_in_place();
         let mut ui = Ui { dom, services };
-        ui.settle().await;
+        let deadline = Instant::now() + SETTLE_LIMIT;
+        loop {
+            ui.settle().await;
+            if ui.peek(|s| *s.loaded.peek()) || Instant::now() >= deadline {
+                break;
+            }
+        }
+        assert!(
+            ui.peek(|s| *s.loaded.peek()),
+            "studio initial reload_all did not complete within {:?}",
+            SETTLE_LIMIT
+        );
         ui
     }
 
