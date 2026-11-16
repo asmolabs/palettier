@@ -89,7 +89,7 @@ pub(super) fn CustomTubeForm(
                     state.notify(loc.tr("Indiquez au moins une marque et un nom de couleur.", "Please enter both a brand and a color name."));
                 }
                 Ok(Some(saved)) => {
-                    state.reload_all(&services).await;
+                    state.refresh_paints(&services).await;
                     selected_paint_id.set(saved.id);
                     show_add_form.set(false);
                     name.set(String::new());
@@ -234,7 +234,7 @@ fn RecognizedTubeRow(tube: RecognizedTube) -> Element {
         spawn(async move {
             let loc = *state.locale.read();
             if set_in_stock(&services, pid, true).await.is_ok() {
-                state.reload_all(&services).await;
+                state.set_paint_in_stock_local(pid, true);
                 state.notify(loc.tr("Tube ajouté à votre tiroir.", "Tube added to your drawer."));
             }
         });

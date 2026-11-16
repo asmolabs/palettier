@@ -27,7 +27,7 @@ pub(super) fn PaintSheet(
             let loc = *state.locale.read();
             if delete_tube(&services, pid).await.is_ok() {
                 selected_paint_id.set(None);
-                state.reload_all(&services).await;
+                state.refresh_paints(&services).await;
                 state.notify(loc.tr("Tube personnalisé supprimé.", "Custom tube deleted."));
             }
         });
@@ -126,7 +126,7 @@ fn CalibrationCard(
         spawn(async move {
             let loc = *state.locale.read();
             let _ = calibrate_tube(&services, pid, &m_hex, &t_hex).await;
-            state.reload_all(&services).await;
+            state.refresh_paints(&services).await;
             state.notify(loc.tr("Calibration enregistrée pour ce tube.", "Calibration saved for this tube."));
         });
     };

@@ -21,6 +21,7 @@ pub fn CatalogView() -> Element {
     let search = use_signal(String::new);
     let brand_filter = use_signal(|| "ALL".to_string());
     let stock_only = use_signal(|| false);
+    let display_limit = use_signal(|| 250usize);
     let selected_paint_id = use_signal(|| None::<i64>);
     let calibrate_masstone_hex = use_signal(String::new);
     let calibrate_tint_hex = use_signal(String::new);
@@ -93,6 +94,7 @@ pub fn CatalogView() -> Element {
                 search,
                 brand_filter,
                 stock_only,
+                display_limit,
                 brands,
                 owned_count,
                 shown: filtered.len(),
@@ -101,6 +103,7 @@ pub fn CatalogView() -> Element {
             div { class: "grid-2 u-gtc-1p6fr-1fr",
                 PaintTable {
                     paints: filtered,
+                    display_limit,
                     selected_paint_id,
                     calibrate_masstone_hex,
                     calibrate_tint_hex,
@@ -200,6 +203,7 @@ fn CatalogSearch(
     search: Signal<String>,
     brand_filter: Signal<String>,
     stock_only: Signal<bool>,
+    mut display_limit: Signal<usize>,
     brands: Vec<String>,
     owned_count: usize,
     shown: usize,
@@ -216,11 +220,17 @@ fn CatalogSearch(
                         class: "u-minw-280",
                         placeholder: locale.tr("Rechercher par nom, marque, code ou pigment (ex: PB29, PR108, Zorn)…", "Search by name, brand, code, or pigment (e.g. PB29, PR108, Zorn)…"),
                         value: "{search}",
-                        oninput: move |e| search.set(e.value()),
+                        oninput: move |e| {
+                            search.set(e.value());
+                            display_limit.set(250);
+                        },
                     }
                     select {
                         value: "{brand_filter}",
-                        onchange: move |e| brand_filter.set(e.value()),
+                        onchange: move |e| {
+                            brand_filter.set(e.value());
+                            display_limit.set(250);
+                        },
                         option { value: "ALL", {locale.tr("Toutes les marques", "All brands")}, " ({brands.len()})" }
                         for b in &brands {
                             option { value: "{b}", "{b}" }
@@ -230,7 +240,10 @@ fn CatalogSearch(
                         input {
                             r#type: "checkbox",
                             checked: *stock_only.read(),
-                            onchange: move |e| stock_only.set(e.checked()),
+                            onchange: move |e| {
+                                stock_only.set(e.checked());
+                                display_limit.set(250);
+                            },
                         }
                         span { {locale.tr("Mon tiroir uniquement", "My drawer only")}, " ({owned_count})" }
                     }
@@ -241,16 +254,20 @@ fn CatalogSearch(
     }
 }
 
-/// The list of tubes (the first 250 matches).
+/// The list of tubes, paginated cleanly in chunks of 250 rows.
 #[component]
 fn PaintTable(
     paints: Vec<Paint>,
+    mut display_limit: Signal<usize>,
     selected_paint_id: Signal<Option<i64>>,
     calibrate_masstone_hex: Signal<String>,
     calibrate_tint_hex: Signal<String>,
 ) -> Element {
     let state = use_context::<AppState>();
     let locale = *state.locale.read();
+    let total = paints.len();
+    let limit = *display_limit.read();
+    let shown_count = total.min(limit);
 
     rsx! {
         div { class: "card u-maxh-68vh u-oy-auto",
@@ -265,13 +282,31 @@ fn PaintTable(
                     }
                 }
                 tbody {
-                    for paint in paints.into_iter().take(250) {
+                    for paint in paints.into_iter().take(limit) {
                         PaintRow {
                             paint,
                             selected_paint_id,
                             calibrate_masstone_hex,
                             calibrate_tint_hex,
                         }
+                    }
+                }
+            }
+            if total > shown_count {
+                div { class: "row-between u-mt-10 u-pt-10",
+                    span { class: "muted u-fs-12",
+                        {match locale {
+                            Locale::Fr => format!("Affichage de {shown_count} sur {total} références"),
+                            Locale::En => format!("Showing {shown_count} of {total} references"),
+                        }}
+                    }
+                    button {
+                        class: "btn",
+                        onclick: move |_| {
+                            let next = (*display_limit.peek()).saturating_add(250);
+                            display_limit.set(next);
+                        },
+                        {locale.tr("Afficher +250", "Show +250 more")}
                     }
                 }
             }
@@ -309,7 +344,7 @@ fn PaintRow(
         let services = services.clone();
         spawn(async move {
             if set_in_stock(&services, id, checked).await.is_ok() {
-                state.reload_all(&services).await;
+                state.set_paint_in_stock_local(id, checked);
             }
         });
     };

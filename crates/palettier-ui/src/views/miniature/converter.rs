@@ -15,6 +15,7 @@ pub(super) struct ConverterState {
     brand: Signal<Option<String>>,
     search: Signal<String>,
     selected: Signal<Option<String>>,
+    visible_limit: Signal<usize>,
 }
 
 impl ConverterState {
@@ -23,6 +24,7 @@ impl ConverterState {
             brand: Signal::new(None),
             search: Signal::new(String::new()),
             selected: Signal::new(None),
+            visible_limit: Signal::new(150),
         }
     }
 }
@@ -86,22 +88,28 @@ pub(super) fn Converter(oil_candidates: Vec<Paint>, palette_name: String) -> Ele
 }
 
 fn acrylic_picker(tool: ConverterState, locale: Locale, acrylics: &[Paint], current: Option<&Paint>) -> Element {
-    let ConverterState { mut brand, mut search, .. } = tool;
+    let ConverterState { mut brand, mut search, mut visible_limit, .. } = tool;
     let filtered = filter_acrylics(acrylics, brand.read().as_deref(), &search.read());
+    let total = filtered.len();
+    let limit = *visible_limit.read();
+    let shown = total.min(limit);
     rsx! {
         div { class: "card",
             div { class: "row-between u-mb-10",
                 h3 { class: "card-title u-m-0",
                     {locale.tr("Acryliques Figurines de Référence", "Miniature Acrylic Reference Paints")}
                 }
-                span { class: "pill", "{filtered.len()} ", {locale.tr("teintes", "colours")} }
+                span { class: "pill", "{total} ", {locale.tr("teintes", "colours")} }
             }
 
             // Brand Filter chips
             div { class: "row u-gap-6 u-mb-10 u-fwrap-wrap",
                 button {
                     class: if brand.read().is_none() { "pill pill-accent" } else { "pill" },
-                    onclick: move |_| brand.set(None),
+                    onclick: move |_| {
+                        brand.set(None);
+                        visible_limit.set(150);
+                    },
                     {locale.tr("Toutes marques", "All brands")}
                 }
                 for b in brands(acrylics) {
@@ -111,7 +119,10 @@ fn acrylic_picker(tool: ConverterState, locale: Locale, acrylics: &[Paint], curr
                         rsx! {
                             button {
                                 class: if is_sel { "pill pill-accent" } else { "pill" },
-                                onclick: move |_| brand.set(Some(b.clone())),
+                                onclick: move |_| {
+                                    brand.set(Some(b.clone()));
+                                    visible_limit.set(150);
+                                },
                                 "{label}"
                             }
                         }
@@ -125,13 +136,34 @@ fn acrylic_picker(tool: ConverterState, locale: Locale, acrylics: &[Paint], curr
                 class: "u-w-100pct u-mb-12",
                 placeholder: locale.tr("Rechercher (ex: Mephiston, Blue, Nurgle, Flesh)…", "Search (e.g. Mephiston, Blue, Nurgle, Flesh)…"),
                 value: "{search}",
-                oninput: move |ev| search.set(ev.value()),
+                oninput: move |ev| {
+                    search.set(ev.value());
+                    visible_limit.set(150);
+                },
             }
 
-            // Scrollable list
+            // Scrollable list (capped to `visible_limit` DOM rows for responsiveness)
             div { class: "u-maxh-480 u-oy-auto u-d-flex u-fd-column u-gap-4",
-                for acr in filtered {
+                for acr in filtered.into_iter().take(limit) {
                     {acrylic_row(tool, acr, current)}
+                }
+                if total > shown {
+                    div { class: "row-between u-mt-6 u-p-8-10",
+                        span { class: "muted u-fs-11p5",
+                            {match locale {
+                                Locale::Fr => format!("{shown} sur {total} affichées"),
+                                Locale::En => format!("Showing {shown} of {total}"),
+                            }}
+                        }
+                        button {
+                            class: "btn u-fs-11p5",
+                            onclick: move |_| {
+                                let next = (*visible_limit.peek()).saturating_add(150);
+                                visible_limit.set(next);
+                            },
+                            {locale.tr("Afficher +150", "Show +150 more")}
+                        }
+                    }
                 }
             }
         }

@@ -384,6 +384,29 @@ impl AppState {
         self.loaded.set(true);
     }
 
+    /// Reloads only the paint catalog after a tube calibration, creation or deletion.
+    pub async fn refresh_paints(&mut self, services: &AppServices) {
+        if let Ok(p) = services.catalog.all().await {
+            self.paints.set(p);
+        }
+    }
+
+    /// Updates a single paint's drawer status in memory without re-querying all 2,000+ paints.
+    pub fn set_paint_in_stock_local(&mut self, id: i64, in_stock: bool) {
+        for p in self.paints.write().iter_mut() {
+            if p.id == Some(id) {
+                p.in_stock = in_stock;
+            }
+        }
+        for pal in self.palettes.write().iter_mut() {
+            for p in &mut pal.paints {
+                if p.id == Some(id) {
+                    p.in_stock = in_stock;
+                }
+            }
+        }
+    }
+
     pub fn notify(&mut self, msg: impl Into<String>) {
         self.toast.set(Some(msg.into()));
     }

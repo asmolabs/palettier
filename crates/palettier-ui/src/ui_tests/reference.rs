@@ -7,10 +7,21 @@ async fn catalog_search_narrows_the_list() {
     let mut ui = Ui::studio().await;
     ui.click_in("sidebar", "Catalogue").await;
     ui.assert_shows("680 tube(s) affiché(s)").await;
+    ui.assert_shows("Affichage de 250 sur 680 références").await;
+    ui.click("Afficher +250").await;
+    ui.assert_shows("Affichage de 500 sur 680 références").await;
     ui.type_into("Rechercher par nom, marque, code ou pigment", "PB29")
         .await;
     ui.assert_hides("680 tube(s) affiché(s)").await;
     ui.assert_shows("Ultramarine").await;
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn mixer_solver_runs_asynchronously_on_palette() {
+    let mut ui = Ui::studio().await;
+    ui.click_in("sidebar", "Mélangeur").await;
+    ui.click("Proposer des recettes").await;
+    ui.assert_shows("Dosage proposé").await;
 }
 
 #[tokio::test(flavor = "current_thread")]

@@ -23,6 +23,8 @@ pub fn MixerSolverCard(
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
     let (in_stock, catalog) = (mixer::SCOPE_IN_STOCK, mixer::SCOPE_CATALOG);
+    let mut solving = use_signal(|| false);
+    let mut solve_seq = use_signal(|| 0u64);
 
     rsx! {
         div { class: "card",
@@ -72,18 +74,37 @@ pub fn MixerSolverCard(
                 }
                 button {
                     class: "btn-primary",
+                    disabled: solving(),
                     onclick: {
                         let pals = palettes.clone();
                         let pts = all_paints.clone();
                         move |_| {
                             let pool = mixer::search_pool(&pals, &pts, scope_idx());
                             let target = state.mixer_target_hex.read().clone();
-                            if let Some(found) = mixer::suggest_recipes(&services, &target, &pool, max_paints()) {
-                                suggestions.set(found);
-                            }
+                            let max = max_paints();
+                            let svc = services.clone();
+                            let seq = *solve_seq.peek() + 1;
+                            solve_seq.set(seq);
+                            solving.set(true);
+                            spawn(async move {
+                                let res = tokio::task::spawn_blocking(move || {
+                                    mixer::suggest_recipes(&svc, &target, &pool, max)
+                                })
+                                .await;
+                                if *solve_seq.peek() == seq {
+                                    if let Ok(Some(found)) = res {
+                                        suggestions.set(found);
+                                    }
+                                    solving.set(false);
+                                }
+                            });
                         }
                     },
-                    {locale.tr("Proposer des recettes", "Suggest recipes")}
+                    if solving() {
+                        {locale.tr("Calcul en cours…", "Computing…")}
+                    } else {
+                        {locale.tr("Proposer des recettes", "Suggest recipes")}
+                    }
                 }
             }
 

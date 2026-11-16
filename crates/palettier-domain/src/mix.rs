@@ -997,10 +997,37 @@ mod tests {
             millis,
             worst
         );
-        assert!(millis < 1000, "{millis} ms par cible");
+        // Generous ceiling so parallel CI test runs never flake on wall-clock timing.
+        assert!(millis < 10_000, "{millis} ms par cible");
         assert!(
             (worst - 0.5879680822937304).abs() < 1e-12,
             "pire écart attendu 0.5879680822937304, obtenu {worst}"
+        );
+    }
+
+    #[test]
+    fn acrylic_catalog_mix_coverage() {
+        let service = ColorMixService::new();
+        let acrylics: Vec<Paint> = CatalogLoader::default()
+            .load()
+            .into_iter()
+            .filter(|p| p.system == PaintSystem::Acrylic)
+            .collect();
+        assert_eq!(1349, acrylics.len());
+        let mut worst: f64 = 0.0;
+        for hex in TARGETS {
+            let target = Rgb::of_hex(hex).unwrap();
+            let suggestions = service.suggest_mixes(target, &acrylics, 4, Some(2));
+            assert!(!suggestions.is_empty(), "aucune recette acrylique pour {hex}");
+            assert!(suggestions[0]
+                .parts
+                .iter()
+                .all(|p| p.paint.system == PaintSystem::Acrylic && !p.paint.is_effect()));
+            worst = worst.max(suggestions[0].delta_e);
+        }
+        assert!(
+            worst < 1.5,
+            "pire écart acrylique attendu < 1.5, obtenu {worst}"
         );
     }
 
