@@ -24,7 +24,7 @@ pub fn MixerView() -> Element {
     // Left panel: Freeform bench simulator (ColorMixService::mix)
     let brands = mixer::brands(&all_paints);
     let sim_brand = use_signal(|| brands.first().cloned().unwrap_or_default());
-    let sim_paint_idx = use_signal(|| 0usize);
+    let mut sim_paint_idx = use_signal(|| 0usize);
     let sim_parts_input = use_signal(|| 1.0_f64);
     let manual_parts = use_signal(Vec::<PaintPart>::new);
     let save_mix_name = use_signal(String::new);
@@ -32,9 +32,32 @@ pub fn MixerView() -> Element {
     // Right panel: Inverse Kubelka-Munk solver
     let scope_idx = use_signal(|| 0usize); // 0..N = Palette, 9998 = In stock, 9999 = Full catalog
     let max_paints = use_signal(|| 3usize);
-    let suggestions = use_signal(Vec::<MixSuggestion>::new);
+    let mut suggestions = use_signal(Vec::<MixSuggestion>::new);
 
-    let brand_paints = mixer::paints_of_brand(&all_paints, &sim_brand());
+    use_effect(use_reactive!(|system| {
+        let _ = system;
+        suggestions.set(Vec::new());
+        sim_paint_idx.set(0);
+    }));
+
+    let effective_brand = {
+        let current = sim_brand();
+        if brands.iter().any(|b| b == &current) {
+            current
+        } else {
+            brands.first().cloned().unwrap_or_default()
+        }
+    };
+    let brand_paints = mixer::paints_of_brand(&all_paints, &effective_brand);
+    let effective_paint_idx = sim_paint_idx().min(brand_paints.len().saturating_sub(1));
+    let effective_scope = {
+        let raw = scope_idx();
+        if raw < mixer::SCOPE_IN_STOCK && palettes.get(raw).is_none() {
+            0
+        } else {
+            raw
+        }
+    };
 
     let current_mix_result = {
         let parts_snapshot = manual_parts.read().clone();
@@ -63,6 +86,8 @@ pub fn MixerView() -> Element {
                         brands,
                         brand_paints,
                         mix: current_mix_result.clone(),
+                        effective_brand,
+                        effective_paint_idx,
                         sim_brand,
                         sim_paint_idx,
                         sim_parts_input,
@@ -81,6 +106,7 @@ pub fn MixerView() -> Element {
                         palettes: palettes.clone(),
                         all_paints: all_paints.clone(),
                         target_hex: target_hex.clone(),
+                        effective_scope,
                         scope_idx,
                         max_paints,
                         suggestions,
@@ -89,7 +115,7 @@ pub fn MixerView() -> Element {
 
                     // CIELAB Chromatic Gamut Map (a* / b*)
                     GamutMapCard {
-                        gamut_paints: mixer::gamut_paints(&palettes, scope_idx(), &manual_parts.read(), &all_paints),
+                        gamut_paints: mixer::gamut_paints(&palettes, effective_scope, &manual_parts.read(), &all_paints),
                         target_hex: target_hex.clone(),
                         best_achieved: suggestions().first().map(|s| s.color.to_hex()),
                     }
@@ -105,6 +131,8 @@ fn MixerBenchCard(
     brands: Vec<String>,
     brand_paints: Vec<Paint>,
     mix: Option<MixResult>,
+    effective_brand: String,
+    effective_paint_idx: usize,
     sim_brand: Signal<String>,
     sim_paint_idx: Signal<usize>,
     sim_parts_input: Signal<f64>,
@@ -132,7 +160,7 @@ fn MixerBenchCard(
                 div { class: "row",
                     select {
                         class: "u-w-155",
-                        value: "{sim_brand}",
+                        value: "{effective_brand}",
                         onchange: move |e| {
                             sim_brand.set(e.value());
                             sim_paint_idx.set(0);
@@ -143,6 +171,7 @@ fn MixerBenchCard(
                     }
                     select {
                         class: "u-flex-1 u-minw-180",
+                        value: "{effective_paint_idx}",
                         onchange: move |e| {
                             if let Ok(i) = e.value().parse::<usize>() {
                                 sim_paint_idx.set(i);
@@ -151,7 +180,7 @@ fn MixerBenchCard(
                         for (i, pt) in brand_paints.iter().enumerate() {
                             option {
                                 value: "{i}",
-                                selected: *sim_paint_idx.read() == i,
+                                selected: effective_paint_idx == i,
                                 "{pt.name} ({pt.hex_color})"
                             }
                         }
@@ -174,7 +203,7 @@ fn MixerBenchCard(
                         onclick: {
                             let bp = brand_paints.clone();
                             move |_| {
-                                if let Some(pt) = bp.get(*sim_paint_idx.read()).cloned() {
+                                if let Some(pt) = bp.get(effective_paint_idx).cloned() {
                                     let dose = *sim_parts_input.read();
                                     let list = mixer::add_to_bench(&manual_parts.read(), pt, dose);
                                     manual_parts.set(list);

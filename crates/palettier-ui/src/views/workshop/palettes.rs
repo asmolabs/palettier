@@ -1,11 +1,13 @@
 //! Working palettes: the saved selections of tubes, their table, matrix, gamut and mother mixes.
 
+use crate::actions::catalog::{ALL_BRANDS, brands_of, filter_paints};
 use crate::actions::palettes;
 use crate::state::{AppServices, AppState};
 use crate::theme::{ColorSwatch, DeltaEBadge, GamutMapSvg, PaintSwatch, SectionHeader};
 use dioxus::prelude::*;
 use palettier_domain::guide::MixingGuideBuilder;
-use palettier_domain::paint::Paint;
+use palettier_domain::i18n::Locale;
+use palettier_domain::paint::{Paint, PaintSystem};
 use palettier_domain::palette::Palette;
 use palettier_domain::project::MissingPaint;
 
@@ -27,7 +29,8 @@ pub fn PalettesView() -> Element {
     let locale = *state.locale.read();
     let palettes = palettes_of_system(&state);
     let selected_idx = use_signal(|| 0usize);
-    let active_pal = palettes.get(selected_idx()).cloned();
+    let effective_idx = selected_idx().min(palettes.len().saturating_sub(1));
+    let active_pal = palettes.get(effective_idx).cloned();
 
     rsx! {
         div {
@@ -43,7 +46,7 @@ pub fn PalettesView() -> Element {
             div { class: "grid-3",
                 div {
                     NewPaletteCard { selected_idx }
-                    PaletteList { selected_idx }
+                    PaletteList { selected_idx, effective_idx }
                 }
 
                 div { class: "u-grid-column-span-2",
@@ -154,7 +157,7 @@ fn NewPaletteCard(selected_idx: Signal<usize>) -> Element {
 
 /// « Palettes enregistrées »: every palette of the working system.
 #[component]
-fn PaletteList(selected_idx: Signal<usize>) -> Element {
+fn PaletteList(mut selected_idx: Signal<usize>, effective_idx: usize) -> Element {
     let state = use_context::<AppState>();
     let locale = *state.locale.read();
     let palettes = palettes_of_system(&state);
@@ -165,7 +168,7 @@ fn PaletteList(selected_idx: Signal<usize>) -> Element {
             for (idx, pal) in palettes.iter().enumerate() {
                 div {
                     class: "card-subtle",
-                    style: if idx == selected_idx() {
+                    style: if idx == effective_idx {
                         "margin-bottom:8px;border-color:var(--accent);cursor:pointer;"
                     } else {
                         "margin-bottom:8px;cursor:pointer;"
@@ -198,14 +201,31 @@ fn PaletteList(selected_idx: Signal<usize>) -> Element {
 
 /// The selected palette: its header, tube picker, tube table, matrix and substitutes.
 #[component]
-fn PaletteDetail(pal: Palette, selected_idx: Signal<usize>) -> Element {
+fn PaletteDetail(pal: Palette, mut selected_idx: Signal<usize>) -> Element {
     let mut state = use_context::<AppState>();
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
+    let system = *state.paint_system.read();
     let all_paints = state.paints_of_system();
+    let brands = brands_of(&all_paints);
 
+    let mut brand_filter = use_signal(|| ALL_BRANDS.to_string());
+    let mut tube_query = use_signal(String::new);
     let mut paint_to_add_idx = use_signal(|| 0usize);
     let mut show_matrix = use_signal(|| false);
+
+    let effective_brand = {
+        let current = brand_filter.read().clone();
+        if current == ALL_BRANDS || brands.iter().any(|b| b == &current) {
+            current
+        } else {
+            ALL_BRANDS.to_string()
+        }
+    };
+    let filtered_paints = filter_paints(&all_paints, &tube_query.read(), &effective_brand, false);
+    let visible_paints: Vec<Paint> = filtered_paints.iter().take(200).cloned().collect();
+    let hidden_count = filtered_paints.len().saturating_sub(visible_paints.len());
+    let effective_add_idx = paint_to_add_idx().min(visible_paints.len().saturating_sub(1));
 
     let delete = {
         let svc = services.clone();
@@ -222,9 +242,9 @@ fn PaletteDetail(pal: Palette, selected_idx: Signal<usize>) -> Element {
 
     let add_tube = {
         let pal = pal.clone();
-        let pts = all_paints.clone();
+        let pts = visible_paints.clone();
         move |_| {
-            if let Some(pt) = pts.get(paint_to_add_idx()).cloned() {
+            if let Some(pt) = pts.get(effective_add_idx).cloned() {
                 let svc = services.clone();
                 let pal = pal.clone();
                 spawn(async move {
@@ -244,9 +264,15 @@ fn PaletteDetail(pal: Palette, selected_idx: Signal<usize>) -> Element {
                     span { class: "muted", "{pal.purpose}" }
                 }
                 div { class: "row",
-                    span {
-                        class: "pill pill-accent",
-                        {locale.tr("Rythme imposé", "Pacing set by")}, " : {pal.slowest_drying_class().label(locale)}"
+                    if system == PaintSystem::Acrylic {
+                        span { class: "pill pill-acrylic",
+                            {locale.tr("Système : Acrylique (séchage en min)", "System: Acrylic (dries in min)")}
+                        }
+                    } else {
+                        span {
+                            class: "pill pill-accent",
+                            {locale.tr("Rythme imposé", "Pacing set by")}, " : {pal.slowest_drying_class().label(locale)}"
+                        }
                     }
                     button {
                         class: if show_matrix() { "btn-primary" } else { "btn" },
@@ -268,20 +294,57 @@ fn PaletteDetail(pal: Palette, selected_idx: Signal<usize>) -> Element {
                 p { class: "muted u-mb-14 u-ws-pre-line", "{pal.notes}" }
             }
 
-            div { class: "row u-mb-14",
+            div { class: "row u-mb-14 u-fwrap-wrap",
                 select {
-                    class: "u-flex-1",
+                    class: "u-w-165",
+                    value: "{effective_brand}",
+                    onchange: move |ev| {
+                        brand_filter.set(ev.value());
+                        paint_to_add_idx.set(0);
+                    },
+                    option { value: "{ALL_BRANDS}", {locale.tr("Toutes marques", "All brands")} }
+                    for b in &brands {
+                        option { value: "{b}", "{b}" }
+                    }
+                }
+                input {
+                    r#type: "text",
+                    class: "u-w-165",
+                    placeholder: locale.tr("Filtrer un tube…", "Filter tubes…"),
+                    value: "{tube_query}",
+                    oninput: move |ev| {
+                        tube_query.set(ev.value());
+                        paint_to_add_idx.set(0);
+                    },
+                }
+                select {
+                    class: "u-flex-1 u-minw-180",
+                    value: "{effective_add_idx}",
                     onchange: move |ev| {
                         if let Ok(i) = ev.value().parse::<usize>() {
                             paint_to_add_idx.set(i);
                         }
                     },
-                    for (i, pt) in all_paints.iter().enumerate() {
-                        option { value: "{i}", "{pt.brand} — {pt.name} ({pt.hex_color})" }
+                    for (i, pt) in visible_paints.iter().enumerate() {
+                        option {
+                            value: "{i}",
+                            selected: effective_add_idx == i,
+                            "{pt.brand} — {pt.name} ({pt.hex_color})"
+                        }
+                    }
+                    if hidden_count > 0 {
+                        option {
+                            disabled: true,
+                            {match locale {
+                                Locale::Fr => format!("… +{hidden_count} autres (filtrez par marque ou nom)"),
+                                Locale::En => format!("… +{hidden_count} more (filter by brand or name)"),
+                            }}
+                        }
                     }
                 }
                 button {
                     class: "btn-primary",
+                    disabled: visible_paints.is_empty(),
                     onclick: add_tube,
                     {locale.tr("+ Ajouter ce tube", "+ Add tube")}
                 }

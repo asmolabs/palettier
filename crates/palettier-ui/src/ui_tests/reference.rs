@@ -25,6 +25,15 @@ async fn mixer_solver_runs_asynchronously_on_palette() {
 }
 
 #[tokio::test(flavor = "current_thread")]
+async fn mixer_bench_updates_brands_when_switching_system() {
+    let mut ui = Ui::studio().await;
+    ui.click_in("sidebar", "Mélangeur").await;
+    ui.click_in("system-segment", "Acrylique").await;
+    ui.click("+ Ajouter").await;
+    ui.assert_shows("Vider la paillasse").await;
+}
+
+#[tokio::test(flavor = "current_thread")]
 async fn mixer_in_acrylic_offers_acrylics_only() {
     let mut ui = Ui::studio().await;
     ui.click_in("system-segment", "Acrylique").await;

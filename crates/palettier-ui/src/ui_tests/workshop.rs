@@ -97,6 +97,14 @@ async fn creating_a_palette_lists_it() {
 
     ui.assert_shows("Palettes enregistrées (4)").await;
     ui.assert_shows("Drap bleu").await;
+
+    ui.click("Blindage vert olive").await;
+    ui.click_in("system-segment", "Acrylique").await;
+    ui.assert_shows("Armure bleue (acrylique)").await;
+    ui.assert_shows("Système : Acrylique (séchage en min)").await;
+    ui.type_into("Filtrer un tube…", "Mephiston").await;
+    ui.click("+ Ajouter ce tube").await;
+    ui.assert_shows("Mephiston Red").await;
 }
 
 #[tokio::test(flavor = "current_thread")]

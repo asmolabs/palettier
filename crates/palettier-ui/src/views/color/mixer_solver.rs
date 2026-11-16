@@ -14,6 +14,7 @@ pub fn MixerSolverCard(
     palettes: Vec<Palette>,
     all_paints: Vec<Paint>,
     target_hex: String,
+    effective_scope: usize,
     scope_idx: Signal<usize>,
     max_paints: Signal<usize>,
     suggestions: Signal<Vec<MixSuggestion>>,
@@ -43,16 +44,29 @@ pub fn MixerSolverCard(
                     div {
                         label { class: "field-label", {locale.tr("Chercher dans", "Search Scope")} }
                         select {
+                            value: "{effective_scope}",
                             onchange: move |ev| {
                                 if let Ok(v) = ev.value().parse::<usize>() {
                                     scope_idx.set(v);
                                 }
                             },
                             for (idx, pal) in palettes.iter().enumerate() {
-                                option { value: "{idx}", "Palette: {pal.name} ({pal.paints.len()} tubes)" }
+                                option {
+                                    value: "{idx}",
+                                    selected: effective_scope == idx,
+                                    "Palette: {pal.name} ({pal.paints.len()} tubes)"
+                                }
                             }
-                            option { value: "{in_stock}", {locale.tr("Mes tubes en stock", "My in-stock tubes")} }
-                            option { value: "{catalog}", {locale.tr("Tout le catalogue", "Full catalog")}, " ({all_paints.len()} tubes)" }
+                            option {
+                                value: "{in_stock}",
+                                selected: effective_scope == in_stock,
+                                {locale.tr("Mes tubes en stock", "My in-stock tubes")}
+                            }
+                            option {
+                                value: "{catalog}",
+                                selected: effective_scope == catalog,
+                                {locale.tr("Tout le catalogue", "Full catalog")}, " ({all_paints.len()} tubes)"
+                            }
                         }
                     }
                     div {
@@ -79,7 +93,7 @@ pub fn MixerSolverCard(
                         let pals = palettes.clone();
                         let pts = all_paints.clone();
                         move |_| {
-                            let pool = mixer::search_pool(&pals, &pts, scope_idx());
+                            let pool = mixer::search_pool(&pals, &pts, effective_scope);
                             let target = state.mixer_target_hex.read().clone();
                             let max = max_paints();
                             let svc = services.clone();
