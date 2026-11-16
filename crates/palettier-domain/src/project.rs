@@ -560,6 +560,11 @@ impl SubstituteService {
                     if candidate.id.is_some() && candidate.id == paint.id {
                         continue;
                     }
+                    // Keep substitutes within the same binder system and surface finish
+                    // so a flat colour never suggests a metallic/effect paint or vice versa.
+                    if candidate.system != paint.system || candidate.is_effect() != paint.is_effect() {
+                        continue;
+                    }
                     let gap = delta_e_2000(paint.color(), candidate.color());
                     if best.as_ref().is_none_or(|(_, b_gap)| gap < *b_gap) {
                         best = Some((candidate.clone(), gap));
@@ -805,5 +810,56 @@ mod tests {
         assert_eq!("Cape rouge", risks[0].where_name);
         assert_eq!("Étape 1", risks[0].under);
         assert_eq!("Étape 2", risks[0].over);
+    }
+
+    #[test]
+    fn substitutes_stay_within_same_system_and_finish() {
+        let mut wanted = Paint::new("Vallejo", "Neutral Grey", "#808080")
+            .in_system(PaintSystem::Acrylic);
+        wanted.id = Some(1);
+        wanted.in_stock = false;
+
+        let mut metallic = Paint::new("Vallejo", "Silver", "#808080")
+            .in_system(PaintSystem::Acrylic);
+        metallic.id = Some(2);
+        metallic.pigments.insert("ALU".to_string());
+
+        let mut oil = Paint::new("Williamsburg", "Neutral Grey", "#808080")
+            .in_system(PaintSystem::Oil);
+        oil.id = Some(3);
+
+        let mut flat_acrylic = Paint::new("AK", "Neutral Grey", "#7D7D7D")
+            .in_system(PaintSystem::Acrylic);
+        flat_acrylic.id = Some(4);
+
+        let service = SubstituteService::new();
+        let missing = service.missing_among(
+            std::slice::from_ref(&wanted),
+            &[metallic.clone(), oil, flat_acrylic.clone()],
+        );
+        assert_eq!(missing.len(), 1);
+        assert_eq!(
+            missing[0].nearest.as_ref().map(|p| p.name.as_str()),
+            Some("Neutral Grey")
+        );
+        assert_eq!(
+            missing[0].nearest.as_ref().map(|p| p.brand.as_str()),
+            Some("AK")
+        );
+
+        let only_metallic = service.missing_among(&[wanted], &[metallic.clone()]);
+        assert!(only_metallic[0].nearest.is_none());
+
+        let mut wanted_metallic = Paint::new("AK", "Aluminium", "#808080")
+            .in_system(PaintSystem::Acrylic);
+        wanted_metallic.id = Some(5);
+        wanted_metallic.in_stock = false;
+        wanted_metallic.pigments.insert("ALU".to_string());
+
+        let for_metallic = service.missing_among(&[wanted_metallic], &[flat_acrylic, metallic]);
+        assert_eq!(
+            for_metallic[0].nearest.as_ref().map(|p| p.name.as_str()),
+            Some("Silver")
+        );
     }
 }

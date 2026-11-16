@@ -55,8 +55,13 @@ pub fn TodayView() -> Element {
 #[component]
 fn ClimateCard() -> Element {
     let mut state = use_context::<AppState>();
+    let services = use_context::<AppServices>();
     let locale = *state.locale.read();
     let workshop = *state.workshop.read();
+
+    let svc_temp = services.clone();
+    let svc_hum = services.clone();
+    let svc_vent = services;
 
     rsx! {
         div { class: "card",
@@ -79,7 +84,7 @@ fn ClimateCard() -> Element {
                             oninput: move |ev| {
                                 if let Ok(v) = ev.value().parse::<f64>()
                                     && let Ok(w) = Workshop::new(v, workshop.relative_humidity, workshop.ventilation) {
-                                        state.workshop.set(w);
+                                        state.set_workshop(&svc_temp, w);
                                     }
                             }
                         }
@@ -93,7 +98,7 @@ fn ClimateCard() -> Element {
                             oninput: move |ev| {
                                 if let Ok(v) = ev.value().parse::<f64>()
                                     && let Ok(w) = Workshop::new(workshop.temperature_celsius, v, workshop.ventilation) {
-                                        state.workshop.set(w);
+                                        state.set_workshop(&svc_hum, w);
                                     }
                             }
                         }
@@ -105,7 +110,7 @@ fn ClimateCard() -> Element {
                             onchange: move |ev| {
                                 if let Ok(vent) = Ventilation::from_str(&ev.value())
                                     && let Ok(w) = Workshop::new(workshop.temperature_celsius, workshop.relative_humidity, vent) {
-                                        state.workshop.set(w);
+                                        state.set_workshop(&svc_vent, w);
                                     }
                             },
                             for v in Ventilation::ALL {

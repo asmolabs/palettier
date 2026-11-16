@@ -319,6 +319,19 @@ impl AppState {
     pub const KEY_LOCALE: &'static str = "ui.locale";
     pub const KEY_THEME: &'static str = "ui.theme";
     pub const KEY_PAINT_SYSTEM: &'static str = "ui.paint_system";
+    pub const KEY_WORKSHOP: &'static str = "ui.workshop";
+
+    /// Updates the workshop climate and remembers it for the next start.
+    pub fn set_workshop(&mut self, services: &AppServices, workshop: Workshop) {
+        if *self.workshop.peek() == workshop {
+            return;
+        }
+        self.workshop.set(workshop);
+        let svc = services.clone();
+        spawn(async move {
+            let _ = crate::actions::settings::save_workshop(&svc, workshop).await;
+        });
+    }
 
     /// Switches the working system and remembers it for the next start.
     pub fn set_paint_system(&mut self, services: &AppServices, system: PaintSystem) {
@@ -361,6 +374,9 @@ impl AppState {
             && let Ok(sys) = PaintSystem::from_str(&sys)
         {
             self.paint_system.set(sys);
+        }
+        if let Some(workshop) = crate::actions::settings::load_workshop(services).await {
+            self.workshop.set(workshop);
         }
         if let Ok(p) = services.catalog.all().await {
             self.paints.set(p);

@@ -130,6 +130,7 @@ PR255;Ecarlate pyrrole;#E0401F;SEMI_OPAQUE;MEDIUM;0.90
 PR264;Rubis pyrrole;#A81830;TRANSPARENT;MEDIUM;0.90
 # Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
 PR4;Rouge para chlore;#D8321E;SEMI_OPAQUE;MEDIUM;0.80
+PR146;Rouge naphtol carmin (FBB);#C82034;SEMI_TRANSPARENT;MEDIUM;0.85
 PR176;Carmin de benzimidazolone;#9E1B32;TRANSPARENT;MEDIUM;0.90;#E2A6B4
 PR187;Rouge naphtol;#C21F35;SEMI_TRANSPARENT;MEDIUM;0.85
 # Ajoutes le 15/09/2026 avec les gammes redressees ; proprietes estimees.
@@ -147,6 +148,7 @@ PV49;Violet de cobalt clair;#7A4A86;TRANSPARENT;MEDIUM;0.40
 
 # --- Bleus ---
 PB15;Bleu de phtalocyanine;#0E3F73;TRANSPARENT;MEDIUM;1.00;#8FAED2
+PB15:1;Bleu de phtalocyanine nuance rouge (alpha);#14357A;TRANSPARENT;MEDIUM;1.00;#92B0D8
 PB15:2;Bleu de phtalocyanine nuance rouge;#14357A;TRANSPARENT;MEDIUM;1.00;#92B0D8
 PB15:3;Bleu de phtalocyanine nuance verte;#0D4A80;TRANSPARENT;MEDIUM;1.00;#8CB4D6
 PB15:4;Bleu de phtalocyanine nuance verte (PB15:4);#0D4A80;TRANSPARENT;MEDIUM;1.00;#8CB4D6

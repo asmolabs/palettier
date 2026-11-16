@@ -67,11 +67,16 @@ pub fn filter_paints(paints: &[Paint], query: &str, brand: &str, stock_only: boo
         .collect()
 }
 
-/// The `count` tubes closest in colour to `target` (ΔE 2000), closest first.
+/// The `count` compatible tubes closest in colour to `target` (ΔE 2000), closest first.
+/// Filters to the same binder system and surface finish (`is_effect()`).
 pub fn closest_substitutes(paints: &[Paint], target: &Paint, count: usize) -> Vec<(Paint, f64)> {
     let mut list: Vec<(Paint, f64)> = paints
         .iter()
-        .filter(|p| p.id != target.id)
+        .filter(|p| {
+            p.id != target.id
+                && p.system == target.system
+                && p.is_effect() == target.is_effect()
+        })
         .map(|p| (p.clone(), delta_e_2000(target.color(), p.color())))
         .collect();
     list.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -252,5 +257,33 @@ mod tests {
         assert_eq!(subs.len(), 6.min(paints.len() - 1));
         assert!(subs.iter().all(|(p, _)| p.id != paints[0].id));
         assert!(subs.windows(2).all(|w| w[0].1 <= w[1].1));
+    }
+
+    #[test]
+    fn closest_substitutes_separates_matte_metallic_and_system() {
+        let mut matte = Paint::new("AK", "Flat Grey", "#808080")
+            .in_system(PaintSystem::Acrylic);
+        matte.id = Some(1);
+
+        let mut metal = Paint::new("AK", "Gunmetal", "#808080")
+            .in_system(PaintSystem::Acrylic);
+        metal.id = Some(2);
+        metal.pigments.insert("ALU".to_string());
+
+        let mut oil = Paint::new("Schmincke", "Oil Grey", "#808080")
+            .in_system(PaintSystem::Oil);
+        oil.id = Some(3);
+
+        let mut other_matte = Paint::new("Vallejo", "Basalt Grey", "#7A7A7A")
+            .in_system(PaintSystem::Acrylic);
+        other_matte.id = Some(4);
+
+        let pool = vec![matte.clone(), metal.clone(), oil, other_matte];
+        let subs = closest_substitutes(&pool, &matte, 5);
+        assert_eq!(subs.len(), 1);
+        assert_eq!(subs[0].0.id, Some(4));
+
+        let metal_subs = closest_substitutes(&pool, &metal, 5);
+        assert!(metal_subs.is_empty());
     }
 }

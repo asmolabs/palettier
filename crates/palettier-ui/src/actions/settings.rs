@@ -4,10 +4,13 @@ use crate::state::{AppServices, AppState, ThemeMode};
 use palettier_ai::{AiProvider, AiSettings, ModelOption};
 use palettier_data::backup::{ExportReport, ImportReport};
 use palettier_data::{BackupWriter, ZipBackupArchive, ZipBackupWriter};
+use palettier_domain::drying::Workshop;
 use palettier_domain::error::{DomainError, DomainResult};
 use palettier_domain::i18n::Locale;
+use palettier_domain::paint::Ventilation;
 use palettier_domain::port::SettingsRepository;
 use std::path::Path;
+use std::str::FromStr;
 
 /// Remembers the studio's lighting theme.
 pub async fn save_theme(services: &AppServices, theme: ThemeMode) -> DomainResult<()> {
@@ -17,6 +20,34 @@ pub async fn save_theme(services: &AppServices, theme: ThemeMode) -> DomainResul
 /// Remembers the interface language.
 pub async fn save_locale(services: &AppServices, locale: Locale) -> DomainResult<()> {
     services.settings.put(AppState::KEY_LOCALE, locale.code()).await
+}
+
+/// Remembers the studio's climate conditions (temperature, humidity, ventilation).
+pub async fn save_workshop(services: &AppServices, workshop: Workshop) -> DomainResult<()> {
+    let encoded = format!(
+        "{};{};{}",
+        workshop.temperature_celsius,
+        workshop.relative_humidity,
+        workshop.ventilation.as_db_str()
+    );
+    services.settings.put(AppState::KEY_WORKSHOP, &encoded).await
+}
+
+/// Loads saved studio climate conditions, if present and valid.
+pub async fn load_workshop(services: &AppServices) -> Option<Workshop> {
+    let raw = services.settings.get(AppState::KEY_WORKSHOP).await.ok()??;
+    parse_workshop(&raw)
+}
+
+fn parse_workshop(raw: &str) -> Option<Workshop> {
+    let mut parts = raw.split(';');
+    let temp = parts.next()?.trim().parse::<f64>().ok()?;
+    let humidity = parts.next()?.trim().parse::<f64>().ok()?;
+    let vent = Ventilation::from_str(parts.next()?.trim()).ok()?;
+    if parts.next().is_some() {
+        return None;
+    }
+    Workshop::new(temp, humidity, vent).ok()
 }
 
 /// The settings saved for a provider, or its defaults (no key) when none are.
@@ -122,5 +153,22 @@ mod tests {
             Err(ImportFailure::InvalidArchive(_))
         ));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn remembers_workshop_climate() {
+        let svc = AppServices::in_memory().await.unwrap();
+        assert!(load_workshop(&svc).await.is_none());
+
+        let climate = Workshop::new(24.5, 68.0, Ventilation::Good).unwrap();
+        save_workshop(&svc, climate).await.unwrap();
+
+        let loaded = load_workshop(&svc).await.unwrap();
+        assert!((loaded.temperature_celsius - 24.5).abs() < f64::EPSILON);
+        assert!((loaded.relative_humidity - 68.0).abs() < f64::EPSILON);
+        assert_eq!(loaded.ventilation, Ventilation::Good);
+
+        svc.settings.put(AppState::KEY_WORKSHOP, "bad;data").await.unwrap();
+        assert!(load_workshop(&svc).await.is_none());
     }
 }
