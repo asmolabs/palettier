@@ -6,6 +6,7 @@ use palettier_domain::color::Rgb;
 use palettier_domain::error::{DomainError, DomainResult};
 use palettier_domain::paint::{DryingClass, Opacity, Paint, PaintSystem};
 use palettier_domain::port::PaintCatalogRepository;
+use sea_orm::sea_query::Expr;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait,
     PaginatorTrait, QueryFilter, QueryOrder, Set, TransactionTrait,
@@ -240,6 +241,23 @@ impl PaintCatalogRepository for SeaOrmPaintCatalogRepository {
         let mut active: paint::ActiveModel = row.into();
         active.in_stock = Set(i64::from(owned));
         active.update(&self.db).await.map_err(map_db_err)?;
+        Ok(())
+    }
+
+    async fn set_owned_batch(&self, paint_ids: &[i64], owned: bool) -> DomainResult<()> {
+        if paint_ids.is_empty() {
+            return Ok(());
+        }
+        let txn = self.db.begin().await.map_err(map_db_err)?;
+        for chunk in paint_ids.chunks(500) {
+            paint::Entity::update_many()
+                .col_expr(paint::Column::InStock, Expr::value(i64::from(owned)))
+                .filter(paint::Column::Id.is_in(chunk.iter().copied()))
+                .exec(&txn)
+                .await
+                .map_err(map_db_err)?;
+        }
+        txn.commit().await.map_err(map_db_err)?;
         Ok(())
     }
 

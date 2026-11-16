@@ -169,12 +169,8 @@ pub async fn set_in_stock_batch(
     paint_ids: &[i64],
     owned: bool,
 ) -> DomainResult<usize> {
-    let mut updated = 0usize;
-    for &id in paint_ids {
-        services.catalog.set_owned(id, owned).await?;
-        updated += 1;
-    }
-    Ok(updated)
+    services.catalog.set_owned_batch(paint_ids, owned).await?;
+    Ok(paint_ids.len())
 }
 
 /// Removes a tube from the catalog.

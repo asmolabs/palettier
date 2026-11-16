@@ -6,10 +6,40 @@ use crate::actions::mixer;
 use crate::state::{AppServices, AppState, Section};
 use crate::theme::{ColorSwatch, DeltaEBadge, MixingGuideCard, SectionHeader, ValueLadderStrip};
 use dioxus::prelude::*;
+use palettier_domain::guide::MixingGuide;
 use palettier_domain::i18n::Locale;
 use palettier_domain::paint::Paint;
 use palettier_domain::palette::Palette;
 use palettier_domain::plan::{PaintingPlan, PlanZone};
+use std::hash::{Hash, Hasher};
+
+fn plan_guide_key(plan: &PaintingPlan, paints: &[Paint], locale: Locale) -> u64 {
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    plan.subject.hash(&mut h);
+    plan.palette_name.hash(&mut h);
+    plan.approach.hash(&mut h);
+    plan.system.as_db_str().hash(&mut h);
+    locale.code().hash(&mut h);
+    paints.len().hash(&mut h);
+    for p in paints {
+        p.id.hash(&mut h);
+        p.hex_color.hash(&mut h);
+        p.tint_hex.hash(&mut h);
+    }
+    plan.zones.len().hash(&mut h);
+    for z in &plan.zones {
+        z.name.hash(&mut h);
+        z.material.hash(&mut h);
+        let layers = z.layers();
+        layers.len().hash(&mut h);
+        for l in layers {
+            l.role.hash(&mut h);
+            l.target.to_hex().hash(&mut h);
+            l.technique.as_db_str().hash(&mut h);
+        }
+    }
+    h.finish()
+}
 
 #[component]
 pub fn AssistantView() -> Element {
@@ -257,8 +287,32 @@ fn AssistantPlanCard(
         .get(effective_palette_idx)
         .map(|p| p.paints.clone())
         .unwrap_or_else(|| plan_actions::stock_or_all(&all_paints));
-    let guide = services.guide_builder.from_plan_i18n(&plan, &active_paints, locale);
     let photo_uri = image_bytes().map(|bytes| scaled_data_uri(&services, bytes, 600));
+
+    let mut guide_key = use_signal(|| 0u64);
+    let mut guide_state = use_signal(|| None::<MixingGuide>);
+    if *show_guide_mode.read() {
+        let key = plan_guide_key(&plan, &active_paints, locale);
+        if *guide_key.read() != key {
+            guide_key.set(key);
+            guide_state.set(None);
+            let builder = services.guide_builder.clone();
+            let plan_c = plan.clone();
+            let paints_c = active_paints.clone();
+            spawn(async move {
+                let Ok(guide) = tokio::task::spawn_blocking(move || {
+                    builder.from_plan_i18n(&plan_c, &paints_c, locale)
+                })
+                .await
+                else {
+                    return;
+                };
+                if *guide_key.peek() == key {
+                    guide_state.set(Some(guide));
+                }
+            });
+        }
+    }
 
     let save_as_project = {
         let svc = services.clone();
@@ -327,10 +381,19 @@ fn AssistantPlanCard(
             }
 
             if *show_guide_mode.read() {
-                MixingGuideCard {
-                    guide: guide,
-                    photo_data_uri: photo_uri,
-                    on_notify: move |msg: String| state.notify(msg),
+                match guide_state.read().as_ref() {
+                    None => rsx! {
+                        div { class: "card-subtle muted u-fs-12",
+                            {locale.tr("Calcul du guide de mélanges…", "Computing mixing guide…")}
+                        }
+                    },
+                    Some(guide) => rsx! {
+                        MixingGuideCard {
+                            guide: guide.clone(),
+                            photo_data_uri: photo_uri,
+                            on_notify: move |msg: String| state.notify(msg),
+                        }
+                    },
                 }
             } else {
                 for z in plan.zones.iter().cloned() {

@@ -453,7 +453,17 @@ fn PaletteTubeRow(pal: Palette, pt: Paint, short_code: String, behavior: String)
 fn PaletteMatrix(pal: Palette) -> Element {
     let state = use_context::<AppState>();
     let locale = *state.locale.read();
-    let matrix = pal.generate_matrix();
+    let key = gamut_cache_key(&pal, Locale::Fr);
+    let mut cached_key = use_signal(|| 0u64);
+    let mut cached_matrix = use_signal(|| None::<palettier_domain::palette::PaletteMatrix>);
+    if *cached_key.read() != key {
+        cached_key.set(key);
+        cached_matrix.set(Some(pal.generate_matrix()));
+    }
+    let matrix = cached_matrix
+        .read()
+        .clone()
+        .unwrap_or_else(|| pal.generate_matrix());
 
     rsx! {
         div { class: "card-subtle u-mt-16 u-ox-auto",

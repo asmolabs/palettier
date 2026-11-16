@@ -701,5 +701,21 @@ mod tests {
 
         let _ = std::fs::remove_file(&temp_zip);
     }
+
+    #[tokio::test]
+    async fn batch_stock_update_runs_in_single_transaction() {
+        let inst = Installation::in_memory().await;
+        inst.seeder.seed().await.unwrap();
+        let all = inst.catalog.all().await.unwrap();
+        let ids: Vec<i64> = all.iter().filter_map(|p| p.id).take(5).collect();
+        inst.catalog.set_owned_batch(&ids, true).await.unwrap();
+        for &id in &ids {
+            assert!(inst.catalog.find_by_id(id).await.unwrap().unwrap().in_stock);
+        }
+        inst.catalog.set_owned_batch(&ids, false).await.unwrap();
+        for &id in &ids {
+            assert!(!inst.catalog.find_by_id(id).await.unwrap().unwrap().in_stock);
+        }
+    }
 }
 

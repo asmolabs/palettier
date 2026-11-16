@@ -182,7 +182,7 @@ Vallejo Model Color;Lemon Yellow;70.952;;;#E4D202;ACRYLIC
 Vallejo Model Color;Flat Yellow;70.953;;;#F6BA36;ACRYLIC
 Vallejo Model Color;Yellow Green;70.954;;;#DEDE26;ACRYLIC
 Vallejo Model Color;Flat Flesh;70.955;;;#E09959;ACRYLIC
-Vallejo Model Color;Clear Orange;70.956;;;#CC4527;ACRYLIC
+Vallejo Model Color;Clear Orange;70.956;;TRANSPARENT;#CC4527;ACRYLIC
 Vallejo Model Color;Flat Red;70.957;;;#A12B29;ACRYLIC
 Vallejo Model Color;Pink;70.958;;;#B04F7C;ACRYLIC
 Vallejo Model Color;Purple;70.959;;;#533152;ACRYLIC

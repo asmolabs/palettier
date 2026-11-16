@@ -9,10 +9,61 @@ use crate::theme::{
 };
 use base64::Engine;
 use dioxus::prelude::*;
+use palettier_domain::guide::MixingGuide;
 use palettier_domain::i18n::Locale;
-use palettier_domain::paint::PaintSystem;
+use palettier_domain::paint::{Paint, PaintSystem};
 use palettier_domain::project::{MissingPaint, PhotoRole, Project, ProjectPhoto};
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::str::FromStr;
+
+fn sync_paints_stock(paints: &[Paint], catalog: &[Paint]) -> Vec<Paint> {
+    let stock: HashMap<i64, bool> = catalog
+        .iter()
+        .filter_map(|p| p.id.map(|id| (id, p.in_stock)))
+        .collect();
+    paints
+        .iter()
+        .cloned()
+        .map(|mut p| {
+            if let Some(id) = p.id
+                && let Some(&in_stock) = stock.get(&id)
+            {
+                p.in_stock = in_stock;
+            }
+            p
+        })
+        .collect()
+}
+
+fn project_guide_key(proj: &Project, locale: Locale) -> u64 {
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    proj.id.hash(&mut h);
+    proj.name.hash(&mut h);
+    proj.subject.hash(&mut h);
+    proj.approach.hash(&mut h);
+    locale.code().hash(&mut h);
+    let effective = proj.effective_paints();
+    effective.len().hash(&mut h);
+    for p in effective {
+        p.id.hash(&mut h);
+        p.hex_color.hash(&mut h);
+        p.tint_hex.hash(&mut h);
+    }
+    proj.zones.len().hash(&mut h);
+    for z in &proj.zones {
+        z.name.hash(&mut h);
+        z.material.hash(&mut h);
+        z.layers.len().hash(&mut h);
+        for l in &z.layers {
+            l.role.hash(&mut h);
+            l.target_hex.hash(&mut h);
+            l.technique.as_db_str().hash(&mut h);
+            l.kind.as_db_str().hash(&mut h);
+        }
+    }
+    h.finish()
+}
 
 /// A photo as an inline `data:` URI.
 fn data_uri(photo: &ProjectPhoto) -> String {
@@ -82,19 +133,29 @@ fn ProjectToolbar(proj: Project) -> Element {
         let svc = services.clone();
         let p_export = proj.clone();
         move |_| {
-            let loc = *state.locale.read();
-            let guide = svc.guide_builder.from_project_i18n(&p_export, loc);
-            let photo_uri = projects::showcase_photo(&p_export).map(data_uri);
-            match export_and_open_guide_html(&guide, photo_uri.as_deref(), loc) {
-                Ok(path) => {
-                    let msg = match loc {
-                        Locale::Fr => format!("Guide de mélanges A4 ouvert : {}", path.display()),
-                        Locale::En => format!("A4 Mixing Guide opened: {}", path.display()),
-                    };
-                    state.notify(msg);
+            let svc = svc.clone();
+            let p_export = p_export.clone();
+            spawn(async move {
+                let loc = *state.locale.read();
+                let photo_uri = projects::showcase_photo(&p_export).map(data_uri);
+                let Ok(guide) = tokio::task::spawn_blocking(move || {
+                    svc.guide_builder.from_project_i18n(&p_export, loc)
+                })
+                .await
+                else {
+                    return;
+                };
+                match export_and_open_guide_html(&guide, photo_uri.as_deref(), loc) {
+                    Ok(path) => {
+                        let msg = match loc {
+                            Locale::Fr => format!("Guide de mélanges A4 ouvert : {}", path.display()),
+                            Locale::En => format!("A4 Mixing Guide opened: {}", path.display()),
+                        };
+                        state.notify(msg);
+                    }
+                    Err(e) => state.notify(e),
                 }
-                Err(e) => state.notify(e),
-            }
+            });
         }
     };
 
@@ -250,15 +311,46 @@ fn ProjectGuide(proj: Project) -> Element {
     let mut state = use_context::<AppState>();
     let services = use_context::<AppServices>();
     let locale = *state.locale.read();
-    let guide = services.guide_builder.from_project_i18n(&proj, locale);
     let photo_uri = projects::showcase_photo(&proj).map(data_uri);
+
+    let key = project_guide_key(&proj, locale);
+    let mut computed_key = use_signal(|| 0u64);
+    let mut guide_state = use_signal(|| None::<MixingGuide>);
+
+    if *computed_key.read() != key {
+        computed_key.set(key);
+        guide_state.set(None);
+        let builder = services.guide_builder.clone();
+        let p_compute = proj.clone();
+        spawn(async move {
+            let Ok(guide) = tokio::task::spawn_blocking(move || {
+                builder.from_project_i18n(&p_compute, locale)
+            })
+            .await
+            else {
+                return;
+            };
+            if *computed_key.peek() == key {
+                guide_state.set(Some(guide));
+            }
+        });
+    }
 
     rsx! {
         div { class: "u-mb-18",
-            MixingGuideCard {
-                guide: guide,
-                photo_data_uri: photo_uri,
-                on_notify: move |msg: String| state.notify(msg),
+            match guide_state.read().as_ref() {
+                None => rsx! {
+                    div { class: "card-subtle muted u-fs-12",
+                        {locale.tr("Calcul du guide de mélanges…", "Computing mixing guide…")}
+                    }
+                },
+                Some(guide) => rsx! {
+                    MixingGuideCard {
+                        guide: guide.clone(),
+                        photo_data_uri: photo_uri,
+                        on_notify: move |msg: String| state.notify(msg),
+                    }
+                },
             }
         }
     }
@@ -287,11 +379,13 @@ fn ProjectTubes(proj: Project) -> Element {
         }
     };
 
+    let live_tubes = sync_paints_stock(proj.effective_paints(), &state.paints.read());
+
     rsx! {
         div { class: "card-subtle u-mb-14",
             div { class: "row-between u-mb-8",
                 span { class: "field-label u-m-0",
-                    {locale.tr("Tubes du projet", "Project Tubes")}, " ({proj.effective_paints().len()})"
+                    {locale.tr("Tubes du projet", "Project Tubes")}, " ({live_tubes.len()})"
                 }
                 if proj.diverges_from_palette() {
                     button {
@@ -302,7 +396,7 @@ fn ProjectTubes(proj: Project) -> Element {
                 }
             }
             div { class: "row",
-                for pt in proj.effective_paints() {
+                for pt in live_tubes {
                     div { class: "pill u-gap-6 u-p-3-9",
                         PaintSwatch {
                             masstone_hex: pt.hex_color.clone(),
@@ -331,14 +425,14 @@ fn ProjectWarnings(proj: Project) -> Element {
     let locale = *state.locale.read();
 
     let risks = services.fat_over_lean.inspect_project_i18n(&proj, locale);
-    let owned_paints: Vec<_> = state
-        .paints
-        .read()
+    let catalog_snapshot = state.paints.read();
+    let live_effective = sync_paints_stock(proj.effective_paints(), &catalog_snapshot);
+    let owned_paints: Vec<_> = catalog_snapshot
         .iter()
         .filter(|p| p.in_stock)
         .cloned()
         .collect();
-    let missing = services.substitute_service.missing_from(&proj, &owned_paints);
+    let missing = services.substitute_service.missing_among(&live_effective, &owned_paints);
 
     rsx! {
         if !risks.is_empty() {
@@ -389,8 +483,8 @@ fn ProjectSubstituteRow(proj: Project, m: MissingPaint) -> Element {
             div { class: "row",
                 ColorSwatch { hex: m.paint.hex_color.clone(), size: 20 }
                 strong { "{m.paint.display_name()}" }
-                span { class: "muted", "→" }
                 if let Some(ref near) = m.nearest {
+                    span { class: "muted", "→" }
                     ColorSwatch { hex: near.hex_color.clone(), size: 20 }
                     DeltaEBadge { delta_e: m.delta_e }
                 }
@@ -550,5 +644,25 @@ fn PhotoCard(proj: Project, ph: ProjectPhoto) -> Element {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sync_paints_stock;
+    use palettier_domain::paint::Paint;
+
+    #[test]
+    fn sync_paints_stock_updates_snapshot_from_catalog() {
+        let mut stale = Paint::new("Vallejo", "Black", "#101010");
+        stale.id = Some(42);
+        stale.in_stock = false;
+
+        let mut catalog_paint = stale.clone();
+        catalog_paint.in_stock = true;
+
+        let synced = sync_paints_stock(&[stale], &[catalog_paint]);
+        assert_eq!(synced.len(), 1);
+        assert!(synced[0].in_stock);
     }
 }

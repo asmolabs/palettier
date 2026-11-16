@@ -450,6 +450,24 @@ impl AppState {
                 }
             }
         }
+        for proj in self.projects.write().iter_mut() {
+            for p in &mut proj.paints {
+                if let Some(id) = p.id
+                    && targets.contains(&id)
+                {
+                    p.in_stock = in_stock;
+                }
+            }
+            if let Some(ref mut pal) = proj.palette {
+                for p in &mut pal.paints {
+                    if let Some(id) = p.id
+                        && targets.contains(&id)
+                    {
+                        p.in_stock = in_stock;
+                    }
+                }
+            }
+        }
     }
 
     pub fn notify(&mut self, msg: impl Into<String>) {

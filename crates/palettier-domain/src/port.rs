@@ -17,6 +17,7 @@ pub trait PaintCatalogRepository: Send + Sync {
     async fn save(&self, paint: &Paint) -> DomainResult<Paint>;
     async fn save_all(&self, paints: &[Paint]) -> DomainResult<()>;
     async fn set_owned(&self, paint_id: i64, owned: bool) -> DomainResult<()>;
+    async fn set_owned_batch(&self, paint_ids: &[i64], owned: bool) -> DomainResult<()>;
     async fn record_tint(&self, paint_id: i64, tint: Rgb) -> DomainResult<()>;
     async fn record_masstone(&self, paint_id: i64, measured: Rgb) -> DomainResult<()>;
     async fn count_owned(&self) -> DomainResult<u64>;
