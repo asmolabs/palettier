@@ -163,6 +163,20 @@ pub async fn set_in_stock(services: &AppServices, paint_id: i64, owned: bool) ->
     services.catalog.set_owned(paint_id, owned).await
 }
 
+/// Updates the drawer membership of every paint id in `paint_ids`.
+pub async fn set_in_stock_batch(
+    services: &AppServices,
+    paint_ids: &[i64],
+    owned: bool,
+) -> DomainResult<usize> {
+    let mut updated = 0usize;
+    for &id in paint_ids {
+        services.catalog.set_owned(id, owned).await?;
+        updated += 1;
+    }
+    Ok(updated)
+}
+
 /// Removes a tube from the catalog.
 pub async fn delete_tube(services: &AppServices, paint_id: i64) -> DomainResult<()> {
     services.catalog.delete(paint_id).await
@@ -377,5 +391,23 @@ mod tests {
             .collect::<Vec<_>>(),
             vec!["Phthalo Blue"]
         );
+    }
+
+    #[tokio::test]
+    async fn batch_stock_toggle_updates_multiple_tubes() {
+        let svc = AppServices::in_memory().await.unwrap();
+        let all = svc.catalog.all().await.unwrap();
+        let ids: Vec<i64> = all.iter().filter_map(|p| p.id).take(3).collect();
+        assert_eq!(ids.len(), 3);
+
+        assert_eq!(set_in_stock_batch(&svc, &ids, true).await.unwrap(), 3);
+        for &id in &ids {
+            assert!(find(&svc, id).await.in_stock);
+        }
+
+        assert_eq!(set_in_stock_batch(&svc, &ids, false).await.unwrap(), 3);
+        for &id in &ids {
+            assert!(!find(&svc, id).await.in_stock);
+        }
     }
 }

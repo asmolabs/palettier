@@ -22,7 +22,7 @@ Scale75 Artist;Coral Red;;;;#F73724;ACRYLIC;false
 Scale75 Artist;Cork Brown;;;;#9F8D78;ACRYLIC;false
 Scale75 Artist;Crimson;SART-10;PV19;TRANSPARENT;#C22335;ACRYLIC;true
 Scale75 Artist;Crimson Ink;;;TRANSPARENT;#9F1C2B;ACRYLIC;false
-Scale75 Artist;Dark Brown Ochre;SART-41;;;#1E1317;ACRYLIC;false
+Scale75 Artist;Dark Brown Ochre;SART-41;PV19 PY42;;#1E1317;ACRYLIC;true
 Scale75 Artist;Dark Prussian Blue;;;;#252430;ACRYLIC;false
 Scale75 Artist;Dark Ultramarine;SART-29;PV15 PB15:3;;#32297A;ACRYLIC;true
 Scale75 Artist;Dark Violet;SART-25;PR122 PB15:3;;#481A3F;ACRYLIC;true
@@ -48,7 +48,7 @@ Scale75 Artist;Neon Red;;;TRANSPARENT;#EF321D;ACRYLIC;false
 Scale75 Artist;Neon Yellow;;;TRANSPARENT;#EDFE5A;ACRYLIC;false
 Scale75 Artist;Off White;SART-47;;OPAQUE;#DFD3B9;ACRYLIC;false
 Scale75 Artist;Olive Green;SART-35;PBr7 PY42;;#585135;ACRYLIC;true
-Scale75 Artist;Orange;SART-22;;;#D45B14;ACRYLIC;false
+Scale75 Artist;Orange;SART-22;PO5;;#D45B14;ACRYLIC;true
 Scale75 Artist;Oxford Blue;;;;#434EA8;ACRYLIC;false
 Scale75 Artist;Pale Skin;;;;#F3D6CF;ACRYLIC;false
 Scale75 Artist;Pastel Blue;SART-48;;;#44646F;ACRYLIC;false

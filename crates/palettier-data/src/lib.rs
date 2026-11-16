@@ -30,6 +30,7 @@ mod tests {
     use palettier_domain::palette::{Palette, PaletteMix, PaletteMixService};
     use palettier_domain::port::{
         PaintCatalogRepository, PaletteMixRepository, PaletteRepository, ProjectRepository,
+        SettingsRepository,
     };
     use palettier_domain::project::{PhotoRole, Project, ProjectLayer, ProjectPhoto, ProjectZone};
     use palettier_domain::workbench::WorkbenchService;
@@ -43,6 +44,7 @@ mod tests {
         projects: Arc<SeaOrmProjectRepository>,
         _recipes: Arc<SeaOrmRecipeRepository>,
         mixes: Arc<SeaOrmPaletteMixRepository>,
+        settings: Arc<SeaOrmSettingsRepository>,
         seeder: CatalogSeeder,
         importer: BackupImporter,
         exporter: BackupExporter,
@@ -64,19 +66,22 @@ mod tests {
             ));
             let recipes = Arc::new(SeaOrmRecipeRepository::new(&db));
             let mixes = Arc::new(SeaOrmPaletteMixRepository::new(&db));
+            let settings = Arc::new(SeaOrmSettingsRepository::new(&db));
             let seeder = CatalogSeeder::new(catalog.clone(), palettes.clone(), recipes.clone());
             let importer = BackupImporter::new(
                 catalog.clone(),
                 palettes.clone(),
                 projects.clone(),
                 recipes.clone(),
-            );
+            )
+            .with_settings(settings.clone());
             let exporter = BackupExporter::new(
                 catalog.clone(),
                 palettes.clone(),
                 projects.clone(),
                 recipes.clone(),
-            );
+            )
+            .with_settings(settings.clone());
             Self {
                 _db: db,
                 catalog,
@@ -84,6 +89,7 @@ mod tests {
                 projects,
                 _recipes: recipes,
                 mixes,
+                settings,
                 seeder,
                 importer,
                 exporter,
@@ -665,7 +671,11 @@ mod tests {
                     "dryingClass": "MEDIUM",
                     "tintingStrength": 99.0,
                     "owned": true
-                }]
+                }],
+                "settings": {
+                    "ui.workshop": "999;NaN;BAD",
+                    "ui.theme": "light"
+                }
             });
             zip.write_all(doc.to_string().as_bytes()).unwrap();
             zip.finish().unwrap();
@@ -677,6 +687,9 @@ mod tests {
 
         let report = inst.importer.import(&mut archive).await.unwrap();
         assert_eq!(1, report.paints_created);
+        assert!(report.warnings.iter().any(|w| w.contains("ui.workshop")));
+        assert!(inst.settings.get("ui.workshop").await.unwrap().is_none());
+        assert_eq!(inst.settings.get("ui.theme").await.unwrap().as_deref(), Some("light"));
         let paint = inst
             .catalog
             .find_by_natural_key("TestBrand", "BadHexPaint")

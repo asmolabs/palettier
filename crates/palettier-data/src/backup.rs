@@ -1,7 +1,9 @@
 use chrono::{DateTime, Utc};
 use indexmap::{IndexMap, IndexSet};
 use palettier_domain::color::Rgb;
+use palettier_domain::drying::Workshop;
 use palettier_domain::error::{DomainError, DomainResult};
+use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{
     DryingClass, LayerThickness, Medium, Opacity, Paint, PaintSystem, Technique, Ventilation,
 };
@@ -83,6 +85,8 @@ pub struct BackupPaint {
     /// "OIL" or "ACRYLIC"; absent from older backups, which held oil only.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub system: String,
+    #[serde(default)]
+    pub user_added: bool,
 }
 
 fn default_tinting() -> f64 {
@@ -472,7 +476,11 @@ impl BackupImporter {
         if let Some(ref settings_repo) = self.settings {
             for key in STUDIO_SETTING_KEYS {
                 if let Some(val) = document.settings.get(key) {
-                    settings_repo.put(key, val).await?;
+                    if let Err(reason) = validate_studio_setting(key, val) {
+                        warnings.push(format!("Préférence {key} ignorée : {reason}"));
+                    } else {
+                        settings_repo.put(key, val).await?;
+                    }
                 }
             }
         }
@@ -502,6 +510,11 @@ impl BackupImporter {
             {
                 if let Some(id) = existing.id {
                     self.catalog.set_owned(id, entry.owned).await?;
+                    if let Ok(masstone) = Rgb::of_hex(&entry.hex)
+                        && !masstone.to_hex().eq_ignore_ascii_case(&existing.hex_color)
+                    {
+                        self.catalog.record_masstone(id, masstone).await?;
+                    }
                     if let Some(ref tint) = entry.tint_hex
                         && let Ok(rgb) = Rgb::of_hex(tint)
                     {
@@ -538,7 +551,7 @@ impl BackupImporter {
                     tinting_strength,
                     color_derived: entry.color_derived,
                     pigments_verified: false,
-                    user_added: false,
+                    user_added: true,
                     in_stock: entry.owned,
                     notes: entry.notes.clone(),
                     system: PaintSystem::from_str(&entry.system).unwrap_or_default(),
@@ -895,6 +908,7 @@ impl BackupExporter {
                     color_derived: p.color_derived,
                     notes: p.notes.clone(),
                     system: p.system.as_db_str().to_string(),
+                    user_added: p.user_added,
                 })
                 .collect(),
             palettes: all_palettes
@@ -1033,5 +1047,45 @@ impl BackupExporter {
         } else {
             collapsed
         }
+    }
+}
+
+fn validate_studio_setting(key: &str, value: &str) -> Result<(), String> {
+    match key {
+        "ui.locale" => Locale::from_str(value)
+            .map(|_| ())
+            .map_err(|_| format!("langue inconnue '{value}'")),
+        "ui.theme" => {
+            if matches!(value.trim().to_ascii_lowercase().as_str(), "dark" | "light") {
+                Ok(())
+            } else {
+                Err(format!("thème inconnu '{value}'"))
+            }
+        }
+        "ui.paint_system" => PaintSystem::from_str(value)
+            .map(|_| ())
+            .map_err(|_| format!("système inconnu '{value}'")),
+        "ui.workshop" => {
+            let mut parts = value.split(';');
+            let temp = parts
+                .next()
+                .and_then(|s| s.trim().parse::<f64>().ok())
+                .ok_or_else(|| "température invalide".to_string())?;
+            let humidity = parts
+                .next()
+                .and_then(|s| s.trim().parse::<f64>().ok())
+                .ok_or_else(|| "humidité invalide".to_string())?;
+            let vent = parts
+                .next()
+                .and_then(|s| Ventilation::from_str(s.trim()).ok())
+                .ok_or_else(|| "ventilation invalide".to_string())?;
+            if parts.next().is_some() {
+                return Err("format atelier inattendu".to_string());
+            }
+            Workshop::new(temp, humidity, vent)
+                .map(|_| ())
+                .map_err(|e| e.to_string())
+        }
+        _ => Err("clé non gérée".to_string()),
     }
 }

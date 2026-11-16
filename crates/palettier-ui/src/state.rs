@@ -425,14 +425,27 @@ impl AppState {
 
     /// Updates a single paint's drawer status in memory without re-querying all 2,000+ paints.
     pub fn set_paint_in_stock_local(&mut self, id: i64, in_stock: bool) {
+        self.set_paints_in_stock_local(&[id], in_stock);
+    }
+
+    /// Updates several paints' drawer status in memory without re-querying all 2,000+ paints.
+    pub fn set_paints_in_stock_local(&mut self, ids: &[i64], in_stock: bool) {
+        if ids.is_empty() {
+            return;
+        }
+        let targets: std::collections::HashSet<i64> = ids.iter().copied().collect();
         for p in self.paints.write().iter_mut() {
-            if p.id == Some(id) {
+            if let Some(id) = p.id
+                && targets.contains(&id)
+            {
                 p.in_stock = in_stock;
             }
         }
         for pal in self.palettes.write().iter_mut() {
             for p in &mut pal.paints {
-                if p.id == Some(id) {
+                if let Some(id) = p.id
+                    && targets.contains(&id)
+                {
                     p.in_stock = in_stock;
                 }
             }

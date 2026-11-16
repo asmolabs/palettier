@@ -176,12 +176,12 @@ AK Interactive 3rd Gen;Strong Dark Blue;AK11187;;;#04151F;ACRYLIC
 AK Interactive 3rd Gen;Oxford;AK11188;;;#353942;ACRYLIC
 AK Interactive 3rd Gen;Dark Prussian Blue;AK11189;;;#0A0C1B;ACRYLIC
 AK Interactive 3rd Gen;Dark Sea Blue;AK11190;;;#0D1814;ACRYLIC
-AK Interactive 3rd Gen;Clear Red;AK11213;;;#C61215;ACRYLIC
-AK Interactive 3rd Gen;Clear Blue;AK11214;;;#0D265C;ACRYLIC
+AK Interactive 3rd Gen;Clear Red;AK11213;;TRANSPARENT;#C61215;ACRYLIC
+AK Interactive 3rd Gen;Clear Blue;AK11214;;TRANSPARENT;#0D265C;ACRYLIC
 AK Interactive 3rd Gen;Clear Smoke;AK11215;;TRANSPARENT;#734C21;ACRYLIC
-AK Interactive 3rd Gen;Clear Green;AK11216;;;#029837;ACRYLIC
-AK Interactive 3rd Gen;Clear Yellow;AK11217;;;#F49401;ACRYLIC
-AK Interactive 3rd Gen;Clear Orange;AK11218;;;#EB5D0B;ACRYLIC
+AK Interactive 3rd Gen;Clear Green;AK11216;;TRANSPARENT;#029837;ACRYLIC
+AK Interactive 3rd Gen;Clear Yellow;AK11217;;TRANSPARENT;#F49401;ACRYLIC
+AK Interactive 3rd Gen;Clear Orange;AK11218;;TRANSPARENT;#EB5D0B;ACRYLIC
 AK Interactive 3rd Gen;Base Flesh;AK11401;;;#824C30;ACRYLIC
 AK Interactive 3rd Gen;Highlight Flesh;AK11403;;;#FBCFA2;ACRYLIC
 AK Interactive 3rd Gen;Shadow Flesh;AK11404;;;#90433B;ACRYLIC

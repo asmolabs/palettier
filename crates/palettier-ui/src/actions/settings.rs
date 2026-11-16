@@ -99,9 +99,10 @@ pub async fn import_backup(services: &AppServices, path: &Path) -> Result<Import
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::actions::catalog::{NewTube, add_custom_tube, calibrate_tube};
     use crate::actions::projects::{NewProject, create_project};
-    use palettier_domain::port::ProjectRepository;
-    use palettier_domain::paint::PaintSystem;
+    use palettier_domain::paint::{DryingClass, Opacity, PaintSystem};
+    use palettier_domain::port::{PaintCatalogRepository, ProjectRepository};
 
     #[tokio::test]
     async fn remembers_theme_and_language() {
@@ -134,6 +135,25 @@ mod tests {
             palette: None,
         };
         create_project(&svc, draft, Locale::Fr).await.unwrap();
+        let cat_id = svc.catalog.all().await.unwrap()[0].id.unwrap();
+        calibrate_tube(&svc, cat_id, "#123456", "#D0C8BE").await.unwrap();
+        let custom = add_custom_tube(
+            &svc,
+            NewTube {
+                brand: "Atelier".into(),
+                name: "Terre Calibrée".into(),
+                code: "AT-01".into(),
+                pigments: "PBr7".into(),
+                hex_color: "#553322".into(),
+                opacity: Opacity::Opaque,
+                drying_class: DryingClass::Fast,
+                system: PaintSystem::Acrylic,
+            },
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        assert!(custom.user_added);
         save_theme(&svc, ThemeMode::Light).await.unwrap();
         save_locale(&svc, Locale::En).await.unwrap();
         svc.settings.put(AppState::KEY_PAINT_SYSTEM, PaintSystem::Acrylic.as_db_str()).await.unwrap();
@@ -150,6 +170,17 @@ mod tests {
         let imported = import_backup(&fresh, &zip).await.unwrap();
         assert!(imported.projects_added >= 1);
         assert!(fresh.projects.all().await.unwrap().iter().any(|p| p.name == "Sauvegardé"));
+        let restored_cal = fresh.catalog.all().await.unwrap()[0].clone();
+        assert_eq!(restored_cal.hex_color.to_uppercase(), "#123456");
+        assert_eq!(restored_cal.tint_hex.as_deref().map(str::to_uppercase).as_deref(), Some("#D0C8BE"));
+        let restored_custom = fresh
+            .catalog
+            .find_by_natural_key("Atelier", "Terre Calibrée")
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(restored_custom.user_added);
+        assert_eq!(restored_custom.system, PaintSystem::Acrylic);
         assert_eq!(fresh.settings.get(AppState::KEY_THEME).await.unwrap().as_deref(), Some(ThemeMode::Light.as_str()));
         assert_eq!(fresh.settings.get(AppState::KEY_LOCALE).await.unwrap().as_deref(), Some(Locale::En.code()));
         assert_eq!(fresh.settings.get(AppState::KEY_PAINT_SYSTEM).await.unwrap().as_deref(), Some("ACRYLIC"));

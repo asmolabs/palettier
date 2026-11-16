@@ -4,7 +4,7 @@ use super::catalog_sheet::PaintSheet;
 use super::catalog_tubes::{CustomTubeForm, RecognizedTubesCard, use_tube_form};
 use crate::actions::catalog::{
     FinishFilter, brands_of, closest_substitutes, filter_paints_with, pigment_codes,
-    recognize_tubes, set_in_stock,
+    recognize_tubes, set_in_stock, set_in_stock_batch,
 };
 use crate::state::{AppServices, AppState};
 use crate::theme::{PaintSwatch, SectionHeader};
@@ -74,6 +74,22 @@ pub fn CatalogView() -> Element {
         ),
     };
 
+    let is_filtered = !search.read().trim().is_empty()
+        || *brand_filter.read() != "ALL"
+        || *stock_only.read()
+        || *finish_filter.read() != FinishFilter::All
+        || opacity_filter.read().is_some();
+    let to_add_ids: Vec<i64> = filtered
+        .iter()
+        .filter(|p| !p.in_stock)
+        .filter_map(|p| p.id)
+        .collect();
+    let to_remove_ids: Vec<i64> = filtered
+        .iter()
+        .filter(|p| p.in_stock)
+        .filter_map(|p| p.id)
+        .collect();
+
     rsx! {
         div {
             SectionHeader {
@@ -106,6 +122,9 @@ pub fn CatalogView() -> Element {
                 brands,
                 owned_count,
                 shown: filtered.len(),
+                is_filtered,
+                to_add_ids,
+                to_remove_ids,
             }
 
             div { class: "grid-2 u-gtc-1p6fr-1fr",
@@ -217,12 +236,41 @@ fn CatalogSearch(
     brands: Vec<String>,
     owned_count: usize,
     shown: usize,
+    is_filtered: bool,
+    to_add_ids: Vec<i64>,
+    to_remove_ids: Vec<i64>,
 ) -> Element {
-    let state = use_context::<AppState>();
+    let mut state = use_context::<AppState>();
+    let services = use_context::<AppServices>();
     let locale = *state.locale.read();
     let opacity_val = (*opacity_filter.read())
         .map(|o| o.as_db_str())
         .unwrap_or("ALL");
+    let add_count = to_add_ids.len();
+    let remove_count = to_remove_ids.len();
+    let svc_add = services.clone();
+    let svc_remove = services;
+
+    let toggle_batch = move |svc: AppServices, ids: Vec<i64>, owned: bool| {
+        spawn(async move {
+            let loc = *state.locale.read();
+            if let Ok(count) = set_in_stock_batch(&svc, &ids, owned).await {
+                state.set_paints_in_stock_local(&ids, owned);
+                let msg = if owned {
+                    match loc {
+                        Locale::Fr => format!("{count} tube(s) ajouté(s) au tiroir."),
+                        Locale::En => format!("{count} tube(s) added to drawer."),
+                    }
+                } else {
+                    match loc {
+                        Locale::Fr => format!("{count} tube(s) retiré(s) du tiroir."),
+                        Locale::En => format!("{count} tube(s) removed from drawer."),
+                    }
+                };
+                state.notify(msg);
+            }
+        });
+    };
 
     rsx! {
         div { class: "card",
@@ -287,7 +335,29 @@ fn CatalogSearch(
                         span { {locale.tr("Mon tiroir uniquement", "My drawer only")}, " ({owned_count})" }
                     }
                 }
-                span { class: "pill", "{shown} ", {locale.tr("tube(s) affiché(s)", "tube(s) shown")} }
+                div { class: "row u-gap-8",
+                    if is_filtered && add_count > 0 {
+                        button {
+                            class: "btn u-fs-11p5",
+                            onclick: move |_| toggle_batch(svc_add.clone(), to_add_ids.clone(), true),
+                            {match locale {
+                                Locale::Fr => format!("+ Tout au tiroir ({add_count})"),
+                                Locale::En => format!("+ Add all ({add_count})"),
+                            }}
+                        }
+                    }
+                    if is_filtered && remove_count > 0 {
+                        button {
+                            class: "btn u-fs-11p5",
+                            onclick: move |_| toggle_batch(svc_remove.clone(), to_remove_ids.clone(), false),
+                            {match locale {
+                                Locale::Fr => format!("− Retirer ({remove_count})"),
+                                Locale::En => format!("− Remove ({remove_count})"),
+                            }}
+                        }
+                    }
+                    span { class: "pill", "{shown} ", {locale.tr("tube(s) affiché(s)", "tube(s) shown")} }
+                }
             }
         }
     }
