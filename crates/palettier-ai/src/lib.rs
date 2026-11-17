@@ -1,9 +1,41 @@
 #![forbid(unsafe_code)]
 
+//! Multimodal AI assistant integrations for Palettier.
+//!
+//! Provides vision and language model features:
+//! - **Structured Plan Generation**: Analyzes miniature reference photos to identify painted zones,
+//!   suggests techniques, and recommends paint mixes according to the selected paint system.
+//! - **Paint Tube Shelf Recognition**: Identifies paint tubes, brands, and colors from workshop photos.
+//! - **Multi-Provider Engine**: Supports Google Gemini, OpenAI, and local Ollama instances.
+//! - **Strict JSON Schema**: Guarantees typed structured responses compatible with provider-specific APIs.
+//! - **Credential Security**: Redacts and securely handles API keys using `secrecy` and `zeroize`.
+//!
+//! # Example
+//! ```
+//! use palettier_ai::strict_schema;
+//! use serde_json::json;
+//!
+//! let raw = json!({
+//!     "type": "object",
+//!     "properties": { "name": { "type": "string" } }
+//! });
+//! let strict = strict_schema(&raw);
+//! assert_eq!(strict["additionalProperties"], false);
+//! ```
+
+/// LLM engine interfaces and provider implementations (Gemini, OpenAI, Ollama).
 pub mod engine;
+
+/// Plan generation from miniature reference images and recipe enrichment.
 pub mod plan;
+
+/// Vision-based tube recognition from shelf or palette photos.
 pub mod recognition;
+
+/// JSON schema transformation utilities for strict structured outputs.
 pub mod schema;
+
+/// AI provider settings and secure secret persistence.
 pub mod settings;
 
 pub use engine::{

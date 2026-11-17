@@ -12,10 +12,27 @@ use std::io::Cursor;
 const MAX_IMAGE_DIMENSION: u32 = 8192;
 const MAX_ALLOC_BYTES: u64 = 256 * 1024 * 1024; // 256 MB max
 
+/// Safe image decoding and processing service with bounded resource consumption.
+///
+/// Implements hard limits against decompression bombs, provides linear-light downscaling,
+/// dominant color extraction, and social recipe card rendering.
+///
+/// # Example
+/// ```
+/// use palettier_domain::image::PixelMap;
+/// use palettier_image::ImageDecoder;
+///
+/// let decoder = ImageDecoder::new();
+/// let map = PixelMap::new(1, 1, vec![0xFFFF0000]).unwrap();
+/// let png = decoder.encode_png(&map).unwrap();
+/// let decoded = decoder.decode(&png).unwrap();
+/// assert_eq!((decoded.width, decoded.height), (1, 1));
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct ImageDecoder;
 
 impl ImageDecoder {
+    /// Creates a new `ImageDecoder` instance.
     pub fn new() -> Self {
         Self
     }

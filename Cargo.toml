@@ -21,6 +21,7 @@ unsafe_code = "forbid"
 
 [workspace.lints.clippy]
 unwrap_used = "warn"
+expect_used = "warn"
 dbg_macro = "warn"
 todo = "warn"
 

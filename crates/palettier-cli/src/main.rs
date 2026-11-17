@@ -21,7 +21,7 @@ use std::sync::Arc;
 #[command(
     name = "palettier-cli",
     version,
-    about = "Outil en ligne de commande Palettier (peinture à l'huile pour figurines)"
+    about = "Outil en ligne de commande Palettier (peinture à l'huile et acrylique pour figurines)"
 )]
 struct Cli {
     /// Database directory or SQLite file path (defaults to `~/.palettier`)
@@ -34,7 +34,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Initializes the database and synchronizes the catalog of 680 oils, palettes, and recipes
+    /// Initializes the database and synchronizes the catalog of 680 oils, 1427 acrylics, palettes, and recipes
     Seed,
     /// Imports a backup archive (.zip) produced by Palettier
     ImportBackup {

@@ -9,7 +9,7 @@ pub struct BatchSquad {
     pub name: String,
     pub miniature_count: usize,
     pub steps: Vec<String>,
-    /// Matrix of [miniature_idx][step_idx]
+    /// Matrix of `[miniature_idx][step_idx]`.
     pub progress: Vec<Vec<bool>>,
 }
 

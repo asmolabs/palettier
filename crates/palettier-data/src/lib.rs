@@ -1,10 +1,46 @@
 #![forbid(unsafe_code)]
 
+//! Persistence and infrastructure crate for Palettier.
+//!
+//! Implements domain repository traits using [SeaORM](https://www.sea-ql.org/SeaORM/) and SQLite,
+//! manages database migrations, runs automated catalog seeding from CSV data, and handles
+//! portable ZIP backup import and export with integrity checks.
+//!
+//! # Key Components
+//! - [`db::Database`]: Connection management, SQLite pragmas (WAL mode, foreign keys, synchronous NORMAL).
+//! - [`repository`]: Concrete implementations of domain repository ports.
+//! - [`seeder::CatalogSeeder`]: Embeds and synchronizes paint catalogs and default palettes/recipes.
+//! - [`backup`]: ZIP archive export and import, with path-traversal protection and legacy format support.
+//!
+//! # Example
+//! ```
+//! use palettier_data::{Database, SeaOrmPaintCatalogRepository};
+//! use palettier_domain::port::PaintCatalogRepository;
+//!
+//! let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+//! rt.block_on(async {
+//!     let db = Database::in_memory().await.unwrap();
+//!     let repo = SeaOrmPaintCatalogRepository::new(&db);
+//!     assert_eq!(repo.count().await.unwrap(), 0);
+//! });
+//! ```
+
+/// ZIP backup archive import, export, and schema serialization.
 pub mod backup;
+
+/// SQLite connection management, connection pooling, and pragma configuration.
 pub mod db;
+
+/// SeaORM entity models and relation mappings.
 pub mod entity;
+
+/// Database schema migrations.
 pub mod migration;
+
+/// Concrete repository implementations for domain ports.
 pub mod repository;
+
+/// Catalog seeder populating oil and acrylic paints from embedded CSV tables.
 pub mod seeder;
 
 pub use backup::{

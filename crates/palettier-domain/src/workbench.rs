@@ -1,7 +1,7 @@
 use crate::drying::{DryingContext, DryingEstimate, DryingTimeService, waits_for_through_dry};
 use crate::i18n::Locale;
 use crate::paint::{DryingClass, PaintSystem};
-use crate::project::{Project, ProjectLayer, ProjectZone};
+use crate::project::{AppliedCoat, Project, ProjectLayer, ProjectZone};
 use chrono::{DateTime, Utc};
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
@@ -236,16 +236,17 @@ impl WorkbenchService {
 
     fn state_zone(&self, zone: &ProjectZone, system: PaintSystem, now: DateTime<Utc>) -> ZoneState {
         let applied_count = zone.layers.iter().filter(|l| l.is_applied()).count();
-        let last_idx = zone
+        let last = zone
             .layers
             .iter()
             .enumerate()
-            .filter_map(|(idx, l)| l.applied.as_ref().map(|a| (idx, a.at)))
-            .max_by_key(|(_, at)| *at)
-            .map(|(idx, _)| idx);
+            .filter_map(|(idx, l)| l.applied.as_ref().map(|a| (idx, a)))
+            .max_by_key(|(_, a)| a.at);
 
-        let next = Self::next_after(&zone.layers, last_idx);
-        let last_coat = last_idx.map(|idx| self.coat(zone, &zone.layers[idx], next, system, now));
+        let next = Self::next_after(&zone.layers, last.map(|(idx, _)| idx));
+        let last_coat = last.map(|(idx, applied)| {
+            self.coat(zone, &zone.layers[idx], applied, next, system, now)
+        });
 
         ZoneState {
             name: zone.name.clone(),
@@ -270,11 +271,11 @@ impl WorkbenchService {
         &self,
         zone: &ProjectZone,
         layer: &ProjectLayer,
+        applied: &AppliedCoat,
         next: Option<&ProjectLayer>,
         system: PaintSystem,
         now: DateTime<Utc>,
     ) -> CoatState {
-        let applied = layer.applied.as_ref().expect("couche posée");
         let technique = layer.technique;
         let estimate = self
             .drying_time_service

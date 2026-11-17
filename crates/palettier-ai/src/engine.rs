@@ -49,7 +49,7 @@ fn default_http_client() -> DomainResult<Client> {
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(180))
         .build()
-        .map_err(|e| DomainError::Storage(format!("Impossible d'initialiser le client HTTP: {e}")))
+        .map_err(|e| DomainError::Service(format!("Impossible d'initialiser le client HTTP: {e}")))
 }
 
 /// Local Ollama engine (`/api/chat`).
@@ -113,20 +113,20 @@ impl ChatEngine for OllamaEngine {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| DomainError::Storage(format!("Ollama injoignable ({url}): {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Ollama injoignable ({url}): {e}")))?;
 
         let status = resp.status();
         let body: Value = resp
             .json()
             .await
-            .map_err(|e| DomainError::Storage(format!("Réponse Ollama illisible: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Réponse Ollama illisible: {e}")))?;
 
         if !status.is_success() {
             let msg = body
                 .get("error")
                 .and_then(Value::as_str)
                 .unwrap_or("Erreur Ollama");
-            return Err(DomainError::Storage(format!("Ollama ({status}): {msg}")));
+            return Err(DomainError::Service(format!("Ollama ({status}): {msg}")));
         }
 
         let content = body
@@ -135,7 +135,7 @@ impl ChatEngine for OllamaEngine {
             .unwrap_or("")
             .trim();
         if content.is_empty() {
-            return Err(DomainError::Storage(
+            return Err(DomainError::Service(
                 "Ollama a répondu, mais sans contenu.".to_string(),
             ));
         }
@@ -221,20 +221,20 @@ impl ChatEngine for OpenAiEngine {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| DomainError::Storage(format!("OpenAI injoignable ({url}): {e}")))?;
+            .map_err(|e| DomainError::Service(format!("OpenAI injoignable ({url}): {e}")))?;
 
         let status = resp.status();
         let body: Value = resp
             .json()
             .await
-            .map_err(|e| DomainError::Storage(format!("Réponse OpenAI illisible: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Réponse OpenAI illisible: {e}")))?;
 
         if !status.is_success() {
             let msg = body
                 .pointer("/error/message")
                 .and_then(Value::as_str)
                 .unwrap_or("Erreur OpenAI");
-            return Err(DomainError::Storage(format!("OpenAI ({status}): {msg}")));
+            return Err(DomainError::Service(format!("OpenAI ({status}): {msg}")));
         }
 
         let content = body
@@ -243,7 +243,7 @@ impl ChatEngine for OpenAiEngine {
             .unwrap_or("")
             .trim();
         if content.is_empty() {
-            return Err(DomainError::Storage(
+            return Err(DomainError::Service(
                 "OpenAI a répondu, mais sans contenu.".to_string(),
             ));
         }
@@ -319,20 +319,20 @@ impl ChatEngine for GeminiEngine {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| DomainError::Storage(format!("Gemini injoignable: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Gemini injoignable: {e}")))?;
 
         let status = resp.status();
         let body: Value = resp
             .json()
             .await
-            .map_err(|e| DomainError::Storage(format!("Réponse Gemini illisible: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Réponse Gemini illisible: {e}")))?;
 
         if !status.is_success() {
             let msg = body
                 .pointer("/error/message")
                 .and_then(Value::as_str)
                 .unwrap_or("Erreur Gemini");
-            return Err(DomainError::Storage(format!("Gemini ({status}): {msg}")));
+            return Err(DomainError::Service(format!("Gemini ({status}): {msg}")));
         }
 
         let content = body
@@ -341,7 +341,7 @@ impl ChatEngine for GeminiEngine {
             .unwrap_or("")
             .trim();
         if content.is_empty() {
-            return Err(DomainError::Storage(
+            return Err(DomainError::Service(
                 "Gemini a répondu, mais sans contenu.".to_string(),
             ));
         }
@@ -463,10 +463,10 @@ impl ModelCatalog {
             .get(&url)
             .send()
             .await
-            .map_err(|e| DomainError::Storage(format!("Ollama injoignable ({url}): {e}")))?
+            .map_err(|e| DomainError::Service(format!("Ollama injoignable ({url}): {e}")))?
             .json()
             .await
-            .map_err(|e| DomainError::Storage(format!("Réponse Ollama illisible: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Réponse Ollama illisible: {e}")))?;
 
         let mut models = Vec::new();
         if let Some(arr) = body.get("models").and_then(Value::as_array) {
@@ -505,18 +505,18 @@ impl ModelCatalog {
             .bearer_auth(api_key)
             .send()
             .await
-            .map_err(|e| DomainError::Storage(format!("OpenAI injoignable: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("OpenAI injoignable: {e}")))?;
         let status = resp.status();
         let body: Value = resp
             .json()
             .await
-            .map_err(|e| DomainError::Storage(format!("Réponse OpenAI illisible: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Réponse OpenAI illisible: {e}")))?;
         if !status.is_success() {
             let msg = body
                 .pointer("/error/message")
                 .and_then(Value::as_str)
                 .unwrap_or("Erreur OpenAI");
-            return Err(DomainError::Storage(format!("OpenAI ({status}): {msg}")));
+            return Err(DomainError::Service(format!("OpenAI ({status}): {msg}")));
         }
 
         let mut models = Vec::new();
@@ -546,18 +546,18 @@ impl ModelCatalog {
             .header("x-goog-api-key", api_key)
             .send()
             .await
-            .map_err(|e| DomainError::Storage(format!("Gemini injoignable: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Gemini injoignable: {e}")))?;
         let status = resp.status();
         let body: Value = resp
             .json()
             .await
-            .map_err(|e| DomainError::Storage(format!("Réponse Gemini illisible: {e}")))?;
+            .map_err(|e| DomainError::Service(format!("Réponse Gemini illisible: {e}")))?;
         if !status.is_success() {
             let msg = body
                 .pointer("/error/message")
                 .and_then(Value::as_str)
                 .unwrap_or("Erreur Gemini");
-            return Err(DomainError::Storage(format!("Gemini ({status}): {msg}")));
+            return Err(DomainError::Service(format!("Gemini ({status}): {msg}")));
         }
 
         let mut models = Vec::new();

@@ -1,4 +1,5 @@
 use crate::color::{Colorant, Rgb, linear_to_srgb, mix, srgb_to_linear};
+use crate::error::{DomainError, DomainResult};
 use crate::paint::{DryingClass, Opacity, Paint, PaintSystem, Pigment};
 use indexmap::{IndexMap, IndexSet};
 use std::str::FromStr;
@@ -87,25 +88,33 @@ impl Default for PigmentIndex {
     }
 }
 
+fn csv_err(row: &CsvRow, e: impl std::fmt::Display) -> DomainError {
+    DomainError::CsvError {
+        location: row.location(),
+        message: e.to_string(),
+    }
+}
+
 impl PigmentIndex {
-    pub fn new(pigments_csv: &str) -> Self {
+    /// Parses a pigment table from CSV text, returning a structured [`DomainError::CsvError`] on invalid rows.
+    pub fn try_new(pigments_csv: &str) -> DomainResult<Self> {
         let mut by_code = IndexMap::new();
         for row in Csv::read(pigments_csv, "pigments.csv") {
             let code = row.get("code").to_string();
             let name = row.get("name").to_string();
-            let color = Rgb::of_hex(row.get("hex")).expect("hex pigment valide");
-            let opacity = Opacity::from_str(row.get("opacity")).expect("opacité pigment valide");
+            let color = Rgb::of_hex(row.get("hex")).map_err(|e| csv_err(&row, e))?;
+            let opacity = Opacity::from_str(row.get("opacity")).map_err(|e| csv_err(&row, e))?;
             let drying_class =
-                DryingClass::from_str(row.get("drying")).expect("drying pigment valide");
+                DryingClass::from_str(row.get("drying")).map_err(|e| csv_err(&row, e))?;
             let tinting_strength: f64 = row
                 .get("tinting")
                 .parse()
-                .expect("tinting_strength pigment valide");
+                .map_err(|e| csv_err(&row, e))?;
             let tint_raw = row.get_or_default("tint", "");
             let tint = if tint_raw.is_empty() {
                 None
             } else {
-                Some(Rgb::of_hex(tint_raw).expect("tint hex pigment valide"))
+                Some(Rgb::of_hex(tint_raw).map_err(|e| csv_err(&row, e))?)
             };
             let pigment = Pigment {
                 code: code.clone(),
@@ -118,7 +127,12 @@ impl PigmentIndex {
             };
             by_code.insert(Self::normalise(&code), pigment);
         }
-        Self { by_code }
+        Ok(Self { by_code })
+    }
+
+    /// Parses a pigment table from embedded CSV text, panicking if the compile-time asset is malformed.
+    pub fn new(pigments_csv: &str) -> Self {
+        Self::try_new(pigments_csv).unwrap_or_else(|e| panic!("Invalid pigments CSV: {e}"))
     }
 
     pub fn find(&self, code: &str) -> Option<&Pigment> {
@@ -279,13 +293,14 @@ impl CatalogLoader {
         self.load_detailed().paints
     }
 
-    pub fn load_detailed(&self) -> LoadedCatalog {
+    /// Loads all brand CSV files, returning a structured [`DomainError::CsvError`] on malformed rows.
+    pub fn try_load_detailed(&self) -> DomainResult<LoadedCatalog> {
         let mut paints = Vec::new();
         let mut cited = IndexSet::new();
 
         for brand in &self.brands {
             for row in Csv::read(&brand.content, &brand.name) {
-                let paint = self.to_paint(&row);
+                let paint = self.try_to_paint(&row)?;
                 for code in &paint.pigments {
                     cited.insert(code.clone());
                 }
@@ -295,24 +310,28 @@ impl CatalogLoader {
         let unknown = self
             .pigments
             .unknown_among(cited.iter().map(String::as_str));
-        LoadedCatalog {
+        Ok(LoadedCatalog {
             paints,
             unknown_pigments: unknown,
-        }
+        })
     }
 
-    fn to_paint(&self, row: &CsvRow) -> Paint {
+    /// Loads all embedded brand CSV files, panicking if a compile-time asset is malformed.
+    pub fn load_detailed(&self) -> LoadedCatalog {
+        self.try_load_detailed()
+            .unwrap_or_else(|e| panic!("Invalid catalog CSV: {e}"))
+    }
+
+    fn try_to_paint(&self, row: &CsvRow) -> DomainResult<Paint> {
         let system = PaintSystem::from_str(row.get_or_default("system", ""))
-            .expect("systeme valide dans fichier de gamme");
+            .map_err(|e| csv_err(row, e))?;
         if system == PaintSystem::Acrylic {
-            return self.to_acrylic(row);
+            return self.try_to_acrylic(row);
         }
         let pigment_codes = Self::parse_pigments(row.get("pigments"));
-        assert!(
-            !pigment_codes.is_empty(),
-            "Aucun pigment déclaré en {}",
-            row.location()
-        );
+        if pigment_codes.is_empty() {
+            return Err(csv_err(row, "Aucun pigment déclaré"));
+        }
 
         let declared_hex = row.get_or_default("hex", "");
         let derived = declared_hex.is_empty();
@@ -326,14 +345,14 @@ impl CatalogLoader {
         let opacity = if opacity_raw.is_empty() {
             self.pigments.opacity_for(&pigment_codes)
         } else {
-            Opacity::from_str(opacity_raw).expect("opacité valide dans fichier de gamme")
+            Opacity::from_str(opacity_raw).map_err(|e| csv_err(row, e))?
         };
 
         let tint_raw = row.get_or_default("tint", "");
         let tint = if !tint_raw.is_empty() {
             Some(tint_raw.to_string())
         } else {
-            let masstone = Rgb::of_hex(&hex).expect("hex valide");
+            let masstone = Rgb::of_hex(&hex).map_err(|e| csv_err(row, e))?;
             self.pigments
                 .tint_for(&pigment_codes, masstone)
                 .map(|c| c.to_hex())
@@ -342,7 +361,7 @@ impl CatalogLoader {
         let verified_str = row.get_or_default("verified", "false");
         let pigments_verified = verified_str.eq_ignore_ascii_case("true");
 
-        Paint {
+        Ok(Paint {
             id: None,
             brand: row.get("brand").to_string(),
             name: row.get("name").to_string(),
@@ -360,23 +379,19 @@ impl CatalogLoader {
             in_stock: true,
             notes: String::new(),
             system: PaintSystem::Oil,
-        }
+        })
     }
 
     /// An acrylic pot. Miniature acrylic ranges rarely publish their pigments, so the
     /// row must carry its colour; pigments, when given, feed opacity and tint as for oil.
     /// The drying class is left neutral: the acrylic drying model does not read it.
-    fn to_acrylic(&self, row: &CsvRow) -> Paint {
+    fn try_to_acrylic(&self, row: &CsvRow) -> DomainResult<Paint> {
         let pigment_codes = Self::parse_pigments(row.get_or_default("pigments", ""));
         let hex = row.get_or_default("hex", "").to_string();
-        assert!(
-            Rgb::of_hex(&hex).is_ok(),
-            "Une acrylique doit déclarer sa teinte (colonne hex) en {}",
-            row.location()
-        );
+        let masstone = Rgb::of_hex(&hex).map_err(|e| csv_err(row, e))?;
         let opacity_raw = row.get_or_default("opacity", "");
         let opacity = if !opacity_raw.is_empty() {
-            Opacity::from_str(opacity_raw).expect("opacité valide dans fichier de gamme")
+            Opacity::from_str(opacity_raw).map_err(|e| csv_err(row, e))?
         } else if !pigment_codes.is_empty() {
             self.pigments.opacity_for(&pigment_codes)
         } else {
@@ -386,7 +401,6 @@ impl CatalogLoader {
         let tint = if !tint_raw.is_empty() {
             Some(tint_raw.to_string())
         } else if !pigment_codes.is_empty() {
-            let masstone = Rgb::of_hex(&hex).expect("hex valide");
             self.pigments
                 .tint_for(&pigment_codes, masstone)
                 .map(|c| c.to_hex())
@@ -398,7 +412,7 @@ impl CatalogLoader {
         } else {
             self.pigments.tinting_strength_for(&pigment_codes)
         };
-        Paint {
+        Ok(Paint {
             id: None,
             brand: row.get("brand").to_string(),
             name: row.get("name").to_string(),
@@ -418,7 +432,7 @@ impl CatalogLoader {
             in_stock: true,
             notes: String::new(),
             system: PaintSystem::Acrylic,
-        }
+        })
     }
 
     fn parse_pigments(cell: &str) -> IndexSet<String> {

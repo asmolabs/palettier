@@ -51,6 +51,18 @@ impl Rgb {
         (self.r, self.g, self.b)
     }
 
+    /// Parses an sRGB color from a 3-digit or 6-digit hex string (e.g. `"#FFF"` or `"336699"`).
+    ///
+    /// # Errors
+    /// Returns [`DomainError::InvalidHex`] if the string is not valid hexadecimal.
+    ///
+    /// # Example
+    /// ```
+    /// use palettier_domain::color::Rgb;
+    ///
+    /// let color = Rgb::of_hex("#336699").unwrap();
+    /// assert_eq!(color.to_hex(), "#336699");
+    /// ```
     pub fn of_hex(hex: &str) -> DomainResult<Self> {
         let raw = hex.trim().strip_prefix('#').unwrap_or(hex.trim());
         let expanded = match raw.len() {
@@ -74,6 +86,7 @@ impl Rgb {
         ))
     }
 
+    /// Formats the color as a standard uppercase 6-digit `#RRGGBB` hex string.
     pub fn to_hex(&self) -> String {
         let r = (self.r * 255.0).round() as u8;
         let g = (self.g * 255.0).round() as u8;

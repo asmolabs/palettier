@@ -648,7 +648,7 @@ impl<'a> MixSearch<'a> {
 
         Evaluation {
             paints: paints.to_vec(),
-            parts: best_parts.expect("ratios non vide").to_vec(),
+            parts: best_parts.map(<[i32]>::to_vec).unwrap_or_default(),
             color: best_color,
             delta_e: best_de,
         }
