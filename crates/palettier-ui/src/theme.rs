@@ -1,5 +1,6 @@
 //! Global CSS stylesheet (supporting Night/Dark and Day/Light studio themes) and reusable UI components.
 
+use crate::icons::IconClose;
 use crate::state::{AppState, ThemeMode};
 use dioxus::prelude::*;
 use palettier_domain::i18n::Locale;
@@ -16,6 +17,50 @@ pub fn SectionHeader(title: String, subtitle: String, actions: Option<Element>) 
             }
             if let Some(act) = actions {
                 div { class: "row", {act} }
+            }
+        }
+    }
+}
+
+/// Slide-over right detail/form drawer with blurred backdrop and Escape-to-close support.
+#[component]
+pub fn SlideDrawer(
+    title: String,
+    subtitle: Option<String>,
+    on_close: EventHandler<()>,
+    children: Element,
+) -> Element {
+    let locale = *use_context::<AppState>().locale.read();
+    rsx! {
+        div {
+            class: "drawer-backdrop",
+            tabindex: "0",
+            onclick: move |_| on_close.call(()),
+            onkeydown: move |e| {
+                if e.key() == Key::Escape {
+                    on_close.call(());
+                }
+            },
+            div {
+                class: "drawer-panel",
+                onclick: move |e| e.stop_propagation(),
+                div { class: "drawer-header",
+                    div { class: "drawer-header-text",
+                        h3 { class: "drawer-title", "{title}" }
+                        if let Some(sub) = subtitle {
+                            p { class: "drawer-subtitle", "{sub}" }
+                        }
+                    }
+                    button {
+                        class: "icon-btn drawer-close-btn",
+                        title: locale.tr("Fermer (Échap)", "Close (Esc)"),
+                        onclick: move |_| on_close.call(()),
+                        IconClose {}
+                    }
+                }
+                div { class: "drawer-body",
+                    {children}
+                }
             }
         }
     }
@@ -248,7 +293,7 @@ pub fn GamutMapSvg(
     #[props(default = 240)] size: u32,
 ) -> Element {
     use palettier_domain::color::Rgb;
-    use palettier_domain::guide::MixingGuideBuilder;
+    use palettier_domain::guide;
 
     let state = use_context::<AppState>();
     let locale = *state.locale.read();
@@ -262,7 +307,7 @@ pub fn GamutMapSvg(
         (x, y)
     };
 
-    let entries = MixingGuideBuilder::build_palette_entries(&paints);
+    let entries = guide::build_palette_entries(&paints, locale);
     let mut lab_pts: Vec<(f64, f64)> = Vec::new();
     let mut tube_markers: Vec<(f64, f64, String, String, String)> = Vec::new();
 
@@ -331,6 +376,12 @@ pub fn GamutMapSvg(
             "#d8cfc0",
             "#bfb4a2",
             "#262320",
+        ),
+        ThemeMode::Neutral => (
+            "background: radial-gradient(circle at center, #333333 0%, #262626 100%); border-radius: 10px; border: 1px solid #444444;",
+            "#444444",
+            "#555555",
+            "#ebebeb",
         ),
     };
 
@@ -482,7 +533,7 @@ pub fn export_and_open_guide_html(
     photo_data_uri: Option<&str>,
     locale: palettier_domain::i18n::Locale,
 ) -> Result<std::path::PathBuf, String> {
-    let html = guide.to_printable_html_i18n(photo_data_uri, locale);
+    let html = guide.to_printable_html(photo_data_uri, locale);
     let safe_name: String = guide
         .subtitle
         .chars()

@@ -102,7 +102,7 @@ fn LayerRow(proj: Project, z_idx: usize, l_idx: usize) -> Element {
         return rsx! {};
     };
     let is_editing = *ui.editing_layer.read() == Some((z_idx, l_idx));
-    let computed = services.planner.recompute(&layer, proj.effective_paints());
+    let computed = palettier_domain::plan::recompute_layer(&layer, proj.effective_paints());
 
     let save_edit = {
         let svc = services.clone();
@@ -190,7 +190,7 @@ fn LayerRow(proj: Project, z_idx: usize, l_idx: usize) -> Element {
                     if let Some(ref rec) = computed.recipe {
                         div { class: "row",
                             ColorSwatch { hex: computed.achieved.to_hex(), size: 18 }
-                            strong { class: "u-fs-12p5", "{rec.describe_i18n(locale)}" }
+                            strong { class: "u-fs-12p5", "{rec.describe(locale)}" }
                             DeltaEBadge { delta_e: computed.delta_e }
                         }
                     }

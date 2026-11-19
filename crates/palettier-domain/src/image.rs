@@ -64,12 +64,10 @@ pub struct PixelMap {
 impl PixelMap {
     pub fn new(width: usize, height: usize, argb: Vec<u32>) -> DomainResult<Self> {
         if argb.len() != width * height {
-            return Err(DomainError::InvalidArgument(format!(
-                "{} pixels pour {}x{}",
-                argb.len(),
-                width,
-                height
-            )));
+            return Err(DomainError::localized(
+                format!("{} pixels pour {}×{}", argb.len(), width, height),
+                format!("{} pixels for {}×{}", argb.len(), width, height),
+            ));
         }
         Ok(Self {
             width,

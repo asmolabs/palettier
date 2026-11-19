@@ -22,6 +22,17 @@ pub async fn save_locale(services: &AppServices, locale: Locale) -> DomainResult
     services.settings.put(AppState::KEY_LOCALE, locale.code()).await
 }
 
+/// Remembers whether the navigation sidebar is collapsed.
+pub async fn save_sidebar_collapsed(services: &AppServices, collapsed: bool) -> DomainResult<()> {
+    services
+        .settings
+        .put(
+            AppState::KEY_SIDEBAR_COLLAPSED,
+            if collapsed { "true" } else { "false" },
+        )
+        .await
+}
+
 /// Remembers the studio's climate conditions (temperature, humidity, ventilation).
 pub async fn save_workshop(services: &AppServices, workshop: Workshop) -> DomainResult<()> {
     let encoded = format!(
@@ -87,11 +98,16 @@ pub enum ImportFailure {
 }
 
 /// Restores a ZIP archive into the studio.
-pub async fn import_backup(services: &AppServices, path: &Path) -> Result<ImportReport, ImportFailure> {
-    let mut archive = ZipBackupArchive::open(path).map_err(ImportFailure::InvalidArchive)?;
+pub async fn import_backup(
+    services: &AppServices,
+    path: &Path,
+    locale: Locale,
+) -> Result<ImportReport, ImportFailure> {
+    let mut archive =
+        ZipBackupArchive::open_in(path, locale).map_err(ImportFailure::InvalidArchive)?;
     services
         .importer()
-        .import(&mut archive)
+        .import_in(&mut archive, locale)
         .await
         .map_err(ImportFailure::Import)
 }
@@ -167,7 +183,7 @@ mod tests {
         assert!(exported.projects >= 1);
 
         let fresh = AppServices::in_memory().await.unwrap();
-        let imported = import_backup(&fresh, &zip).await.unwrap();
+        let imported = import_backup(&fresh, &zip, Locale::Fr).await.unwrap();
         assert!(imported.projects_added >= 1);
         assert!(fresh.projects.all().await.unwrap().iter().any(|p| p.name == "Sauvegardé"));
         let restored_cal = fresh.catalog.all().await.unwrap()[0].clone();
@@ -192,7 +208,7 @@ mod tests {
         let junk = dir.join("pas-une-archive.zip");
         std::fs::write(&junk, b"pas un zip").unwrap();
         assert!(matches!(
-            import_backup(&fresh, &junk).await,
+            import_backup(&fresh, &junk, Locale::Fr).await,
             Err(ImportFailure::InvalidArchive(_))
         ));
         let _ = std::fs::remove_dir_all(&dir);

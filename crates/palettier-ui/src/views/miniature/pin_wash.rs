@@ -111,7 +111,7 @@ pub(super) fn PinWash(candidates: Vec<Paint>) -> Element {
                             div { class: "row u-gap-10 u-ai-center",
                                 ColorSwatch { hex: s.color.to_hex(), size: 28 }
                                 div {
-                                    div { class: "u-fw-700 u-fs-12p5", "{s.describe_i18n(locale)}" }
+                                    div { class: "u-fw-700 u-fs-12p5", "{s.describe(locale)}" }
                                     div { class: "muted u-fs-11",
                                         {locale.tr("Diluer dans ", "Dilute with ")},
                                         strong { "{wash_solvent_ratio} parts " },

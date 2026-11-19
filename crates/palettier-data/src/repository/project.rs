@@ -1,4 +1,4 @@
-use crate::db::{Database, map_db_err};
+use crate::db::{Database, DbExec, map_db_err};
 use crate::entity::{
     project, project_layer, project_paint, project_photo, project_zone,
 };
@@ -14,15 +14,15 @@ use palettier_domain::project::{
     AppliedCoat, LayerKind, PhotoRole, Project, ProjectLayer, ProjectPhoto, ProjectZone,
 };
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait,
-    PaginatorTrait, QueryFilter, QueryOrder, Set, Statement, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter,
+    QueryOrder, Set, Statement, TransactionTrait,
 };
 use std::str::FromStr;
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct SeaOrmProjectRepository {
-    db: DatabaseConnection,
+    db: DbExec,
     catalog: Arc<dyn PaintCatalogRepository>,
     palettes: Arc<dyn PaletteRepository>,
 }
@@ -34,7 +34,19 @@ impl SeaOrmProjectRepository {
         palettes: Arc<dyn PaletteRepository>,
     ) -> Self {
         Self {
-            db: database.connection().clone(),
+            db: DbExec::Pool(database.connection().clone()),
+            catalog,
+            palettes,
+        }
+    }
+
+    pub(crate) fn from_exec(
+        db: DbExec,
+        catalog: Arc<dyn PaintCatalogRepository>,
+        palettes: Arc<dyn PaletteRepository>,
+    ) -> Self {
+        Self {
+            db,
             catalog,
             palettes,
         }
@@ -131,6 +143,7 @@ impl SeaOrmProjectRepository {
         Ok(rows
             .into_iter()
             .map(|row| {
+                let system = PaintSystem::from_str(&row.paint_system).unwrap_or_default();
                 let paints = frozen
                     .get(&row.id)
                     .map(|ids| {
@@ -148,7 +161,7 @@ impl SeaOrmProjectRepository {
                             .swap_remove(&z.id)
                             .unwrap_or_default()
                             .into_iter()
-                            .map(layer_row_to_domain)
+                            .map(|l| layer_row_to_domain(l, system))
                             .collect();
                         ProjectZone {
                             id: Some(z.id),
@@ -171,7 +184,7 @@ impl SeaOrmProjectRepository {
                     subject: row.subject,
                     approach: row.approach,
                     notes: row.notes,
-                    system: PaintSystem::from_str(&row.paint_system).unwrap_or_default(),
+                    system,
                     palette: row
                         .palette_id
                         .and_then(|pid| palettes_by_id.get(&pid).cloned()),
@@ -185,7 +198,7 @@ impl SeaOrmProjectRepository {
     }
 }
 
-fn layer_row_to_domain(row: project_layer::Model) -> ProjectLayer {
+fn layer_row_to_domain(row: project_layer::Model, system: PaintSystem) -> ProjectLayer {
     let std_workshop = Workshop::standard();
     let applied = row.applied_at.map(|ms| {
         let at = Utc
@@ -219,13 +232,13 @@ fn layer_row_to_domain(row: project_layer::Model) -> ProjectLayer {
         id: Some(row.id),
         role: row.role,
         target_hex: row.target_hex,
-        technique: Technique::Glaze,
+        technique: Technique::default_for(system),
         note: row.note,
         kind: LayerKind::from_str(&row.kind).unwrap_or(LayerKind::Ladder),
         applied,
     };
     // Stored as a code since migration m0003; anything else is read like a label.
-    layer.set_technique_label(&row.technique, PaintSystem::Oil);
+    layer.set_technique_label(&row.technique, system);
     layer
 }
 

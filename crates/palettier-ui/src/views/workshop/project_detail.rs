@@ -12,7 +12,9 @@ use dioxus::prelude::*;
 use palettier_domain::guide::MixingGuide;
 use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{Paint, PaintSystem};
-use palettier_domain::project::{MissingPaint, PhotoRole, Project, ProjectPhoto};
+use palettier_domain::project::{
+    MissingPaint, PhotoRole, Project, ProjectPhoto, fat_over_lean, missing_paints,
+};
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
@@ -130,16 +132,14 @@ fn ProjectToolbar(proj: Project) -> Element {
     let show_guide = (ui.show_guide)();
 
     let export_guide = {
-        let svc = services.clone();
         let p_export = proj.clone();
         move |_| {
-            let svc = svc.clone();
             let p_export = p_export.clone();
             spawn(async move {
                 let loc = *state.locale.read();
                 let photo_uri = projects::showcase_photo(&p_export).map(data_uri);
                 let Ok(guide) = tokio::task::spawn_blocking(move || {
-                    svc.guide_builder.from_project_i18n(&p_export, loc)
+                    palettier_domain::guide::from_project(&p_export, loc)
                 })
                 .await
                 else {
@@ -197,7 +197,6 @@ fn ProjectToolbar(proj: Project) -> Element {
     };
 
     let export_card = {
-        let svc = services.clone();
         let p_card = proj.clone();
         move |_| {
             let loc = *state.locale.read();
@@ -207,17 +206,26 @@ fn ProjectToolbar(proj: Project) -> Element {
                 .iter()
                 .map(|p| p.hex_color.clone())
                 .collect();
-            if let Ok(card_png) = svc.decoder.render_social_recipe_card(photo_bytes, &swatches)
-                && let Some(dest) = rfd::FileDialog::new()
-                    .add_filter("PNG Image", &["png"])
-                    .set_file_name(format!("{}-recipe-card.png", p_card.name))
-                    .save_file()
-                && std::fs::write(&dest, card_png).is_ok()
-            {
-                state.notify(loc.tr(
-                    "Carte recette PNG exportée avec succès !",
-                    "Recipe card PNG exported successfully!",
-                ));
+            match palettier_image::render_social_recipe_card(photo_bytes, &swatches) {
+                Ok(card_png) => {
+                    if let Some(dest) = rfd::FileDialog::new()
+                        .add_filter("PNG Image", &["png"])
+                        .set_file_name(format!("{}-recipe-card.png", p_card.name))
+                        .save_file()
+                    {
+                        match std::fs::write(&dest, card_png) {
+                            Ok(()) => state.notify(loc.tr(
+                                "Carte recette PNG exportée avec succès !",
+                                "Recipe card PNG exported successfully!",
+                            )),
+                            Err(err) => state.notify(format!(
+                                "{}: {err}",
+                                loc.tr("Échec d'export de la carte", "Card export failed")
+                            )),
+                        }
+                    }
+                }
+                Err(err) => state.notify(err.message(loc)),
             }
         }
     };
@@ -309,7 +317,6 @@ fn ProjectToolbar(proj: Project) -> Element {
 #[component]
 fn ProjectGuide(proj: Project) -> Element {
     let mut state = use_context::<AppState>();
-    let services = use_context::<AppServices>();
     let locale = *state.locale.read();
     let photo_uri = projects::showcase_photo(&proj).map(data_uri);
 
@@ -320,11 +327,10 @@ fn ProjectGuide(proj: Project) -> Element {
     if *computed_key.read() != key {
         computed_key.set(key);
         guide_state.set(None);
-        let builder = services.guide_builder.clone();
         let p_compute = proj.clone();
         spawn(async move {
             let Ok(guide) = tokio::task::spawn_blocking(move || {
-                builder.from_project_i18n(&p_compute, locale)
+                palettier_domain::guide::from_project(&p_compute, locale)
             })
             .await
             else {
@@ -421,10 +427,9 @@ fn ProjectTubes(proj: Project) -> Element {
 #[component]
 fn ProjectWarnings(proj: Project) -> Element {
     let state = use_context::<AppState>();
-    let services = use_context::<AppServices>();
     let locale = *state.locale.read();
 
-    let risks = services.fat_over_lean.inspect_project_i18n(&proj, locale);
+    let risks = fat_over_lean::inspect_project(&proj, locale);
     let catalog_snapshot = state.paints.read();
     let live_effective = sync_paints_stock(proj.effective_paints(), &catalog_snapshot);
     let owned_paints: Vec<_> = catalog_snapshot
@@ -432,7 +437,7 @@ fn ProjectWarnings(proj: Project) -> Element {
         .filter(|p| p.in_stock)
         .cloned()
         .collect();
-    let missing = services.substitute_service.missing_among(&live_effective, &owned_paints);
+    let missing = missing_paints(&live_effective, &owned_paints);
 
     rsx! {
         if !risks.is_empty() {

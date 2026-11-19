@@ -257,7 +257,7 @@ fn hue_angle(b: f64, ap: f64) -> f64 {
 /// Average of a set of pixels in linear light.
 pub fn average(samples: &[Rgb]) -> DomainResult<Rgb> {
     if samples.is_empty() {
-        return Err(DomainError::InvalidArgument("Échantillon vide".to_string()));
+        return Err(DomainError::localized("Échantillon vide", "Empty color sample"));
     }
     let mut r = 0.0;
     let mut g = 0.0;
@@ -293,14 +293,16 @@ pub fn neutralise(sample: Rgb, grey_point: Rgb) -> Rgb {
 /// Subtractive color mixing (single-constant Kubelka-Munk).
 pub fn mix(colors: &[Rgb], weights: &[f64]) -> DomainResult<Rgb> {
     if colors.is_empty() || colors.len() != weights.len() {
-        return Err(DomainError::InvalidArgument(
-            "Il faut autant de poids que de couleurs, et au moins une couleur".to_string(),
+        return Err(DomainError::localized(
+            "Il faut autant de poids que de couleurs, et au moins une couleur",
+            "Weights and colors must be non-empty and have the same length",
         ));
     }
     let total: f64 = weights.iter().sum();
     if total <= 0.0 {
-        return Err(DomainError::InvalidArgument(
-            "La somme des poids doit être strictement positive".to_string(),
+        return Err(DomainError::localized(
+            "La somme des poids doit être strictement positive",
+            "Total weight must be strictly positive",
         ));
     }
 
@@ -425,14 +427,16 @@ impl Colorant {
     /// Mixes multiple colorants.
     pub fn mix(colorants: &[Colorant], weights: &[f64]) -> DomainResult<Rgb> {
         if colorants.is_empty() || colorants.len() != weights.len() {
-            return Err(DomainError::InvalidArgument(
-                "Il faut autant de poids que de colorants, et au moins un colorant".to_string(),
+            return Err(DomainError::localized(
+                "Il faut autant de poids que de colorants, et au moins un colorant",
+                "Weights and colorants must be non-empty and have the same length",
             ));
         }
         let total: f64 = weights.iter().sum();
         if total <= 0.0 {
-            return Err(DomainError::InvalidArgument(
-                "La somme des poids doit être strictement positive".to_string(),
+            return Err(DomainError::localized(
+                "La somme des poids doit être strictement positive",
+                "Total weight must be strictly positive",
             ));
         }
 

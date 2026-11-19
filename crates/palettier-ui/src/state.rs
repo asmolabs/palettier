@@ -12,39 +12,37 @@ use palettier_data::{
 };
 use palettier_domain::drying::{DryingTimeService, Workshop};
 use palettier_domain::error::DomainResult;
-use palettier_domain::guide::MixingGuideBuilder;
 use palettier_domain::i18n::Locale;
-use palettier_domain::mix::ColorMixService;
 use palettier_domain::paint::{Paint, PaintSystem};
 use palettier_domain::palette::{Palette, PaletteMix, PaletteMixService};
-use palettier_domain::plan::{ProjectPlanner, SampledPlanService};
 use palettier_domain::port::{
     PaintCatalogRepository, PaletteMixRepository, PaletteRepository, ProjectRepository,
     RecipeRepository, SettingsRepository,
 };
-use palettier_domain::project::{
-    FatOverLeanService, ProgressCheckService, Project, SubstituteService,
-};
+use palettier_domain::project::Project;
 use palettier_domain::recipe::{Recipe, RecipeTimelineService};
 use palettier_domain::workbench::WorkbenchService;
-use palettier_image::ImageDecoder;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 
-/// Visual theme mode (Night / Dark studio vs Day / Light studio).
+/// Visual theme mode (Night studio, Day studio, or Neutral D65 color-grading grey).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ThemeMode {
     #[default]
     Dark,
     Light,
+    Neutral,
 }
 
 impl ThemeMode {
+    pub const ALL: [Self; 3] = [Self::Dark, Self::Light, Self::Neutral];
+
     pub fn css_class(&self) -> &'static str {
         match self {
             Self::Dark => "theme-dark",
             Self::Light => "theme-light",
+            Self::Neutral => "theme-neutral",
         }
     }
 
@@ -52,22 +50,41 @@ impl ThemeMode {
         match self {
             Self::Dark => "dark",
             Self::Light => "light",
+            Self::Neutral => "neutral",
         }
     }
 
     pub fn toggle(&self) -> Self {
         match self {
             Self::Dark => Self::Light,
-            Self::Light => Self::Dark,
+            Self::Light => Self::Neutral,
+            Self::Neutral => Self::Dark,
         }
     }
 
     pub fn button_label(&self, locale: Locale) -> &'static str {
         match (self, locale) {
-            (Self::Dark, Locale::Fr) => "☀️ Mode Jour",
-            (Self::Dark, Locale::En) => "☀️ Day Mode",
-            (Self::Light, Locale::Fr) => "🌙 Mode Nuit",
-            (Self::Light, Locale::En) => "🌙 Night Mode",
+            (Self::Dark, Locale::Fr) => "🌙 Mode Nuit",
+            (Self::Dark, Locale::En) => "🌙 Night Mode",
+            (Self::Light, Locale::Fr) => "☀️ Mode Jour",
+            (Self::Light, Locale::En) => "☀️ Day Mode",
+            (Self::Neutral, Locale::Fr) => "⚖️ Gris neutre",
+            (Self::Neutral, Locale::En) => "⚖️ Neutral Grey",
+        }
+    }
+
+    pub fn next_button_label(&self, locale: Locale) -> &'static str {
+        self.toggle().button_label(locale)
+    }
+
+    pub fn description(&self, locale: Locale) -> &'static str {
+        match (self, locale) {
+            (Self::Dark, Locale::Fr) => "Atelier sombre chaleureux",
+            (Self::Dark, Locale::En) => "Warm dark studio",
+            (Self::Light, Locale::Fr) => "Lumière du jour contrastée",
+            (Self::Light, Locale::En) => "High-contrast daylight",
+            (Self::Neutral, Locale::Fr) => "Gris achromatique sans biais couleur",
+            (Self::Neutral, Locale::En) => "Achromatic grey for colour accuracy",
         }
     }
 
@@ -77,6 +94,8 @@ impl ThemeMode {
             (Self::Dark, Locale::En) => "Night",
             (Self::Light, Locale::Fr) => "Jour",
             (Self::Light, Locale::En) => "Day",
+            (Self::Neutral, Locale::Fr) => "Neutre",
+            (Self::Neutral, Locale::En) => "Neutral",
         }
     }
 }
@@ -88,6 +107,7 @@ impl FromStr for ThemeMode {
         match s.trim().to_lowercase().as_str() {
             "light" | "day" | "jour" => Ok(Self::Light),
             "dark" | "night" | "nuit" => Ok(Self::Dark),
+            "neutral" | "neutre" | "grey" | "gray" | "gris" => Ok(Self::Neutral),
             _ => Err(()),
         }
     }
@@ -114,22 +134,6 @@ impl Section {
     pub const WORKSHOP: [Self; 3] = [Self::Today, Self::Projects, Self::Palettes];
     pub const COLOR: [Self; 3] = [Self::Mixer, Self::Eyedropper, Self::Assistant];
     pub const REFERENCE: [Self; 3] = [Self::Catalog, Self::Drying, Self::Recipes];
-
-    pub fn icon(&self) -> &'static str {
-        match self {
-            Self::Miniature => "⚔️",
-            Self::Today => "⏱️",
-            Self::Projects => "📋",
-            Self::Palettes => "🎨",
-            Self::Mixer => "🧪",
-            Self::Eyedropper => "💧",
-            Self::Assistant => "🤖",
-            Self::Catalog => "📚",
-            Self::Drying => "⏳",
-            Self::Recipes => "📖",
-            Self::Settings => "⚙️",
-        }
-    }
 
     pub fn label(&self, locale: Locale) -> &'static str {
         match self {
@@ -180,18 +184,10 @@ pub struct AppServices {
     pub plan_service: Arc<PaintingPlanService>,
     pub recognition_service: Arc<TubeRecognitionService>,
     pub model_catalog: Arc<ModelCatalog>,
-    pub mix_service: ColorMixService,
     pub drying_service: DryingTimeService,
-    pub fat_over_lean: FatOverLeanService,
-    pub substitute_service: SubstituteService,
-    pub progress_service: ProgressCheckService,
     pub palette_mix_service: PaletteMixService,
     pub recipe_timeline: RecipeTimelineService,
     pub workbench: WorkbenchService,
-    pub planner: ProjectPlanner,
-    pub sampled_plan_service: SampledPlanService,
-    pub guide_builder: MixingGuideBuilder,
-    pub decoder: ImageDecoder,
 }
 
 impl PartialEq for AppServices {
@@ -255,18 +251,10 @@ impl AppServices {
             plan_service,
             recognition_service,
             model_catalog,
-            mix_service: ColorMixService,
             drying_service: DryingTimeService::default(),
-            fat_over_lean: FatOverLeanService,
-            substitute_service: SubstituteService,
-            progress_service: ProgressCheckService,
             palette_mix_service: PaletteMixService::default(),
             recipe_timeline: RecipeTimelineService::default(),
             workbench: WorkbenchService::default(),
-            planner: ProjectPlanner::default(),
-            sampled_plan_service: SampledPlanService::default(),
-            guide_builder: MixingGuideBuilder::default(),
-            decoder: ImageDecoder,
         })
     }
 
@@ -278,6 +266,7 @@ impl AppServices {
             self.recipes.clone(),
         )
         .with_settings(self.settings.clone())
+        .with_database(&self._database)
     }
 
     pub fn exporter(&self) -> BackupExporter {
@@ -292,6 +281,13 @@ impl AppServices {
 }
 
 /// Reactive application state stored in Dioxus signals.
+/// Transient notification shown in the floating bottom-right toast banner.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ToastNotice {
+    pub message: String,
+    pub is_error: bool,
+}
+
 #[derive(Clone, Copy)]
 pub struct AppState {
     pub section: Signal<Section>,
@@ -304,7 +300,7 @@ pub struct AppState {
     pub mixes: Signal<Vec<PaletteMix>>,
     pub workshop: Signal<Workshop>,
     pub ai_settings: Signal<AiSettings>,
-    pub toast: Signal<Option<String>>,
+    pub toast: Signal<Option<ToastNotice>>,
     pub sampled_zones: Signal<Vec<SampledZone>>,
     pub mixer_target_hex: Signal<String>,
     pub last_sampled_hex: Signal<Option<String>>,
@@ -315,6 +311,8 @@ pub struct AppState {
     pub paint_system: Signal<PaintSystem>,
     /// True once the initial `reload_all` pass has populated state from the store.
     pub loaded: Signal<bool>,
+    /// True when the navigation sidebar is collapsed to an icon rail.
+    pub sidebar_collapsed: Signal<bool>,
 }
 
 impl AppState {
@@ -322,6 +320,7 @@ impl AppState {
     pub const KEY_THEME: &'static str = "ui.theme";
     pub const KEY_PAINT_SYSTEM: &'static str = "ui.paint_system";
     pub const KEY_WORKSHOP: &'static str = "ui.workshop";
+    pub const KEY_SIDEBAR_COLLAPSED: &'static str = "ui.sidebar_collapsed";
 
     /// Updates the workshop climate and remembers it for the next start.
     pub fn set_workshop(&mut self, services: &AppServices, workshop: Workshop) {
@@ -371,6 +370,9 @@ impl AppState {
             && let Ok(th) = ThemeMode::from_str(&th_str)
         {
             self.theme.set(th);
+        }
+        if let Ok(Some(collapsed)) = services.settings.get(Self::KEY_SIDEBAR_COLLAPSED).await {
+            self.sidebar_collapsed.set(collapsed == "true");
         }
         if let Ok(Some(sys)) = services.settings.get(Self::KEY_PAINT_SYSTEM).await
             && let Ok(sys) = PaintSystem::from_str(&sys)
@@ -470,7 +472,33 @@ impl AppState {
         }
     }
 
+    /// Shows a status toast and auto-dismisses it after 5 seconds unless replaced.
     pub fn notify(&mut self, msg: impl Into<String>) {
-        self.toast.set(Some(msg.into()));
+        self.push_toast(msg.into(), false);
+    }
+
+    /// Shows an error-styled status toast and auto-dismisses it after 5 seconds unless replaced.
+    #[allow(dead_code)]
+    pub fn notify_error(&mut self, msg: impl Into<String>) {
+        self.push_toast(msg.into(), true);
+    }
+
+    fn push_toast(&mut self, message: String, is_error: bool) {
+        let notice = ToastNotice {
+            message: message.clone(),
+            is_error,
+        };
+        self.toast.set(Some(notice));
+        let mut toast_sig = self.toast;
+        spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+            let matches = toast_sig
+                .peek()
+                .as_ref()
+                .is_some_and(|t| t.message == message && t.is_error == is_error);
+            if matches {
+                toast_sig.set(None);
+            }
+        });
     }
 }

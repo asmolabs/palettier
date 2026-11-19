@@ -26,7 +26,7 @@ impl RecipeSheetState {
 fn set_base_acrylic(sheet: &mut ArmyRecipeSheet, acrylic: &Paint, mix: Option<&MixSuggestion>, locale: Locale) {
     sheet.base_acrylic = format!("{} ({})", acrylic.name, acrylic.brand);
     sheet.base_hex = acrylic.hex_color.clone();
-    sheet.oil_mix_formula = mix.map(|m| m.describe_i18n(locale)).unwrap_or_default();
+    sheet.oil_mix_formula = mix.map(|m| m.describe(locale)).unwrap_or_default();
     sheet.mixed_hex = mix.map(|m| m.color.to_hex()).unwrap_or_default();
 }
 
@@ -287,13 +287,17 @@ mod tests {
     use super::*;
     use palettier_domain::color::Rgb;
     use palettier_domain::paint::PaintSystem;
-    use palettier_domain::mix::ColorMixService;
 
     #[test]
     fn the_base_acrylic_brings_its_oil_mix_or_clears_it() {
         let acrylic = Paint::new("Citadel", "Mephiston Red", "#9A1115").in_system(PaintSystem::Acrylic);
         let oils = vec![Paint::new("W&N", "Cadmium Red", "#B0201C")];
-        let mix = ColorMixService.suggest_mixes(Rgb::of_hex("#9A1115").unwrap(), &oils, 1, Some(3));
+        let mix = palettier_domain::mix::suggest_mixes(
+            Rgb::of_hex("#9A1115").unwrap(),
+            &oils,
+            1,
+            Some(3),
+        );
         let mut sheet = ArmyRecipeSheet::default();
         set_base_acrylic(&mut sheet, &acrylic, mix.first(), Locale::Fr);
         assert_eq!("Mephiston Red (Citadel)", sheet.base_acrylic);

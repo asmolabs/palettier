@@ -57,6 +57,27 @@ async fn mixer_in_acrylic_offers_acrylics_only() {
 }
 
 #[tokio::test(flavor = "current_thread")]
+async fn mixer_picks_acrylic_target_for_oil_mix_and_vice_versa() {
+    let mut ui = Ui::studio().await;
+    ui.click_in("sidebar", "Mélangeur").await;
+
+    // In Oil mode, the cross-system target picker defaults to Acrylic: search Mephiston Red.
+    ui.type_into("Chercher un pot/tube cible", "Mephiston Red").await;
+    ui.click_in("target-paint-grid", "Mephiston Red").await;
+    ui.assert_shows("Citadel · Mephiston Red").await;
+    ui.assert_shows("(Acrylique → Huile)").await;
+    // Selecting a target paint automatically solves for an Oil mix.
+    ui.assert_shows("Dosage proposé").await;
+
+    // Switch studio to Acrylic: target picker defaults to Oil; search Burnt Umber.
+    ui.click_in("system-segment", "Acrylique").await;
+    ui.type_into("Chercher un pot/tube cible", "Burnt Umber").await;
+    ui.click_in("target-paint-grid", "Burnt Umber").await;
+    ui.assert_shows("(Huile → Acrylique)").await;
+    ui.assert_shows("Dosage proposé").await;
+}
+
+#[tokio::test(flavor = "current_thread")]
 async fn drying_follows_the_thickness_chosen() {
     let mut ui = Ui::studio().await;
     ui.click_in("sidebar", "Séchage").await;
@@ -111,4 +132,24 @@ async fn deleting_a_recipe_removes_it() {
     ui.click_in("sidebar", "Recettes").await;
     ui.click("Supprimer").await;
     ui.assert_shows("Recettes enregistrées (2)").await;
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn catalog_custom_tube_and_sheet_open_in_slide_drawer() {
+    let mut ui = Ui::studio().await;
+    ui.click_in("sidebar", "Catalogue").await;
+    ui.assert_hides("Enregistrer ce tube").await;
+
+    ui.click("+ Nouveau tube personnalisé").await;
+    assert!(ui.find_class("drawer-panel").is_some());
+    ui.type_into("ex. Ocre d'or maison", "Ocre Atelier Test").await;
+    ui.click("Enregistrer ce tube").await;
+
+    // Submitting closes the custom-tube drawer and notifies via the floating toast.
+    ui.assert_shows("Ocre Atelier Test").await;
+    ui.assert_shows("ajouté au catalogue et au tiroir.").await;
+    // The newly created tube is selected in the sheet drawer; closing clears it.
+    assert!(ui.find_class("drawer-panel").is_some());
+    ui.click_in("drawer-panel", "Fermer (Échap)").await;
+    assert!(ui.find_class("drawer-panel").is_none());
 }

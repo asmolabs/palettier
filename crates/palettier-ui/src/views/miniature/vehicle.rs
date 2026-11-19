@@ -109,7 +109,7 @@ fn effect_card(services: &AppServices, locale: Locale, current_fx: VehicleEffect
                 if let Some(ref s) = sugg {
                     div { class: "row u-gap-8 u-ai-center",
                         div { class: "u-fw-650 u-fs-12 u-c-accent",
-                            "{s.describe_i18n(locale)}"
+                            "{s.describe(locale)}"
                         }
                         DeltaEBadge { delta_e: s.delta_e }
                     }

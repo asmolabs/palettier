@@ -1,13 +1,13 @@
-use crate::db::{Database, map_db_err};
+use crate::db::{Database, DbExec, map_db_err};
 use crate::entity::setting;
 use async_trait::async_trait;
 use palettier_domain::error::{DomainError, DomainResult};
 use palettier_domain::port::SettingsRepository;
-use sea_orm::{DatabaseConnection, EntityTrait, Set};
+use sea_orm::{EntityTrait, Set};
 
 #[derive(Clone)]
 pub struct SeaOrmSettingsRepository {
-    db: DatabaseConnection,
+    db: DbExec,
     use_keyring: bool,
 }
 
@@ -16,16 +16,20 @@ impl SeaOrmSettingsRepository {
 
     pub fn new(database: &Database) -> Self {
         Self {
-            db: database.connection().clone(),
+            db: DbExec::Pool(database.connection().clone()),
             use_keyring: false,
         }
     }
 
     pub fn with_keyring(database: &Database) -> Self {
         Self {
-            db: database.connection().clone(),
+            db: DbExec::Pool(database.connection().clone()),
             use_keyring: true,
         }
+    }
+
+    pub(crate) fn from_exec(db: DbExec, use_keyring: bool) -> Self {
+        Self { db, use_keyring }
     }
 
     fn is_secret_key(key: &str) -> bool {

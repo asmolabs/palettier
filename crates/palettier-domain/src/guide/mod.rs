@@ -12,12 +12,13 @@
 //!    `Base + Si`, `une trace de Pr au cure-dent`) accompagnés des indications d'anatomie ou de sculpture.
 //! 5. **Conseils numérotés** adaptés à la palette et au sujet, et export A4 imprimable (HTML/PDF).
 
+mod render;
+
 use crate::color::{Rgb, delta_e_2000};
-use crate::html::{escape_html, sanitize_hex_css, sanitize_image_data_uri};
 use crate::i18n::Locale;
-use crate::mix::{ColorMixService, MixSuggestion, PaintPart};
+use crate::mix::{MixSuggestion, PaintPart, mix_paints, suggest_mixes};
 use crate::paint::{DryingClass, Opacity, Paint};
-use crate::plan::{PaintingPlan, PlanLayer, PlanZone, ProjectPlanner};
+use crate::plan::{PaintingPlan, PlanLayer, PlanZone, plan_project};
 use crate::project::Project;
 use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
@@ -46,6 +47,15 @@ pub struct UndercoatWash {
     pub name: String,
     pub hex_color: String,
     pub recipe_text: String,
+}
+
+/// Contexte partagé pour formater une recette Kubelka-Munk en syntaxe courte d'atelier.
+pub struct PainterRecipeContext<'a> {
+    pub base_layer: Option<&'a PlanLayer>,
+    pub paints: &'a [Paint],
+    pub code_map: &'a IndexMap<String, String>,
+    pub mother_mixes: &'a [MotherMix],
+    pub locale: Locale,
 }
 
 /// Une ligne de couche dans une zone du guide de mélanges.
@@ -83,27 +93,28 @@ pub struct MixingGuide {
     pub advice: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct MixingGuideBuilder {
-    mixer: ColorMixService,
-    planner: ProjectPlanner,
+/// Builds a complete mixing guide from an existing project in the chosen locale.
+pub fn from_project(project: &Project, locale: Locale) -> MixingGuide {
+    GuideBuilder::from_project(project, locale)
 }
 
-impl MixingGuideBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
+/// Builds a complete mixing guide from a [`PaintingPlan`] and its palette paints in the chosen locale.
+pub fn from_plan(plan: &PaintingPlan, paints: &[Paint], locale: Locale) -> MixingGuide {
+    GuideBuilder::from_plan(plan, paints, locale)
+}
 
-    /// Construit un guide de mélanges complet à partir d'un projet existant.
-    pub fn from_project(&self, project: &Project) -> MixingGuide {
-        self.from_project_i18n(project, Locale::Fr)
-    }
+/// Assigns short mnemonic codes and workbench behavior notes to each paint in the chosen locale.
+pub fn build_palette_entries(paints: &[Paint], locale: Locale) -> Vec<GuidePaletteEntry> {
+    GuideBuilder::build_palette_entries(paints, locale)
+}
 
-    /// Construit un guide de mélanges complet à partir d'un projet existant dans la langue choisie.
-    pub fn from_project_i18n(&self, project: &Project, locale: Locale) -> MixingGuide {
-        let plan = self.planner.plan(project);
+struct GuideBuilder;
+
+impl GuideBuilder {
+    fn from_project(project: &Project, locale: Locale) -> MixingGuide {
+        let plan = plan_project(project);
         let paints = project.effective_paints();
-        let mut guide = self.from_plan_i18n(&plan, paints, locale);
+        let mut guide = Self::from_plan(&plan, paints, locale);
         if !project.name.trim().is_empty() {
             guide.title = project.name.clone();
         }
@@ -122,31 +133,20 @@ impl MixingGuideBuilder {
         guide
     }
 
-    /// Construit un guide de mélanges complet à partir d'un `PaintingPlan` et des tubes de la palette.
-    pub fn from_plan(&self, plan: &PaintingPlan, paints: &[Paint]) -> MixingGuide {
-        self.from_plan_i18n(plan, paints, Locale::Fr)
-    }
-
-    /// Construit un guide de mélanges complet à partir d'un `PaintingPlan` et des tubes de la palette dans la langue choisie.
-    pub fn from_plan_i18n(
-        &self,
-        plan: &PaintingPlan,
-        paints: &[Paint],
-        locale: Locale,
-    ) -> MixingGuide {
-        let palette_entries = Self::build_palette_entries_i18n(paints, locale);
+    fn from_plan(plan: &PaintingPlan, paints: &[Paint], locale: Locale) -> MixingGuide {
+        let palette_entries = Self::build_palette_entries(paints, locale);
         let code_map: IndexMap<String, String> = palette_entries
             .iter()
             .map(|e| (Self::paint_key(&e.paint), e.short_code.clone()))
             .collect();
 
-        let mother_mixes = self.build_mother_mixes(paints, &code_map, locale);
-        let washes = self.build_washes(&plan.zones, paints, &code_map, &mother_mixes);
+        let mother_mixes = Self::build_mother_mixes(paints, &code_map, locale);
+        let washes = Self::build_washes(&plan.zones, paints, &code_map, &mother_mixes);
 
         let zones: Vec<GuideZone> = plan
             .zones
             .iter()
-            .map(|z| self.build_zone(z, paints, &code_map, &mother_mixes, locale))
+            .map(|z| Self::build_zone(z, paints, &code_map, &mother_mixes, locale))
             .collect();
 
         let subtitle = if plan.palette_name.trim().is_empty() {
@@ -194,14 +194,7 @@ impl MixingGuideBuilder {
         }
     }
 
-    /// Attribue à chaque tube un code mnémonique court (`B`, `JC`, `Rc`, `Ga`, `Pr`, `Vi`, `Oc`, `N`...)
-    /// sans collision au sein de la palette, ainsi qu'une note de comportement à l'établi.
-    pub fn build_palette_entries(paints: &[Paint]) -> Vec<GuidePaletteEntry> {
-        Self::build_palette_entries_i18n(paints, Locale::Fr)
-    }
-
-    /// Attribue à chaque tube un code mnémonique court et une note de comportement dans la langue choisie.
-    pub fn build_palette_entries_i18n(paints: &[Paint], locale: Locale) -> Vec<GuidePaletteEntry> {
+    fn build_palette_entries(paints: &[Paint], locale: Locale) -> Vec<GuidePaletteEntry> {
         let mut used = IndexSet::new();
         let mut entries = Vec::with_capacity(paints.len());
 
@@ -331,11 +324,6 @@ impl MixingGuideBuilder {
         }
     }
 
-    #[allow(dead_code)]
-    fn describe_behavior(paint: &Paint) -> String {
-        Self::describe_behavior_i18n(paint, Locale::Fr)
-    }
-
     fn describe_behavior_i18n(paint: &Paint, locale: Locale) -> String {
         let low = paint.name.to_lowercase();
         let pigs = &paint.pigments;
@@ -411,7 +399,6 @@ impl MixingGuideBuilder {
     /// Synthétise les 3 mélanges intermédiaires (`Si` — Sienne, `BF` — Brun foncé, `NC` — Noir coloré)
     /// à partir des tubes présents dans la palette.
     fn build_mother_mixes(
-        &self,
         paints: &[Paint],
         code_map: &IndexMap<String, String>,
         locale: Locale,
@@ -449,9 +436,7 @@ impl MixingGuideBuilder {
             {
                 comps.push(p3);
             }
-            let hex = self
-                .mixer
-                .mix(&comps)
+            let hex = mix_paints(&comps)
                 .map(|r| r.color.to_hex())
                 .unwrap_or_else(|_| target_sienna.to_hex());
             let recipe_text = if let Some(ga) = cool_red
@@ -487,9 +472,7 @@ impl MixingGuideBuilder {
                 recipe_text,
                 adjustment_note: String::new(),
             });
-        } else if let Some(sugg) = self
-            .mixer
-            .suggest_mixes(target_sienna, paints, 1, Some(3))
+        } else if let Some(sugg) = suggest_mixes(target_sienna, paints, 1, Some(3))
             .into_iter()
             .next()
         {
@@ -522,9 +505,7 @@ impl MixingGuideBuilder {
             if let Ok(p3) = PaintPart::new(pr.clone(), 0.5) {
                 comps.push(p3);
             }
-            let hex = self
-                .mixer
-                .mix(&comps)
+            let hex = mix_paints(&comps)
                 .map(|r| r.color.to_hex())
                 .unwrap_or_else(|_| target_umber.to_hex());
             let pr_code = Self::code_of(pr, code_map);
@@ -546,9 +527,7 @@ impl MixingGuideBuilder {
                 },
                 adjustment_note: String::new(),
             });
-        } else if let Some(sugg) = self
-            .mixer
-            .suggest_mixes(target_umber, paints, 1, Some(3))
+        } else if let Some(sugg) = suggest_mixes(target_umber, paints, 1, Some(3))
             .into_iter()
             .next()
         {
@@ -578,9 +557,7 @@ impl MixingGuideBuilder {
             if let Ok(p2) = PaintPart::new(pr.clone(), 1.0) {
                 comps.push(p2);
             }
-            let hex = self
-                .mixer
-                .mix(&comps)
+            let hex = mix_paints(&comps)
                 .map(|r| r.color.to_hex())
                 .unwrap_or_else(|_| target_black.to_hex());
             let ga_c = Self::code_of(ga, code_map);
@@ -599,9 +576,7 @@ impl MixingGuideBuilder {
                 },
                 adjustment_note: String::new(),
             });
-        } else if let Some(sugg) = self
-            .mixer
-            .suggest_mixes(target_black, paints, 1, Some(2))
+        } else if let Some(sugg) = suggest_mixes(target_black, paints, 1, Some(2))
             .into_iter()
             .next()
         {
@@ -625,7 +600,6 @@ impl MixingGuideBuilder {
     }
 
     fn build_washes(
-        &self,
         zones: &[PlanZone],
         paints: &[Paint],
         code_map: &IndexMap<String, String>,
@@ -714,7 +688,6 @@ impl MixingGuideBuilder {
     }
 
     fn build_zone(
-        &self,
         zone: &PlanZone,
         paints: &[Paint],
         code_map: &IndexMap<String, String>,
@@ -741,7 +714,7 @@ impl MixingGuideBuilder {
         let base_layer = zone.base.as_ref();
         let rows = ordered_layers
             .iter()
-            .map(|layer| self.build_layer_row(layer, base_layer, paints, code_map, mother_mixes, locale))
+            .map(|layer| Self::build_layer_row(layer, base_layer, paints, code_map, mother_mixes, locale))
             .collect();
 
         GuideZone {
@@ -753,7 +726,6 @@ impl MixingGuideBuilder {
     }
 
     fn build_layer_row(
-        &self,
         layer: &PlanLayer,
         base_layer: Option<&PlanLayer>,
         paints: &[Paint],
@@ -765,16 +737,16 @@ impl MixingGuideBuilder {
         let target_hex = layer.target.to_hex();
 
         let raw_recipe = match &layer.recipe {
-            Some(sugg) => Self::format_painter_recipe(
-                &layer.role,
-                layer.target,
-                sugg,
-                base_layer,
-                paints,
-                code_map,
-                mother_mixes,
-                locale,
-            ),
+            Some(sugg) => {
+                let ctx = PainterRecipeContext {
+                    base_layer,
+                    paints,
+                    code_map,
+                    mother_mixes,
+                    locale,
+                };
+                Self::format_painter_recipe(&layer.role, layer.target, sugg, &ctx)
+            }
             None => locale
                 .tr("Tube pur ou mélange à ajuster à l'œil", "Neat tube or mix to adjust by eye")
                 .to_string(),
@@ -806,24 +778,21 @@ impl MixingGuideBuilder {
     /// - Codes courts (`B`, `Oc`, `Rc`, `Ga`, `Pr`, `Vi`, `JC`, `N`)
     /// - Petites parts transformées en « une pointe de X » (5–14 %) ou « une trace de X » (< 5 % ou pigment très puissant)
     /// - Réutilisation de `Base`, `Si`, `BF`, `NC` pour les ombres et lumières lorsque c'est pertinent.
-    #[allow(clippy::too_many_arguments)]
     pub fn format_painter_recipe(
         role: &str,
         target: Rgb,
         sugg: &MixSuggestion,
-        base_layer: Option<&PlanLayer>,
-        paints: &[Paint],
-        code_map: &IndexMap<String, String>,
-        mother_mixes: &[MotherMix],
-            locale: Locale,
+        ctx: &PainterRecipeContext<'_>,
     ) -> String {
+        let locale = ctx.locale;
+        let code_map = ctx.code_map;
         let role_low = role.to_lowercase();
-        let white_code = Self::find_by_code(paints, code_map, "B")
+        let white_code = Self::find_by_code(ctx.paints, code_map, "B")
             .map(|p| Self::code_of(p, code_map))
             .unwrap_or_else(|| "B".to_string());
 
         // Si un mélange-mère (`Si`, `BF`, `NC`) est très proche de la cible (ΔE < 4.5), on l'utilise directement !
-        for mm in mother_mixes {
+        for mm in ctx.mother_mixes {
             if let Ok(mm_rgb) = Rgb::of_hex(&mm.hex_color) {
                 let de = delta_e_2000(target, mm_rgb);
                 if de < 3.8 {
@@ -835,7 +804,7 @@ impl MixingGuideBuilder {
         // Pour Lumière 1 : si Base existe et que la suggestion contient surtout les composants de Base + Blanc
         let total_parts: f64 = sugg.parts.iter().map(|p| p.parts).sum::<f64>().max(1e-6);
         if (role_low == "lumière 1" || role_low == "lumiere 1")
-            && base_layer.is_some()
+            && ctx.base_layer.is_some()
             && sugg
                 .parts
                 .iter()
@@ -848,7 +817,13 @@ impl MixingGuideBuilder {
                     Self::code_of(&c.paint, code_map) != white_code
                         && (c.parts / total_parts) < 0.22
                 })
-                .map(|c| format!("une trace de {}", Self::code_of(&c.paint, code_map)))
+                .map(|c| {
+                    format!(
+                        "{} {}",
+                        locale.tr("une trace de", "a trace of"),
+                        Self::code_of(&c.paint, code_map)
+                    )
+                })
                 .collect();
             if extras.is_empty() {
                 return format!("Base + {white_code}");
@@ -859,7 +834,7 @@ impl MixingGuideBuilder {
 
         // Pour Ombre 1 : si un mélange-mère (Si ou BF) est dans la direction chromatique de l'ombre
         if (role_low == "ombre 1" || role_low == "ombre 2")
-            && let Some(base) = base_layer
+            && let Some(base) = ctx.base_layer
         {
             let target_lab = target.to_lab();
             let base_lab = base.target.to_lab();
@@ -868,7 +843,7 @@ impl MixingGuideBuilder {
                 if role_low == "ombre 1"
                     && target_lab.a > 6.0
                     && target_lab.b > 8.0
-                    && mother_mixes.iter().any(|m| m.code == "Si")
+                    && ctx.mother_mixes.iter().any(|m| m.code == "Si")
                 {
                     let extra_cool = sugg
                         .parts
@@ -877,14 +852,20 @@ impl MixingGuideBuilder {
                             let code = Self::code_of(&c.paint, code_map);
                             (code == "Ga" || code == "Pr") && (c.parts / total_parts) <= 0.25
                         })
-                        .map(|c| format!(" + une pointe de {}", Self::code_of(&c.paint, code_map)))
+                        .map(|c| {
+                            format!(
+                                " + {} {}",
+                                locale.tr("une pointe de", "a touch of"),
+                                Self::code_of(&c.paint, code_map)
+                            )
+                        })
                         .unwrap_or_default();
                     return format!("Base + Si{extra_cool}");
                 }
                 if role_low == "ombre 2"
                     && target_lab.l < 28.0
                     && target_lab.a > 4.0
-                    && mother_mixes.iter().any(|m| m.code == "Si")
+                    && ctx.mother_mixes.iter().any(|m| m.code == "Si")
                 {
                     let has_ga = sugg
                         .parts
@@ -896,7 +877,7 @@ impl MixingGuideBuilder {
                         .any(|c| Self::code_of(&c.paint, code_map) == "Pr");
                     if has_ga && has_pr {
                         return format!("Si + Ga + {} Pr", locale.tr("une trace de", "a trace of"));
-                    } else if mother_mixes.iter().any(|m| m.code == "BF") {
+                    } else if ctx.mother_mixes.iter().any(|m| m.code == "BF") {
                         return format!("Si + {} BF", locale.tr("une trace de", "a trace of"));
                     }
                 }
@@ -911,7 +892,7 @@ impl MixingGuideBuilder {
     pub fn format_suggestion_short(
         sugg: &MixSuggestion,
         code_map: &IndexMap<String, String>,
-            locale: Locale,
+        locale: Locale,
     ) -> String {
         if sugg.parts.is_empty() {
             return String::new();
@@ -1084,343 +1065,6 @@ impl MixingGuideBuilder {
         tips
     }
 }
-
-impl MixingGuide {
-    /// Génère une fiche d'atelier A4 autonome en HTML/CSS prête à imprimer ou enregistrer en PDF,
-    /// fidèle à la mise en page des guides `references/guide-melanges-*.pdf`.
-    pub fn to_printable_html(&self, photo_data_uri: Option<&str>) -> String {
-        self.to_printable_html_i18n(photo_data_uri, Locale::Fr)
-    }
-
-    /// Génère une fiche d'atelier A4 autonome en HTML/CSS prête à imprimer dans la langue choisie.
-    pub fn to_printable_html_i18n(&self, photo_data_uri: Option<&str>, locale: Locale) -> String {
-        let mut html = String::with_capacity(16384);
-        html.push_str("<!DOCTYPE html>\n<html lang=\"");
-        html.push_str(locale.code());
-        html.push_str(
-            r#"">
-<head>
-<meta charset="utf-8">
-<title>"#,
-        );
-        html.push_str(&Self::escape_html(&self.title));
-        html.push_str(" — ");
-        html.push_str(&Self::escape_html(&self.subtitle));
-        html.push_str(r#"</title>
-<style>
-  @page { size: A4 portrait; margin: 16mm 16mm 18mm 16mm; }
-  * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: #262320;
-    background: #FFFFFF;
-    margin: 0;
-    padding: 24px 32px;
-    font-size: 10.5pt;
-    line-height: 1.42;
-    max-width: 210mm;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #FAF6F0;
-    border: 1px solid #E5DEC9;
-    padding: 10px 16px;
-    border-radius: 8px;
-    margin-bottom: 22px;
-  }
-  .toolbar button {
-    background: #7C2D12;
-    color: #FFFFFF;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 10pt;
-  }
-  @media print {
-    body { padding: 0; max-width: none; }
-    .toolbar { display: none !important; }
-  }
-  .header-grid {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-    margin-bottom: 18px;
-  }
-  .piece-photo {
-    width: 175px;
-    max-height: 225px;
-    object-fit: cover;
-    border-radius: 3px;
-    border: 1px solid #D6D0C4;
-    flex-shrink: 0;
-  }
-  .header-main { flex: 1; }
-  h1 {
-    font-size: 22pt;
-    font-weight: 800;
-    margin: 0 0 4px 0;
-    color: #1F1C18;
-    letter-spacing: -0.02em;
-  }
-  .subtitle {
-    font-size: 11.5pt;
-    color: #57524A;
-    margin: 0 0 10px 0;
-  }
-  .disclaimer {
-    font-size: 9pt;
-    color: #6E675F;
-    margin: 0 0 14px 0;
-  }
-  h2 {
-    font-size: 13pt;
-    font-weight: 700;
-    color: #7C2D12;
-    margin: 18px 0 8px 0;
-    page-break-after: avoid;
-  }
-  table.guide-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 10px;
-  }
-  table.guide-table tr {
-    border-bottom: 1px solid #EBE6DC;
-    page-break-inside: avoid;
-  }
-  table.guide-table td {
-    padding: 5px 8px 5px 0;
-    vertical-align: middle;
-  }
-  .swatch-cell {
-    width: 44px;
-    padding-right: 10px !important;
-  }
-  .swatch-box {
-    width: 36px;
-    height: 22px;
-    border: 1px solid #B8B0A4;
-    border-radius: 2px;
-  }
-  .code-cell {
-    width: 42px;
-    font-weight: 700;
-    color: #1F1C18;
-  }
-  .role-cell {
-    width: 135px;
-    font-weight: 700;
-    color: #1F1C18;
-  }
-  .behavior-cell {
-    color: #57524A;
-    font-size: 9.5pt;
-    width: 36%;
-  }
-  .note-paragraph {
-    font-size: 9pt;
-    color: #4A453E;
-    margin: 6px 0 14px 0;
-    line-height: 1.45;
-  }
-  ol.advice-list {
-    margin: 6px 0 0 0;
-    padding-left: 20px;
-  }
-  ol.advice-list li {
-    margin-bottom: 6px;
-    page-break-inside: avoid;
-  }
-  .footer {
-    margin-top: 24px;
-    padding-top: 8px;
-    border-top: 1px solid #EBE6DC;
-    text-align: right;
-    font-size: 8.5pt;
-    color: #8C8479;
-  }
-</style>
-</head>
-<body>
-<div class="toolbar">
-  <div><strong>"#);
-        html.push_str(locale.tr("Fiche d'établi Palettier", "Palettier Workbench Sheet"));
-        html.push_str("</strong> — ");
-        html.push_str(locale.tr(
-            "Prête à imprimer en A4 ou enregistrer en PDF",
-            "Ready to print on A4 or save as PDF",
-        ));
-        html.push_str(
-            r#"</div>
-  <button onclick="window.print()">"#,
-        );
-        html.push_str(locale.tr(
-            "Imprimer / Enregistrer en PDF (⌘P)",
-            "Print / Save to PDF (⌘P)",
-        ));
-        html.push_str(
-            r#"</button>
-</div>
-<div class="header-grid">
-"#,
-        );
-
-        if let Some(uri) = photo_data_uri.and_then(sanitize_image_data_uri) {
-            let alt_txt = escape_html(locale.tr("Pièce de référence", "Reference Piece"));
-            html.push_str(&format!(
-                r#"  <img class="piece-photo" src="{uri}" alt="{alt_txt}"/>"#
-            ));
-        }
-
-        html.push_str(r#"  <div class="header-main">"#);
-        html.push_str(&format!(
-            "<h1>{}</h1>\n<p class=\"subtitle\">{}</p>\n<p class=\"disclaimer\">{}</p>\n",
-            Self::escape_html(&self.title),
-            Self::escape_html(&self.subtitle),
-            Self::escape_html(&self.disclaimer)
-        ));
-
-        // Section Ta palette / Your palette
-        if !self.palette_entries.is_empty() {
-            html.push_str(&format!(
-                "<h2>{}</h2>\n<table class=\"guide-table\">\n",
-                locale.tr("Ta palette", "Your Palette")
-            ));
-            for entry in &self.palette_entries {
-                let code_suffix = if entry.paint.code.trim().is_empty() {
-                    String::new()
-                } else {
-                    format!(
-                        " <span style=\"color:#78716A;\">({})</span>",
-                        Self::escape_html(&entry.paint.code)
-                    )
-                };
-                html.push_str(&format!(
-                    "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"code-cell\">{}</td><td>{}{code_suffix}</td><td class=\"behavior-cell\">{}</td></tr>\n",
-                    sanitize_hex_css(&entry.paint.hex_color),
-                    Self::escape_html(&entry.short_code),
-                    Self::escape_html(&entry.paint.name),
-                    Self::escape_html(&entry.behavior),
-                ));
-            }
-            html.push_str("</table>\n");
-        }
-        html.push_str("  </div>\n</div>\n");
-
-        // Mélanges intermédiaires / Mother mixes
-        if !self.mother_mixes.is_empty() {
-            html.push_str(&format!(
-                "<h2>{}</h2>\n<table class=\"guide-table\">\n",
-                locale.tr(
-                    "Mélanges intermédiaires à préparer en début de séance",
-                    "Intermediate Mother Mixes to Prepare Before Painting"
-                )
-            ));
-            for mm in &self.mother_mixes {
-                html.push_str(&format!(
-                    "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"role-cell\"><strong>{}</strong> — {}</td><td>{}</td></tr>\n",
-                    sanitize_hex_css(&mm.hex_color),
-                    Self::escape_html(&mm.code),
-                    Self::escape_html(&mm.name),
-                    Self::escape_html(&mm.recipe_text),
-                ));
-            }
-            html.push_str("</table>\n");
-            html.push_str(&format!(
-                "<p class=\"note-paragraph\">{}</p>\n",
-                Self::escape_html(&self.mother_mixes_note)
-            ));
-        }
-
-        // Lavis sur sous-couche blanche / Washes
-        if !self.washes.is_empty() {
-            html.push_str(&format!(
-                "<h2>{}</h2>\n<table class=\"guide-table\">\n",
-                locale.tr(
-                    "Lavis sur sous-couche blanche (à l'huile)",
-                    "Oil Washes Over White Undercoat"
-                )
-            ));
-            for w in &self.washes {
-                html.push_str(&format!(
-                    "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"role-cell\">{}</td><td>{}</td></tr>\n",
-                    sanitize_hex_css(&w.hex_color),
-                    Self::escape_html(&w.name),
-                    Self::escape_html(&w.recipe_text),
-                ));
-            }
-            html.push_str("</table>\n");
-            html.push_str(&format!(
-                "<p class=\"note-paragraph\"><strong>{}</strong> {}</p>\n",
-                locale.tr("Méthode :", "Method:"),
-                Self::escape_html(&self.washes_method)
-            ));
-        }
-
-        // Zones
-        for zone in &self.zones {
-            let zone_heading = if zone.material.trim().is_empty()
-                || zone
-                    .name
-                    .to_lowercase()
-                    .contains(&zone.material.to_lowercase())
-            {
-                zone.name.clone()
-            } else {
-                format!("{} ({})", zone.name, zone.material)
-            };
-            html.push_str(&format!(
-                "<h2>{}</h2>\n<table class=\"guide-table\">\n",
-                Self::escape_html(&zone_heading)
-            ));
-            for row in &zone.rows {
-                html.push_str(&format!(
-                    "<tr><td class=\"swatch-cell\"><div class=\"swatch-box\" style=\"background:{};\"></div></td><td class=\"role-cell\">{}</td><td>{}</td></tr>\n",
-                    sanitize_hex_css(&row.swatch_hex),
-                    Self::escape_html(&row.role),
-                    Self::escape_html(&row.painter_recipe),
-                ));
-            }
-            html.push_str("</table>\n");
-            if !zone.note.trim().is_empty() {
-                html.push_str(&format!(
-                    "<p class=\"note-paragraph\">{}</p>\n",
-                    Self::escape_html(&zone.note)
-                ));
-            }
-        }
-
-        // Conseils / Studio tips
-        if !self.advice.is_empty() {
-            html.push_str(&format!(
-                "<h2>{}</h2>\n<ol class=\"advice-list\">\n",
-                locale.tr("Conseils", "Studio Tips")
-            ));
-            for tip in &self.advice {
-                html.push_str(&format!("  <li>{}</li>\n", Self::escape_html(tip)));
-            }
-            html.push_str("</ol>\n");
-        }
-
-        html.push_str(&format!(
-            "<div class=\"footer\">{} — {}</div>\n</body>\n</html>",
-            Self::escape_html(&self.title),
-            Self::escape_html(&self.subtitle)
-        ));
-        html
-    }
-
-    fn escape_html(s: &str) -> String {
-        escape_html(s)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1447,14 +1091,13 @@ mod tests {
         let box_paints = norma_blue_starter_box();
         assert_eq!(8, box_paints.len());
 
-        let entries = MixingGuideBuilder::build_palette_entries(&box_paints);
+        let entries = build_palette_entries(&box_paints, Locale::Fr);
         let short_codes: Vec<&str> = entries.iter().map(|e| e.short_code.as_str()).collect();
         assert_eq!(
             vec!["B", "JC", "Rc", "Ga", "Pr", "Vi", "Oc", "N"],
             short_codes
         );
 
-        let builder = MixingGuideBuilder::new();
         let plan = PaintingPlan {
             subject: "Buste de samouraï".to_string(),
             palette_name: "Schmincke Norma Blue (coffret 71200097)".to_string(),
@@ -1479,24 +1122,25 @@ mod tests {
             }],
         };
 
-        let guide = builder.from_plan(&plan, &box_paints);
+        let guide = from_plan(&plan, &box_paints, Locale::Fr);
         let mm_codes: Vec<&str> = guide.mother_mixes.iter().map(|m| m.code.as_str()).collect();
         assert_eq!(vec!["Si", "BF", "NC"], mm_codes);
         assert!(!guide.washes.is_empty());
         assert!(!guide.advice.is_empty());
 
-        let html = guide.to_printable_html(None);
+        let html = guide.to_printable_html(None, Locale::Fr);
         assert!(html.contains("Ta palette"));
         assert!(html.contains("Mélanges intermédiaires"));
         assert!(html.contains("Lavis sur sous-couche blanche"));
         assert!(html.contains("Buste de samouraï"));
 
-        let unsafe_html = guide.to_printable_html(Some("javascript:alert(1)\" onerror=\"alert(1)"));
+        let unsafe_html =
+            guide.to_printable_html(Some("javascript:alert(1)\" onerror=\"alert(1)"), Locale::Fr);
         assert!(!unsafe_html.contains("javascript:alert"));
         assert!(!unsafe_html.contains("<img class=\"piece-photo\""));
 
         let safe_uri = "data:image/png;base64,iVBORw0KGgo=";
-        let safe_html = guide.to_printable_html(Some(safe_uri));
+        let safe_html = guide.to_printable_html(Some(safe_uri), Locale::Fr);
         assert!(safe_html.contains(safe_uri));
     }
 }

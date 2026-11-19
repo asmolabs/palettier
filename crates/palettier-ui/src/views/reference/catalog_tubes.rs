@@ -106,9 +106,8 @@ pub(super) fn CustomTubeForm(
     };
 
     rsx! {
-        div { class: "card u-bc-accent",
-            h3 { class: "card-title", {locale.tr("Ajouter un tube personnalisé au catalogue", "Add a custom tube to the catalog")} }
-            div { class: "grid-3 u-mb-12",
+        div {
+            div { class: "grid-2 u-mb-12",
                 div {
                     label { class: "field-label", {locale.tr("Marque / Gamme", "Brand / Line")} }
                     input {
@@ -138,8 +137,6 @@ pub(super) fn CustomTubeForm(
                         oninput: move |e| code.set(e.value()),
                     }
                 }
-            }
-            div { class: "grid-3 u-mb-12",
                 div {
                     label { class: "field-label", {locale.tr("Pigments C.I. (séparés par virgule)", "C.I. Pigments (comma-separated)")} }
                     input {
@@ -179,7 +176,7 @@ pub(super) fn CustomTubeForm(
                     }
                 }
             }
-            div { class: "row-between",
+            div { class: "row-between u-pt-10 u-bt-1-solid-border-main",
                 div { class: "row",
                     label { class: "field-label u-m-0", {locale.tr("Teinte de sortie de tube :", "Masstone color:")} }
                     HexColorInput {
@@ -193,7 +190,6 @@ pub(super) fn CustomTubeForm(
                     {locale.tr("Enregistrer ce tube", "Save tube")}
                 }
             }
-
         }
     }
 }

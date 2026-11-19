@@ -105,14 +105,16 @@ impl Workshop {
         ventilation: Ventilation,
     ) -> DomainResult<Self> {
         if !(-20.0..=60.0).contains(&temperature_celsius) {
-            return Err(DomainError::InvalidArgument(format!(
-                "Température hors plage (-20..60 °C): {temperature_celsius}"
-            )));
+            return Err(DomainError::localized(
+                format!("Température hors plage (-20..60 °C) : {temperature_celsius}"),
+                format!("Temperature out of range (-20..60 °C): {temperature_celsius}"),
+            ));
         }
         if !(0.0..=100.0).contains(&relative_humidity) {
-            return Err(DomainError::InvalidArgument(format!(
-                "Humidité hors plage (0..100 %): {relative_humidity}"
-            )));
+            return Err(DomainError::localized(
+                format!("Humidité hors plage (0..100 %) : {relative_humidity}"),
+                format!("Humidity out of range (0..100 %): {relative_humidity}"),
+            ));
         }
         Ok(Self {
             temperature_celsius,
@@ -157,9 +159,10 @@ impl DryingContext {
         workshop: Workshop,
     ) -> DomainResult<Self> {
         if !(0.0..=1.0).contains(&medium_ratio) {
-            return Err(DomainError::InvalidArgument(format!(
-                "Proportion de medium hors de [0, 1] : {medium_ratio}"
-            )));
+            return Err(DomainError::localized(
+                format!("Proportion de médium hors de [0, 1] : {medium_ratio}"),
+                format!("Medium ratio out of range [0, 1]: {medium_ratio}"),
+            ));
         }
         Ok(Self {
             system: medium.system().unwrap_or_default(),

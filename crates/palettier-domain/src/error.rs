@@ -14,6 +14,15 @@ pub enum DomainError {
     #[error("Argument invalide : {0}")]
     InvalidArgument(String),
 
+    /// A bilingual domain validation error carrying both French and English messages.
+    #[error("Argument invalide : {fr}")]
+    LocalizedArgument {
+        /// French validation message.
+        fr: String,
+        /// English validation message.
+        en: String,
+    },
+
     /// A parsing failure occurred while loading catalog or reference CSV data.
     #[error("Erreur de format CSV dans {location} : {message}")]
     CsvError {
@@ -33,6 +42,14 @@ pub enum DomainError {
 }
 
 impl DomainError {
+    /// Constructs a bilingual validation error carrying French and English descriptions.
+    pub fn localized(fr: impl Into<String>, en: impl Into<String>) -> Self {
+        Self::LocalizedArgument {
+            fr: fr.into(),
+            en: en.into(),
+        }
+    }
+
     /// Formats this error message in the requested [`Locale`].
     ///
     /// # Example
@@ -48,6 +65,7 @@ impl DomainError {
             (Locale::Fr, _) => self.to_string(),
             (Locale::En, Self::InvalidHex(hex)) => format!("Invalid hexadecimal code: {hex}"),
             (Locale::En, Self::InvalidArgument(msg)) => format!("Invalid argument: {msg}"),
+            (Locale::En, Self::LocalizedArgument { en, .. }) => format!("Invalid argument: {en}"),
             (Locale::En, Self::CsvError { location, message }) => {
                 format!("CSV format error in {location}: {message}")
             }

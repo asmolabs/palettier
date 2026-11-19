@@ -17,11 +17,15 @@ pub struct ImageAttachment {
 }
 
 impl ImageAttachment {
-    pub fn jpeg(bytes: Vec<u8>) -> Self {
+    pub fn new(bytes: Vec<u8>, mime_type: impl Into<String>) -> Self {
         Self {
             bytes,
-            mime_type: "image/jpeg".to_string(),
+            mime_type: mime_type.into(),
         }
+    }
+
+    pub fn jpeg(bytes: Vec<u8>) -> Self {
+        Self::new(bytes, "image/jpeg")
     }
 
     pub fn base64_encoded(&self) -> String {

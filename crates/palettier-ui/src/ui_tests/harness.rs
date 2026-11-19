@@ -13,9 +13,8 @@ use dioxus::html::{
     PlatformEventData, SerializedFormData, SerializedHtmlEventConverter, SerializedKeyboardData,
     SerializedMouseData,
 };
-use dioxus::prelude::{Code, Key, Location, Modifiers, Readable};
+use dioxus::prelude::{Code, Key, Location, Modifiers, ReadableExt};
 use std::any::Any;
-use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Once;
 use std::time::{Duration, Instant};
@@ -155,7 +154,8 @@ impl Ui {
     /// The shared app state, as the views see it.
     pub fn state(&self) -> AppState {
         self.dom
-            .in_runtime(|| dioxus::dioxus_core::ScopeId::APP.consume_context::<AppState>())
+            .runtime()
+            .consume_context::<AppState>(dioxus::dioxus_core::ScopeId::APP)
             .expect("AppState is provided by StudioShell")
     }
 
@@ -376,7 +376,7 @@ impl Ui {
     async fn fire_form(&mut self, id: ElementId, value: &str) {
         // The desktop renderer sends both, like a browser does for text fields.
         for name in ["input", "change"] {
-            let data = SerializedFormData::new(value.to_string(), HashMap::new());
+            let data = SerializedFormData::new(value.to_string(), Vec::new());
             self.fire(name, id, Box::new(data), true);
         }
         self.settle().await;

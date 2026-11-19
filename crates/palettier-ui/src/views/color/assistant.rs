@@ -296,12 +296,11 @@ fn AssistantPlanCard(
         if *guide_key.read() != key {
             guide_key.set(key);
             guide_state.set(None);
-            let builder = services.guide_builder.clone();
             let plan_c = plan.clone();
             let paints_c = active_paints.clone();
             spawn(async move {
                 let Ok(guide) = tokio::task::spawn_blocking(move || {
-                    builder.from_plan_i18n(&plan_c, &paints_c, locale)
+                    palettier_domain::guide::from_plan(&plan_c, &paints_c, locale)
                 })
                 .await
                 else {
@@ -444,7 +443,7 @@ fn PlanZoneTable(zone: PlanZone) -> Element {
                                 if let Some(ref rec) = l.recipe {
                                     div { class: "row",
                                         ColorSwatch { hex: l.achieved.to_hex(), size: 22 }
-                                        span { "{rec.describe_i18n(locale)}" }
+                                        span { "{rec.describe(locale)}" }
                                     }
                                 } else {
                                     span { class: "muted", {locale.tr("Aucune recette", "No recipe")} }

@@ -1,4 +1,4 @@
-use crate::db::{Database, map_db_err};
+use crate::db::{Database, DbExec, map_db_err};
 use crate::entity::{palette, palette_paint};
 use async_trait::async_trait;
 use indexmap::{IndexMap, IndexSet};
@@ -7,23 +7,26 @@ use palettier_domain::paint::Paint;
 use palettier_domain::palette::Palette;
 use palettier_domain::port::{PaintCatalogRepository, PaletteRepository};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
-    TransactionTrait,
+    ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, Set, TransactionTrait,
 };
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct SeaOrmPaletteRepository {
-    db: DatabaseConnection,
+    db: DbExec,
     catalog: Arc<dyn PaintCatalogRepository>,
 }
 
 impl SeaOrmPaletteRepository {
     pub fn new(database: &Database, catalog: Arc<dyn PaintCatalogRepository>) -> Self {
         Self {
-            db: database.connection().clone(),
+            db: DbExec::Pool(database.connection().clone()),
             catalog,
         }
+    }
+
+    pub(crate) fn from_exec(db: DbExec, catalog: Arc<dyn PaintCatalogRepository>) -> Self {
+        Self { db, catalog }
     }
 
     async fn assemble(&self, rows: Vec<palette::Model>) -> DomainResult<Vec<Palette>> {

@@ -45,7 +45,7 @@ pub fn run(mut state: AppState, dir: PathBuf) {
             let name = format!("tool-{:02}-{:?}.html", tab.to_idx(), tab).to_lowercase();
             capture(&dir.join(name)).await;
         }
-        for theme in [ThemeMode::Dark, ThemeMode::Light] {
+        for theme in [ThemeMode::Dark, ThemeMode::Light, ThemeMode::Neutral] {
             state.theme.set(theme);
             for (i, section) in SECTIONS.iter().enumerate() {
                 state.section.set(*section);

@@ -10,6 +10,7 @@ use palettier_domain::palette::Palette;
 use palettier_domain::port::ProjectRepository;
 use palettier_domain::project::{
     LayerKind, ObservedColour, PhotoRole, Project, ProjectLayer, ProjectPhoto, ProjectZone,
+    compare_progress,
 };
 
 /// The value ladder a new piece starts with on its first zone (the face).
@@ -263,12 +264,12 @@ pub async fn remove_photo(
 
 /// Compares the six dominant colours of a photo of the piece with its planned coats.
 pub fn compare_to_plan(
-    services: &AppServices,
+    _services: &AppServices,
     project: &Project,
     photo: &[u8],
 ) -> DomainResult<Vec<ObservedColour>> {
-    let dominant = services.decoder.dominant_colours(photo, 6)?;
-    Ok(services.progress_service.compare(project, &dominant))
+    let dominant = palettier_image::dominant_colours(photo, 6)?;
+    Ok(compare_progress(project, &dominant))
 }
 
 /// The photo that best shows the piece: the piece itself, else the reference, else the first.
@@ -404,7 +405,10 @@ mod tests {
             .unwrap()
             .project
             .unwrap();
-        assert!(svc.fat_over_lean.inspect_project(&project).is_empty());
+        assert!(
+            palettier_domain::project::fat_over_lean::inspect_project(&project, Locale::Fr)
+                .is_empty()
+        );
 
         // An oil glaze on the base, then an acrylic layer above it.
         let oil = Technique::ALL
@@ -420,7 +424,8 @@ mod tests {
         let edited = edit_layer(&svc, &project, 0, 2, edit).await.unwrap().project.unwrap();
         assert_eq!(edited.zones[0].layers[2].technique, oil);
 
-        let risks = svc.fat_over_lean.inspect_project(&edited);
+        let risks =
+            palettier_domain::project::fat_over_lean::inspect_project(&edited, Locale::Fr);
         assert_eq!(risks.len(), 1, "{risks:?}");
         assert!(risks[0].explanation.contains("acrylique"));
         assert_eq!(risks[0].over, edited.zones[0].layers[3].role);

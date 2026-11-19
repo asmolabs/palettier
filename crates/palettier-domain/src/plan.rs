@@ -4,7 +4,7 @@ use crate::drying::{
 };
 use crate::error::{DomainError, DomainResult};
 use crate::i18n::Locale;
-use crate::mix::{ColorMixService, MixSuggestion};
+use crate::mix::{MixSuggestion, suggest_mixes};
 use crate::paint::{DryingClass, Paint, PaintSystem, Technique};
 use crate::palette::Palette;
 use crate::project::{LayerKind, Project, ProjectLayer, ProjectZone};
@@ -279,7 +279,7 @@ impl PlanDryingService {
                 mix: layer
                     .recipe
                     .as_ref()
-                    .map(|r| r.describe())
+                    .map(|r| r.describe(Locale::Fr))
                     .unwrap_or_default(),
                 technique,
                 drying_class: drying,
@@ -328,132 +328,115 @@ impl PlanDryingService {
     }
 }
 
+const MAX_PLAN_PAINTS: usize = 3;
+
 /// Rebuilds a project's painting plan with recomputed mix ratios.
-#[derive(Debug, Clone, Default)]
-pub struct ProjectPlanner {
-    mixer: ColorMixService,
+pub fn plan_project(project: &Project) -> PaintingPlan {
+    let paints = project.effective_paints();
+    let zones = project
+        .zones
+        .iter()
+        .map(|z| rebuild_zone(z, paints))
+        .collect();
+    let palette_name = project
+        .palette
+        .as_ref()
+        .map(|p| p.name.clone())
+        .unwrap_or_else(|| format!("{} tubes conserves avec le projet", paints.len()));
+
+    PaintingPlan {
+        subject: project.subject.clone(),
+        palette_name,
+        approach: project.approach.clone(),
+        system: project.system,
+        zones,
+    }
 }
 
-impl ProjectPlanner {
-    const MAX_PAINTS: usize = 3;
+fn rebuild_zone(zone: &ProjectZone, paints: &[Paint]) -> PlanZone {
+    let ladder: Vec<PlanLayer> = zone
+        .layers
+        .iter()
+        .filter(|l| l.kind == LayerKind::Ladder)
+        .map(|l| recompute_layer(l, paints))
+        .collect();
+    let accents: Vec<PlanLayer> = zone
+        .layers
+        .iter()
+        .filter(|l| l.kind == LayerKind::Accent)
+        .map(|l| recompute_layer(l, paints))
+        .collect();
 
-    pub fn new(mixer: ColorMixService) -> Self {
-        Self { mixer }
+    let mut shadows: Vec<PlanLayer> = ladder
+        .iter()
+        .filter(|l| {
+            let low = l.role.to_lowercase();
+            low.starts_with("ombre") || low.starts_with("shadow")
+        })
+        .cloned()
+        .collect();
+    shadows.reverse();
+
+    let highlights: Vec<PlanLayer> = ladder
+        .iter()
+        .filter(|l| {
+            let low = l.role.to_lowercase();
+            low.starts_with("lumiere")
+                || low.starts_with("lumière")
+                || low.starts_with("highlight")
+        })
+        .cloned()
+        .collect();
+
+    let base = ladder
+        .iter()
+        .find(|l| l.role.eq_ignore_ascii_case("base"))
+        .cloned()
+        .or_else(|| ladder.get(ladder.len() / 2).cloned());
+
+    PlanZone {
+        name: zone.name.clone(),
+        material: zone.material.clone(),
+        note: zone.note.clone(),
+        base,
+        shadows,
+        highlights,
+        accents,
     }
+}
 
-    pub fn plan(&self, project: &Project) -> PaintingPlan {
-        let paints = project.effective_paints();
-        let zones = project
-            .zones
-            .iter()
-            .map(|z| self.rebuild(z, paints))
-            .collect();
-        let palette_name = project
-            .palette
-            .as_ref()
-            .map(|p| p.name.clone())
-            .unwrap_or_else(|| format!("{} tubes conserves avec le projet", paints.len()));
+/// Recomputes a single project layer's best mix suggestion against `paints`.
+pub fn recompute_layer(layer: &ProjectLayer, paints: &[Paint]) -> PlanLayer {
+    let target = layer.target();
+    let found = if paints.is_empty() {
+        Vec::new()
+    } else {
+        suggest_mixes(target, paints, 1, Some(MAX_PLAN_PAINTS))
+    };
 
-        PaintingPlan {
-            subject: project.subject.clone(),
-            palette_name,
-            approach: project.approach.clone(),
-            system: project.system,
-            zones,
-        }
-    }
-
-    fn rebuild(&self, zone: &ProjectZone, paints: &[Paint]) -> PlanZone {
-        let ladder: Vec<PlanLayer> = zone
-            .layers
-            .iter()
-            .filter(|l| l.kind == LayerKind::Ladder)
-            .map(|l| self.recompute(l, paints))
-            .collect();
-        let accents: Vec<PlanLayer> = zone
-            .layers
-            .iter()
-            .filter(|l| l.kind == LayerKind::Accent)
-            .map(|l| self.recompute(l, paints))
-            .collect();
-
-        let mut shadows: Vec<PlanLayer> = ladder
-            .iter()
-            .filter(|l| {
-                let low = l.role.to_lowercase();
-                low.starts_with("ombre") || low.starts_with("shadow")
-            })
-            .cloned()
-            .collect();
-        shadows.reverse();
-
-        let highlights: Vec<PlanLayer> = ladder
-            .iter()
-            .filter(|l| {
-                let low = l.role.to_lowercase();
-                low.starts_with("lumiere")
-                    || low.starts_with("lumière")
-                    || low.starts_with("highlight")
-            })
-            .cloned()
-            .collect();
-
-        let base = ladder
-            .iter()
-            .find(|l| l.role.eq_ignore_ascii_case("base"))
-            .cloned()
-            .or_else(|| ladder.get(ladder.len() / 2).cloned());
-
-        PlanZone {
-            name: zone.name.clone(),
-            material: zone.material.clone(),
-            note: zone.note.clone(),
-            base,
-            shadows,
-            highlights,
-            accents,
-        }
-    }
-
-    pub fn recompute(&self, layer: &ProjectLayer, paints: &[Paint]) -> PlanLayer {
-        let target = layer.target();
-        let found = if paints.is_empty() {
-            Vec::new()
-        } else {
-            self.mixer
-                .suggest_mixes(target, paints, 1, Some(Self::MAX_PAINTS))
-        };
-
-        let Some(best) = found.into_iter().next() else {
-            return PlanLayer {
-                role: layer.role.clone(),
-                target,
-                technique: layer.technique,
-                note: layer.note.clone(),
-                recipe: None,
-                achieved: target,
-                delta_e: 0.0,
-            };
-        };
-
-        let achieved = best.color;
-        let delta_e = delta_e_2000(target, achieved);
-        PlanLayer {
+    let Some(best) = found.into_iter().next() else {
+        return PlanLayer {
             role: layer.role.clone(),
             target,
             technique: layer.technique,
             note: layer.note.clone(),
-            recipe: Some(best),
-            achieved,
-            delta_e,
-        }
-    }
-}
+            recipe: None,
+            achieved: target,
+            delta_e: 0.0,
+        };
+    };
 
-/// Builds a painting plan from colors sampled on a reference image.
-#[derive(Debug, Clone, Default)]
-pub struct SampledPlanService {
-    mixer: ColorMixService,
+    let achieved = best.color;
+    let delta_e = delta_e_2000(target, achieved);
+    PlanLayer {
+        role: layer.role.clone(),
+        target,
+        technique: layer.technique,
+        note: layer.note.clone(),
+        recipe: Some(best),
+        achieved,
+        delta_e,
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -463,171 +446,162 @@ pub struct ColourGroup {
     pub samples: Vec<Rgb>,
 }
 
-impl SampledPlanService {
-    pub fn new(mixer: ColorMixService) -> Self {
-        Self { mixer }
+/// Builds a painting plan from colors sampled on a reference image.
+pub fn plan_from_sampled(
+    subject: &str,
+    palette: Option<&Palette>,
+    groups: &[ColourGroup],
+    max_paints: usize,
+    locale: Locale,
+) -> DomainResult<PaintingPlan> {
+    let usable: Vec<&ColourGroup> = groups.iter().filter(|g| !g.samples.is_empty()).collect();
+    if usable.is_empty() {
+        return Err(DomainError::InvalidArgument(
+            locale
+                .tr(
+                    "Aucun point relevé : ajoutez au moins une couleur à un groupe.",
+                    "No sampled point: add at least one colour to a group.",
+                )
+                .to_string(),
+        ));
     }
 
-    pub fn plan(
-        &self,
-        subject: &str,
-        palette: Option<&Palette>,
-        groups: &[ColourGroup],
-        max_paints: usize,
-        locale: Locale,
-    ) -> DomainResult<PaintingPlan> {
-        let usable: Vec<&ColourGroup> = groups.iter().filter(|g| !g.samples.is_empty()).collect();
-        if usable.is_empty() {
-            return Err(DomainError::InvalidArgument(
-                locale
-                    .tr(
-                        "Aucun point relevé : ajoutez au moins une couleur à un groupe.",
-                        "No sampled point: add at least one colour to a group.",
-                    )
-                    .to_string(),
-            ));
-        }
+    let total_samples: usize = usable.iter().map(|g| g.samples.len()).sum();
+    let zones = usable
+        .into_iter()
+        .map(|g| build_sampled_zone(g, palette, max_paints, locale))
+        .collect();
 
-        let total_samples: usize = usable.iter().map(|g| g.samples.len()).sum();
-        let zones = usable
-            .into_iter()
-            .map(|g| self.build_zone(g, palette, max_paints, locale))
-            .collect();
+    Ok(PaintingPlan {
+        subject: subject.to_string(),
+        palette_name: palette
+            .map(|p| p.name.clone())
+            .unwrap_or_else(|| locale.tr("sans palette", "no palette").to_string()),
+        approach: match locale {
+            Locale::Fr => format!(
+                "Plan établi à partir de {total_samples} points relevés sur la référence."
+            ),
+            Locale::En => format!(
+                "Plan built from {total_samples} points sampled on the reference."
+            ),
+        },
+        system: palette.map(|p| p.system()).unwrap_or_default(),
+        zones,
+    })
+}
 
-        Ok(PaintingPlan {
-            subject: subject.to_string(),
-            palette_name: palette
-                .map(|p| p.name.clone())
-                .unwrap_or_else(|| locale.tr("sans palette", "no palette").to_string()),
-            approach: match locale {
-                Locale::Fr => format!(
-                    "Plan établi à partir de {total_samples} points relevés sur la référence."
-                ),
-                Locale::En => format!(
-                    "Plan built from {total_samples} points sampled on the reference."
-                ),
-            },
-            system: palette.map(|p| p.system()).unwrap_or_default(),
-            zones,
-        })
-    }
+fn build_sampled_zone(
+    group: &ColourGroup,
+    palette: Option<&Palette>,
+    max_paints: usize,
+    locale: Locale,
+) -> PlanZone {
+    let (shadow_word, light_word) = (locale.tr("Ombre", "Shadow"), locale.tr("Lumière", "Highlight"));
+    let mut ordered = group.samples.clone();
+    ordered.sort_by(|a, b| a.relative_luminance().total_cmp(&b.relative_luminance()));
 
-    fn build_zone(
-        &self,
-        group: &ColourGroup,
-        palette: Option<&Palette>,
-        max_paints: usize,
-        locale: Locale,
-    ) -> PlanZone {
-        let (shadow_word, light_word) = (locale.tr("Ombre", "Shadow"), locale.tr("Lumière", "Highlight"));
-        let mut ordered = group.samples.clone();
-        ordered.sort_by(|a, b| a.relative_luminance().total_cmp(&b.relative_luminance()));
-
-        let base_index = ordered.len() / 2;
-        let system = palette.map(|p| p.system()).unwrap_or_default();
-        let (shadow_technique, light_technique) = match system {
-            PaintSystem::Oil => (Technique::Glaze, Technique::Highlight),
-            PaintSystem::Acrylic => (Technique::ShadeWash, Technique::Layering),
-        };
-        let shadows: Vec<PlanLayer> = (0..base_index)
-            .rev()
-            .enumerate()
-            .map(|(rank, idx)| {
-                self.make_layer(
-                    format!("{shadow_word} {}", rank + 1),
-                    ordered[idx],
-                    shadow_technique,
-                    palette,
-                    max_paints,
-                )
-            })
-            .collect();
-
-        let highlights: Vec<PlanLayer> = ((base_index + 1)..ordered.len())
-            .enumerate()
-            .map(|(rank, idx)| {
-                self.make_layer(
-                    format!("{light_word} {}", rank + 1),
-                    ordered[idx],
-                    light_technique,
-                    palette,
-                    max_paints,
-                )
-            })
-            .collect();
-
-        PlanZone {
-            name: group.name.clone(),
-            material: group.material.clone(),
-            note: Self::note_for(ordered.len(), locale),
-            base: Some(self.make_layer(
-                "Base".to_string(),
-                ordered[base_index],
-                Technique::BaseLayer,
+    let base_index = ordered.len() / 2;
+    let system = palette.map(|p| p.system()).unwrap_or_default();
+    let (shadow_technique, light_technique) = match system {
+        PaintSystem::Oil => (Technique::Glaze, Technique::Highlight),
+        PaintSystem::Acrylic => (Technique::ShadeWash, Technique::Layering),
+    };
+    let shadows: Vec<PlanLayer> = (0..base_index)
+        .rev()
+        .enumerate()
+        .map(|(rank, idx)| {
+            make_sampled_layer(
+                format!("{shadow_word} {}", rank + 1),
+                ordered[idx],
+                shadow_technique,
                 palette,
                 max_paints,
-            )),
-            shadows,
-            highlights,
-            accents: Vec::new(),
-        }
+            )
+        })
+        .collect();
+
+    let highlights: Vec<PlanLayer> = ((base_index + 1)..ordered.len())
+        .enumerate()
+        .map(|(rank, idx)| {
+            make_sampled_layer(
+                format!("{light_word} {}", rank + 1),
+                ordered[idx],
+                light_technique,
+                palette,
+                max_paints,
+            )
+        })
+        .collect();
+
+    PlanZone {
+        name: group.name.clone(),
+        material: group.material.clone(),
+        note: sampled_note_for(ordered.len(), locale),
+        base: Some(make_sampled_layer(
+            "Base".to_string(),
+            ordered[base_index],
+            Technique::BaseLayer,
+            palette,
+            max_paints,
+        )),
+        shadows,
+        highlights,
+        accents: Vec::new(),
     }
+}
 
-    fn note_for(sample_count: usize, locale: Locale) -> String {
-        match (sample_count, locale) {
-            (1, _) => locale.tr(
-                "Un seul point relevé : la valeur locale, sans modèle. Relevez une ombre et une lumière pour obtenir un dégradé.",
-                "A single sampled point: the local value, without modelling. Sample a shadow and a highlight to get a gradient.",
-            ).to_string(),
-            (2, _) => locale.tr(
-                "Deux points : une base et un écart. Un troisième de l'autre côté donnerait un vrai dégradé.",
-                "Two points: a base and one step. A third on the other side would give a true gradient.",
-            ).to_string(),
-            (n, Locale::Fr) => format!("{n} points relevés sur la référence."),
-            (n, Locale::En) => format!("{n} points sampled on the reference."),
-        }
+fn sampled_note_for(sample_count: usize, locale: Locale) -> String {
+    match (sample_count, locale) {
+        (1, _) => locale.tr(
+            "Un seul point relevé : la valeur locale, sans modèle. Relevez une ombre et une lumière pour obtenir un dégradé.",
+            "A single sampled point: the local value, without modelling. Sample a shadow and a highlight to get a gradient.",
+        ).to_string(),
+        (2, _) => locale.tr(
+            "Deux points : une base et un écart. Un troisième de l'autre côté donnerait un vrai dégradé.",
+            "Two points: a base and one step. A third on the other side would give a true gradient.",
+        ).to_string(),
+        (n, Locale::Fr) => format!("{n} points relevés sur la référence."),
+        (n, Locale::En) => format!("{n} points sampled on the reference."),
     }
+}
 
-    fn make_layer(
-        &self,
-        role: String,
-        target: Rgb,
-        technique: Technique,
-        palette: Option<&Palette>,
-        max_paints: usize,
-    ) -> PlanLayer {
-        let paints = palette.map(|p| p.paints.as_slice()).unwrap_or(&[]);
-        let best = if paints.is_empty() {
-            None
-        } else {
-            self.mixer
-                .suggest_mixes(target, paints, 1, Some(max_paints))
-                .into_iter()
-                .next()
-        };
+fn make_sampled_layer(
+    role: String,
+    target: Rgb,
+    technique: Technique,
+    palette: Option<&Palette>,
+    max_paints: usize,
+) -> PlanLayer {
+    let paints = palette.map(|p| p.paints.as_slice()).unwrap_or(&[]);
+    let best = if paints.is_empty() {
+        None
+    } else {
+        suggest_mixes(target, paints, 1, Some(max_paints))
+            .into_iter()
+            .next()
+    };
 
-        match best {
-            None => PlanLayer {
+    match best {
+        None => PlanLayer {
+            role,
+            target,
+            technique,
+            note: String::new(),
+            recipe: None,
+            achieved: target,
+            delta_e: 0.0,
+        },
+        Some(sugg) => {
+            let achieved = sugg.color;
+            let delta_e = delta_e_2000(target, achieved);
+            PlanLayer {
                 role,
                 target,
                 technique,
                 note: String::new(),
-                recipe: None,
-                achieved: target,
-                delta_e: 0.0,
-            },
-            Some(sugg) => {
-                let achieved = sugg.color;
-                let delta_e = delta_e_2000(target, achieved);
-                PlanLayer {
-                    role,
-                    target,
-                    technique,
-                    note: String::new(),
-                    recipe: Some(sugg),
-                    achieved,
-                    delta_e,
-                }
+                recipe: Some(sugg),
+                achieved,
+                delta_e,
             }
         }
     }
@@ -660,9 +634,8 @@ mod tests {
 
     #[test]
     fn a_sampled_plan_is_written_in_the_chosen_language() {
-        let service = SampledPlanService::default();
-        let fr = service.plan("Hussard", None, &[group()], 3, Locale::Fr).expect("plan");
-        let en = service.plan("Hussard", None, &[group()], 3, Locale::En).expect("plan");
+        let fr = plan_from_sampled("Hussard", None, &[group()], 3, Locale::Fr).expect("plan");
+        let en = plan_from_sampled("Hussard", None, &[group()], 3, Locale::En).expect("plan");
         assert_eq!(roles(&fr), ["Ombre 1", "Base", "Lumière 1"]);
         assert_eq!(roles(&en), ["Shadow 1", "Base", "Highlight 1"]);
         assert_eq!(fr.zones[0].note, "3 points relevés sur la référence.");
@@ -673,8 +646,7 @@ mod tests {
     #[test]
     fn a_plan_without_samples_says_so_in_the_chosen_language() {
         let empty = ColourGroup { samples: Vec::new(), ..group() };
-        let err = SampledPlanService::default()
-            .plan("Hussard", None, &[empty], 3, Locale::En)
+        let err = plan_from_sampled("Hussard", None, &[empty], 3, Locale::En)
             .expect_err("nothing to plan");
         assert!(err.to_string().contains("No sampled point"), "{err}");
     }

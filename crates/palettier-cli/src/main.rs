@@ -7,7 +7,7 @@ use palettier_data::{
     BackupExporter, BackupImporter, BackupWriter, CatalogSeeder, Database,
     SeaOrmPaintCatalogRepository, SeaOrmPaletteMixRepository, SeaOrmPaletteRepository,
     SeaOrmProjectRepository, SeaOrmRecipeRepository, SeaOrmSettingsRepository, ZipBackupArchive,
-    ZipBackupWriter,
+    ZipBackupWriter, default_db_dir,
 };
 use palettier_domain::port::{
     PaintCatalogRepository, PaletteMixRepository, PaletteRepository, ProjectRepository,
@@ -48,19 +48,6 @@ enum Commands {
     },
     /// Displays the status of the catalog, projects, and workbench
     Stats,
-}
-
-fn default_db_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("PALETTIER_DB_DIR") {
-        return PathBuf::from(dir);
-    }
-    let local = PathBuf::from(".").join(".palettier");
-    if local.exists() {
-        return local;
-    }
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".palettier")
 }
 
 #[tokio::main]
@@ -109,8 +96,9 @@ async fn run_cli(cli: Cli) -> Result<()> {
             );
         }
         Commands::ImportBackup { archive } => {
-            let importer =
-                BackupImporter::new(catalog, palettes, projects, recipes).with_settings(settings);
+            let importer = BackupImporter::new(catalog, palettes, projects, recipes)
+                .with_settings(settings)
+                .with_database(&database);
             let mut zip = ZipBackupArchive::open(&archive)?;
             let report = importer.import(&mut zip).await?;
             println!(

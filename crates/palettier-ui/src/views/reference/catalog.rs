@@ -7,7 +7,7 @@ use crate::actions::catalog::{
     recognize_tubes, set_in_stock, set_in_stock_batch,
 };
 use crate::state::{AppServices, AppState};
-use crate::theme::{PaintSwatch, SectionHeader};
+use crate::theme::{PaintSwatch, SectionHeader, SlideDrawer};
 use dioxus::prelude::*;
 use palettier_ai::RecognizedTube;
 use palettier_domain::i18n::Locale;
@@ -26,14 +26,14 @@ pub fn CatalogView() -> Element {
     let finish_filter = use_signal(|| FinishFilter::All);
     let opacity_filter = use_signal(|| None::<Opacity>);
     let display_limit = use_signal(|| 250usize);
-    let selected_paint_id = use_signal(|| None::<i64>);
+    let mut selected_paint_id = use_signal(|| None::<i64>);
     let calibrate_masstone_hex = use_signal(String::new);
     let calibrate_tint_hex = use_signal(String::new);
     let recognizing = use_signal(|| false);
     let recognized_tubes = use_signal(Vec::<RecognizedTube>::new);
 
     // Custom tube creation form state
-    let show_add_form = use_signal(|| false);
+    let mut show_add_form = use_signal(|| false);
     let tube_form = use_tube_form();
 
     let all_paints = state.paints_of_system();
@@ -104,10 +104,6 @@ pub fn CatalogView() -> Element {
                 }),
             }
 
-            if *show_add_form.read() {
-                CustomTubeForm { form: tube_form, show_add_form, selected_paint_id }
-            }
-
             if !recognized_tubes.read().is_empty() {
                 RecognizedTubesCard { recognized_tubes }
             }
@@ -127,31 +123,34 @@ pub fn CatalogView() -> Element {
                 to_remove_ids,
             }
 
-            div { class: "grid-2 u-gtc-1p6fr-1fr",
-                PaintTable {
-                    paints: filtered,
-                    display_limit,
-                    selected_paint_id,
-                    calibrate_masstone_hex,
-                    calibrate_tint_hex,
+            PaintTable {
+                paints: filtered,
+                display_limit,
+                selected_paint_id,
+                calibrate_masstone_hex,
+                calibrate_tint_hex,
+            }
+
+            if *show_add_form.read() {
+                SlideDrawer {
+                    title: locale.tr("Ajouter un tube personnalisé au catalogue", "Add a custom tube to the catalog").to_string(),
+                    subtitle: Some(locale.tr("Ajout immédiat au catalogue et à votre tiroir", "Added immediately to the catalog and drawer").to_string()),
+                    on_close: move |_| show_add_form.set(false),
+                    CustomTubeForm { form: tube_form, show_add_form, selected_paint_id }
                 }
-
-                div { class: "card",
-                    if let Some(paint) = selected_paint {
-                        PaintSheet {
-                            paint,
-                            substitutes,
-                            pipette_hex,
-                            selected_paint_id,
-                            calibrate_masstone_hex,
-                            calibrate_tint_hex,
-                        }
-                    } else {
-                        p { class: "muted",
-                            {locale.tr("Sélectionnez un tube dans la liste pour afficher sa fiche pigmentaire, calibrer sa teinte ou chercher des équivalents.", "Select a tube from the list to view its pigment sheet, calibrate its masstone/tint, or find substitutes.")}
-                        }
+            } else if let Some(paint) = selected_paint {
+                SlideDrawer {
+                    title: paint.name.clone(),
+                    subtitle: Some(format!("{} · #{} · {}", paint.brand, paint.code, paint.hex_color)),
+                    on_close: move |_| selected_paint_id.set(None),
+                    PaintSheet {
+                        paint,
+                        substitutes,
+                        pipette_hex,
+                        selected_paint_id,
+                        calibrate_masstone_hex,
+                        calibrate_tint_hex,
                     }
-
                 }
             }
         }
@@ -181,7 +180,8 @@ fn CatalogActions(
             recognizing.set(true);
             let bytes = handle.read().await;
             let catalog_snapshot = state.paints.read().clone();
-            match recognize_tubes(&services, &bytes, &catalog_snapshot).await {
+            let system = *state.paint_system.read();
+            match recognize_tubes(&services, &bytes, &catalog_snapshot, system, loc).await {
                 Ok(tubes) => {
                     let count = tubes.len();
                     recognized_tubes.set(tubes);

@@ -58,25 +58,24 @@ impl Palette {
         set
     }
 
-    pub fn with_paint(&self, paint: Paint) -> Self {
+    /// Adds a paint to the palette if not already present (by ID), returning `true` when inserted.
+    pub fn add_paint(&mut self, paint: Paint) -> bool {
         if self
             .paints
             .iter()
             .any(|p| p.id.is_some() && p.id == paint.id)
         {
-            self.clone()
+            false
         } else {
-            let mut next = self.clone();
-            next.paints.push(paint);
-            next
+            self.paints.push(paint);
+            true
         }
     }
 
-    pub fn without_paint(&self, paint: &Paint) -> Self {
-        let mut next = self.clone();
-        next.paints
+    /// Removes a paint matching `paint.id` from the palette in place.
+    pub fn remove_paint(&mut self, paint: &Paint) {
+        self.paints
             .retain(|p| !(p.id.is_some() && p.id == paint.id));
-        next
     }
 
     /// Generates a comprehensive 2-tube subtractive cross-product matrix.

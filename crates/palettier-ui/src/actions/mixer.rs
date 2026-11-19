@@ -49,6 +49,32 @@ pub fn paints_of_brand(paints: &[Paint], brand: &str) -> Vec<Paint> {
         .collect()
 }
 
+/// Filters catalog paints for the cross-system target picker by optional system,
+/// brand, and search query (matching name, brand, code, or hex), returning at most `limit` items.
+pub fn search_target_paints(
+    paints: &[Paint],
+    system: Option<PaintSystem>,
+    brand: Option<&str>,
+    query: &str,
+    limit: usize,
+) -> Vec<Paint> {
+    let term = query.trim().to_lowercase();
+    paints
+        .iter()
+        .filter(|p| system.is_none_or(|sys| p.system == sys))
+        .filter(|p| brand.is_none_or(|b| p.brand == b))
+        .filter(|p| {
+            term.is_empty()
+                || p.name.to_lowercase().contains(&term)
+                || p.brand.to_lowercase().contains(&term)
+                || p.code.to_lowercase().contains(&term)
+                || p.hex_color.to_lowercase().contains(&term)
+        })
+        .take(limit)
+        .cloned()
+        .collect()
+}
+
 /// The tubes the solver may use: a palette (by index), the tubes in stock, or the
 /// whole catalog of the system.
 pub fn search_pool(palettes: &[Palette], paints: &[Paint], scope: usize) -> Vec<Paint> {
@@ -64,13 +90,18 @@ pub fn search_pool(palettes: &[Palette], paints: &[Paint], scope: usize) -> Vec<
 /// The six best recipes for a colour, from the given tubes, using at most `max_paints`.
 /// `None` when the colour is not a hex colour (the search is not run).
 pub fn suggest_recipes(
-    services: &AppServices,
+    _services: &AppServices,
     target_hex: &str,
     pool: &[Paint],
     max_paints: usize,
 ) -> Option<Vec<MixSuggestion>> {
     let target = Rgb::of_hex(target_hex).ok()?;
-    Some(services.mix_service.suggest_mixes(target, pool, 6, Some(max_paints)))
+    Some(palettier_domain::mix::suggest_mixes(
+        target,
+        pool,
+        6,
+        Some(max_paints),
+    ))
 }
 
 /// The bench with a dose of one tube added (to its existing dose if already there).
@@ -284,7 +315,7 @@ mod tests {
         let svc = AppServices::in_memory().await.unwrap();
         let (paints, _) = catalog(&svc).await;
         let bench = add_to_bench(&[], paints_of_system(&paints, PaintSystem::Acrylic)[0].clone(), 1.0);
-        let result = svc.mix_service.mix(&bench).unwrap();
+        let result = palettier_domain::mix::mix_paints(&bench).unwrap();
         let mix = BenchMix {
             name: "  ".into(),
             hex_color: result.hex(),
@@ -303,5 +334,21 @@ mod tests {
         let named = BenchMix { name: " Ombre chaude ".into(), ..mix };
         let all = place_bench_mix(&svc, named, Locale::En).await.unwrap();
         assert!(all.iter().any(|m| m.name == "Ombre chaude"));
+    }
+
+    #[tokio::test]
+    async fn target_paint_search_filters_by_system_brand_and_query() {
+        let svc = AppServices::in_memory().await.unwrap();
+        let (paints, _) = catalog(&svc).await;
+
+        let acrylic_red =
+            search_target_paints(&paints, Some(PaintSystem::Acrylic), None, "Mephiston", 10);
+        assert!(!acrylic_red.is_empty());
+        assert!(acrylic_red.iter().all(|p| p.system == PaintSystem::Acrylic));
+
+        let oil_umber =
+            search_target_paints(&paints, Some(PaintSystem::Oil), Some("Winsor & Newton"), "Burnt Umber", 10);
+        assert!(!oil_umber.is_empty());
+        assert!(oil_umber.iter().all(|p| p.system == PaintSystem::Oil && p.brand == "Winsor & Newton"));
     }
 }

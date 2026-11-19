@@ -12,7 +12,6 @@ use palettier_domain::paint::Paint;
 #[component]
 pub fn MixerView() -> Element {
     let state = use_context::<AppState>();
-    let services = use_context::<AppServices>();
 
     let locale = *state.locale.read();
     // Oil and acrylic never mix: the mixer only offers paints of the working system.
@@ -64,7 +63,7 @@ pub fn MixerView() -> Element {
         if parts_snapshot.is_empty() {
             None
         } else {
-            services.mix_service.mix(&parts_snapshot).ok()
+            palettier_domain::mix::mix_paints(&parts_snapshot).ok()
         }
     };
 
@@ -103,6 +102,8 @@ pub fn MixerView() -> Element {
                 // Right column: Inverse Kubelka-Munk solver
                 div {
                     MixerSolverCard {
+                        system,
+                        catalog_paints: state.paints.read().clone(),
                         palettes: palettes.clone(),
                         all_paints: all_paints.clone(),
                         target_hex: target_hex.clone(),

@@ -148,7 +148,7 @@ fn glaze_row(
                 if let Some(ref s) = sugg {
                     div { class: "row u-gap-8 u-ai-center",
                         div { class: "u-ta-right",
-                            div { class: "u-fw-650 u-fs-12", "{s.describe_i18n(locale)}" }
+                            div { class: "u-fw-650 u-fs-12", "{s.describe(locale)}" }
                         }
                         DeltaEBadge { delta_e: s.delta_e }
                     }

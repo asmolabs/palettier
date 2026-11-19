@@ -89,7 +89,7 @@ pub(super) fn Pigments(candidates: Vec<Paint>) -> Element {
                             div { class: "row u-gap-10 u-ai-center",
                                 ColorSwatch { hex: s.color.to_hex(), size: 30 }
                                 div {
-                                    div { class: "u-fw-700 u-fs-13", "{s.describe_i18n(locale)}" }
+                                    div { class: "u-fw-700 u-fs-13", "{s.describe(locale)}" }
                                     div { class: "muted u-fs-11", "{s.verdict(locale)}" }
                                 }
                             }

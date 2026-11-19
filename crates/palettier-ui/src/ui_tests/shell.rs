@@ -114,6 +114,39 @@ async fn theme_switch_changes_the_shell_class() {
         shell.attr("class")
     );
     ui.assert_shows("Jour · Français").await;
+
+    ui.click("⚖️ Gris neutre").await;
+    let shell = ui.find_class("app-shell").expect("shell");
+    assert!(
+        shell.has_class("theme-neutral"),
+        "classes: {:?}",
+        shell.attr("class")
+    );
+    ui.assert_shows("Neutre · Français").await;
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn sidebar_collapses_and_expands() {
+    let mut ui = Ui::studio().await;
+    let sidebar = ui.find_class("sidebar").expect("sidebar");
+    assert!(!sidebar.has_class("collapsed"));
+
+    ui.click("Replier la barre latérale").await;
+    let sidebar = ui.find_class("sidebar").expect("sidebar");
+    assert!(sidebar.has_class("collapsed"));
+    assert_eq!(
+        ui.services
+            .settings
+            .get(crate::state::AppState::KEY_SIDEBAR_COLLAPSED)
+            .await
+            .unwrap()
+            .as_deref(),
+        Some("true")
+    );
+
+    ui.click("Déplier la barre latérale").await;
+    let sidebar = ui.find_class("sidebar").expect("sidebar");
+    assert!(!sidebar.has_class("collapsed"));
 }
 
 #[tokio::test(flavor = "current_thread")]

@@ -1,7 +1,8 @@
 use crate::engine::{ChatEngine, ImageAttachment};
-use palettier_domain::error::{DomainError, DomainResult};
-use palettier_domain::paint::{Paint, PaintMatcher};
-use palettier_image::ImageDecoder;
+use crate::schema::parse_json_object;
+use palettier_domain::error::DomainResult;
+use palettier_domain::i18n::Locale;
+use palettier_domain::paint::{Paint, PaintSystem, match_paint_label};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::sync::{Arc, LazyLock};
@@ -74,14 +75,12 @@ pub static TUBE_SCHEMA: LazyLock<Value> = LazyLock::new(|| {
 
 pub struct TubeRecognitionService {
     engine: Arc<dyn ChatEngine>,
-    decoder: ImageDecoder,
-    matcher: PaintMatcher,
 }
 
 impl TubeRecognitionService {
     const MAX_DIMENSION: u32 = 1568;
 
-    const SYSTEM_PROMPT: &'static str = r#"Tu examines la photo d'un ou plusieurs tubes de peinture à l'huile posés sur un établi. Pour chaque tube dont l'étiquette est lisible, relève :
+    const SYSTEM_PROMPT_OIL_FR: &'static str = r#"Tu examines la photo d'un ou plusieurs tubes de peinture à l'huile posés sur un établi. Pour chaque tube dont l'étiquette est lisible, relève :
 - brand    : la marque (ex. "Abteilung 502", "Winsor & Newton", "Scale75", "Sennelier", "Old Holland", "Rembrandt", "Gamblin", "Michael Harding")
 - name     : le nom exact de la couleur tel qu'écrit sur le tube, de préférence en anglais s'il figure en plusieurs langues (ex. "Burnt Umber", "Starship Filth", "Basic Flesh Tone")
 - code     : la référence ou le numéro sur le tube s'il est visible (ex. "ABT005", "S75-012", "074"), sinon ""
@@ -89,14 +88,35 @@ impl TubeRecognitionService {
 
 Si une étiquette est trop floue ou retournée, mentionne-le dans "notes" plutôt que de deviner."#;
 
-    const USER_PROMPT: &'static str = "Relève tous les tubes visibles sur cette photo.";
+    const SYSTEM_PROMPT_OIL_EN: &'static str = r#"You are inspecting a photo of one or more oil paint tubes on a workbench. For every tube with a readable label, extract:
+- brand    : the manufacturer (e.g. "Abteilung 502", "Winsor & Newton", "Scale75", "Sennelier", "Old Holland", "Rembrandt", "Gamblin", "Michael Harding")
+- name     : the exact colour name printed on the tube, preferring English when multilingual (e.g. "Burnt Umber", "Starship Filth", "Basic Flesh Tone")
+- code     : the product code or number if visible (e.g. "ABT005", "S75-012", "074"), otherwise ""
+- pigments : the C.I. pigment codes if visible (e.g. "PBr7", "PW6, PY42"), otherwise ""
+
+If a label is too blurry or turned away, mention it in "notes" rather than guessing."#;
+
+    const SYSTEM_PROMPT_ACRYLIC_FR: &'static str = r#"Tu examines la photo d'un ou plusieurs pots ou flacons de peinture acrylique pour figurines posés sur un établi. Pour chaque flacon ou pot dont l'étiquette est lisible, relève :
+- brand    : la marque (ex. "Citadel", "Vallejo Model Color", "Vallejo Game Color", "Army Painter Warpaints", "AK Interactive 3rd Gen", "Pro Acryl", "Scale75", "Kimera Kolors")
+- name     : le nom exact de la couleur tel qu'écrit sur l'étiquette (ex. "Mephiston Red", "Ice Yellow", "Dark Sea Blue")
+- code     : la référence ou le numéro si visible (ex. "70.951", "AK11001"), sinon ""
+- pigments : les codes pigments C.I. s'ils sont visibles (ex. "PR112", "PW6, PY42"), sinon ""
+
+Si une étiquette est trop floue ou retournée, mentionne-le dans "notes" plutôt que de deviner."#;
+
+    const SYSTEM_PROMPT_ACRYLIC_EN: &'static str = r#"You are inspecting a photo of one or more miniature acrylic paint pots or dropper bottles on a workbench. For every bottle or pot with a readable label, extract:
+- brand    : the range or manufacturer (e.g. "Citadel", "Vallejo Model Color", "Vallejo Game Color", "Army Painter Warpaints", "AK Interactive 3rd Gen", "Pro Acryl", "Scale75", "Kimera Kolors")
+- name     : the exact colour name printed on the label (e.g. "Mephiston Red", "Ice Yellow", "Dark Sea Blue")
+- code     : the product code or number if visible (e.g. "70.951", "AK11001"), otherwise ""
+- pigments : the C.I. pigment codes if visible (e.g. "PR112", "PW6, PY42"), otherwise ""
+
+If a label is too blurry or turned away, mention it in "notes" rather than guessing."#;
+
+    const USER_PROMPT_FR: &'static str = "Relève tous les tubes ou flacons visibles sur cette photo.";
+    const USER_PROMPT_EN: &'static str = "List all paint tubes or bottles visible in this photo.";
 
     pub fn new(engine: Arc<dyn ChatEngine>) -> Self {
-        Self {
-            engine,
-            decoder: ImageDecoder,
-            matcher: PaintMatcher,
-        }
+        Self { engine }
     }
 
     pub async fn recognize(
@@ -104,28 +124,54 @@ Si une étiquette est trop floue ou retournée, mentionne-le dans "notes" plutô
         image_bytes: &[u8],
         catalog: &[Paint],
     ) -> DomainResult<RecognitionResult> {
-        let scaled = self.decoder.scale_to(image_bytes, Self::MAX_DIMENSION)?;
+        self.recognize_in(image_bytes, catalog, PaintSystem::Oil, Locale::Fr)
+            .await
+    }
+
+    pub async fn recognize_in(
+        &self,
+        image_bytes: &[u8],
+        catalog: &[Paint],
+        system: PaintSystem,
+        locale: Locale,
+    ) -> DomainResult<RecognitionResult> {
+        let scaled = palettier_image::scale_to_encoded(image_bytes, Self::MAX_DIMENSION)?;
+        let (system_prompt, user_prompt) = match (system, locale) {
+            (PaintSystem::Oil, Locale::Fr) => (Self::SYSTEM_PROMPT_OIL_FR, Self::USER_PROMPT_FR),
+            (PaintSystem::Oil, Locale::En) => (Self::SYSTEM_PROMPT_OIL_EN, Self::USER_PROMPT_EN),
+            (PaintSystem::Acrylic, Locale::Fr) => {
+                (Self::SYSTEM_PROMPT_ACRYLIC_FR, Self::USER_PROMPT_FR)
+            }
+            (PaintSystem::Acrylic, Locale::En) => {
+                (Self::SYSTEM_PROMPT_ACRYLIC_EN, Self::USER_PROMPT_EN)
+            }
+        };
         let raw = self
             .engine
             .complete(
-                Self::SYSTEM_PROMPT,
-                Self::USER_PROMPT,
-                &[ImageAttachment::jpeg(scaled)],
+                system_prompt,
+                user_prompt,
+                &[ImageAttachment::new(scaled.bytes, scaled.mime_type)],
                 Some(&TUBE_SCHEMA),
             )
             .await?;
 
-        let parsed = Self::parse(&raw)?;
+        let parsed = Self::parse_in(&raw, locale)?;
+        let system_catalog: Vec<Paint> =
+            catalog.iter().filter(|p| p.system == system).cloned().collect();
+        let match_pool = if system_catalog.is_empty() {
+            catalog
+        } else {
+            &system_catalog
+        };
+
         let tubes = parsed
             .tubes
             .into_iter()
             .filter(|t| !t.name.trim().is_empty() || !t.code.trim().is_empty())
             .map(|t| {
                 let label = format!("{} {} {}", t.brand, t.name, t.code);
-                let matched = self
-                    .matcher
-                    .match_label(Some(&label), catalog)
-                    .map(|m| m.paint);
+                let matched = match_paint_label(Some(&label), match_pool).map(|m| m.paint);
                 RecognizedTube {
                     read_brand: t.brand,
                     read_name: t.name,
@@ -143,17 +189,10 @@ Si une étiquette est trop floue ou retournée, mentionne-le dans "notes" plutô
     }
 
     pub fn parse(raw: &str) -> DomainResult<TubeList> {
-        let start = raw.find('{');
-        let end = raw.rfind('}');
-        let cleaned = match (start, end) {
-            (Some(s), Some(e)) if e > s => &raw[s..=e],
-            _ => raw,
-        };
-        serde_json::from_str::<TubeList>(cleaned).map_err(|e| {
-            let preview: String = raw.chars().take(200).collect();
-            DomainError::InvalidArgument(format!(
-                "Réponse du modèle illisible ({e}) : {preview}"
-            ))
-        })
+        Self::parse_in(raw, Locale::Fr)
+    }
+
+    pub fn parse_in(raw: &str, locale: Locale) -> DomainResult<TubeList> {
+        parse_json_object(raw, locale)
     }
 }

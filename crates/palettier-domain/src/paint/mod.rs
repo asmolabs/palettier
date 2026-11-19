@@ -8,7 +8,10 @@ pub mod tube;
 pub use medium::Medium;
 pub use properties::{DryingClass, LayerThickness, Opacity, PaintSystem, Ventilation};
 pub use technique::Technique;
-pub use tube::{Lightfastness, Paint, PaintLabelMatch, PaintMatchByColour, PaintMatcher, Pigment, SafetyInfo, SafetyLevel, find_closest};
+pub use tube::{
+    Lightfastness, Paint, PaintLabelMatch, PaintMatchByColour, Pigment, SafetyInfo, SafetyLevel,
+    find_closest, match_paint_label,
+};
 
 #[cfg(test)]
 use std::str::FromStr;
@@ -39,10 +42,8 @@ mod tests {
 
     #[test]
     fn full_label_matches_tube_including_noise() {
-        let matcher = PaintMatcher::new();
         let cat = sample_catalogue();
-        let m = matcher
-            .match_label(Some("W&N Burnt Umber 37ml"), &cat)
+        let m = match_paint_label(Some("W&N Burnt Umber 37ml"), &cat)
             .expect("doit trouver Burnt Umber");
         assert_eq!("Burnt Umber", m.paint.name);
         assert!(m.is_reliable(), "confiance {}", m.confidence);
@@ -50,32 +51,24 @@ mod tests {
 
     #[test]
     fn brand_alone_matches_nothing() {
-        let matcher = PaintMatcher::new();
         let cat = sample_catalogue();
-        assert!(matcher.match_label(Some("Winsor & Newton"), &cat).is_none());
+        assert!(match_paint_label(Some("Winsor & Newton"), &cat).is_none());
     }
 
     #[test]
     fn accents_do_not_break_matching() {
-        let matcher = PaintMatcher::new();
         let cat = sample_catalogue();
-        let m = matcher
-            .match_label(Some("Terre d'ombre brûlée"), &cat)
+        let m = match_paint_label(Some("Terre d'ombre brûlée"), &cat)
             .expect("doit trouver Terre d'ombre brulee");
         assert_eq!("Terre d'ombre brulee", m.paint.name);
     }
 
     #[test]
     fn unrelated_label_matches_nothing() {
-        let matcher = PaintMatcher::new();
         let cat = sample_catalogue();
-        assert!(
-            matcher
-                .match_label(Some("pinceau martre numero 2"), &cat)
-                .is_none()
-        );
-        assert!(matcher.match_label(Some(""), &cat).is_none());
-        assert!(matcher.match_label(None, &cat).is_none());
+        assert!(match_paint_label(Some("pinceau martre numero 2"), &cat).is_none());
+        assert!(match_paint_label(Some(""), &cat).is_none());
+        assert!(match_paint_label(None, &cat).is_none());
     }
 
     #[test]

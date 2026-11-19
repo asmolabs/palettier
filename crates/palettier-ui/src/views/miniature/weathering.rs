@@ -146,7 +146,7 @@ fn palette_mix(locale: Locale, palette_name: &str, sugg: Option<&MixSuggestion>)
                     div { class: "row u-gap-10 u-ai-center",
                         ColorSwatch { hex: s.color.to_hex(), size: 32 }
                         div {
-                            div { class: "u-fw-750 u-fs-13p5", "{s.describe_i18n(locale)}" }
+                            div { class: "u-fw-750 u-fs-13p5", "{s.describe(locale)}" }
                             div { class: "muted u-fs-11", "{s.verdict(locale)}" }
                         }
                     }

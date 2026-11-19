@@ -1,4 +1,4 @@
-use crate::db::{Database, map_db_err};
+use crate::db::{Database, DbExec, map_db_err};
 use crate::entity::{paint, paint_pigment, palette_paint, project_paint};
 use async_trait::async_trait;
 use indexmap::{IndexMap, IndexSet};
@@ -8,33 +8,41 @@ use palettier_domain::paint::{DryingClass, Opacity, Paint, PaintSystem};
 use palettier_domain::port::PaintCatalogRepository;
 use sea_orm::sea_query::Expr;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait,
-    PaginatorTrait, QueryFilter, QueryOrder, Set, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter,
+    QueryOrder, Set, TransactionTrait,
 };
 use std::str::FromStr;
 
 #[derive(Clone)]
 pub struct SeaOrmPaintCatalogRepository {
-    db: DatabaseConnection,
+    db: DbExec,
 }
 
 impl SeaOrmPaintCatalogRepository {
     pub fn new(database: &Database) -> Self {
         Self {
-            db: database.connection().clone(),
+            db: DbExec::Pool(database.connection().clone()),
         }
+    }
+
+    pub(crate) fn from_exec(db: DbExec) -> Self {
+        Self { db }
     }
 
     async fn with_pigments(&self, rows: Vec<paint::Model>) -> DomainResult<Vec<Paint>> {
         if rows.is_empty() {
             return Ok(Vec::new());
         }
-        let all_pigments = paint_pigment::Entity::find()
+        let ids: Vec<i64> = rows.iter().map(|r| r.id).collect();
+        // Full-table scans are slightly faster for bulk catalog loads (> 500 paints),
+        // while small/filtered result sets query only the matching paint IDs.
+        let mut query = paint_pigment::Entity::find()
             .order_by_asc(paint_pigment::Column::PaintId)
-            .order_by_asc(paint_pigment::Column::Position)
-            .all(&self.db)
-            .await
-            .map_err(map_db_err)?;
+            .order_by_asc(paint_pigment::Column::Position);
+        if ids.len() <= 500 {
+            query = query.filter(paint_pigment::Column::PaintId.is_in(ids));
+        }
+        let all_pigments = query.all(&self.db).await.map_err(map_db_err)?;
 
         let mut by_paint: IndexMap<i64, IndexSet<String>> = IndexMap::new();
         for p in all_pigments {

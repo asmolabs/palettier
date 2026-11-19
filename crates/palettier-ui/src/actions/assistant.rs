@@ -106,11 +106,12 @@ mod tests {
     use palettier_domain::port::{PaintCatalogRepository, PaletteRepository};
 
     /// A plan made without the AI engine, from sampled groups.
-    fn plan(svc: &AppServices, palette: Option<&Palette>) -> PaintingPlan {
+    fn plan(_svc: &AppServices, palette: Option<&Palette>) -> PaintingPlan {
         let groups = add_group(&[], "Manteau", "Drap").unwrap();
         let groups = add_sample(&groups, 0, "#2B303A").unwrap();
         let groups = add_sample(&groups, 0, "#5E687D").unwrap();
-        svc.sampled_plan_service.plan("Grognard", palette, &groups, 3, Locale::Fr).unwrap()
+        palettier_domain::plan::plan_from_sampled("Grognard", palette, &groups, 3, Locale::Fr)
+            .unwrap()
     }
 
     #[tokio::test]
@@ -154,7 +155,7 @@ mod tests {
         let palette = svc.palettes.all().await.unwrap().into_iter().find(|p| !p.paints.is_empty());
         let plan = plan(&svc, palette.as_ref());
         let pixels = PixelMap::new(2, 2, vec![0xFF8C_6248; 4]).unwrap();
-        let photo = Some(svc.decoder.encode_png(&pixels).unwrap());
+        let photo = Some(palettier_image::encode_png(&pixels).unwrap());
 
         let (saved, projects) =
             create_project_from_plan(&svc, &plan, palette.as_ref(), Vec::new(), &[], photo, Locale::Fr)

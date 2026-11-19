@@ -305,39 +305,14 @@ impl Project {
     }
 }
 
-/// Validates the fat-over-lean rule across a sequence of coats.
-#[derive(Debug, Clone, Default)]
-pub struct FatOverLeanService;
+/// Fat-over-lean validation across coat sequences (projects and recipes).
+pub mod fat_over_lean {
+    use super::*;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct FatOverLeanRisk {
-    pub where_name: String,
-    pub under: String,
-    pub over: String,
-    pub drop: f64,
-    pub explanation: String,
-}
-
-struct Coat {
-    label: String,
-    role: String,
-    system: PaintSystem,
-    fatness: f64,
-    thickness: LayerThickness,
-}
-
-impl FatOverLeanService {
     const SIGNIFICANT_DROP: f64 = 0.40;
 
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub fn inspect_project(&self, project: &Project) -> Vec<FatOverLeanRisk> {
-        self.inspect_project_i18n(project, Locale::Fr)
-    }
-
-    pub fn inspect_project_i18n(&self, project: &Project, locale: Locale) -> Vec<FatOverLeanRisk> {
+    /// Checks a project's zones for fat-over-lean or acrylic-over-oil risks.
+    pub fn inspect_project(project: &Project, locale: Locale) -> Vec<FatOverLeanRisk> {
         project
             .zones
             .iter()
@@ -345,18 +320,15 @@ impl FatOverLeanService {
                 let coats: Vec<Coat> = zone
                     .layers
                     .iter()
-                    .map(|l| Self::coat_of(l, project.system, locale))
+                    .map(|l| coat_of(l, project.system, locale))
                     .collect();
-                Self::inspect(&zone.name, &coats, locale)
+                inspect(&zone.name, &coats, locale)
             })
             .collect()
     }
 
-    pub fn inspect_recipe(&self, recipe: &Recipe) -> Vec<FatOverLeanRisk> {
-        self.inspect_recipe_i18n(recipe, Locale::Fr)
-    }
-
-    pub fn inspect_recipe_i18n(&self, recipe: &Recipe, locale: Locale) -> Vec<FatOverLeanRisk> {
+    /// Checks a recipe's steps for fat-over-lean or acrylic-over-oil risks.
+    pub fn inspect_recipe(recipe: &Recipe, locale: Locale) -> Vec<FatOverLeanRisk> {
         let step_prefix = locale.tr("Étape", "Step");
         let coats: Vec<Coat> = recipe
             .steps
@@ -370,21 +342,25 @@ impl FatOverLeanService {
                 thickness: step.thickness,
             })
             .collect();
-        Self::inspect(&recipe.name, &coats, locale)
+        inspect(&recipe.name, &coats, locale)
     }
 
-    pub fn fatness_of(&self, technique: Technique) -> f64 {
-        Self::fatness(technique)
+    /// Baseline oil-to-solvent fatness for a technique's default ratio.
+    pub fn fatness(technique: Technique) -> f64 {
+        technique
+            .default_medium()
+            .fatness(technique.default_ratio())
     }
 
-    pub fn is_veil(&self, technique: Technique) -> bool {
+    /// True when the technique typically deposits a glaze-thin veil.
+    pub fn is_veil(technique: Technique) -> bool {
         technique.typical_thickness() == LayerThickness::Glaze
     }
 
     fn inspect(where_name: &str, coats: &[Coat], locale: Locale) -> Vec<FatOverLeanRisk> {
         let mut out = Vec::new();
         for i in 1..coats.len() {
-            if let Some(risk) = Self::compare(where_name, &coats[i - 1], &coats[i], locale) {
+            if let Some(risk) = compare(where_name, &coats[i - 1], &coats[i], locale) {
                 out.push(risk);
             }
         }
@@ -407,7 +383,7 @@ impl FatOverLeanService {
                     under: under.role.clone(),
                     over: over.role.clone(),
                     drop: 1.0,
-                    explanation: Self::explain_acrylic_over_oil(&under.label, &over.label, locale),
+                    explanation: explain_acrylic_over_oil(&under.label, &over.label, locale),
                 });
             }
             // Fat over lean is an oil rule only.
@@ -415,7 +391,7 @@ impl FatOverLeanService {
             _ => return None,
         }
         let drop = under.fatness - over.fatness;
-        if drop < Self::SIGNIFICANT_DROP {
+        if drop < SIGNIFICANT_DROP {
             return None;
         }
         if over.thickness < under.thickness {
@@ -426,7 +402,7 @@ impl FatOverLeanService {
             under: under.role.clone(),
             over: over.role.clone(),
             drop,
-            explanation: Self::explain(&under.label, &over.label, locale),
+            explanation: explain(&under.label, &over.label, locale),
         })
     }
 
@@ -436,7 +412,7 @@ impl FatOverLeanService {
             label: technique.label(locale).to_string(),
             role: layer.role.clone(),
             system: technique.system_within(project),
-            fatness: Self::fatness(technique),
+            fatness: fatness(technique),
             thickness: technique.typical_thickness(),
         }
     }
@@ -452,12 +428,6 @@ impl FatOverLeanService {
         }
     }
 
-    fn fatness(technique: Technique) -> f64 {
-        technique
-            .default_medium()
-            .fatness(technique.default_ratio())
-    }
-
     fn explain(below: &str, above: &str, locale: Locale) -> String {
         match locale {
             Locale::Fr => format!(
@@ -470,9 +440,22 @@ impl FatOverLeanService {
     }
 }
 
-/// Finds owned substitutes for tubes required by a project that are not in stock.
-#[derive(Debug, Clone, Default)]
-pub struct SubstituteService;
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FatOverLeanRisk {
+    pub where_name: String,
+    pub under: String,
+    pub over: String,
+    pub drop: f64,
+    pub explanation: String,
+}
+
+struct Coat {
+    label: String,
+    role: String,
+    system: PaintSystem,
+    fatness: f64,
+    thickness: LayerThickness,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MissingPaint {
@@ -541,50 +524,41 @@ impl MissingPaint {
     }
 }
 
-impl SubstituteService {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub fn missing_from(&self, project: &Project, owned: &[Paint]) -> Vec<MissingPaint> {
-        self.missing_among(project.effective_paints(), owned)
-    }
-
-    pub fn missing_among(&self, wanted: &[Paint], owned: &[Paint]) -> Vec<MissingPaint> {
-        wanted
-            .iter()
-            .filter(|p| !p.in_stock)
-            .map(|paint| {
-                let mut best: Option<(Paint, f64)> = None;
-                for candidate in owned {
-                    if candidate.id.is_some() && candidate.id == paint.id {
-                        continue;
-                    }
-                    // Keep substitutes within the same binder system and surface finish
-                    // so a flat colour never suggests a metallic/effect paint or vice versa.
-                    if candidate.system != paint.system || candidate.is_effect() != paint.is_effect() {
-                        continue;
-                    }
-                    let gap = delta_e_2000(paint.color(), candidate.color());
-                    if best.as_ref().is_none_or(|(_, b_gap)| gap < *b_gap) {
-                        best = Some((candidate.clone(), gap));
-                    }
+/// Finds owned substitutes among `owned` for any out-of-stock paints in `wanted`.
+pub fn missing_paints(wanted: &[Paint], owned: &[Paint]) -> Vec<MissingPaint> {
+    wanted
+        .iter()
+        .filter(|p| !p.in_stock)
+        .map(|paint| {
+            let mut best: Option<(Paint, f64)> = None;
+            for candidate in owned {
+                if candidate.id.is_some() && candidate.id == paint.id {
+                    continue;
                 }
-                match best {
-                    Some((nearest, delta_e)) => MissingPaint {
-                        paint: paint.clone(),
-                        nearest: Some(nearest),
-                        delta_e,
-                    },
-                    None => MissingPaint {
-                        paint: paint.clone(),
-                        nearest: None,
-                        delta_e: f64::MAX,
-                    },
+                // Keep substitutes within the same binder system and surface finish
+                // so a flat colour never suggests a metallic/effect paint or vice versa.
+                if candidate.system != paint.system || candidate.is_effect() != paint.is_effect() {
+                    continue;
                 }
-            })
-            .collect()
-    }
+                let gap = delta_e_2000(paint.color(), candidate.color());
+                if best.as_ref().is_none_or(|(_, b_gap)| gap < *b_gap) {
+                    best = Some((candidate.clone(), gap));
+                }
+            }
+            match best {
+                Some((nearest, delta_e)) => MissingPaint {
+                    paint: paint.clone(),
+                    nearest: Some(nearest),
+                    delta_e,
+                },
+                None => MissingPaint {
+                    paint: paint.clone(),
+                    nearest: None,
+                    delta_e: f64::MAX,
+                },
+            }
+        })
+        .collect()
 }
 
 /// A dominant color sampled from an image and the area share it occupies.
@@ -593,10 +567,6 @@ pub struct DominantColour {
     pub color: Rgb,
     pub share: f64,
 }
-
-/// Compares colors measured on a work-in-progress photo against the planned targets.
-#[derive(Debug, Clone, Default)]
-pub struct ProgressCheckService;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ObservedColour {
@@ -645,42 +615,37 @@ impl ObservedColour {
     }
 }
 
-impl ProgressCheckService {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub fn compare(&self, project: &Project, measured: &[DominantColour]) -> Vec<ObservedColour> {
-        measured
-            .iter()
-            .map(|dominant| {
-                let mut closest: Option<ObservedColour> = None;
-                for zone in &project.zones {
-                    for layer in &zone.layers {
-                        let gap = delta_e_2000(dominant.color, layer.target());
-                        if closest.as_ref().is_none_or(|c| gap < c.delta_e) {
-                            closest = Some(ObservedColour {
-                                measured: dominant.color,
-                                share: dominant.share,
-                                zone: Some(zone.name.clone()),
-                                role: Some(layer.role.clone()),
-                                target: Some(layer.target()),
-                                delta_e: gap,
-                            });
-                        }
+/// Compares dominant colors measured on a work-in-progress photo against the planned layer targets.
+pub fn compare_progress(project: &Project, measured: &[DominantColour]) -> Vec<ObservedColour> {
+    measured
+        .iter()
+        .map(|dominant| {
+            let mut closest: Option<ObservedColour> = None;
+            for zone in &project.zones {
+                for layer in &zone.layers {
+                    let gap = delta_e_2000(dominant.color, layer.target());
+                    if closest.as_ref().is_none_or(|c| gap < c.delta_e) {
+                        closest = Some(ObservedColour {
+                            measured: dominant.color,
+                            share: dominant.share,
+                            zone: Some(zone.name.clone()),
+                            role: Some(layer.role.clone()),
+                            target: Some(layer.target()),
+                            delta_e: gap,
+                        });
                     }
                 }
-                closest.unwrap_or(ObservedColour {
-                    measured: dominant.color,
-                    share: dominant.share,
-                    zone: None,
-                    role: None,
-                    target: None,
-                    delta_e: f64::MAX,
-                })
+            }
+            closest.unwrap_or(ObservedColour {
+                measured: dominant.color,
+                share: dominant.share,
+                zone: None,
+                role: None,
+                target: None,
+                delta_e: f64::MAX,
             })
-            .collect()
-    }
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -717,7 +682,6 @@ mod tests {
 
     #[test]
     fn fat_over_lean_is_not_applied_between_acrylic_coats() {
-        let service = FatOverLeanService::new();
         // In oil, a lean filter over an opaque highlight would be flagged; in acrylic it is normal.
         let mut p = piece_with(&[
             Technique::BaseLayer.label(Locale::Fr),
@@ -726,54 +690,59 @@ mod tests {
             Technique::Layering.label(Locale::Fr),
         ]);
         p.system = PaintSystem::Acrylic;
-        assert!(service.inspect_project(&p).is_empty());
+        assert!(fat_over_lean::inspect_project(&p, Locale::Fr).is_empty());
     }
 
     #[test]
     fn oil_over_acrylic_is_fine_acrylic_over_oil_is_flagged() {
-        let service = FatOverLeanService::new();
-        let mut fine = piece_with(&[Technique::Layering.label(Locale::Fr), Technique::OilWash.label(Locale::Fr)]);
+        let mut fine = piece_with(&[
+            Technique::Layering.label(Locale::Fr),
+            Technique::OilWash.label(Locale::Fr),
+        ]);
         fine.system = PaintSystem::Acrylic;
-        assert!(service.inspect_project(&fine).is_empty());
+        assert!(fat_over_lean::inspect_project(&fine, Locale::Fr).is_empty());
 
-        let mut wrong = piece_with(&[Technique::OilWash.label(Locale::Fr), Technique::EdgeHighlight.label(Locale::Fr)]);
+        let mut wrong = piece_with(&[
+            Technique::OilWash.label(Locale::Fr),
+            Technique::EdgeHighlight.label(Locale::Fr),
+        ]);
         wrong.system = PaintSystem::Acrylic;
-        let risks = service.inspect_project(&wrong);
+        let risks = fat_over_lean::inspect_project(&wrong, Locale::Fr);
         assert_eq!(1, risks.len());
         assert!(risks[0].explanation.contains("n'accroche pas"));
     }
 
     #[test]
     fn all_glaze_plan_triggers_no_risk() {
-        let service = FatOverLeanService::new();
         let p = piece_with(&[
             Technique::Glaze.label(Locale::Fr),
             Technique::Glaze.label(Locale::Fr),
             Technique::Glaze.label(Locale::Fr),
         ]);
-        assert!(service.inspect_project(&p).is_empty());
+        assert!(fat_over_lean::inspect_project(&p, Locale::Fr).is_empty());
     }
 
     #[test]
     fn glaze_over_base_layer_triggers_no_risk() {
-        let service = FatOverLeanService::new();
         assert!(
-            service.fatness_of(Technique::Glaze)
-                < service.fatness_of(Technique::BaseLayer)
+            fat_over_lean::fatness(Technique::Glaze)
+                < fat_over_lean::fatness(Technique::BaseLayer)
         );
-        assert!(service.is_veil(Technique::Glaze));
-        let p = piece_with(&[Technique::BaseLayer.label(Locale::Fr), Technique::Glaze.label(Locale::Fr)]);
-        assert!(service.inspect_project(&p).is_empty());
+        assert!(fat_over_lean::is_veil(Technique::Glaze));
+        let p = piece_with(&[
+            Technique::BaseLayer.label(Locale::Fr),
+            Technique::Glaze.label(Locale::Fr),
+        ]);
+        assert!(fat_over_lean::inspect_project(&p, Locale::Fr).is_empty());
     }
 
     #[test]
     fn lean_streaking_over_fat_blending_at_equal_thickness_is_flagged() {
-        let service = FatOverLeanService::new();
         let p = piece_with(&[
             Technique::Blending.label(Locale::Fr),
             Technique::StreakingGrime.label(Locale::Fr),
         ]);
-        let risks = service.inspect_project(&p);
+        let risks = fat_over_lean::inspect_project(&p, Locale::Fr);
         assert_eq!(1, risks.len());
         let risk = &risks[0];
         assert_eq!("Visage", risk.where_name);
@@ -785,7 +754,6 @@ mod tests {
 
     #[test]
     fn recipe_is_checked_on_entered_values() {
-        let service = FatOverLeanService::new();
         let recipe = Recipe::new("Cape rouge", "Tissu")
             .with_step(RecipeStep {
                 id: None,
@@ -805,7 +773,7 @@ mod tests {
                 thickness: LayerThickness::Normal,
                 notes: String::new(),
             });
-        let risks = service.inspect_recipe(&recipe);
+        let risks = fat_over_lean::inspect_recipe(&recipe, Locale::Fr);
         assert_eq!(1, risks.len());
         assert_eq!("Cape rouge", risks[0].where_name);
         assert_eq!("Étape 1", risks[0].under);
@@ -832,8 +800,7 @@ mod tests {
             .in_system(PaintSystem::Acrylic);
         flat_acrylic.id = Some(4);
 
-        let service = SubstituteService::new();
-        let missing = service.missing_among(
+        let missing = missing_paints(
             std::slice::from_ref(&wanted),
             &[metallic.clone(), oil, flat_acrylic.clone()],
         );
@@ -847,7 +814,7 @@ mod tests {
             Some("AK")
         );
 
-        let only_metallic = service.missing_among(&[wanted], &[metallic.clone()]);
+        let only_metallic = missing_paints(&[wanted], &[metallic.clone()]);
         assert!(only_metallic[0].nearest.is_none());
 
         let mut wanted_metallic = Paint::new("AK", "Aluminium", "#808080")
@@ -856,7 +823,7 @@ mod tests {
         wanted_metallic.in_stock = false;
         wanted_metallic.pigments.insert("ALU".to_string());
 
-        let for_metallic = service.missing_among(&[wanted_metallic], &[flat_acrylic, metallic]);
+        let for_metallic = missing_paints(&[wanted_metallic], &[flat_acrylic, metallic]);
         assert_eq!(
             for_metallic[0].nearest.as_ref().map(|p| p.name.as_str()),
             Some("Silver")

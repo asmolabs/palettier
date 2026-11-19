@@ -5,11 +5,11 @@ use crate::actions::palettes;
 use crate::state::{AppServices, AppState};
 use crate::theme::{ColorSwatch, DeltaEBadge, GamutMapSvg, PaintSwatch, SectionHeader};
 use dioxus::prelude::*;
-use palettier_domain::guide::{MixingGuideBuilder, MotherMix};
+use palettier_domain::guide::{MotherMix, build_palette_entries, from_plan};
 use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{Paint, PaintSystem};
 use palettier_domain::palette::Palette;
-use palettier_domain::project::MissingPaint;
+use palettier_domain::project::{MissingPaint, missing_paints};
 
 /// The palettes of the working system (an empty palette belongs to both).
 fn palettes_of_system(state: &AppState) -> Vec<Palette> {
@@ -381,7 +381,7 @@ fn PaletteTubeTable(pal: Palette) -> Element {
                 }
             }
             tbody {
-                for entry in MixingGuideBuilder::build_palette_entries_i18n(&pal.paints, locale) {
+                for entry in build_palette_entries(&pal.paints, locale) {
                     PaletteTubeRow {
                         pal: pal.clone(),
                         pt: entry.paint.clone(),
@@ -515,10 +515,9 @@ fn PaletteMatrix(pal: Palette) -> Element {
 #[component]
 fn PaletteSubstitutes(pal: Palette) -> Element {
     let state = use_context::<AppState>();
-    let services = use_context::<AppServices>();
     let locale = *state.locale.read();
     let owned: Vec<_> = state.paints_of_system().into_iter().filter(|p| p.in_stock).collect();
-    let missing = services.substitute_service.missing_among(&pal.paints, &owned);
+    let missing = missing_paints(&pal.paints, &owned);
     if missing.is_empty() {
         return rsx! {};
     }
@@ -600,7 +599,6 @@ fn gamut_cache_key(pal: &Palette, locale: Locale) -> u64 {
 #[component]
 fn PaletteGamut(pal: Palette) -> Element {
     let state = use_context::<AppState>();
-    let services = use_context::<AppServices>();
     let locale = *state.locale.read();
 
     let key = gamut_cache_key(&pal, locale);
@@ -613,7 +611,6 @@ fn PaletteGamut(pal: Palette) -> Element {
             mother_mixes.set(Some(Vec::new()));
         } else {
             mother_mixes.set(None);
-            let builder = services.guide_builder.clone();
             let dummy_plan = palettier_domain::plan::PaintingPlan {
                 subject: pal.name.clone(),
                 palette_name: pal.name.clone(),
@@ -624,7 +621,7 @@ fn PaletteGamut(pal: Palette) -> Element {
             let paints = pal.paints.clone();
             spawn(async move {
                 let Ok(mixes) = tokio::task::spawn_blocking(move || {
-                    builder.from_plan_i18n(&dummy_plan, &paints, locale).mother_mixes
+                    from_plan(&dummy_plan, &paints, locale).mother_mixes
                 })
                 .await
                 else {

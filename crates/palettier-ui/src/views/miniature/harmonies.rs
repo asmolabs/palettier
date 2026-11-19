@@ -115,7 +115,7 @@ fn harmony_card(
                     div { class: "row-between u-ai-center",
                         div { class: "row u-gap-8 u-ai-center",
                             ColorSwatch { hex: s.color.to_hex(), size: 24 }
-                            div { class: "u-fw-650 u-fs-12", "{s.describe_i18n(locale)}" }
+                            div { class: "u-fw-650 u-fs-12", "{s.describe(locale)}" }
                         }
                         DeltaEBadge { delta_e: s.delta_e }
                     }

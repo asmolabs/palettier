@@ -287,10 +287,7 @@ impl Lightfastness {
     }
 }
 
-/// Finds a catalog tube from a free-form label such as `"W&N Burnt Umber 37ml"`.
-#[derive(Debug, Default, Clone)]
-pub struct PaintMatcher;
-
+/// Match result when looking up a catalog tube from a free-form label.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PaintLabelMatch {
     pub paint: Paint,
@@ -304,132 +301,126 @@ impl PaintLabelMatch {
     }
 }
 
-impl PaintMatcher {
-    const MINIMUM_CONFIDENCE: f64 = 0.45;
+const MINIMUM_LABEL_CONFIDENCE: f64 = 0.45;
+const LABEL_NOISE_WORDS: &[&str] = &[
+    "oil",
+    "color",
+    "colour",
+    "couleur",
+    "huile",
+    "paint",
+    "peinture",
+    "artists",
+    "artist",
+    "professional",
+    "fine",
+    "ml",
+    "tube",
+    "series",
+    "serie",
+];
 
-    const NOISE: &'static [&'static str] = &[
-        "oil",
-        "color",
-        "colour",
-        "couleur",
-        "huile",
-        "paint",
-        "peinture",
-        "artists",
-        "artist",
-        "professional",
-        "fine",
-        "ml",
-        "tube",
-        "series",
-        "serie",
-    ];
-
-    pub fn new() -> Self {
-        Self
+/// Finds a catalog tube from a free-form label such as `"W&N Burnt Umber 37ml"`.
+pub fn match_paint_label(label: Option<&str>, catalogue: &[Paint]) -> Option<PaintLabelMatch> {
+    let wanted = label_words(label);
+    if wanted.is_empty() {
+        return None;
     }
+    let source = label.unwrap_or_default().to_string();
 
-    pub fn match_label(&self, label: Option<&str>, catalogue: &[Paint]) -> Option<PaintLabelMatch> {
-        let wanted = Self::words(label);
-        if wanted.is_empty() {
-            return None;
-        }
-        let source = label.unwrap_or_default().to_string();
-
-        let mut best: Option<PaintLabelMatch> = None;
-        for paint in catalogue {
-            let conf = Self::score(&wanted, paint);
-            if conf >= Self::MINIMUM_CONFIDENCE {
-                let is_better = match &best {
-                    None => true,
-                    Some(prev) => conf > prev.confidence,
-                };
-                if is_better {
-                    best = Some(PaintLabelMatch {
-                        paint: paint.clone(),
-                        confidence: conf,
-                        source: source.clone(),
-                    });
-                }
+    let mut best: Option<PaintLabelMatch> = None;
+    for paint in catalogue {
+        let conf = score_label(&wanted, paint);
+        if conf >= MINIMUM_LABEL_CONFIDENCE {
+            let is_better = match &best {
+                None => true,
+                Some(prev) => conf > prev.confidence,
+            };
+            if is_better {
+                best = Some(PaintLabelMatch {
+                    paint: paint.clone(),
+                    confidence: conf,
+                    source: source.clone(),
+                });
             }
         }
-        best
+    }
+    best
+}
+
+fn score_label(wanted: &IndexSet<String>, paint: &Paint) -> f64 {
+    let brand_words = label_words(Some(&paint.brand));
+    let raw_name_words = label_words(Some(&paint.name));
+    let name_words = distinctive_words(&raw_name_words, &brand_words);
+
+    let asked_for: IndexSet<String> = wanted
+        .iter()
+        .filter(|w| !brand_words.contains(*w))
+        .cloned()
+        .collect();
+    if asked_for.is_empty() || name_words.is_empty() {
+        return 0.0;
     }
 
-    fn score(wanted: &IndexSet<String>, paint: &Paint) -> f64 {
-        let brand_words = Self::words(Some(&paint.brand));
-        let raw_name_words = Self::words(Some(&paint.name));
-        let name_words = Self::distinctive(&raw_name_words, &brand_words);
-
-        let asked_for: IndexSet<String> = wanted
-            .iter()
-            .filter(|w| !brand_words.contains(*w))
-            .cloned()
-            .collect();
-        if asked_for.is_empty() || name_words.is_empty() {
-            return 0.0;
-        }
-
-        let name_hits = asked_for.iter().filter(|w| name_words.contains(*w)).count();
-        if name_hits == 0 {
-            return 0.0;
-        }
-
-        let name_score = name_hits as f64 / name_words.len() as f64;
-        let brand_named = wanted.iter().any(|w| brand_words.contains(w));
-        let noise = 1.0 - (0.3_f64).min((asked_for.len() - name_hits) as f64 * 0.1);
-
-        (name_score * noise + if brand_named { 0.2 } else { 0.0 }).min(1.0)
+    let name_hits = asked_for.iter().filter(|w| name_words.contains(*w)).count();
+    if name_hits == 0 {
+        return 0.0;
     }
 
-    fn distinctive(words: &IndexSet<String>, brand_words: &IndexSet<String>) -> IndexSet<String> {
-        let remaining: IndexSet<String> = words
-            .iter()
-            .filter(|w| !brand_words.contains(*w))
-            .cloned()
-            .collect();
-        if remaining.is_empty() {
-            words.clone()
+    let name_score = name_hits as f64 / name_words.len() as f64;
+    let brand_named = wanted.iter().any(|w| brand_words.contains(w));
+    let noise = 1.0 - (0.3_f64).min((asked_for.len() - name_hits) as f64 * 0.1);
+
+    (name_score * noise + if brand_named { 0.2 } else { 0.0 }).min(1.0)
+}
+
+fn distinctive_words(words: &IndexSet<String>, brand_words: &IndexSet<String>) -> IndexSet<String> {
+    let remaining: IndexSet<String> = words
+        .iter()
+        .filter(|w| !brand_words.contains(*w))
+        .cloned()
+        .collect();
+    if remaining.is_empty() {
+        words.clone()
+    } else {
+        remaining
+    }
+}
+
+fn label_words(text: Option<&str>) -> IndexSet<String> {
+    let Some(raw) = text else {
+        return IndexSet::new();
+    };
+    if raw.trim().is_empty() {
+        return IndexSet::new();
+    }
+    let mut plain = String::with_capacity(raw.len());
+    for c in raw.to_lowercase().chars() {
+        let folded = fold_accent(c);
+        if folded.is_ascii_lowercase() || folded.is_ascii_digit() {
+            plain.push(folded);
         } else {
-            remaining
+            plain.push(' ');
         }
     }
+    plain
+        .split(' ')
+        .filter(|w| w.len() > 1 && !LABEL_NOISE_WORDS.contains(w))
+        .map(ToString::to_string)
+        .collect()
+}
 
-    fn words(text: Option<&str>) -> IndexSet<String> {
-        let Some(raw) = text else {
-            return IndexSet::new();
-        };
-        if raw.trim().is_empty() {
-            return IndexSet::new();
-        }
-        let mut plain = String::with_capacity(raw.len());
-        for c in raw.to_lowercase().chars() {
-            let folded = Self::fold_accent(c);
-            if folded.is_ascii_lowercase() || folded.is_ascii_digit() {
-                plain.push(folded);
-            } else {
-                plain.push(' ');
-            }
-        }
-        plain
-            .split(' ')
-            .filter(|w| w.len() > 1 && !Self::NOISE.contains(w))
-            .map(ToString::to_string)
-            .collect()
-    }
-
-    fn fold_accent(c: char) -> char {
-        match c {
-            'à' | 'á' | 'â' | 'ä' | 'ã' | 'å' => 'a',
-            'è' | 'é' | 'ê' | 'ë' => 'e',
-            'ì' | 'í' | 'î' | 'ï' => 'i',
-            'ò' | 'ó' | 'ô' | 'ö' | 'õ' => 'o',
-            'ù' | 'ú' | 'û' | 'ü' => 'u',
-            'ç' => 'c',
-            'ñ' => 'n',
-            'ý' | 'ÿ' => 'y',
-            other => other,
-        }
+fn fold_accent(c: char) -> char {
+    match c {
+        'à' | 'á' | 'â' | 'ä' | 'ã' | 'å' => 'a',
+        'è' | 'é' | 'ê' | 'ë' => 'e',
+        'ì' | 'í' | 'î' | 'ï' => 'i',
+        'ò' | 'ó' | 'ô' | 'ö' | 'õ' => 'o',
+        'ù' | 'ú' | 'û' | 'ü' => 'u',
+        'ç' => 'c',
+        'ñ' => 'n',
+        'ý' | 'ÿ' => 'y',
+        other => other,
     }
 }
 

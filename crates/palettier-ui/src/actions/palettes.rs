@@ -84,7 +84,9 @@ pub async fn add_paint(
     palette: &Palette,
     paint: Paint,
 ) -> DomainResult<Vec<Palette>> {
-    save_palette(services, &palette.with_paint(paint)).await
+    let mut updated = palette.clone();
+    updated.add_paint(paint);
+    save_palette(services, &updated).await
 }
 
 /// Takes a tube out of a palette.
@@ -93,7 +95,9 @@ pub async fn remove_paint(
     palette: &Palette,
     paint: &Paint,
 ) -> DomainResult<Vec<Palette>> {
-    save_palette(services, &palette.without_paint(paint)).await
+    let mut updated = palette.clone();
+    updated.remove_paint(paint);
+    save_palette(services, &updated).await
 }
 
 /// Replaces an out-of-stock tube of a palette by one on the shelf.
@@ -103,7 +107,10 @@ pub async fn substitute_paint(
     absent: &Paint,
     replacement: Paint,
 ) -> DomainResult<Vec<Palette>> {
-    save_palette(services, &palette.without_paint(absent).with_paint(replacement)).await
+    let mut updated = palette.clone();
+    updated.remove_paint(absent);
+    updated.add_paint(replacement);
+    save_palette(services, &updated).await
 }
 
 /// Deletes a palette and returns the palettes left.

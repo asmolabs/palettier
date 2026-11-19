@@ -1,4 +1,25 @@
+use palettier_domain::error::{DomainError, DomainResult};
+use palettier_domain::i18n::Locale;
+use serde::de::DeserializeOwned;
 use serde_json::{Map, Value};
+
+/// Extracts and deserializes the outer `{ ... }` JSON object from an LLM response.
+pub(crate) fn parse_json_object<T: DeserializeOwned>(raw: &str, locale: Locale) -> DomainResult<T> {
+    let start = raw.find('{');
+    let end = raw.rfind('}');
+    let cleaned = match (start, end) {
+        (Some(s), Some(e)) if e > s => &raw[s..=e],
+        _ => raw,
+    };
+    serde_json::from_str::<T>(cleaned).map_err(|e| {
+        let preview: String = raw.chars().take(200).collect();
+        let msg = match locale {
+            Locale::Fr => format!("Réponse du modèle illisible ({e}) : {preview}"),
+            Locale::En => format!("Unreadable model response ({e}): {preview}"),
+        };
+        DomainError::InvalidArgument(msg)
+    })
+}
 
 /// Adapts a JSON schema for OpenAI strict mode (`additionalProperties: false` and full `required` on every object).
 pub fn strict_schema(schema: &Value) -> Value {

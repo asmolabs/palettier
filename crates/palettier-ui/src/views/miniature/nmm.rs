@@ -118,7 +118,7 @@ fn step_row(
                     div { class: "row u-gap-8 u-ai-center",
                         ColorSwatch { hex: s.color.to_hex(), size: 28 }
                         div { class: "u-ta-right u-lh-1p3",
-                            div { class: "u-fw-650 u-fs-12 u-c-accent", "{s.describe_i18n(locale)}" }
+                            div { class: "u-fw-650 u-fs-12 u-c-accent", "{s.describe(locale)}" }
                             div { class: "u-d-flex u-gap-4 u-jc-flex-end u-ai-center u-mt-2",
                                 DeltaEBadge { delta_e: s.delta_e }
                             }

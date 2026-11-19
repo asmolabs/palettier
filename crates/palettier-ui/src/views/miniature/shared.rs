@@ -129,16 +129,14 @@ fn store_best_mix(key: MixCacheKey, value: Option<MixSuggestion>) {
 }
 
 /// The closest mix of `target` from `candidates`, with at most three tubes, cached in memory.
-pub(super) fn best_mix(services: &AppServices, target: Rgb, candidates: &[Paint]) -> Option<MixSuggestion> {
+pub(super) fn best_mix(_services: &AppServices, target: Rgb, candidates: &[Paint]) -> Option<MixSuggestion> {
     let key = cache_key(target, pool_fingerprint(candidates));
     if let Ok(guard) = MIX_CACHE.lock()
         && let Some(hit) = guard.map.get(&key)
     {
         return hit.clone();
     }
-    let found = services
-        .mix_service
-        .suggest_mixes(target, candidates, 1, Some(3))
+    let found = palettier_domain::mix::suggest_mixes(target, candidates, 1, Some(3))
         .into_iter()
         .next();
     store_best_mix(key, found.clone());

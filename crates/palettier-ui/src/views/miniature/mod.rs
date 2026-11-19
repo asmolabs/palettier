@@ -344,8 +344,8 @@ pub fn MiniatureView() -> Element {
             SectionHeader {
                 title: locale.tr("Atelier Figurine & Modélisme", "Miniature & Weathering Studio").to_string(),
                 subtitle: locale.tr(
-                    "Les outils du figuriniste, rangés par thème dans la colonne de gauche. Ils suivent le système choisi en haut ; en acrylique, les outils propres à l'huile sont réunis sous « Finition à l'huile ».",
-                    "Miniature painter's tools, grouped by theme in the left column. They follow the system chosen at the top; in acrylic, oil-only tools are gathered under “Oil finishing”."
+                    "Les outils du figuriniste, rangés par thème dans la barre ci-dessous. Ils suivent le système choisi en haut ; en acrylique, les outils propres à l'huile sont réunis sous « Finition à l'huile ».",
+                    "Miniature painter's tools, grouped by theme in the top bar below. They follow the system chosen at the top; in acrylic, oil-only tools are gathered under “Oil finishing”."
                 ).to_string(),
                 actions: None
             }

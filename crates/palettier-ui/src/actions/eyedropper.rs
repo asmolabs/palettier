@@ -16,44 +16,53 @@ use palettier_domain::project::{DominantColour, Project};
 #[derive(Debug, Clone)]
 pub struct ReferencePhoto {
     pub pixels: PixelMap,
-    /// The photo scaled down to 1 400 px, as a JPEG `data:` URI.
+    /// The photo scaled down to 1 400 px, as a `data:` URI matching its real MIME type.
     pub data_uri: String,
 }
 
 /// Decodes a reference photo. `None` when the bytes are not an image.
-pub fn open_reference(services: &AppServices, bytes: &[u8]) -> Option<ReferencePhoto> {
-    let pixels = services.decoder.decode(bytes).ok()?;
-    let scaled = services
-        .decoder
-        .scale_to(bytes, 1400)
-        .unwrap_or_else(|_| bytes.to_vec());
-    Some(ReferencePhoto {
-        pixels,
-        data_uri: jpeg_data_uri(&scaled),
-    })
+pub fn open_reference(_services: &AppServices, bytes: &[u8]) -> Option<ReferencePhoto> {
+    let pixels = palettier_image::decode(bytes).ok()?;
+    let data_uri = match palettier_image::scale_to_encoded(bytes, 1400) {
+        Ok(scaled) => image_data_uri(&scaled.bytes, scaled.mime_type),
+        Err(_) => {
+            let mime = palettier_image::detect_mime_type(bytes).unwrap_or("image/jpeg");
+            image_data_uri(bytes, mime)
+        }
+    };
+    Some(ReferencePhoto { pixels, data_uri })
 }
 
-/// A photo scaled down to `max_edge` px, as a JPEG `data:` URI.
-pub fn scaled_data_uri(services: &AppServices, bytes: Vec<u8>, max_edge: u32) -> String {
-    let scaled = services.decoder.scale_to(&bytes, max_edge).unwrap_or(bytes);
-    jpeg_data_uri(&scaled)
+/// A photo scaled down to `max_edge` px, as a `data:` URI matching its real MIME type.
+pub fn scaled_data_uri(_services: &AppServices, bytes: Vec<u8>, max_edge: u32) -> String {
+    match palettier_image::scale_to_encoded(&bytes, max_edge) {
+        Ok(scaled) => image_data_uri(&scaled.bytes, scaled.mime_type),
+        Err(_) => {
+            let mime = palettier_image::detect_mime_type(&bytes).unwrap_or("image/jpeg");
+            image_data_uri(&bytes, mime)
+        }
+    }
 }
 
-fn jpeg_data_uri(bytes: &[u8]) -> String {
+fn image_data_uri(bytes: &[u8], mime_type: &str) -> String {
     let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
-    format!("data:image/jpeg;base64,{b64}")
+    format!("data:{mime_type};base64,{b64}")
 }
 
 /// The photo seen through a value study (grisaille, notan…), as a PNG `data:` URI.
-pub fn study_data_uri(services: &AppServices, pixels: &PixelMap, mode: StudyMode) -> Option<String> {
-    let png = services.decoder.encode_png(&pixels.to_study_map(mode)).ok()?;
+pub fn study_data_uri(
+    _services: &AppServices,
+    pixels: &PixelMap,
+    mode: StudyMode,
+) -> Option<String> {
+    let png = palettier_image::encode_png(&pixels.to_study_map(mode)).ok()?;
     let b64 = base64::engine::general_purpose::STANDARD.encode(&png);
     Some(format!("data:image/png;base64,{b64}"))
 }
 
 /// The eight dominant colours of a photo.
-pub fn dominants(services: &AppServices, bytes: &[u8]) -> Option<Vec<DominantColour>> {
-    services.decoder.dominant_colours(bytes, 8).ok()
+pub fn dominants(_services: &AppServices, bytes: &[u8]) -> Option<Vec<DominantColour>> {
+    palettier_image::dominant_colours(bytes, 8).ok()
 }
 
 /// A click on the photo shown at `zoom_pct` %: the pixel hit and the colour averaged
@@ -130,7 +139,7 @@ pub async fn create_project_from_groups(
     } else {
         name
     };
-    let plan = services.sampled_plan_service.plan(subject, palette, groups, 3, locale)?;
+    let plan = palettier_domain::plan::plan_from_sampled(subject, palette, groups, 3, locale)?;
     let unique = unique_name(&plan.subject, taken_names.iter().map(String::as_str));
     let project = plan.as_project(unique, palette);
     Ok(services.projects.save(&project).await.ok())

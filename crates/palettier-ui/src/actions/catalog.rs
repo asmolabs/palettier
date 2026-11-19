@@ -5,6 +5,7 @@ use crate::state::AppServices;
 use palettier_ai::RecognizedTube;
 use palettier_domain::color::{Rgb, delta_e_2000};
 use palettier_domain::error::DomainResult;
+use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{DryingClass, Opacity, Paint, PaintSystem};
 use palettier_domain::port::PaintCatalogRepository;
 use std::collections::BTreeSet;
@@ -198,13 +199,19 @@ pub async fn calibrate_tube(
     masstone.and(tint)
 }
 
-/// Reads the tubes on a photo and matches them against the catalog.
+/// Reads the tubes or bottles on a photo and matches them against the catalog for `system`.
 pub async fn recognize_tubes(
     services: &AppServices,
     image: &[u8],
     catalog: &[Paint],
+    system: PaintSystem,
+    locale: Locale,
 ) -> DomainResult<Vec<RecognizedTube>> {
-    services.recognition_service.recognize(image, catalog).await.map(|r| r.tubes)
+    services
+        .recognition_service
+        .recognize_in(image, catalog, system, locale)
+        .await
+        .map(|r| r.tubes)
 }
 
 #[cfg(test)]

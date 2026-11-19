@@ -301,7 +301,7 @@ mod tests {
             warnings: Vec::new(),
         };
 
-        let plan = PlanEnricher::new().enrich(&draft, "Zorn", &palette);
+        let plan = PlanEnricher::enrich(&draft, "Zorn", &palette, palettier_domain::i18n::Locale::Fr);
         assert_eq!(1, plan.zones.len());
         let zone = &plan.zones[0];
         let ladder = zone.layers();
@@ -323,7 +323,7 @@ mod tests {
             }],
             warnings: Vec::new(),
         };
-        let en_plan = PlanEnricher::new().enrich_i18n(
+        let en_plan = PlanEnricher::enrich(
             &empty_draft,
             "Zorn",
             &palette,
@@ -405,5 +405,71 @@ mod tests {
         let parsed = TubeRecognitionService::parse(&raw).unwrap();
         assert_eq!(2, parsed.tubes.len());
         assert_eq!("Un tube retourné", parsed.notes);
+    }
+
+    #[tokio::test]
+    async fn tube_recognition_supports_acrylic_english_and_preserves_png_mime() {
+        use palettier_domain::i18n::Locale;
+        use palettier_domain::image::PixelMap;
+        use palettier_domain::paint::PaintSystem;
+
+        struct CaptureEngine {
+            captured_system: Mutex<String>,
+            captured_mime: Mutex<String>,
+            response: String,
+        }
+
+        #[async_trait]
+        impl ChatEngine for CaptureEngine {
+            async fn complete(
+                &self,
+                system: &str,
+                _user: &str,
+                images: &[ImageAttachment],
+                _schema: Option<&Value>,
+            ) -> DomainResult<String> {
+                *self.captured_system.lock().unwrap() = system.to_string();
+                *self.captured_mime.lock().unwrap() = images[0].mime_type.clone();
+                Ok(self.response.clone())
+            }
+        }
+
+        let png = palettier_image::encode_png(&PixelMap::new(2, 2, vec![0xFF9A_1115; 4]).unwrap())
+            .unwrap();
+        let engine = Arc::new(CaptureEngine {
+            captured_system: Mutex::new(String::new()),
+            captured_mime: Mutex::new(String::new()),
+            response: json!({
+                "tubes": [{
+                    "brand": "Citadel",
+                    "name": "Mephiston Red",
+                    "code": "",
+                    "pigments": ""
+                }],
+                "notes": ""
+            })
+            .to_string(),
+        });
+
+        let mut acrylic = zorn_palette()[0].clone();
+        acrylic.brand = "Citadel".to_string();
+        acrylic.name = "Mephiston Red".to_string();
+        acrylic.system = PaintSystem::Acrylic;
+        let mut oil = acrylic.clone();
+        oil.system = PaintSystem::Oil;
+
+        let service = TubeRecognitionService::new(engine.clone());
+        let res = service
+            .recognize_in(&png, &[oil, acrylic], PaintSystem::Acrylic, Locale::En)
+            .await
+            .unwrap();
+
+        assert!(engine.captured_system.lock().unwrap().contains("acrylic"));
+        assert_eq!("image/png", *engine.captured_mime.lock().unwrap());
+        assert_eq!(1, res.tubes.len());
+        assert_eq!(
+            Some(PaintSystem::Acrylic),
+            res.tubes[0].matched.as_ref().map(|p| p.system)
+        );
     }
 }

@@ -58,40 +58,43 @@ fn AppearanceCard() -> Element {
         div { class: "card",
             h3 { class: "card-title", {locale.tr("Apparence & Langue de l'atelier", "Studio Appearance & Language")} }
             div { class: "grid-2",
-                div { class: "card-subtle row-between",
+                div { class: "card-subtle",
                     div {
-                        div { class: "u-fw-600", {locale.tr("Thème d'éclairage (Mode Jour / Nuit)", "Lighting Theme (Day / Night Mode)")} }
-                        div { class: "muted u-fs-12", {locale.tr("Basculez entre le thème sombre d'atelier et le thème clair lumière du jour.", "Switch between the dark studio theme and the daylight high-contrast theme.")} }
+                        div { class: "u-fw-600", {locale.tr("Thème d'éclairage de l'atelier", "Studio Lighting Theme")} }
+                        div { class: "muted u-fs-12", {locale.tr("Choisissez entre Nuit, Jour ou Gris neutre D65 pour juger vos mélanges sans biais de couleur.", "Choose Night, Day, or D65 Neutral Grey to judge colour mixes without ambient cast.")} }
                     }
-                    div { class: "row",
-                        button {
-                            class: if theme == ThemeMode::Dark { "btn-primary" } else { "btn" },
-                            onclick: {
+                    div { class: "theme-picker-grid",
+                        for mode in ThemeMode::ALL {
+                            {
+                                let is_active = theme == mode;
+                                let preview_cls = match mode {
+                                    ThemeMode::Dark => "theme-swatch-preview swatch-dark",
+                                    ThemeMode::Light => "theme-swatch-preview swatch-light",
+                                    ThemeMode::Neutral => "theme-swatch-preview swatch-neutral",
+                                };
                                 let svc = services.clone();
-                                move |_| {
-                                    state.theme.set(ThemeMode::Dark);
-                                    let svc = svc.clone();
-                                    spawn(async move {
-                                        if let Err(e) = actions::save_theme(&svc, ThemeMode::Dark).await {
-                                            tracing::warn!("Failed to persist dark theme setting: {e}");
+                                rsx! {
+                                    button {
+                                        class: if is_active { "theme-swatch-card active" } else { "theme-swatch-card" },
+                                        onclick: move |_| {
+                                            state.theme.set(mode);
+                                            let svc = svc.clone();
+                                            spawn(async move {
+                                                if let Err(e) = actions::save_theme(&svc, mode).await {
+                                                    tracing::warn!("Failed to persist theme setting: {e}");
+                                                }
+                                            });
+                                        },
+                                        div { class: "{preview_cls}",
+                                            div { class: "theme-swatch-card-chip" }
+                                            div { class: "theme-swatch-accent-dot" }
                                         }
-                                    });
+                                        div { class: "u-fw-650 u-fs-12p5", "{mode.button_label(locale)}" }
+                                        div { class: "muted u-fs-11", "{mode.description(locale)}" }
+                                    }
                                 }
-                            }, {locale.tr("🌙 Mode Nuit", "🌙 Night Mode")} }
-                        button {
-                            class: if theme == ThemeMode::Light { "btn-primary" } else { "btn" },
-                            onclick: {
-                                let svc = services.clone();
-                                move |_| {
-                                    state.theme.set(ThemeMode::Light);
-                                    let svc = svc.clone();
-                                    spawn(async move {
-                                        if let Err(e) = actions::save_theme(&svc, ThemeMode::Light).await {
-                                            tracing::warn!("Failed to persist light theme setting: {e}");
-                                        }
-                                    });
-                                }
-                            }, {locale.tr("☀️ Mode Jour", "☀️ Day Mode")} }
+                            }
+                        }
                     }
                 }
 
@@ -349,7 +352,7 @@ fn BackupCard() -> Element {
                     .pick_file()
                     .await;
                 let Some(handle) = file else { return };
-                let msg = match actions::import_backup(&services, handle.path()).await {
+                let msg = match actions::import_backup(&services, handle.path(), loc).await {
                     Ok(rep) => {
                         state.reload_all(&services).await;
                         match loc {

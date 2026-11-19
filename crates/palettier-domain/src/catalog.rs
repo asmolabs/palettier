@@ -10,9 +10,6 @@ mod generated {
 
 pub use generated::{BRAND_FILES, PIGMENTS_CSV};
 
-/// Semicolon-separated CSV reader.
-pub struct Csv;
-
 #[derive(Debug, Clone)]
 pub struct CsvRow {
     values: IndexMap<String, String>,
@@ -21,11 +18,15 @@ pub struct CsvRow {
 }
 
 impl CsvRow {
-    pub fn get(&self, column: &str) -> &str {
+    /// Returns the trimmed value of `column`, or [`DomainError::CsvError`] when missing.
+    pub fn get(&self, column: &str) -> DomainResult<&str> {
         self.values
             .get(column)
             .map(String::as_str)
-            .unwrap_or_else(|| panic!("Colonne '{}' absente dans {}", column, self.origin))
+            .ok_or_else(|| DomainError::CsvError {
+                location: self.location(),
+                message: format!("Colonne '{column}' absente"),
+            })
     }
 
     pub fn get_or_default<'a>(&'a self, column: &str, fallback: &'a str) -> &'a str {
@@ -40,40 +41,36 @@ impl CsvRow {
     }
 }
 
-impl Csv {
+/// Parses semicolon-separated CSV text (`#` comments and blank lines skipped).
+pub fn parse_csv(text: &str, origin: &str) -> Vec<CsvRow> {
     const SEPARATOR: char = ';';
-    const COMMENT: &'static str = "#";
+    const COMMENT: &str = "#";
 
-    pub fn read(text: &str, origin: &str) -> Vec<CsvRow> {
-        let mut rows = Vec::new();
-        let mut headers: Option<Vec<String>> = None;
+    let mut rows = Vec::new();
+    let mut headers: Option<Vec<String>> = None;
 
-        for (index, line) in text.lines().enumerate() {
-            let trimmed = line.trim();
-            if trimmed.is_empty() || trimmed.starts_with(Self::COMMENT) {
-                continue;
-            }
-            let cells: Vec<String> = line
-                .split(Self::SEPARATOR)
-                .map(|c| c.trim().to_string())
-                .collect();
-            let Some(cols) = &headers else {
-                headers = Some(cells);
-                continue;
-            };
-            let mut values = IndexMap::with_capacity(cols.len());
-            for (i, col_name) in cols.iter().enumerate() {
-                let cell = cells.get(i).cloned().unwrap_or_default();
-                values.insert(col_name.clone(), cell);
-            }
-            rows.push(CsvRow {
-                values,
-                origin: origin.to_string(),
-                line_number: index + 1,
-            });
+    for (index, line) in text.lines().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with(COMMENT) {
+            continue;
         }
-        rows
+        let cells: Vec<String> = line.split(SEPARATOR).map(|c| c.trim().to_string()).collect();
+        let Some(cols) = &headers else {
+            headers = Some(cells);
+            continue;
+        };
+        let mut values = IndexMap::with_capacity(cols.len());
+        for (i, col_name) in cols.iter().enumerate() {
+            let cell = cells.get(i).cloned().unwrap_or_default();
+            values.insert(col_name.clone(), cell);
+        }
+        rows.push(CsvRow {
+            values,
+            origin: origin.to_string(),
+            line_number: index + 1,
+        });
     }
+    rows
 }
 
 /// Pigment lookup table built from `catalog/pigments.csv`.
@@ -99,15 +96,15 @@ impl PigmentIndex {
     /// Parses a pigment table from CSV text, returning a structured [`DomainError::CsvError`] on invalid rows.
     pub fn try_new(pigments_csv: &str) -> DomainResult<Self> {
         let mut by_code = IndexMap::new();
-        for row in Csv::read(pigments_csv, "pigments.csv") {
-            let code = row.get("code").to_string();
-            let name = row.get("name").to_string();
-            let color = Rgb::of_hex(row.get("hex")).map_err(|e| csv_err(&row, e))?;
-            let opacity = Opacity::from_str(row.get("opacity")).map_err(|e| csv_err(&row, e))?;
+        for row in parse_csv(pigments_csv, "pigments.csv") {
+            let code = row.get("code")?.to_string();
+            let name = row.get("name")?.to_string();
+            let color = Rgb::of_hex(row.get("hex")?).map_err(|e| csv_err(&row, e))?;
+            let opacity = Opacity::from_str(row.get("opacity")?).map_err(|e| csv_err(&row, e))?;
             let drying_class =
-                DryingClass::from_str(row.get("drying")).map_err(|e| csv_err(&row, e))?;
+                DryingClass::from_str(row.get("drying")?).map_err(|e| csv_err(&row, e))?;
             let tinting_strength: f64 = row
-                .get("tinting")
+                .get("tinting")?
                 .parse()
                 .map_err(|e| csv_err(&row, e))?;
             let tint_raw = row.get_or_default("tint", "");
@@ -299,7 +296,7 @@ impl CatalogLoader {
         let mut cited = IndexSet::new();
 
         for brand in &self.brands {
-            for row in Csv::read(&brand.content, &brand.name) {
+            for row in parse_csv(&brand.content, &brand.name) {
                 let paint = self.try_to_paint(&row)?;
                 for code in &paint.pigments {
                     cited.insert(code.clone());
@@ -328,7 +325,7 @@ impl CatalogLoader {
         if system == PaintSystem::Acrylic {
             return self.try_to_acrylic(row);
         }
-        let pigment_codes = Self::parse_pigments(row.get("pigments"));
+        let pigment_codes = Self::parse_pigments(row.get("pigments")?);
         if pigment_codes.is_empty() {
             return Err(csv_err(row, "Aucun pigment déclaré"));
         }
@@ -363,8 +360,8 @@ impl CatalogLoader {
 
         Ok(Paint {
             id: None,
-            brand: row.get("brand").to_string(),
-            name: row.get("name").to_string(),
+            brand: row.get("brand")?.to_string(),
+            name: row.get("name")?.to_string(),
             code: row.get_or_default("code", "").to_string(),
             legacy_code: row.get_or_default("legacy", "").to_string(),
             pigments: pigment_codes.clone(),
@@ -414,8 +411,8 @@ impl CatalogLoader {
         };
         Ok(Paint {
             id: None,
-            brand: row.get("brand").to_string(),
-            name: row.get("name").to_string(),
+            brand: row.get("brand")?.to_string(),
+            name: row.get("name")?.to_string(),
             code: row.get_or_default("code", "").to_string(),
             legacy_code: row.get_or_default("legacy", "").to_string(),
             pigments: pigment_codes,
@@ -601,5 +598,12 @@ mod tests {
             Opacity::Opaque,
             index.opacity_for(&IndexSet::from(["PW6".to_string(), "PB27".to_string()]))
         );
+    }
+
+    #[test]
+    fn missing_csv_column_returns_structured_error_instead_of_panicking() {
+        let bad_csv = "code;name\nPB29;Ultramarine\n";
+        let err = PigmentIndex::try_new(bad_csv).expect_err("missing hex column must error");
+        assert!(matches!(err, DomainError::CsvError { .. }));
     }
 }

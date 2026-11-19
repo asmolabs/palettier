@@ -1,11 +1,11 @@
 use crate::engine::{ChatEngine, ImageAttachment};
+use crate::schema::parse_json_object;
 use palettier_domain::color::Rgb;
 use palettier_domain::error::{DomainError, DomainResult};
 use palettier_domain::i18n::Locale;
-use palettier_domain::mix::ColorMixService;
+use palettier_domain::mix;
 use palettier_domain::paint::{Paint, PaintSystem, Technique};
 use palettier_domain::plan::{PaintingPlan, PlanLayer, PlanZone};
-use palettier_image::ImageDecoder;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::sync::{Arc, LazyLock};
@@ -103,22 +103,10 @@ pub static PLAN_SCHEMA: LazyLock<Value> = LazyLock::new(|| {
     })
 });
 
-#[derive(Default, Clone)]
-pub struct PlanEnricher {
-    mix_service: ColorMixService,
-}
+pub struct PlanEnricher;
 
 impl PlanEnricher {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn enrich(&self, draft: &PlanDraft, palette_name: &str, palette: &[Paint]) -> PaintingPlan {
-        self.enrich_i18n(draft, palette_name, palette, Locale::Fr)
-    }
-
-    pub fn enrich_i18n(
-        &self,
+    pub fn enrich(
         draft: &PlanDraft,
         palette_name: &str,
         palette: &[Paint],
@@ -128,7 +116,7 @@ impl PlanEnricher {
         let zones = draft
             .zones
             .iter()
-            .map(|z| self.enrich_zone(z, palette, locale))
+            .map(|z| Self::enrich_zone(z, palette, locale))
             .collect();
         PaintingPlan {
             system,
@@ -159,7 +147,7 @@ impl PlanEnricher {
         }
     }
 
-    fn enrich_zone(&self, zone: &ZoneDraft, palette: &[Paint], locale: Locale) -> PlanZone {
+    fn enrich_zone(zone: &ZoneDraft, palette: &[Paint], locale: Locale) -> PlanZone {
         let fallback_shadow = Rgb::new(0.23, 0.16, 0.13);
         let fallback_base = Rgb::new(0.55, 0.42, 0.34);
         let fallback_light = Rgb::new(0.85, 0.75, 0.65);
@@ -181,19 +169,19 @@ impl PlanEnricher {
 
         // `PlanZone::layers()` expects `shadows` in `[Shadow 2, Shadow 1]` order (since it iterates with `shadows.iter().rev()`)
         let shadows = vec![
-            self.to_layer(zone.shadow2.as_ref(), role_s2, shadow2_rgb, palette, locale),
-            self.to_layer(zone.shadow1.as_ref(), role_s1, shadow1_rgb, palette, locale),
+            Self::to_layer(zone.shadow2.as_ref(), role_s2, shadow2_rgb, palette, locale),
+            Self::to_layer(zone.shadow1.as_ref(), role_s1, shadow1_rgb, palette, locale),
         ];
-        let base = Some(self.to_layer(zone.base.as_ref(), role_base, base_rgb, palette, locale));
+        let base = Some(Self::to_layer(zone.base.as_ref(), role_base, base_rgb, palette, locale));
         let highlights = vec![
-            self.to_layer(
+            Self::to_layer(
                 zone.highlight1.as_ref(),
                 role_h1,
                 highlight1_rgb,
                 palette,
                 locale,
             ),
-            self.to_layer(
+            Self::to_layer(
                 zone.highlight2.as_ref(),
                 role_h2,
                 highlight2_rgb,
@@ -212,7 +200,7 @@ impl PlanEnricher {
                 } else {
                     &accent.role
                 };
-                self.to_layer(Some(accent), role, color, palette, locale)
+                Self::to_layer(Some(accent), role, color, palette, locale)
             })
             .collect();
 
@@ -232,16 +220,13 @@ impl PlanEnricher {
     }
 
     fn to_layer(
-        &self,
         draft: Option<&LayerDraft>,
         default_role: &str,
         target: Rgb,
         palette: &[Paint],
         locale: Locale,
     ) -> PlanLayer {
-        let recipe = self
-            .mix_service
-            .suggest_mixes(target, palette, 1, None)
+        let recipe = mix::suggest_mixes(target, palette, 1, None)
             .into_iter()
             .next();
         let achieved = recipe.as_ref().map(|r| r.color).unwrap_or(target);
@@ -319,8 +304,6 @@ impl SampledZone {
 
 pub struct PaintingPlanService {
     engine: Arc<dyn ChatEngine>,
-    decoder: ImageDecoder,
-    enricher: PlanEnricher,
 }
 
 impl PaintingPlanService {
@@ -450,11 +433,7 @@ IMPORTANT: do NOT invent any mixing recipe and do not cite any paint name: provi
 Respond in English, only with the JSON requested by the schema."##;
 
     pub fn new(engine: Arc<dyn ChatEngine>) -> Self {
-        Self {
-            engine,
-            decoder: ImageDecoder,
-            enricher: PlanEnricher::new(),
-        }
+        Self { engine }
     }
 
     pub async fn plan(
@@ -505,8 +484,8 @@ Respond in English, only with the JSON requested by the schema."##;
         let prompt = Self::build_prompt_i18n(description, palette, sampled_zones, locale);
         let mut attachments = Vec::new();
         if let Some(bytes) = image_bytes {
-            let scaled = self.decoder.scale_to(bytes, Self::MAX_DIMENSION)?;
-            attachments.push(ImageAttachment::jpeg(scaled));
+            let scaled = palettier_image::scale_to_encoded(bytes, Self::MAX_DIMENSION)?;
+            attachments.push(ImageAttachment::new(scaled.bytes, scaled.mime_type));
         }
 
         let system_prompt = match (PlanEnricher::system_of(palette), locale) {
@@ -521,23 +500,16 @@ Respond in English, only with the JSON requested by the schema."##;
             .complete(system_prompt, &prompt, &attachments, Some(&PLAN_SCHEMA))
             .await?;
 
-        let draft = Self::parse_draft(&raw)?;
-        Ok(self
-            .enricher
-            .enrich_i18n(&draft, palette_name, palette, locale))
+        let draft = Self::parse_draft_in(&raw, locale)?;
+        Ok(PlanEnricher::enrich(&draft, palette_name, palette, locale))
     }
 
     pub fn parse_draft(raw: &str) -> DomainResult<PlanDraft> {
-        let start = raw.find('{');
-        let end = raw.rfind('}');
-        let cleaned = match (start, end) {
-            (Some(s), Some(e)) if e > s => &raw[s..=e],
-            _ => raw,
-        };
-        serde_json::from_str::<PlanDraft>(cleaned).map_err(|e| {
-            let preview: String = raw.chars().take(200).collect();
-            DomainError::InvalidArgument(format!("Réponse du modèle illisible ({e}) : {preview}"))
-        })
+        Self::parse_draft_in(raw, Locale::Fr)
+    }
+
+    pub fn parse_draft_in(raw: &str, locale: Locale) -> DomainResult<PlanDraft> {
+        parse_json_object(raw, locale)
     }
 
     fn build_prompt_i18n(

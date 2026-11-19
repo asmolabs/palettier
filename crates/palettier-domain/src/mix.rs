@@ -19,8 +19,9 @@ pub struct PaintPart {
 impl PaintPart {
     pub fn new(paint: Paint, parts: f64) -> DomainResult<Self> {
         if parts <= 0.0 {
-            return Err(DomainError::InvalidArgument(
-                "La dose doit être strictement positive".to_string(),
+            return Err(DomainError::localized(
+                "La dose doit être strictement positive",
+                "Amount must be strictly positive",
             ));
         }
         Ok(Self { paint, parts })
@@ -72,11 +73,7 @@ impl MixSuggestion {
         })
     }
 
-    pub fn describe(&self) -> String {
-        self.describe_i18n(Locale::Fr)
-    }
-
-    pub fn describe_i18n(&self, locale: Locale) -> String {
+    pub fn describe(&self, locale: Locale) -> String {
         self.parts
             .iter()
             .map(|part| {
@@ -143,43 +140,38 @@ impl PaintMatch {
     }
 }
 
-/// Simulates mixing multiple oil paints and suggests recipes to match a target hue.
-#[derive(Debug, Clone, Default)]
-pub struct ColorMixService;
+const MUDDY_MIX_THRESHOLD: usize = 4;
+/// Maximum number of paints considered in a single suggested mix.
+pub const MAX_PAINTS: usize = MixSearch::MAX_PAINTS;
+const SHORT_PALETTE: usize = 8;
+const LARGE_SELECTION: usize = 24;
 
-impl ColorMixService {
-    const MUDDY_MIX_THRESHOLD: usize = 4;
-    pub const MAX_PAINTS: usize = MixSearch::MAX_PAINTS;
-    const SHORT_PALETTE: usize = 8;
-    const LARGE_SELECTION: usize = 24;
-
-    pub fn new() -> Self {
-        Self
+/// Maximum paints recommended per mix based on candidate pool size.
+pub fn recommended_max_paints(candidate_count: usize) -> usize {
+    if candidate_count <= SHORT_PALETTE {
+        MAX_PAINTS
+    } else if candidate_count <= LARGE_SELECTION {
+        4
+    } else {
+        3
     }
+}
 
-    pub fn recommended_max_paints(candidate_count: usize) -> usize {
-        if candidate_count <= Self::SHORT_PALETTE {
-            Self::MAX_PAINTS
-        } else if candidate_count <= Self::LARGE_SELECTION {
-            4
-        } else {
-            3
-        }
-    }
-
-    pub fn mix(&self, parts: &[PaintPart]) -> DomainResult<MixResult> {
+/// Simulates mixing weighted paints using subtractive Kubelka-Munk theory.
+pub fn mix_paints(parts: &[PaintPart]) -> DomainResult<MixResult> {
         if parts.is_empty() {
-            return Err(DomainError::InvalidArgument(
-                "Un mélange demande au moins une peinture".to_string(),
+            return Err(DomainError::localized(
+                "Un mélange demande au moins une peinture",
+                "A mix requires at least one paint",
             ));
         }
         if parts
             .iter()
             .any(|p| p.paint.system != parts[0].paint.system)
         {
-            return Err(DomainError::InvalidArgument(
-                "On ne mélange pas huile et acrylique : l'une se dilue au solvant, l'autre à l'eau."
-                    .to_string(),
+            return Err(DomainError::localized(
+                "On ne mélange pas huile et acrylique : l'une se dilue au solvant, l'autre à l'eau.",
+                "Do not mix oils and acrylics: one thins with solvent, the other with water.",
             ));
         }
 
@@ -217,7 +209,7 @@ impl ColorMixService {
             }
         }
 
-        let warnings = Self::warnings_for(&components, drying);
+        let warnings = mix_warnings(&components, drying);
         Ok(MixResult {
             color: mixed,
             components,
@@ -227,9 +219,9 @@ impl ColorMixService {
         })
     }
 
-    fn warnings_for(components: &[MixComponent], drying: DryingClass) -> Vec<String> {
-        let mut out = Vec::new();
-        if components.len() >= Self::MUDDY_MIX_THRESHOLD {
+fn mix_warnings(components: &[MixComponent], drying: DryingClass) -> Vec<String> {
+    let mut out = Vec::new();
+    if components.len() >= MUDDY_MIX_THRESHOLD {
             out.push(format!(
                 "{} huiles dans le mélange : le résultat va tendre vers le gris. Deux ou trois suffisent presque toujours.",
                 components.len()
@@ -292,48 +284,47 @@ impl ColorMixService {
         out
     }
 
-    pub fn suggest_mixes(
-        &self,
-        target: Rgb,
-        candidates: &[Paint],
-        max_results: usize,
-        max_paints: Option<usize>,
-    ) -> Vec<MixSuggestion> {
-        if candidates.is_empty() || max_results == 0 {
-            return Vec::new();
-        }
-        // A mix never crosses systems: oil and acrylic do not blend in the pot. When the
-        // candidates hold both, each system is searched on its own and the best kept.
-        let first = candidates[0].system;
-        if candidates.iter().any(|p| p.system != first) {
-            let mut merged: Vec<MixSuggestion> = PaintSystem::ALL
-                .into_iter()
-                .flat_map(|system| {
-                    let subset: Vec<Paint> = candidates
-                        .iter()
-                        .filter(|p| p.system == system)
-                        .cloned()
-                        .collect();
-                    self.suggest_mixes(target, &subset, max_results, max_paints)
-                })
-                .collect();
-            merged.sort_by(|a, b| a.delta_e.total_cmp(&b.delta_e));
-            merged.truncate(max_results);
-            return merged;
-        }
-        // Flat-colour mixes exclude metallic/pearl/effect paints unless every candidate is an effect paint.
-        let flat: Vec<Paint> = candidates
-            .iter()
-            .filter(|p| !p.is_effect())
-            .cloned()
-            .collect();
-        let pool: &[Paint] = if flat.is_empty() { candidates } else { &flat };
-
-        let limit_paints = max_paints
-            .unwrap_or_else(|| Self::recommended_max_paints(pool.len()))
-            .clamp(1, Self::MAX_PAINTS);
-        MixSearch::new(target, pool).search(limit_paints, max_results)
+/// Suggests up to `max_results` practical integer-ratio paint mixes matching `target`.
+pub fn suggest_mixes(
+    target: Rgb,
+    candidates: &[Paint],
+    max_results: usize,
+    max_paints: Option<usize>,
+) -> Vec<MixSuggestion> {
+    if candidates.is_empty() || max_results == 0 {
+        return Vec::new();
     }
+    // A mix never crosses systems: oil and acrylic do not blend in the pot. When the
+    // candidates hold both, each system is searched on its own and the best kept.
+    let first = candidates[0].system;
+    if candidates.iter().any(|p| p.system != first) {
+        let mut merged: Vec<MixSuggestion> = PaintSystem::ALL
+            .into_iter()
+            .flat_map(|system| {
+                let subset: Vec<Paint> = candidates
+                    .iter()
+                    .filter(|p| p.system == system)
+                    .cloned()
+                    .collect();
+                suggest_mixes(target, &subset, max_results, max_paints)
+            })
+            .collect();
+        merged.sort_by(|a, b| a.delta_e.total_cmp(&b.delta_e));
+        merged.truncate(max_results);
+        return merged;
+    }
+    // Flat-colour mixes exclude metallic/pearl/effect paints unless every candidate is an effect paint.
+    let flat: Vec<Paint> = candidates
+        .iter()
+        .filter(|p| !p.is_effect())
+        .cloned()
+        .collect();
+    let pool: &[Paint] = if flat.is_empty() { candidates } else { &flat };
+
+    let limit_paints = max_paints
+        .unwrap_or_else(|| recommended_max_paints(pool.len()))
+        .clamp(1, MAX_PAINTS);
+    MixSearch::new(target, pool).search(limit_paints, max_results)
 }
 
 static PAIR_RATIOS: LazyLock<Vec<Vec<i32>>> = LazyLock::new(practical_pair_ratios);
@@ -794,27 +785,25 @@ mod tests {
 
     #[test]
     fn catalog_color_is_found_identically_by_single_tube() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
         let reference = catalog.iter().find(|p| p.name == "Burnt Umber").unwrap();
 
-        let best = &service.suggest_mixes(reference.color(), &catalog, 1, None)[0];
+        let best = &suggest_mixes(reference.color(), &catalog, 1, None)[0];
         assert!(best.delta_e < 0.5, "écart {}", best.delta_e);
         assert_eq!(1, best.parts.len());
     }
 
     #[test]
     fn each_suggestion_reports_exact_delta_e_of_proposed_ratio() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
         for hex in TARGETS {
             let target = Rgb::of_hex(hex).unwrap();
-            for suggestion in service.suggest_mixes(target, &catalog, 5, None) {
-                let actual = service.mix(&suggestion.parts).unwrap().color;
+            for suggestion in suggest_mixes(target, &catalog, 5, None) {
+                let actual = mix_paints(&suggestion.parts).unwrap().color;
                 assert!(
                     (delta_e_2000(target, actual) - suggestion.delta_e).abs() < 0.01,
                     "{hex} : écart annoncé pour {}",
-                    suggestion.describe()
+                    suggestion.describe(Locale::Fr)
                 );
             }
         }
@@ -822,11 +811,10 @@ mod tests {
 
     #[test]
     fn proposed_ratios_are_simple_integers() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
         for hex in TARGETS {
             let target = Rgb::of_hex(hex).unwrap();
-            for suggestion in service.suggest_mixes(target, &catalog, 5, None) {
+            for suggestion in suggest_mixes(target, &catalog, 5, None) {
                 for part in suggestion.parts {
                     assert_eq!(part.parts.round(), part.parts);
                     assert!((1.0..=30.0).contains(&part.parts));
@@ -837,12 +825,11 @@ mod tests {
 
     #[test]
     fn requested_max_paints_is_respected() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
         for hex in TARGETS {
             let target = Rgb::of_hex(hex).unwrap();
             for max in 1..=5 {
-                for suggestion in service.suggest_mixes(target, &catalog, 8, Some(max)) {
+                for suggestion in suggest_mixes(target, &catalog, 8, Some(max)) {
                     assert!(suggestion.parts.len() <= max, "{hex} avec {max} tubes");
                 }
             }
@@ -851,7 +838,6 @@ mod tests {
 
     #[test]
     fn short_palette_benefits_from_extra_tubes() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
         let short_palette = vec![
             find_wn(&catalog, "Cadmium Yellow Pale"),
@@ -865,8 +851,8 @@ mod tests {
         let mut with_four = 0.0;
         for hex in TARGETS {
             let target = Rgb::of_hex(hex).unwrap();
-            with_three += service.suggest_mixes(target, &short_palette, 1, Some(3))[0].delta_e;
-            with_four += service.suggest_mixes(target, &short_palette, 1, Some(4))[0].delta_e;
+            with_three += suggest_mixes(target, &short_palette, 1, Some(3))[0].delta_e;
+            with_four += suggest_mixes(target, &short_palette, 1, Some(4))[0].delta_e;
         }
         assert!(
             with_four < with_three,
@@ -876,9 +862,8 @@ mod tests {
 
     #[test]
     fn list_proposes_distinct_tube_combinations() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
-        let suggestions = service.suggest_mixes(Rgb::of_hex("#C98F72").unwrap(), &catalog, 8, None);
+        let suggestions = suggest_mixes(Rgb::of_hex("#C98F72").unwrap(), &catalog, 8, None);
 
         let combinations: Vec<Vec<String>> = suggestions
             .iter()
@@ -895,13 +880,12 @@ mod tests {
 
     #[test]
     fn allowing_one_more_tube_never_degrades_result() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
         for hex in TARGETS {
             let target = Rgb::of_hex(hex).unwrap();
             let mut previous = f64::MAX;
             for max in 1..=5 {
-                let current = service.suggest_mixes(target, &catalog, 1, Some(max))[0].delta_e;
+                let current = suggest_mixes(target, &catalog, 1, Some(max))[0].delta_e;
                 assert!(current <= previous + 1e-9, "cible {hex} avec {max} tubes");
                 previous = current;
             }
@@ -910,9 +894,8 @@ mod tests {
 
     #[test]
     fn suggestions_are_ranked_by_perceptual_tier() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
-        let suggestions = service.suggest_mixes(Rgb::of_hex("#6B5A42").unwrap(), &catalog, 8, None);
+        let suggestions = suggest_mixes(Rgb::of_hex("#6B5A42").unwrap(), &catalog, 8, None);
         let tiers: Vec<i32> = suggestions
             .iter()
             .map(|s| (s.delta_e / 0.5) as i32)
@@ -924,17 +907,15 @@ mod tests {
 
     #[test]
     fn within_imperceptible_gap_simplest_mix_wins() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
         let reference = catalog.iter().find(|p| p.name == "Yellow Ochre").unwrap();
-        let best = &service.suggest_mixes(reference.color(), &catalog, 5, None)[0];
-        assert_eq!(1, best.parts.len(), "{}", best.describe());
+        let best = &suggest_mixes(reference.color(), &catalog, 5, None)[0];
+        assert_eq!(1, best.parts.len(), "{}", best.describe(Locale::Fr));
         assert!(best.delta_e < 0.5);
     }
 
     #[test]
     fn oil_and_acrylic_never_end_up_in_the_same_mix() {
-        let service = ColorMixService::new();
         let all = CatalogLoader::default().load();
         assert!(all.iter().any(|p| p.system == PaintSystem::Acrylic));
         let oil = all
@@ -947,11 +928,7 @@ mod tests {
             .find(|p| p.system == PaintSystem::Acrylic)
             .unwrap()
             .clone();
-        assert!(
-            service
-                .mix(&[PaintPart::of(oil, 1.0), PaintPart::of(acr, 1.0)])
-                .is_err()
-        );
+        assert!(mix_paints(&[PaintPart::of(oil, 1.0), PaintPart::of(acr, 1.0)]).is_err());
 
         let candidates: Vec<Paint> = all
             .iter()
@@ -959,44 +936,37 @@ mod tests {
             .chain(all.iter().rev().take(40))
             .cloned()
             .collect();
-        for s in service.suggest_mixes(Rgb::of_hex("#6A7F4C").unwrap(), &candidates, 6, Some(3)) {
+        for s in suggest_mixes(Rgb::of_hex("#6A7F4C").unwrap(), &candidates, 6, Some(3)) {
             let first = s.parts[0].paint.system;
             assert!(
                 s.parts.iter().all(|p| p.paint.system == first),
                 "{}",
-                s.describe()
+                s.describe(Locale::Fr)
             );
         }
     }
 
     #[test]
     fn recommended_max_paints_adapts_to_selection_size() {
-        assert_eq!(5, ColorMixService::recommended_max_paints(4));
-        assert_eq!(5, ColorMixService::recommended_max_paints(8));
-        assert_eq!(4, ColorMixService::recommended_max_paints(9));
-        assert_eq!(4, ColorMixService::recommended_max_paints(24));
-        assert_eq!(3, ColorMixService::recommended_max_paints(25));
-        assert_eq!(3, ColorMixService::recommended_max_paints(439));
+        assert_eq!(5, recommended_max_paints(4));
+        assert_eq!(5, recommended_max_paints(8));
+        assert_eq!(4, recommended_max_paints(9));
+        assert_eq!(4, recommended_max_paints(24));
+        assert_eq!(3, recommended_max_paints(25));
+        assert_eq!(3, recommended_max_paints(439));
     }
 
     #[test]
     fn search_cost_and_worst_delta_e_on_full_catalogue() {
-        let service = ColorMixService::new();
         let catalog = load_catalogue();
         let start = Instant::now();
         let mut worst: f64 = 0.0;
         for hex in TARGETS {
             let target = Rgb::of_hex(hex).unwrap();
-            let best_de = service.suggest_mixes(target, &catalog, 8, None)[0].delta_e;
+            let best_de = suggest_mixes(target, &catalog, 8, None)[0].delta_e;
             worst = worst.max(best_de);
         }
         let millis = start.elapsed().as_millis() / (TARGETS.len() as u128);
-        println!(
-            "recherche Rust : {} tubes, {} ms par cible, pire écart {}",
-            catalog.len(),
-            millis,
-            worst
-        );
         // Generous ceiling so parallel CI test runs never flake on wall-clock timing.
         assert!(millis < 10_000, "{millis} ms par cible");
         assert!(
@@ -1007,7 +977,6 @@ mod tests {
 
     #[test]
     fn acrylic_catalog_mix_coverage() {
-        let service = ColorMixService::new();
         let acrylics: Vec<Paint> = CatalogLoader::default()
             .load()
             .into_iter()
@@ -1017,7 +986,7 @@ mod tests {
         let mut worst: f64 = 0.0;
         for hex in TARGETS {
             let target = Rgb::of_hex(hex).unwrap();
-            let suggestions = service.suggest_mixes(target, &acrylics, 4, Some(2));
+            let suggestions = suggest_mixes(target, &acrylics, 4, Some(2));
             assert!(!suggestions.is_empty(), "aucune recette acrylique pour {hex}");
             assert!(suggestions[0]
                 .parts
@@ -1033,7 +1002,6 @@ mod tests {
 
     #[test]
     fn solver_excludes_metallic_paints_when_flat_paints_are_available() {
-        let service = ColorMixService::new();
         let all = CatalogLoader::default().load();
         let acrylics: Vec<Paint> = all
             .into_iter()
@@ -1046,13 +1014,13 @@ mod tests {
             .clone();
         assert!(gold.is_effect());
 
-        let suggestions = service.suggest_mixes(gold.color(), &acrylics, 6, Some(2));
+        let suggestions = suggest_mixes(gold.color(), &acrylics, 6, Some(2));
         assert!(!suggestions.is_empty());
         for s in &suggestions {
             assert!(
                 s.parts.iter().all(|part| !part.paint.is_effect()),
                 "le solveur a proposé une peinture métallique : {}",
-                s.describe()
+                s.describe(Locale::Fr)
             );
         }
 
@@ -1061,9 +1029,7 @@ mod tests {
             .find(|p| !p.is_effect())
             .expect("acrylique mate présente")
             .clone();
-        let mixed = service
-            .mix(&[PaintPart::of(gold, 1.0), PaintPart::of(flat, 1.0)])
-            .unwrap();
+        let mixed = mix_paints(&[PaintPart::of(gold, 1.0), PaintPart::of(flat, 1.0)]).unwrap();
         assert!(
             mixed
                 .warnings

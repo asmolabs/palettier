@@ -48,7 +48,7 @@ pub use backup::{
     BackupPaintRef, BackupPalette, BackupPhoto, BackupProject, BackupRecipe, BackupStep,
     BackupWriter, BackupZone, ExportReport, ImportReport, ZipBackupArchive, ZipBackupWriter,
 };
-pub use db::Database;
+pub use db::{Database, choose_db_dir, default_db_dir};
 pub use repository::{
     SeaOrmPaintCatalogRepository, SeaOrmPaletteMixRepository, SeaOrmPaletteRepository,
     SeaOrmProjectRepository, SeaOrmRecipeRepository, SeaOrmSettingsRepository,
@@ -110,7 +110,8 @@ mod tests {
                 projects.clone(),
                 recipes.clone(),
             )
-            .with_settings(settings.clone());
+            .with_settings(settings.clone())
+            .with_database(&db);
             let exporter = BackupExporter::new(
                 catalog.clone(),
                 palettes.clone(),
@@ -752,6 +753,163 @@ mod tests {
         for &id in &ids {
             assert!(!inst.catalog.find_by_id(id).await.unwrap().unwrap().in_stock);
         }
+    }
+
+    #[tokio::test]
+    async fn unknown_layer_technique_falls_back_to_project_paint_system() {
+        use sea_orm::{ConnectionTrait, Statement};
+
+        let inst = Installation::in_memory().await;
+        let mut proj = Project::new("Marine");
+        proj.system = PaintSystem::Acrylic;
+        let mut zone = ProjectZone::new("Épaulière");
+        let mut layer = ProjectLayer::new("Base", "#224488");
+        layer.technique = palettier_domain::paint::Technique::default_for(PaintSystem::Acrylic);
+        zone.layers.push(layer);
+        proj.zones.push(zone);
+        let saved = inst.projects.save(&proj).await.unwrap();
+
+        // Simulate an unknown technique string in SQLite (e.g. from an external/legacy import).
+        let layer_id = saved.zones[0].layers[0].id.unwrap();
+        inst._db
+            .connection()
+            .execute_raw(Statement::from_sql_and_values(
+                sea_orm::DatabaseBackend::Sqlite,
+                "UPDATE project_layer SET technique = ? WHERE id = ?",
+                ["UnknownTechnique".into(), layer_id.into()],
+            ))
+            .await
+            .unwrap();
+
+        let reloaded = inst
+            .projects
+            .find_with_photos(saved.id.unwrap())
+            .await
+            .unwrap()
+            .unwrap();
+        let layer = &reloaded.zones[0].layers[0];
+        assert_eq!(
+            palettier_domain::paint::Technique::default_for(PaintSystem::Acrylic),
+            layer.technique
+        );
+        assert!(layer.note.contains("UnknownTechnique"));
+    }
+
+    #[tokio::test]
+    async fn backup_import_rolls_back_atomically_on_mid_import_failure() {
+        use palettier_domain::i18n::Locale;
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let inst = Installation::in_memory().await;
+        assert_eq!(0, inst.catalog.count().await.unwrap());
+
+        let temp_zip = std::env::temp_dir().join(format!(
+            "palettier-atomic-rollback-{}.zip",
+            Utc::now().timestamp_nanos_opt().unwrap_or(0)
+        ));
+        {
+            let file = std::fs::File::create(&temp_zip).unwrap();
+            let mut zip = zip::ZipWriter::new(file);
+            let opts = SimpleFileOptions::default();
+            zip.start_file("palettier.json", opts).unwrap();
+            // Valid new paint + project referencing a path-traversal photo path so import fails mid-way.
+            let doc = serde_json::json!({
+                "formatVersion": 1,
+                "paints": [{
+                    "brand": "AtomicTest",
+                    "name": "ShouldRollBack",
+                    "hex": "#123456",
+                    "opacity": "OPAQUE",
+                    "dryingClass": "MEDIUM"
+                }],
+                "projects": [{
+                    "name": "BrokenProject",
+                    "photos": [{
+                        "file": "../escape.jpg",
+                        "role": "PIECE"
+                    }]
+                }]
+            });
+            zip.write_all(doc.to_string().as_bytes()).unwrap();
+            zip.finish().unwrap();
+        }
+
+        let mut archive = ZipBackupArchive::open_in(&temp_zip, Locale::En).unwrap();
+        let err = inst.importer.import_in(&mut archive, Locale::En).await.unwrap_err();
+        assert!(err.to_string().contains("Unsafe archive path"));
+        // The paint written before the project failure must have been rolled back.
+        assert_eq!(0, inst.catalog.count().await.unwrap());
+        assert!(inst.projects.all().await.unwrap().is_empty());
+
+        let _ = std::fs::remove_file(&temp_zip);
+    }
+
+    #[tokio::test]
+    async fn backup_export_deduplicates_colliding_project_photo_slugs() {
+        let inst = Installation::in_memory().await;
+
+        let p1 = inst.projects.save(&Project::new("Space Marine")).await.unwrap();
+        inst.projects
+            .add_photo(
+                p1.id.unwrap(),
+                &ProjectPhoto {
+                    id: None,
+                    data: b"PHOTO_ONE".to_vec(),
+                    role: PhotoRole::Piece,
+                    caption: "first".to_string(),
+                    added_at: Utc::now(),
+                },
+            )
+            .await
+            .unwrap();
+        let p2 = inst.projects.save(&Project::new("Space-Marine!")).await.unwrap();
+        inst.projects
+            .add_photo(
+                p2.id.unwrap(),
+                &ProjectPhoto {
+                    id: None,
+                    data: b"PHOTO_TWO".to_vec(),
+                    role: PhotoRole::Piece,
+                    caption: "second".to_string(),
+                    added_at: Utc::now(),
+                },
+            )
+            .await
+            .unwrap();
+
+        let temp_zip = std::env::temp_dir().join(format!(
+            "palettier-slug-dedup-{}.zip",
+            Utc::now().timestamp_nanos_opt().unwrap_or(0)
+        ));
+        let mut writer = ZipBackupWriter::new(&temp_zip);
+        let exported = inst.exporter.export(&mut writer).await.unwrap();
+        assert_eq!(2, exported.photos);
+        writer.finish().unwrap();
+
+        let fresh = Installation::in_memory().await;
+        let mut archive = ZipBackupArchive::open(&temp_zip).unwrap();
+        let report = fresh.importer.import(&mut archive).await.unwrap();
+        assert_eq!(2, report.projects_added);
+        assert_eq!(2, report.photos);
+
+        let restored = fresh.projects.all().await.unwrap();
+        let r1 = fresh
+            .projects
+            .find_with_photos(restored.iter().find(|p| p.name == "Space Marine").unwrap().id.unwrap())
+            .await
+            .unwrap()
+            .unwrap();
+        let r2 = fresh
+            .projects
+            .find_with_photos(restored.iter().find(|p| p.name == "Space-Marine!").unwrap().id.unwrap())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(b"PHOTO_ONE", r1.photos[0].data.as_slice());
+        assert_eq!(b"PHOTO_TWO", r2.photos[0].data.as_slice());
+
+        let _ = std::fs::remove_file(&temp_zip);
     }
 }
 

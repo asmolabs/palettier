@@ -1,4 +1,4 @@
-use crate::db::{Database, map_db_err};
+use crate::db::{Database, DbExec, map_db_err};
 use crate::entity::{recipe, recipe_step};
 use async_trait::async_trait;
 use indexmap::IndexMap;
@@ -7,21 +7,25 @@ use palettier_domain::paint::{LayerThickness, Medium, Technique};
 use palettier_domain::port::RecipeRepository;
 use palettier_domain::recipe::{Recipe, RecipeStep};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, QueryFilter,
-    QueryOrder, Set, Statement, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QueryOrder, Set,
+    Statement, TransactionTrait,
 };
 use std::str::FromStr;
 
 #[derive(Clone)]
 pub struct SeaOrmRecipeRepository {
-    db: DatabaseConnection,
+    db: DbExec,
 }
 
 impl SeaOrmRecipeRepository {
     pub fn new(database: &Database) -> Self {
         Self {
-            db: database.connection().clone(),
+            db: DbExec::Pool(database.connection().clone()),
         }
+    }
+
+    pub(crate) fn from_exec(db: DbExec) -> Self {
+        Self { db }
     }
 }
 

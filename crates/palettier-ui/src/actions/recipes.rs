@@ -6,7 +6,7 @@ use palettier_domain::error::DomainResult;
 use palettier_domain::i18n::Locale;
 use palettier_domain::paint::{DryingClass, PaintSystem, Technique};
 use palettier_domain::port::RecipeRepository;
-use palettier_domain::project::FatOverLeanRisk;
+use palettier_domain::project::{FatOverLeanRisk, fat_over_lean};
 use palettier_domain::recipe::{Recipe, RecipeStep, Timeline};
 
 /// What the painter typed in « Ajouter une étape à cette recette ».
@@ -48,7 +48,7 @@ pub fn recipe_outlook(
     locale: Locale,
 ) -> RecipeOutlook {
     RecipeOutlook {
-        risks: services.fat_over_lean.inspect_recipe_i18n(recipe, locale),
+        risks: fat_over_lean::inspect_recipe(recipe, locale),
         timeline: services.recipe_timeline.plan(recipe, DryingClass::Medium, workshop),
     }
 }
